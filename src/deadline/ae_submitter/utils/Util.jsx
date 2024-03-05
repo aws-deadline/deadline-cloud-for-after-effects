@@ -406,15 +406,15 @@ function __generateUtil() {
         * @param {string} output: String gotten from wrappedCallSystem. Contains error code, data, and message.
         * Returns object with authentication status for credentials, status, and api.
         */
-        var typeRegex = /Type:\s*(.*?)(\n|$)/;
+        var sourceRegex = /Source:\s*(.*?)(\n|$)/;
         var statusRegex = /Status:\s*(.*?)(\n|$)/;
         var apiRegex = /API Availability:\s*(.*?)(\n|$)/;
 
-        var typeMatch = getMatch(output, typeRegex);
+        var sourceMatch = getMatch(output, sourceRegex);
         var statusMatch = getMatch(output, statusRegex);
         var apiMatch = getMatch(output, apiRegex);
         return {
-            "type": typeMatch,
+            "source": sourceMatch,
             "status": statusMatch,
             "api": apiMatch
         };

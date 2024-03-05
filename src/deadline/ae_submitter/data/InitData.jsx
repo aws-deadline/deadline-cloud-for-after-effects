@@ -9,7 +9,7 @@ function __generateInitData()
         _dcConfig = dcUtil.wrappedCallSystem("deadline config show");
     
         dcProperties.config.aws_profile.set(dcUtil.getConfigSettingData(_dcConfig, "defaults.aws_profile_name"));
-        // If job history has backslashes, `deadline creds login` will mangle the config path
+        // If job history has backslashes, `deadline auth login` will mangle the config path
         var _job_history = dcUtil.getConfigSettingData(_dcConfig, "settings.job_history_dir")
         _job_history = dcUtil.enforceForwardSlashes(_job_history)
         dcProperties.config.job_history_dir.set(_job_history);

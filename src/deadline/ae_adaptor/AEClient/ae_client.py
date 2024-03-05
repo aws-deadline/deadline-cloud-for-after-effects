@@ -18,11 +18,11 @@ from ae_adaptor.AEClient.ipc import send_command
 try:
     from adaptor_runtime_client import ClientInterface  # type: ignore[import]
     from adaptor_runtime.process import LoggingSubprocess
-    from adaptor_runtime.app_handlers import RegexCallback, RegexHandler
+    from adaptor_runtime.app_handlers import RegexHandler
 except (ImportError, ModuleNotFoundError):
     from openjd.adaptor_runtime_client import ClientInterface  # type: ignore[import]
     from openjd.adaptor_runtime.process import LoggingSubprocess
-    from openjd.adaptor_runtime.app_handlers import RegexCallback, RegexHandler
+    from openjd.adaptor_runtime.app_handlers import RegexHandler
 
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,6 @@ class AEClient(ClientInterface):
         # Wait for socket to be alive
         SOCKET_WAIT_SECONDS = 15
         time.sleep(SOCKET_WAIT_SECONDS)
-        
 
     def close(self, args: Optional[dict] = None) -> None:
         send_command("shutdown_application", dict())

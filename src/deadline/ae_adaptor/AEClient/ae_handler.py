@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import logging
 import subprocess
+from typing import Optional
 
 from ae_adaptor.AEClient.ipc import send_command
 
@@ -23,7 +24,7 @@ class AEHandler:
             "project_file": self.set_project_file,
             "comp_name": self.set_comp_name,
         }
-        self.comp_name = None
+        self.comp_name: Optional[str] = None
         self.output_dir = None
         self.output_pattern = None
         self.output_format = None
@@ -40,15 +41,21 @@ class AEHandler:
         if frame is None:
             raise RuntimeError("AEClient: start_render called without a frame number.")
 
-        if self.output_dir is None or self.output_pattern is None or self.output_format is None:
-            print(
-                "Error: AEClient: start_render called without a valid output path. Output directory, pattern or "
-                "format is missing."
-            )
-            raise RuntimeError(
-                "AEClient: start_render called without a valid output path. Output directory, pattern "
-                "or format is missing."
-            )
+        if (
+            self.comp_name is None
+            or self.output_dir is None
+            or self.output_pattern is None
+            or self.output_format is None
+            or self.file_path is None
+        ):
+            message = """Error: AEClient: start_render called without at least one of: "
+    * an output directory,
+    * an output pattern,
+    * an output format,
+    * a project filepath, or
+    * a comp name"""
+            print(message)
+            raise RuntimeError(message)
 
         # Create the folder(s) if the directory doesn't exist
         if not os.path.exists(self.output_dir):

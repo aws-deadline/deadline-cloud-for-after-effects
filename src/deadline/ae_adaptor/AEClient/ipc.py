@@ -1,3 +1,4 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 """
 ipc.jsx expect JSON payloads in the following structure:
 
@@ -8,6 +9,7 @@ ipc.jsx expect JSON payloads in the following structure:
 
 It always replies with a single JSON compatible message.
 """
+
 import json
 import socket
 

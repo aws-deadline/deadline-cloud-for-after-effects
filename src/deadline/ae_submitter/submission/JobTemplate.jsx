@@ -96,13 +96,13 @@ var OPENJD_TEMPLATE = {
                         "name": "runStart",
                         "filename": "start.bat",
                         "type": "TEXT",
-                        "data": "AfterEffectsAdaptor daemon start --connection-file {{Session.WorkingDirectory}}/connection.json --init-data file://{{Env.File.initData}} \n"
+                        "data": "afterfx-openjd daemon start --connection-file {{Session.WorkingDirectory}}/connection.json --init-data file://{{Env.File.initData}} \n"
                     },
                     {
                         "name": "runStop",
                         "filename": "stop.bat",
                         "type": "TEXT",
-                        "data": "AfterEffectsAdaptor daemon stop --connection-file {{Session.WorkingDirectory}}/connection.json \n"
+                        "data": "afterfx-openjd daemon stop --connection-file {{Session.WorkingDirectory}}/connection.json \n"
                     }
                 ],
                 "actions": {
@@ -144,7 +144,7 @@ var OPENJD_TEMPLATE = {
                 "filename": "bootstrap.bat",
                 "type": "TEXT",
                 "runnable": true,
-                "data": "AfterEffectsAdaptor daemon run --connection-file {{ Session.WorkingDirectory }}/connection.json --run-data file://{{Task.File.runData}} \n"
+                "data": "afterfx-openjd daemon run --connection-file {{ Session.WorkingDirectory }}/connection.json --run-data file://{{Task.File.runData}} \n"
             }
             ]
         }
@@ -252,13 +252,13 @@ var OPENJD_TEMPLATE_LAYER = {
                         "name": "runStart",
                         "filename": "start.bat",
                         "type": "TEXT",
-                        "data": "AfterEffectsAdaptor daemon start --connection-file {{Session.WorkingDirectory}}/connection.json --init-data file://{{Env.File.initData}} \n"
+                        "data": "afterfx-openjd daemon start --connection-file {{Session.WorkingDirectory}}/connection.json --init-data file://{{Env.File.initData}} \n"
                     },
                     {
                         "name": "runStop",
                         "filename": "stop.bat",
                         "type": "TEXT",
-                        "data": "AfterEffectsAdaptor daemon start --connection-file {{Session.WorkingDirectory}}/connection.json \n"
+                        "data": "afterfx-openjd daemon start --connection-file {{Session.WorkingDirectory}}/connection.json \n"
                     }
                 ],
                 "actions": {
@@ -300,7 +300,7 @@ var OPENJD_TEMPLATE_LAYER = {
                 "filename": "bootstrap.bat",
                 "type": "TEXT",
                 "runnable": true,
-                "data": "AfterEffectsAdaptor daemon run --connection-file {{ Session.WorkingDirectory }}/connection.json --run-data file://{{Task.File.runData}} \n"
+                "data": "afterfx-openjd daemon run --connection-file {{ Session.WorkingDirectory }}/connection.json --run-data file://{{Task.File.runData}} \n"
             }
             ]
         }

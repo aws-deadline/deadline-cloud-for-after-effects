@@ -186,7 +186,7 @@ function __generateSettingsWindow() {
         authenticateGroup = deadlineCloudSettings.mainPanel.add("group", undefined);
         authenticateGroup.orientation = "row";
     
-        authenticateGroup.credsLabel = authenticateGroup.add("statictext", undefined, "Creds: ");
+        authenticateGroup.credsLabel = authenticateGroup.add("statictext", undefined, "Source: ");
         authenticateGroup.credsLabel.size = [40, 20];
         authenticateGroup.credsAuthentication = authenticateGroup.add("statictext", undefined, "NOT_VALID");
         authenticateGroup.credsAuthentication.graphics.foregroundColor = red;
@@ -381,9 +381,9 @@ function __generateSettingsWindow() {
             buttonsGroupSettingsWindow.applyBtn.enabled = true;
             buttonsGroupSettingsWindow.okBtn.enabled = true;
 
-            authenticateGroup.credsAuthentication.text = dcProperties.credentialStatus.type.get();
+            authenticateGroup.credsAuthentication.text = dcProperties.credentialStatus.source.get();
             authenticateGroup.credsAuthentication.graphics.foregroundColor = green;
-            if(dcProperties.credentialStatus.type.get() == "NOT_VALID")
+            if(dcProperties.credentialStatus.source.get() == "NOT_VALID")
             {
             authenticateGroup.credsAuthentication.graphics.foregroundColor = red;
             }
@@ -436,11 +436,11 @@ function __generateSettingsWindow() {
         buttonsGroupSettingsWindow.okBtn.enabled = false;
         jobHistoryGroup.jobHistoryText.text = configDataSelections.job_history_dir;
 
-        authenticateGroup.credsAuthentication.text = dcProperties.credentialStatus.type.get();
+        authenticateGroup.credsAuthentication.text = dcProperties.credentialStatus.source.get();
         authenticateGroup.credsAuthentication.graphics.foregroundColor = green;
-        if(dcProperties.credentialStatus.type.get() == "NOT_VALID")
+        if(dcProperties.credentialStatus.source.get() == "NOT_VALID")
         {
-        authenticateGroup.credsAuthentication.graphics.foregroundColor = red;
+            authenticateGroup.credsAuthentication.graphics.foregroundColor = red;
         }
 
         authenticateGroup.statusAuthentication.text =  dcProperties.credentialStatus.status.get();

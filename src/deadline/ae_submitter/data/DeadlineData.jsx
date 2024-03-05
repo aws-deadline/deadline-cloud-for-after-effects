@@ -54,7 +54,7 @@ function __generateProperties() {
         }, 
         "compName": ObservableProperty(),
         "credentialStatus": {
-            type: ObservableProperty(),
+            source: ObservableProperty(),
             status: ObservableProperty(),
             api: ObservableProperty()
         }

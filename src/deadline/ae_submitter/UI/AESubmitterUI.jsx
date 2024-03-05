@@ -113,7 +113,7 @@ function __generateSubmitterUI() {
         authenticateGroup = deadlineCloud.aeSubmitterUI.add("group", undefined);
         authenticateGroup.orientation = "row";
 
-        credsLabel = authenticateGroup.add("statictext", undefined, "Creds: ");
+        credsLabel = authenticateGroup.add("statictext", undefined, "Source: ");
         credsLabel.size = [40, 20];
 
         credsAuthentication = authenticateGroup.add("statictext", undefined, "NOT_VALID");
@@ -1511,12 +1511,12 @@ function __generateSubmitterUI() {
             }
             // Fill farm and queue list again. When we startup and we are logged out the lists are empty
             var result = dcDeadlineCommands.credentialStatus(dcProperties.config.aws_profile.get());
-            dcProperties.credentialStatus.type.set(result.type);
+            dcProperties.credentialStatus.source.set(result.source);
             dcProperties.credentialStatus.status.set(result.status);
             dcProperties.credentialStatus.api.set(result.api);
-            credsAuthentication.text = dcProperties.credentialStatus.type.get();
+            credsAuthentication.text = dcProperties.credentialStatus.source.get();
             credsAuthentication.graphics.foregroundColor = green;
-            if(result.type == "NOT_VALID")
+            if(result.source == "NOT_VALID")
             {
                 credsAuthentication.graphics.foregroundColor = red;
             }
@@ -1567,12 +1567,12 @@ function __generateSubmitterUI() {
         buttonsGroup.submitLayersButton.enabled = false;
         buttonsGroup.submitButton.enabled = false;
         var result = dcDeadlineCommands.credentialStatus(dcProperties.config.aws_profile.get());
-        dcProperties.credentialStatus.type.set(result.type);
+        dcProperties.credentialStatus.source.set(result.source);
         dcProperties.credentialStatus.status.set(result.status);
         dcProperties.credentialStatus.api.set(result.api);
-        credsAuthentication.text = dcProperties.credentialStatus.type.get();
+        credsAuthentication.text = dcProperties.credentialStatus.source.get();
         credsAuthentication.graphics.foregroundColor = green;
-        if(result.type == "NOT_VALID")
+        if(result.source == "NOT_VALID")
         {
             credsAuthentication.graphics.foregroundColor = red;
         }

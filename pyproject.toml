@@ -6,13 +6,16 @@ build-backend = "hatchling.build"
 name = "deadline-cloud-for-after-effects"
 dynamic = ["version"]
 readme = "README.md"
-license = ""
+license = "Apache-2.0"
 requires-python = ">=3.9"
 
-dependencies = ["deadline == 0.37.*", "openjd-adaptor-runtime == 0.4.*"]
+dependencies = [
+  "deadline == 0.40.*",
+  "openjd-adaptor-runtime == 0.5.*"
+]
 
 [project.scripts]
-AfterEffectsAdaptor = "deadline.ae_adaptor.AEAdaptor:main"
+afterfx-openjd = "deadline.ae_adaptor.AEAdaptor:main"
 
 # --- HATCH ---
 
@@ -32,7 +35,7 @@ version-file = "_version.py"
 path = "hatch_custom_hook.py"
 jsx_version_path = "src/deadline/ae_submitter/DeadlineVersionRequirement.jsx"
 # The minimum deadline library required for the AE submitter's CLI calls
-jsx_version_minimum = [0, 36, 0]
+jsx_version_minimum = [0, 40, 0]
 
 [tool.hatch.build.hooks.custom.copy_version_py]
 destinations = [
@@ -65,11 +68,13 @@ mypy_path = "src"
 # --- RUFF / BLACK ---
 
 [tool.ruff]
-ignore = ["E501"]
 line-length = 100
 
-[tool.ruff.isort]
-known-first-party = ["deadline_worker_agent"]
+[tool.ruff.lint]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["deadline", "openjd"]
 
 [tool.black]
 line-length = 100
@@ -108,7 +113,6 @@ omit = [
   "**/_version.py"
 ]
 
-
 [tool.coverage.paths]
 source = [
   "src/"
@@ -116,4 +120,42 @@ source = [
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 45
+
+[tool.semantic_release]
+# Can be removed or set to true once we are v1
+major_on_zero = false
+tag_format = "{version}"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+    "build",
+    "chore",
+    "ci",
+    "docs",
+    "feat",
+    "fix",
+    "perf",
+    "style",
+    "refactor",
+    "test",
+]
+minor_tags = []
+patch_tags = [
+  "chore",
+  "feat",
+  "fix",
+  "refactor",
+]
+
+[tool.semantic_release.publish]
+upload_to_vcs_release = false
+
+[tool.semantic_release.changelog]
+template_dir = ".semantic_release"
+
+[tool.semantic_release.changelog.environment]
+trim_blocks = true
+lstrip_blocks = true
+
+[tool.semantic_release.branches.release]
+match = "(mainline|release)"

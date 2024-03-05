@@ -4,7 +4,7 @@ function __generateDeadlineCommands() {
     var _scriptName = "DeadlineCommands.jsx";
 
     function login(profileName, deadlineMonitorPath) {
-        var cmd = "deadline creds login";
+        var cmd = "deadline auth login";
         logger.debug("System call: " + cmd, _scriptName);
         var loginOutput = dcUtil.wrappedCallSystem(cmd);
         logger.debug(loginOutput, _scriptName)
@@ -19,7 +19,7 @@ function __generateDeadlineCommands() {
     }
     
     function logout(profileName, deadlineMonitorPath) {
-        var cmd = "deadline creds logout";
+        var cmd = "deadline auth logout";
         logger.debug("System call: " + cmd, _scriptName);
         var logoutOutput = dcUtil.wrappedCallSystem(cmd);
         logger.debug(logoutOutput, _scriptName)
@@ -60,13 +60,13 @@ function __generateDeadlineCommands() {
 
     function credentialStatus()
     {
-        var cmdCreds = "deadline creds status";
+        var cmdCreds = "deadline auth status";
         logger.debug("System call: " + cmdCreds, _scriptName);
         var credsOutput = dcUtil.wrappedCallSystem(cmdCreds);
         logger.debug(credsOutput, _scriptName);
         var credsParsedDataObject = dcUtil.parseCredsData(credsOutput);
         return {
-            "type": credsParsedDataObject.type,
+            "source": credsParsedDataObject.source,
             "status": credsParsedDataObject.status,
             "api": credsParsedDataObject.api
         };

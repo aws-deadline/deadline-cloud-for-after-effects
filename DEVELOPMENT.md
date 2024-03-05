@@ -1,4 +1,4 @@
-# Amazon Deadline Cloud for After Effects Development
+# AWS Deadline Cloud for After Effects Development
 
 ### Configuring development environment (Submitter)
 
