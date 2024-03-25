@@ -1,0 +1,36 @@
+# AE
+..ae submitter test projectReport.txt
+Adobe After Effects Auto-Save/
+# Ignore Logs from test projects
+test_projects/*/*Logs/*
+
+# build artifacts
+dist/
+build/
+var/
+src/deadline/ae_adaptor/clientipc/ipc.jsx
+
+### Python
+# Hatch version temp file
+*_version.py
+
+*.egg-info/
+__pycache__/
+*.py[cod]
+.coverage
+.tox
+
+# virtualenv
+.venv
+venv/
+
+### JavaScript
+node_modules
+
+# IDE
+.idea
+*.code-workspace
+.vscode
+
+# macOS
+.DS_Store
