@@ -1,4 +1,11 @@
-## v0.0.1 (2024-03-26)
+## 0.0.2 (2024-03-26)
+
+
+### CI
+* updating patch version to resolve a build failure
+
+
+## 0.0.1 (2024-03-26)
 
 
 ### Features
