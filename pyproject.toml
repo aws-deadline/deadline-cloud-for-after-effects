@@ -4,11 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "deadline-cloud-for-after-effects"
+authors = [
+  {name = "Amazon Web Services"},
+]
+description = "AWS Deadline Cloud integrated submitter and adaptor for After Effects"
 dynamic = ["version"]
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.9"
-description = "The submitter and adaptor to enable After Effects support for AWS Deadline Cloud"
 # https://pypi.org/classifiers/
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -32,6 +35,10 @@ dependencies = [
 
 [project.scripts]
 afterfx-openjd = "deadline.ae_adaptor.AEAdaptor:main"
+
+[project.urls]
+Homepage = "https://github.com/aws-deadline/deadline-cloud-for-after-effects"
+Source = "https://github.com/aws-deadline/deadline-cloud-for-after-effects"
 
 # --- HATCH ---
 
