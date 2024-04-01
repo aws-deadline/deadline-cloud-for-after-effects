@@ -7,7 +7,7 @@ name = "deadline-cloud-for-after-effects"
 authors = [
   {name = "Amazon Web Services"},
 ]
-description = "AWS Deadline Cloud integrated submitter and adaptor for After Effects"
+description = "AWS Deadline Cloud for After Effects"
 dynamic = ["version"]
 readme = "README.md"
 license = "Apache-2.0"

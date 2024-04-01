@@ -1,8 +1,8 @@
+# AWS Deadline Cloud for After Effects
+
 [![pypi](https://img.shields.io/pypi/v/deadline-cloud-for-after-effects.svg?style=flat)](https://pypi.python.org/pypi/deadline-cloud-for-after-effects)
 [![python](https://img.shields.io/pypi/pyversions/deadline-cloud-for-after-effects.svg?style=flat)](https://pypi.python.org/pypi/deadline-cloud-for-after-effects)
 [![license](https://img.shields.io/pypi/l/deadline-cloud-for-after-effects.svg?style=flat)](https://github.com/aws-deadline/deadline-cloud-for-after-effects/blob/mainline/LICENSE)
-
-# AWS Deadline Cloud for After Effects
 
 ### Disclaimer
 ---
