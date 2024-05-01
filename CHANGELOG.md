@@ -1,3 +1,9 @@
+## 0.1.1 (2024-05-01)
+
+### Dependencies
+* Update deadline requirement from ==0.47.* to ==0.48.* (#25) ([`7a63cde`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/7a63cde8a85568cbd0338eb86bd3e52cd994807c))
+
+
 ## 0.1.0 (2024-04-02)
 
 ### BREAKING CHANGES
