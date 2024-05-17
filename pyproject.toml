@@ -66,10 +66,10 @@ destinations = [
 ]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/deadline/ae_adaptor/*", "hatch_custom_hook.py"]
+include = ["src/deadline/*", "hatch_custom_hook.py"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/deadline/ae_adaptor"]
+packages = ["src/deadline"]
 
 # --- MYPY ---
 

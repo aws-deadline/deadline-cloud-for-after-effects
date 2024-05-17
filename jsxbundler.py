@@ -28,7 +28,7 @@ def cli_entry():
         default="dist/jsxbundle/DeadlineCloudSubmitter.jsx",
         help="""Destination file. Defaults to 
         "dist/jsxbundle/DeadlineCloudSubmitter.jsx". Alternatively you could 
-        use "C:\Program Files\Adobe\Adobe After Effects 2023\Support Files\Scripts\DeadlineCloudSubmitter.jsx" 
+        use "C:/Program Files/Adobe/Adobe After Effects 2023/Support Files/Scripts/DeadlineCloudSubmitter.jsx"
         or equivalent.""",
     )
     args = parser.parse_args()
