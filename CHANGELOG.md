@@ -1,3 +1,10 @@
+## 0.1.2 (2024-05-22)
+
+
+
+### Bug Fixes
+* move ae_adaptor and ae_submitter into deadline namespace package, and fix \P invalid syntax in jsxbundler on windows (#32) ([`6c01fc9`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/6c01fc9ce5f4ce8143557a4652e12c233357e61c))
+
 ## 0.1.1 (2024-05-01)
 
 ### Dependencies
