@@ -104,8 +104,12 @@
                         "filename": "bootstrap.bat",
                         "type": "TEXT",
                         "runnable": true,
-                        "data": 
-                        "aerender -project \"{{Param.AfterEffectsProjectFile}}\" -comp \"{{Param.CompName}}\" -output \"{{Param.OutputFilePath}}/{{Param.OutputPattern}}.{{Param.Format}}\" -s \"{{Param.StartFrame}}\" -e \"{{Param.EndFrame}}\"\n"
+                        "data": |
+                            set "AERENDER_EXE=aerender"
+                            IF DEFINED AFTEREFFECTS_ADAPTOR_AERENDER_EXE (
+                                set "AERENDER_EXE=%AFTEREFFECTS_ADAPTOR_AERENDER_EXE%"
+                            )
+                            %AERENDER_EXE% -project "{{Param.AfterEffectsProjectFile}}" -comp "{{Param.CompName}}" -output "{{Param.OutputFilePath}}/{{Param.OutputPattern}}.{{Param.Format}}" -s "{{Param.StartFrame}}" -e "{{Param.EndFrame}}"
                     }
                 ]
             }
