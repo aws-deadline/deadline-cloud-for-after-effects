@@ -63,10 +63,11 @@ class AEHandler:
 
         filename = self.output_pattern + "." + self.output_format
         output = os.path.join(self.output_dir, filename)
+        ae_render_exe = os.environ.get("AFTEREFFECTS_ADAPTOR_AERENDER_EXECUTABLE", "aerender")
 
         subprocess.run(
             [
-                "aerender",
+                ae_render_exe,
                 "-project",
                 self.file_path,
                 "-comp",
