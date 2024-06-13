@@ -81,3 +81,8 @@ Example `launch.json` configuration for attached debugger (for AE 2023):
     ]
 }
 ```
+
+
+_______
+
+NOTE: The aftereffects-openjd binary expects that the AfterEffects executable is named `afterfx` and is set on the PATH. If this is not the case, you can set the `AFTEREFFECTS_ADAPTOR_AEFX_EXECUTABLE` environment variable to the path to the After Effects executable.
