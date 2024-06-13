@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade hatch
+      - name: Run JSX Bundle for clientipc
+        run: |
+          python jsxbundler.py --source src/aeipc/ipc.jsx --destination src/deadline/ae_adaptor/clientipc/ipc.jsx
       - name: Build
         run: hatch -v build
       # # See https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-pypi
