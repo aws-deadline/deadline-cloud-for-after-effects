@@ -71,6 +71,9 @@ include = ["src/deadline/*", "hatch_custom_hook.py"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/deadline"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/deadline/ae_adaptor/clientipc" = "src/deadline/ae_adaptor/clientipc"
+
 # --- MYPY ---
 
 [tool.mypy]
