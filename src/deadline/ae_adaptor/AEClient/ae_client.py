@@ -26,7 +26,6 @@ except (ImportError, ModuleNotFoundError):
 
 
 logger = logging.getLogger(__name__)
-ae_exe = "afterfx"
 
 
 class AEClient(ClientInterface):
@@ -42,6 +41,9 @@ class AEClient(ClientInterface):
             # Escape backslashes in client path
             client_path_abs = client_path_abs.replace("\\", "\\\\")
         startup_script_inline = f"var x = new File('{client_path_abs}') ; x.open(); eval(x.read()); app.exitAfterLaunchAndEval = false;"
+
+        ae_exe = os.environ.get("AFTEREFFECTS_ADAPTOR_AEFX_EXECUTABLE", "afterfx")
+
         # flag -noui for no ui doesn't close properly when running in monitor
         cmd_args = [ae_exe, "-s", startup_script_inline]
         print(f"Starting AfterFX: {cmd_args}")
