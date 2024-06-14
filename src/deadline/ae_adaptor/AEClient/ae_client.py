@@ -42,7 +42,10 @@ class AEClient(ClientInterface):
             client_path_abs = client_path_abs.replace("\\", "\\\\")
         startup_script_inline = f"var x = new File('{client_path_abs}') ; x.open(); eval(x.read()); app.exitAfterLaunchAndEval = false;"
 
+        logger.info("Querying for AFTEREFFECTS_ADAPTOR_AEFX_EXECUTABLE environment variable")
+        logger.info("AFTEREFFECTS_ADAPTOR_AEFX_EXECUTABLE: %s" % os.environ.get("AFTEREFFECTS_ADAPTOR_AEFX_EXECUTABLE", "Not Set"))
         ae_exe = os.environ.get("AFTEREFFECTS_ADAPTOR_AEFX_EXECUTABLE", "afterfx")
+
 
         # flag -noui for no ui doesn't close properly when running in monitor
         cmd_args = [ae_exe, "-s", startup_script_inline]
