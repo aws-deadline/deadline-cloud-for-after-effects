@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logginn
+import logging
 import os
 import platform
 import sys
