@@ -48,7 +48,7 @@ class AEClient(ClientInterface):
 
 
         # flag -noui for no ui doesn't close properly when running in monitor
-        cmd_args = [ae_exe, "-s", startup_script_inline]
+        cmd_args = [ae_exe, "-noui", "-s", startup_script_inline]
         print(f"Starting AfterFX: {cmd_args}")
         # Set stdout and stderr to the system stdout and stderr to prevent shell getting blocked
         sys.__stdout__.flush()
