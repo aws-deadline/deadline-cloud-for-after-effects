@@ -320,4 +320,4 @@ function _ipcModule() {
 
 ipc = _ipcModule()
 
-ipc.listen()
+ipc.listenBlocking()

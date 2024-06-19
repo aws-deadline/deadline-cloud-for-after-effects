@@ -13,7 +13,7 @@ It always replies with a single JSON compatible message.
 import json
 import socket
 
-DEFAULT_HOST = "127.0.0.1"
+DEFAULT_HOST = "localhost"
 DEFAULT_PORT = 8008
 
 
