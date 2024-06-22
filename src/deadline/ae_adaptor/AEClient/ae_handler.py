@@ -65,7 +65,7 @@ class AEHandler:
         output = os.path.join(self.output_dir, filename)
         ae_render_exe = os.environ.get("AFTEREFFECTS_ADAPTOR_AERENDER_EXECUTABLE", "aerender")
 
-	data.update({
+        data.update({
             "comp_name": self.comp_name,
             "output_dir": self.output_dir,
             "output_pattern": self.output_pattern,
