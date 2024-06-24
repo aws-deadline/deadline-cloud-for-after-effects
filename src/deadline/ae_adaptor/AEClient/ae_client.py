@@ -13,7 +13,7 @@ from typing import Optional
 # The After Effects Adaptor adds the `openjd` namespace directory to PYTHONPATH, so that importing just the
 # adaptor_runtime_client should work.
 from ae_adaptor.AEClient.ae_handler import AEHandler
-from ae_adaptor.AEClient.ipc import send_command
+from ae_adaptor.AEClient.ipc import send_command, ipc_ready
 
 try:
     from adaptor_runtime_client import ClientInterface  # type: ignore[import]
@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 
 
 class AEClient(ClientInterface):
+    SOCKET_WAIT_SECONDS = 120
+
     def __init__(self, server_path: str) -> None:
         super().__init__(server_path)
         # List of actions that can be performed by the action queue
@@ -56,9 +58,6 @@ class AEClient(ClientInterface):
             stdout_handler=regexhandler,
             stderr_handler=regexhandler,
         )
-        # Wait for socket to be alive
-        SOCKET_WAIT_SECONDS = 15
-        time.sleep(SOCKET_WAIT_SECONDS)
 
     def close(self, args: Optional[dict] = None) -> None:
         send_command("shutdown_application", dict())
@@ -85,6 +84,14 @@ class AEClient(ClientInterface):
             f"{sys.path[1:]}"
         )
 
+    def wait_for_ipc(self, timeout=SOCKET_WAIT_SECONDS):
+        start = time.time()
+        while not ipc_ready():
+            time.sleep(0.1)
+            if time.time() - start > timeout:
+                self._ipc_client.terminate()
+                raise RuntimeError("Error waiting for AfterEffects IPC socket to come online")
+
 
 def main():
     """
@@ -105,6 +112,7 @@ def main():
         )
 
     client = AEClient(server_path)
+    client.wait_for_ipc()
     client.poll()
 
 
