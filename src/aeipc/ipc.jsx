@@ -287,7 +287,9 @@ function _ipcModule() {
             }
         }
         _log.info("renderQueue.numItems: " + app.project.renderQueue.numItems);
+        _log.info("RQI_to_copy: " + RQI_to_copy);
         var RQI = RQI_to_copy.duplicate();
+        _log.info("Successfully duplicated RQI_to_copy: " + RQI);
         // var renderQueueItem = app.project.renderQueue.item(1).outputModule(1).getSettings(); // Assuming you want information for the first render queue item
         // alert(renderQueueItem["Format"]);
         output_file_settings = {
