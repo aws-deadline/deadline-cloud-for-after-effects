@@ -74,7 +74,7 @@ class AEHandler:
         })
         resp = send_command("start_render", data)
         logger.info("RESPONSE")
-        print(resp)
+        print(resp, flush=True)
 
         # ae_render_args = [
         #     ae_render_exe,
