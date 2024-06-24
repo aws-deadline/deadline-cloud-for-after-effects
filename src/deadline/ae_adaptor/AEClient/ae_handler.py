@@ -72,9 +72,9 @@ class AEHandler:
             "output_format": self.output_format,
 
         })
-        response = send_command("start_render", data)
+        resp = send_command("start_render", data)
         logger.info("RESPONSE")
-        print(response)
+        print(resp)
 
         # ae_render_args = [
         #     ae_render_exe,

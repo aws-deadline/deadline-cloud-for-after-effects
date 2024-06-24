@@ -361,6 +361,7 @@ class AEAdaptor(Adaptor[AdaptorConfiguration]):
             raise RuntimeError(
                 f"After Effects exited early and did not render successfully, please check render logs. Exit code {exit_code}"
             )
+        print("Finished the \"start_render\" command.")
         _logger.info("Finished the \"start_render\" command.")
 
     def on_stop(self) -> None:
