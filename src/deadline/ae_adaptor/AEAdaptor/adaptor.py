@@ -20,6 +20,7 @@ from openjd.adaptor_runtime.application_ipc import AdaptorServer
 
 _logger = logging.getLogger(__name__)
 log_path = os.path.join(os.environ.get("USERPROFILE"), ".deadline", "logs", "aftereffects", "adaptor.log")
+os.makedirs(os.path.dirname(log_path))
 fh = logging.FileHandler(log_path)
 fh.setLevel(logging.DEBUG)
 _logger.addHandler(fh)
