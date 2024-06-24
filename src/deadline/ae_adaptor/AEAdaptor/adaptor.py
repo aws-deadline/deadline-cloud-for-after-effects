@@ -19,7 +19,8 @@ from openjd.adaptor_runtime.application_ipc import ActionsQueue
 from openjd.adaptor_runtime.application_ipc import AdaptorServer
 
 _logger = logging.getLogger(__name__)
-fh = logging.FileHandler("C:\\ProgramData\\Amazon\\Deadline\\Logs\\adaptor.log")
+log_path = os.path.join(os.environ.get("USERPROFILE"), ".deadline", "logs", "aftereffects", "adaptor.log")
+fh = logging.FileHandler(log_path)
 fh.setLevel(logging.DEBUG)
 _logger.addHandler(fh)
 
