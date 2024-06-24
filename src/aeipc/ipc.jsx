@@ -275,12 +275,14 @@ function _ipcModule() {
         var RQI = null;
         for (var j = 1; j <= app.project.renderQueue.numItems; j++)
         {
+            _log.info("Does " + compName + " == " + app.project.renderQueue.item(j).comp.name + " ?");
             if(compName == app.project.renderQueue.item(j).comp.name)
             {
                 var RQI_to_copy = app.project.renderQueue.item(j);
                 RQI_to_copy.render = false;
             }
             else {
+                _log.info("Setting " + app.project.renderQueue.item(j).comp.name + " to not render");
                 app.project.renderQueue.item(j).render = false;
             }
         }
