@@ -21,7 +21,7 @@ from openjd.adaptor_runtime.application_ipc import AdaptorServer
 _logger = logging.getLogger(__name__)
 fh = logging.FileHandler("C:\\ProgramData\\Amazon\\Deadline\\Logs\\adaptor.log")
 fh.setLevel(logging.DEBUG)
-_logger.addHanler(fh)
+_logger.addHandler(fh)
 
 
 class AENotRunningError(Exception):
