@@ -19,6 +19,9 @@ from openjd.adaptor_runtime.application_ipc import ActionsQueue
 from openjd.adaptor_runtime.application_ipc import AdaptorServer
 
 _logger = logging.getLogger(__name__)
+fh = logging.FileHandler("C:\\ProgramData\\Amazon\\Deadline\\Logs\\adaptor.log")
+fh.setLevel(logging.DEBUG)
+_logger.addHanler(fh)
 
 
 class AENotRunningError(Exception):
@@ -189,6 +192,7 @@ class AEAdaptor(Adaptor[AdaptorConfiguration]):
         the message
         :type match: (re.Match)
         """
+        _logger.info("Handle complete")
         self._ae_is_rendering = False
         self.update_status(progress=100)
 
@@ -354,6 +358,7 @@ class AEAdaptor(Adaptor[AdaptorConfiguration]):
             raise RuntimeError(
                 f"After Effects exited early and did not render successfully, please check render logs. Exit code {exit_code}"
             )
+        _logger.info("Finished the \"start_render\" command.")
 
     def on_stop(self) -> None:
         """
