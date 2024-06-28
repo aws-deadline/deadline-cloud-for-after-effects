@@ -90,7 +90,7 @@ class AEClient(ClientInterface):
             time.sleep(0.1)
             if time.time() - start > timeout:
                 self._ipc_client.terminate()
-                raise RuntimeError("Error waiting for AfterEffects IPC socket to come online")
+                raise RuntimeError("Error waiting for After Effects IPC socket to come online")
 
 
 def main():

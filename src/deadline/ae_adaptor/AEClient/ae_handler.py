@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import logging
-import subprocess
 from typing import Optional
 
 from ae_adaptor.AEClient.ipc import send_command
@@ -61,13 +60,14 @@ class AEHandler:
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
-        data.update({
-            "comp_name": self.comp_name,
-            "output_dir": self.output_dir,
-            "output_pattern": self.output_pattern,
-            "output_format": self.output_format,
-
-        })
+        data.update(
+            {
+                "comp_name": self.comp_name,
+                "output_dir": self.output_dir,
+                "output_pattern": self.output_pattern,
+                "output_format": self.output_format,
+            }
+        )
         resp = send_command("start_render", data)
         logger.info("RESPONSE")
         print(resp, flush=True)
