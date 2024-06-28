@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 import os
 import shutil
+import sys
 from typing import Any
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
@@ -35,6 +36,17 @@ class HatchCustomBuildHook(BuildHookInterface):
                 os.path.join(self.root, destination),
             )
         self._update_jsx_version()
+        self._create_jsx_bundles()
+
+    def _create_jsx_bundles(self):
+        sys.path.append(os.path.dirname(__file__))
+        import jsxbundler
+
+        ipc_jsx_source = os.path.join(os.path.dirname(__file__), "src", "aeipc", "ipc.jsx")
+        ipc_jsx_destination = os.path.join(
+            os.path.dirname(__file__), "src", "deadline", "ae_adaptor", "clientipc", "ipc.jsx"
+        )
+        jsxbundler._bundle(src_file=ipc_jsx_source, dest_file=ipc_jsx_destination)
 
     def _update_jsx_version(self):
         version_requirement = self.config["jsx_version_minimum"]

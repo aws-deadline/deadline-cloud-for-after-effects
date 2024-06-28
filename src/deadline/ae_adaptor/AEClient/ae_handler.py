@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import logging
-import subprocess
 from typing import Optional
 
 from ae_adaptor.AEClient.ipc import send_command
@@ -61,26 +60,17 @@ class AEHandler:
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
-        filename = self.output_pattern + "." + self.output_format
-        output = os.path.join(self.output_dir, filename)
-
-        subprocess.run(
-            [
-                "aerender",
-                "-project",
-                self.file_path,
-                "-comp",
-                self.comp_name,
-                "-output",
-                output,
-                "-s",
-                str(frame),
-                "-e",
-                str(frame),
-            ]
+        data.update(
+            {
+                "comp_name": self.comp_name,
+                "output_dir": self.output_dir,
+                "output_pattern": self.output_pattern,
+                "output_format": self.output_format,
+            }
         )
-
-        print(f"AEClient: Finished Rendering Frame {frame}\n", flush=True)
+        resp = send_command("start_render", data)
+        logger.info("RESPONSE")
+        print(resp, flush=True)
 
     def set_output_file_path(self, data: dict) -> None:
         """

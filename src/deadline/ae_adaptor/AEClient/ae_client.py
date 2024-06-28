@@ -13,7 +13,7 @@ from typing import Optional
 # The After Effects Adaptor adds the `openjd` namespace directory to PYTHONPATH, so that importing just the
 # adaptor_runtime_client should work.
 from ae_adaptor.AEClient.ae_handler import AEHandler
-from ae_adaptor.AEClient.ipc import send_command
+from ae_adaptor.AEClient.ipc import send_command, ipc_ready
 
 try:
     from adaptor_runtime_client import ClientInterface  # type: ignore[import]
@@ -26,10 +26,11 @@ except (ImportError, ModuleNotFoundError):
 
 
 logger = logging.getLogger(__name__)
-ae_exe = "afterfx"
 
 
 class AEClient(ClientInterface):
+    SOCKET_WAIT_SECONDS = 120
+
     def __init__(self, server_path: str) -> None:
         super().__init__(server_path)
         # List of actions that can be performed by the action queue
@@ -42,8 +43,11 @@ class AEClient(ClientInterface):
             # Escape backslashes in client path
             client_path_abs = client_path_abs.replace("\\", "\\\\")
         startup_script_inline = f"var x = new File('{client_path_abs}') ; x.open(); eval(x.read()); app.exitAfterLaunchAndEval = false;"
+
+        ae_exe = os.environ.get("AFTEREFFECTS_ADAPTOR_AEFX_EXECUTABLE", "afterfx")
+
         # flag -noui for no ui doesn't close properly when running in monitor
-        cmd_args = [ae_exe, "-s", startup_script_inline]
+        cmd_args = [ae_exe, "-noui", "-s", startup_script_inline]
         print(f"Starting AfterFX: {cmd_args}")
         # Set stdout and stderr to the system stdout and stderr to prevent shell getting blocked
         sys.__stdout__.flush()
@@ -54,9 +58,6 @@ class AEClient(ClientInterface):
             stdout_handler=regexhandler,
             stderr_handler=regexhandler,
         )
-        # Wait for socket to be alive
-        SOCKET_WAIT_SECONDS = 15
-        time.sleep(SOCKET_WAIT_SECONDS)
 
     def close(self, args: Optional[dict] = None) -> None:
         send_command("shutdown_application", dict())
@@ -83,6 +84,14 @@ class AEClient(ClientInterface):
             f"{sys.path[1:]}"
         )
 
+    def wait_for_ipc(self, timeout=SOCKET_WAIT_SECONDS):
+        start = time.time()
+        while not ipc_ready():
+            time.sleep(0.1)
+            if time.time() - start > timeout:
+                self._ipc_client.terminate()
+                raise RuntimeError("Error waiting for After Effects IPC socket to come online")
+
 
 def main():
     """
@@ -103,6 +112,7 @@ def main():
         )
 
     client = AEClient(server_path)
+    client.wait_for_ipc()
     client.poll()
 
 
