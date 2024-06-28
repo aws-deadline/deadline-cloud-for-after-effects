@@ -64,6 +64,8 @@ class AEAdaptor(Adaptor[AdaptorConfiguration]):
     _exc_info: Exception | None = None
     _performing_cleanup = False
 
+    FONT_EXTENSIONS = {".OTF", "TTF"}
+
     @property
     def integration_data_interface_version(self) -> SemanticVersion:
         return SemanticVersion(major=0, minor=1)
@@ -285,6 +287,47 @@ class AEAdaptor(Adaptor[AdaptorConfiguration]):
             if action_name in self.init_data:
                 self._action_queue.enqueue_action(self._action_from_action_item(action_name))
 
+    def _find_fonts(self):
+        fonts = set()
+        for path in os.listdir(os.getcwd()):
+            if path.startswith("assetroot-"):
+                asset_dir = os.path.join(os.getcwd(), path)
+                for asset_path in os.listdir(asset_dir):
+                    _, ext = os.path.splitext(os.path.join(asset_dir, asset_path))
+                    if ext.upper() in self.FONT_EXTENSIONS:
+                        fonts.add(os.path.join(asset_dir, asset_path))
+        return fonts
+
+    def _install_fonts(self):
+        fonts = self._find_fonts()
+        installed_fonts = set()
+        if not fonts:
+            return
+
+        from . import font_installer
+
+        for font in fonts:
+            _logger.info("Installing font: %s" % font)
+            installed, msg = font_installer.install_font(font)
+            if not installed:
+                _logger.error("    Error installing font: %s" % msg)
+            else:
+                installed_fonts.add(font)
+        return installed_fonts
+
+    def _remove_fonts(self):
+        fonts = self._find_fonts()
+        if not fonts:
+            return
+
+        from . import font_installer
+
+        for font in fonts:
+            _logger.info("Uninstalling font: %s" % font)
+            uninstalled, msg = font_installer.uninstall_font(font)
+            if not uninstalled:
+                _logger.error("    Error uninstalling font: %s" % msg)
+
     def on_start(self) -> None:
         """
         For job stickiness. Will start everything required for the Task.
@@ -296,6 +339,7 @@ class AEAdaptor(Adaptor[AdaptorConfiguration]):
           - TimeoutError: If After Effects did not complete initialization actions due to timing out.
           - FileNotFoundError: If the ae_client.py file could not be found.
         """
+        self._install_fonts()
         # Validate init data against schema
         cur_dir = os.path.dirname(__file__)
         schema_dir = os.path.join(cur_dir, "schemas")
@@ -384,6 +428,8 @@ class AEAdaptor(Adaptor[AdaptorConfiguration]):
             self._server_thread.join(timeout=self._SERVER_END_TIMEOUT_SECONDS)
             if self._server_thread.is_alive():
                 _logger.error("Failed to shutdown the After Effects Adaptor server.")
+
+        self._remove_fonts()
 
         self._performing_cleanup = False
 
