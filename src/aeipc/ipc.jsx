@@ -274,14 +274,15 @@ function _ipcModule() {
         {
             if(compName == app.project.renderQueue.item(j).comp.name)
             {
-                var RQI_to_copy = app.project.renderQueue.item(j);
-                RQI_to_copy.render = false;
+                RQI = app.project.renderQueue.item(j);
+                RQI.render = true;
             }
             else {
                 app.project.renderQueue.item(j).render = false;
             }
         }
-        var RQI = RQI_to_copy.duplicate();
+        // var RQI = RQI_to_copy.duplicate();
+        // var RQI = RQI_to_copy;
         // var renderQueueItem = app.project.renderQueue.item(1).outputModule(1).getSettings(); // Assuming you want information for the first render queue item
         // alert(renderQueueItem["Format"]);
         output_file_settings = {
@@ -294,12 +295,17 @@ function _ipcModule() {
         RQI.outputModule(1).setSettings(output_file_settings);
 
         // Set start frame and end frame
-        var frameRate = comp.frameRate;
-        var start = frame / frameRate;
-        var end = (frame + 1) / frameRate; 
-        var duration = end - start
+        // var frameRate = comp.frameRate;
+        // var start = frame / frameRate;
+        // var end = (frame + 1) / frameRate; 
+        // var duration = end - start
 
-        setWorkArea(RQI.comp, start, duration, conn);
+        //Have to set the start and duration according to the last entry in this forum post: https://community.adobe.com/t5/after-effects-discussions/workareastart-and-workareaduration-behaviour-in-extendscript/m-p/13093413
+        var start = currentFormatToTime("0:00:" + frame, comp.frameRate);
+        var duration = currentFormatToTime("0:00:01", comp.frameRate, true);//assumes a duration of one frame 
+
+        RQI.timeSpanStart = start
+        RQI.timeSpanDuration = duration
         app.project.renderQueue.render();
         RQI.remove();
     
