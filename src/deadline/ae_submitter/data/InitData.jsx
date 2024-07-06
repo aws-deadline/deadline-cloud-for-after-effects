@@ -103,6 +103,7 @@ function __generateInitData()
             var fontFamilyName = font.familyName;
             var familyStyle = font.styleName;
             var fontName = fontFamilyName + " " + familyStyle + ".otf";
+            var fontLocation = font.location;
             fontLocations.push([fontName, fontLocation]);
         }
         return fontLocations
