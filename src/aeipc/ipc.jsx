@@ -166,47 +166,48 @@ function _ipcModule() {
         if (project) {
             
             // Get the number of compositions in the project
-            var numComps = project.rootFolder.numItems;
+            var numComps = project.numItems;
             var hasComp = false;
             var comp = null;
 
-            // Loop through each item in the project root folder
-            for (var i = 1; i <= numComps; i++) 
+            var hasRQI = false;
+            for (var j = 1; j <= app.project.renderQueue.numItems; j++)
             {
-            
-                // Get the current item
-                var currentItem = project.rootFolder.item(i);
-                
-                // Check if the item is a composition
-                if (currentItem instanceof CompItem) 
+                if(compName == app.project.renderQueue.item(j).comp.name)
                 {
-                    if(currentItem.name.indexOf(compName) !== -1)
+                    hasRQI = true;
+                    conn.writeln("OK");
+                    break;
+                }
+            } 
+            if (!hasRQI)
+            {
+                // Loop through each item in the project to try to find the correct composition
+                for (var i = 1; i <= numComps; i++) 
+                {
+                
+                    // Get the current item
+                    var currentItem = project.item(i);
+                    
+                    // Check if the item is a composition
+                    if (currentItem instanceof CompItem) 
                     {
-                        hasComp = true;
-                        comp = currentItem;
+                        if(currentItem.name.indexOf(compName) !== -1)
+                        {
+                            hasComp = true;
+                            comp = currentItem;
+                            break;
+                        }
                     }
                 }
-            }
-            if (hasComp)
-            {
-                var hasRQI = false;
-                for (var j = 1; j <= app.project.renderQueue.numItems; j++)
-                {
-                    if(compName == app.project.renderQueue.item(j).comp.name)
-                    {
-                        hasRQI = true;
-                        conn.writeln("OK");
-                    }
-                } 
-                if (!hasRQI)
-                {
+                if (!hasComp) {
                     app.project.renderQueue.items.add(comp);
                     conn.writeln("Created RQI");
                 }
-            
-            }
-            else {
-                conn.writeln("Error: Comp doesn't exist in project");
+                else {
+                    doShutdown = true;
+                    conn.writeln("Error: Comp doesn't exist in project");
+                }
             }
         }
     }
@@ -253,33 +254,25 @@ function _ipcModule() {
         var outputPatternData = data["output_pattern"];
         var outputFormatData = data["output_format"];
         var comp = null;
-        var numComps = app.project.rootFolder.numItems;
-        // Loop through each item in the project root folder
-        for (var i = 1; i <= numComps; i++) 
-        {
-            // Get the current item
-            var currentItem = app.project.rootFolder.item(i);
-            
-            // Check if the item is a composition
-            if (currentItem instanceof CompItem) 
-            {
-                if(currentItem.name.indexOf(compName) !== -1)
-                {
-                    comp = currentItem;
-                }
-            }
-        }
         var RQI = null;
+        var compFound = false;
+        //disable all render queue items except for the first item that matches our 
         for (var j = 1; j <= app.project.renderQueue.numItems; j++)
         {
-            if(compName == app.project.renderQueue.item(j).comp.name)
+            if(compName == app.project.renderQueue.item(j).comp.name && !compFound)
             {
+                comp = app.project.renderQueue.item(j).comp;
                 RQI = app.project.renderQueue.item(j);
                 RQI.render = true;
+                compFound = true;
             }
             else {
                 app.project.renderQueue.item(j).render = false;
             }
+        }
+        if(!compFound){
+            doShutdown = true;
+            _log.error("Error: Unable to find composition in render queue");
         }
         // var RQI = RQI_to_copy.duplicate();
         // var RQI = RQI_to_copy;
