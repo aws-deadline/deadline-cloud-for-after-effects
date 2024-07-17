@@ -192,7 +192,7 @@ function _ipcModule() {
                     // Check if the item is a composition
                     if (currentItem instanceof CompItem) 
                     {
-                        if(currentItem.name.indexOf(compName) !== -1)
+                        if(currentItem.name == compName)
                         {
                             hasComp = true;
                             comp = currentItem;
@@ -200,47 +200,16 @@ function _ipcModule() {
                         }
                     }
                 }
-                if (!hasComp) {
+                if (hasComp) {
                     app.project.renderQueue.items.add(comp);
                     conn.writeln("Created RQI");
                 }
                 else {
-                    doShutdown = true;
                     conn.writeln("Error: Comp doesn't exist in project");
+                    app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES);
+                    doShutdown = true;
                 }
             }
-        }
-    }
-
-    var EPSILON = 0.00001
-    // Maximum number of attempts to set the workAreaStart
-    var _WORK_AREA_START_MAX_TRIES = 1000;
-
-    function setWorkArea(compObject, start, duration, conn) {
-        // For some reason, setting the workAreaStart needs to be run multiple times for it to work properly.
-        // We'll try it for a set limit of tries before raising an error.
-        // See: https://community.adobe.com/t5/after-effects-discussions/workareastart-and-workareaduration-behaviour-in-extendscript/m-p/13093413
-        var halfFrameDuration = 1 / compObject.frameRate * 0.5;
-        start = start + EPSILON; // Add float padding to ensure it rounds to the correct frame.
-        duration = duration + EPSILON;
-        for (x = 0; x <= _WORK_AREA_START_MAX_TRIES; x++) {
-            compObject.workAreaStart = start;
-            compObject.workAreaDuration = duration;
-            if (start - halfFrameDuration < compObject.workAreaStart &&
-                compObject.workAreaStart < start + halfFrameDuration &&
-                duration - halfFrameDuration < compObject.workAreaDuration &&
-                compObject.workAreaDuration < duration + halfFrameDuration
-            ) {
-                // Values are correct, stop looping.
-                return
-            }
-        }
-        // Check within epsilon range to account for rounding errors
-        if (!(start - halfFrameDuration < compObject.workAreaStart && compObject.workAreaStart < start + halfFrameDuration)) {
-            conn.writeln("Error: Could not set workAreaStart to " + start)
-        }
-        if (!(duration - halfFrameDuration < compObject.workAreaDuration && compObject.workAreaDuration < duration + halfFrameDuration)) {
-            conn.writeln("Error: Could not set workAreaDuration to " + duration)
         }
     }
 
@@ -271,13 +240,10 @@ function _ipcModule() {
             }
         }
         if(!compFound){
-            doShutdown = true;
             _log.error("Error: Unable to find composition in render queue");
+            app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES);
+            doShutdown = true;
         }
-        // var RQI = RQI_to_copy.duplicate();
-        // var RQI = RQI_to_copy;
-        // var renderQueueItem = app.project.renderQueue.item(1).outputModule(1).getSettings(); // Assuming you want information for the first render queue item
-        // alert(renderQueueItem["Format"]);
         output_file_settings = {
             "Output File Info": {
                 "Base Path": outputDirData,
@@ -286,16 +252,19 @@ function _ipcModule() {
             }
         }
         RQI.outputModule(1).setSettings(output_file_settings);
-
-        // Set start frame and end frame
-        // var frameRate = comp.frameRate;
-        // var start = frame / frameRate;
-        // var end = (frame + 1) / frameRate; 
-        // var duration = end - start
-
-        //Have to set the start and duration according to the last entry in this forum post: https://community.adobe.com/t5/after-effects-discussions/workareastart-and-workareaduration-behaviour-in-extendscript/m-p/13093413
-        var start = currentFormatToTime("0:00:" + frame, comp.frameRate);
-        var duration = currentFormatToTime("0:00:01", comp.frameRate, true);//assumes a duration of one frame 
+        
+        var start;
+        var duration;//assumes a duration of one frame 
+        if(app.project.framesCountType == FramesCountType.FC_START_1){
+            frame++;
+        }
+        if(app.project.framesUseFeetFrames){
+            start = currentFormatToTime("0000+" + frame, comp.frameRate);
+            duration = currentFormatToTime("0000+01", comp.frameRate, true);//assumes a duration of one frame 
+        } else {
+            start = currentFormatToTime("0:00:" + frame, comp.frameRate);
+            duration = currentFormatToTime("0:00:01", comp.frameRate, true);//assumes a duration of one frame 
+        }
 
         RQI.timeSpanStart = start
         RQI.timeSpanDuration = duration
@@ -303,9 +272,6 @@ function _ipcModule() {
         RQI.remove();
     
         conn.writeln("AEClient: Finished Rendering Frame " + frame);
-
-        // app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES);
-        // doShutdown = true;
     }
 
     return {
