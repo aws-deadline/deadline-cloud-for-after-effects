@@ -166,80 +166,50 @@ function _ipcModule() {
         if (project) {
             
             // Get the number of compositions in the project
-            var numComps = project.rootFolder.numItems;
+            var numComps = project.numItems;
             var hasComp = false;
             var comp = null;
 
-            // Loop through each item in the project root folder
-            for (var i = 1; i <= numComps; i++) 
+            var hasRQI = false;
+            for (var j = 1; j <= app.project.renderQueue.numItems; j++)
             {
-            
-                // Get the current item
-                var currentItem = project.rootFolder.item(i);
-                
-                // Check if the item is a composition
-                if (currentItem instanceof CompItem) 
+                if(compName == app.project.renderQueue.item(j).comp.name)
                 {
-                    if(currentItem.name.indexOf(compName) !== -1)
+                    hasRQI = true;
+                    conn.writeln("OK");
+                    break;
+                }
+            } 
+            if (!hasRQI)
+            {
+                // Loop through each item in the project to try to find the correct composition
+                for (var i = 1; i <= numComps; i++) 
+                {
+                
+                    // Get the current item
+                    var currentItem = project.item(i);
+                    
+                    // Check if the item is a composition
+                    if (currentItem instanceof CompItem) 
                     {
-                        hasComp = true;
-                        comp = currentItem;
+                        if(currentItem.name == compName)
+                        {
+                            hasComp = true;
+                            comp = currentItem;
+                            break;
+                        }
                     }
                 }
-            }
-            if (hasComp)
-            {
-                var hasRQI = false;
-                for (var j = 1; j <= app.project.renderQueue.numItems; j++)
-                {
-                    if(compName == app.project.renderQueue.item(j).comp.name)
-                    {
-                        hasRQI = true;
-                        conn.writeln("OK");
-                    }
-                } 
-                if (!hasRQI)
-                {
+                if (hasComp) {
                     app.project.renderQueue.items.add(comp);
                     conn.writeln("Created RQI");
                 }
-            
+                else {
+                    conn.writeln("Error: Comp doesn't exist in project");
+                    app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES);
+                    doShutdown = true;
+                }
             }
-            else {
-                conn.writeln("Error: Comp doesn't exist in project");
-            }
-        }
-    }
-
-    var EPSILON = 0.00001
-    // Maximum number of attempts to set the workAreaStart
-    var _WORK_AREA_START_MAX_TRIES = 1000;
-
-    function setWorkArea(compObject, start, duration, conn) {
-        // For some reason, setting the workAreaStart needs to be run multiple times for it to work properly.
-        // We'll try it for a set limit of tries before raising an error.
-        // See: https://community.adobe.com/t5/after-effects-discussions/workareastart-and-workareaduration-behaviour-in-extendscript/m-p/13093413
-        var halfFrameDuration = 1 / compObject.frameRate * 0.5;
-        start = start + EPSILON; // Add float padding to ensure it rounds to the correct frame.
-        duration = duration + EPSILON;
-        for (x = 0; x <= _WORK_AREA_START_MAX_TRIES; x++) {
-            compObject.workAreaStart = start;
-            compObject.workAreaDuration = duration;
-            if (start - halfFrameDuration < compObject.workAreaStart &&
-                compObject.workAreaStart < start + halfFrameDuration &&
-                duration - halfFrameDuration < compObject.workAreaDuration &&
-                compObject.workAreaDuration < duration + halfFrameDuration
-            ) {
-                // Values are correct, stop looping.
-                return
-            }
-        }
-        // Check within epsilon range to account for rounding errors
-        if (!(start - halfFrameDuration < compObject.workAreaStart && compObject.workAreaStart < start + halfFrameDuration)) {
-            conn.writeln("Error: Could not set workAreaStart to " + start)
-        }
-        if (!(duration - halfFrameDuration < compObject.workAreaDuration && compObject.workAreaDuration < duration + halfFrameDuration)) {
-            conn.writeln("Error: Could not set workAreaDuration to " + duration)
         }
     }
 
@@ -253,37 +223,27 @@ function _ipcModule() {
         var outputPatternData = data["output_pattern"];
         var outputFormatData = data["output_format"];
         var comp = null;
-        var numComps = app.project.rootFolder.numItems;
-        // Loop through each item in the project root folder
-        for (var i = 1; i <= numComps; i++) 
-        {
-            // Get the current item
-            var currentItem = app.project.rootFolder.item(i);
-            
-            // Check if the item is a composition
-            if (currentItem instanceof CompItem) 
-            {
-                if(currentItem.name.indexOf(compName) !== -1)
-                {
-                    comp = currentItem;
-                }
-            }
-        }
         var RQI = null;
+        var compFound = false;
+        //disable all render queue items except for the first item that matches our 
         for (var j = 1; j <= app.project.renderQueue.numItems; j++)
         {
-            if(compName == app.project.renderQueue.item(j).comp.name)
+            if(compName == app.project.renderQueue.item(j).comp.name && !compFound)
             {
-                var RQI_to_copy = app.project.renderQueue.item(j);
-                RQI_to_copy.render = false;
+                comp = app.project.renderQueue.item(j).comp;
+                RQI = app.project.renderQueue.item(j);
+                RQI.render = true;
+                compFound = true;
             }
             else {
                 app.project.renderQueue.item(j).render = false;
             }
         }
-        var RQI = RQI_to_copy.duplicate();
-        // var renderQueueItem = app.project.renderQueue.item(1).outputModule(1).getSettings(); // Assuming you want information for the first render queue item
-        // alert(renderQueueItem["Format"]);
+        if(!compFound){
+            _log.error("Error: Unable to find composition in render queue");
+            app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES);
+            doShutdown = true;
+        }
         output_file_settings = {
             "Output File Info": {
                 "Base Path": outputDirData,
@@ -292,21 +252,26 @@ function _ipcModule() {
             }
         }
         RQI.outputModule(1).setSettings(output_file_settings);
+        
+        var start;
+        var duration;//assumes a duration of one frame 
+        if(app.project.framesCountType == FramesCountType.FC_START_1){
+            frame++;
+        }
+        if(app.project.framesUseFeetFrames){
+            start = currentFormatToTime("0000+" + frame, comp.frameRate);
+            duration = currentFormatToTime("0000+01", comp.frameRate, true);//assumes a duration of one frame 
+        } else {
+            start = currentFormatToTime("0:00:" + frame, comp.frameRate);
+            duration = currentFormatToTime("0:00:01", comp.frameRate, true);//assumes a duration of one frame 
+        }
 
-        // Set start frame and end frame
-        var frameRate = comp.frameRate;
-        var start = frame / frameRate;
-        var end = (frame + 1) / frameRate; 
-        var duration = end - start
-
-        setWorkArea(RQI.comp, start, duration, conn);
+        RQI.timeSpanStart = start
+        RQI.timeSpanDuration = duration
         app.project.renderQueue.render();
         RQI.remove();
     
         conn.writeln("AEClient: Finished Rendering Frame " + frame);
-
-        // app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES);
-        // doShutdown = true;
     }
 
     return {
