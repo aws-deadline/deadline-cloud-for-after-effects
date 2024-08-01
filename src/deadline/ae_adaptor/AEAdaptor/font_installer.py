@@ -2,11 +2,14 @@ import os
 import shutil
 import ctypes
 from ctypes import wintypes
+import logging
 
 try:
     import winreg
 except ImportError:
     import _winreg as winreg
+
+_logger = logging.getLogger(__name__)
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 gdi32 = ctypes.WinDLL("gdi32", use_last_error=True)
