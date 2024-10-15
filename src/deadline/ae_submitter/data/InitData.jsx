@@ -87,7 +87,80 @@ function __generateInitData()
                 }
             }
         }
+        var fontReferences = generateFontReferences();
+        logger.debug("Get Fonts: " + key, scriptFileInitDataName);
+        for (var i = 0; i < fontReferences.length; i++) {
+            detectedItemsList.push(fontReferences[i]);
+        }
         dcProperties.jobAttachments.autoDetectedInputFiles.set(detectedItemsList);
+    }
+
+    function _generateFontReferences() {
+        var fontLocations = [];
+        var usedList = app.project.usedFonts;
+        for (var i = 0; i < usedList.length; i++) {
+            var font = usedList[i].font;
+            var fontFamilyName = font.familyName;
+            var familyStyle = font.styleName;
+            var fontName = fontFamilyName + " " + familyStyle + ".otf";
+            var fontLocation = font.location;
+            fontLocations.push([fontName, fontLocation]);
+        }
+        return fontLocations
+    }
+
+    function _oldGenerateFontReferences() {
+        var fontLocations = [];
+        var items = app.project.items;
+        for (var i = items.length; i >= 1; i--) {
+            var myItem = app.project.item(i);
+            if (myItem instanceof CompItem) {
+                for (var j = myItem.layers.length; j >= 1; j--) {
+                    var myLayer = myItem.layers[j];
+                    if (myLayer instanceof TextLayer){
+                        var textDocument = myLayer.text.sourceText.value;
+                        var fontLocation = textDocument.fontLocation;
+                        var fontFamilyName = textDocument.fontFamily;
+                        var familyStyle = textDocument.fontStyle;
+                        var fontName = fontFamilyName + " " + familyStyle + ".otf";
+                        fontLocations.push([fontName, fontLocation]);
+                    }
+                }
+            }
+        }
+        return fontLocations
+    }
+
+    function generateFontReferences() {
+        var rawFontPaths = [];
+        if (parseInt(app.version[0] + app.version[1]) >= 24) {
+            rawFontPaths = _generateFontReferences();
+        } else {
+            rawFontPaths = _oldGenerateFontReferences();
+        }
+        var _tempFilePath = dcUtil.normPath(Folder.temp.fsName + "/" + "tempFonts");
+        var formattedFontPaths = [];
+        var tempFontPath = new Folder(_tempFilePath);
+        if (!tempFontPath.exists) {
+            tempFontPath.create();
+        }
+
+
+        for (var i = 0; i < rawFontPaths.length; i++) {
+            var fontName = rawFontPaths[i][0];
+            var fontLocation = rawFontPaths[i][1];
+            if (fontLocation.indexOf("C:\\Windows\\Fonts") !== -1) {
+                // We are filtering out fonts installed in C:\Windows\Fonts potentially here.
+                //   I would make the argument that if a font is installed to the system (not an Adobe Font), that
+                //   it should be managed on a system level not through the submitter.
+                continue
+            }
+            var fontFile = File(fontLocation);
+            var _filePath = dcUtil.normPath(_tempFilePath + "/" + fontName);
+            fontFile.copy(_filePath);
+            formattedFontPaths.push(_filePath);
+        }
+        return formattedFontPaths;
     }
 
     function initAutoDetectOutputDirectories()
