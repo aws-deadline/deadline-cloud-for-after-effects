@@ -13,8 +13,8 @@ var AfterEffectsIniFilename = "";
         if (AfterEffectsIniFilename == "") {
             var prefix = app.project.file.parent.fsName;
             var projectName = app.project.file.name.replace(/\.aep$/i, '');
-            prefix = prefix.replace("\n", "");
-            prefix = prefix.replace("\r", "");
+            prefix = prefix.replace(/\n/g, "");
+            prefix = prefix.replace(/\r/g, "");
             AfterEffectsIniFilename = prefix + "/" + projectName + ".ae_deadlinecloud_submission.json";
             logger.debug(AfterEffectsIniFilename, scriptFileSettingsName);
 

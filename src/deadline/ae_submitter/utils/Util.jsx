@@ -8,7 +8,7 @@ function __generateUtil() {
          * @param {string} str - String to turn into an array
          * Return converted string as an array.
          */
-        str = str.replace("\r", "");
+        str = str.replace(/\r/g, "");
         var tempArray = str.split('\n');
         var array;
 
@@ -17,7 +17,7 @@ function __generateUtil() {
 
             // Only loop to second last item in tempArray, because the last item is always empty.
             for (var i = 0; i < tempArray.length - 1; i++)
-                array[i] = tempArray[i].replace("\n", "").replace("\r", "");
+                array[i] = tempArray[i].replace(/[\n\r]/, "");
         } else
             array = new Array(0);
 
@@ -440,7 +440,7 @@ function __generateUtil() {
                 var itemIDData = nextLineItemID.substring(nextLineItemID.indexOf(':') + 1);
                 itemIDData = itemIDData.replace(" ", "").trim();
                 var displayNameData = nextLineDisplayName.substring(nextLineDisplayName.indexOf(':') + 1);
-                displayNameData = displayNameData.replace(" '", "").replace("'", "").trim();
+                displayNameData = displayNameData.replace(/ '/g, "").replace(/'/g, "").trim();
 
                 parsedObject[itemIDData] = displayNameData;
                 logger.debug('itemID found after dash: ' + itemIDData, scriptFileUtilName);
@@ -900,7 +900,7 @@ function __generateUtil() {
         var match = string.match(regex);
         if(match && match[1])
         {
-            var result = match[1].replace("\n", "").replace("\r", "");
+            var result = match[1].replace(/[\n\r]/, "");
         }
         return result;
     }
