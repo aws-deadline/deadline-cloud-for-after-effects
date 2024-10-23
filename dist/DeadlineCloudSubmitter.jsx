@@ -1,0 +1,2382 @@
+// THIS FILE HAS BEEN AUTO-GENERATED.
+// Manual changes in this file may be overwritten by a new installation.
+// Please change the source files and regenerate this file instead.
+
+var scriptFolder = Folder.current.fsName;
+alert("scriptFolder is " + scriptFolder)
+
+function timeToFrames(time, fps) {
+    //temporarily change display format so we can convert seconds to frames
+    //We could perform the math ourselves, but using After Effects's internal methods ensure that we don't lose precision due to floating point errors
+    var prevFrameDisplay = app.project.timeDisplayType;
+    var prevFeetFrames = app.project.framesUseFeetFrames;
+    app.project.timeDisplayType = TimeDisplayType.FRAMES;
+    app.project.framesUseFeetFrames = false;
+    var frame = timeToCurrentFormat(time, fps, false);
+    app.project.timeDisplayType = prevFrameDisplay;
+    app.project.framesUseFeetFrames = prevFeetFrames;
+    return frame;
+}
+
+function sanitizeOutputs(outputPaths) {
+    var sanitized = [];
+    for (var i = 0; i < outputPaths.length; i++) {
+        var sanitizedPath = outputPaths[i]
+            .replace(/^\s+/, "")
+            .replace(/\s+$/, "")
+            .replace(/([\/\\])\s+/, "$1")
+            .replace(/\s+([\/\\])/, "$1");
+        if (sanitizedPath) {
+            sanitized.push(sanitizedPath);
+        }
+    }
+    return sanitized;
+}
+
+//Binary data for the Deadline Cloud logo
+function logoData() {
+    return '\u0089PNG\r\n\x1A\n\x00\x00\x00\rIHDR\x00\x00\x00 \x00\x00\x00 \b\x02\x00\x00\x00\u00FC\x18\u00ED\u00A3\x00\x00\x00\tpHYs\x00\x00\x17\u009F\x00\x00\x17\u009F\x01K\u009C3R\x00\x00\x00\x19tEXtSoftware\x00www.inkscape.org\u009B\u00EE<\x1A\x00\x00\x05\u008CIDATH\u00C7uVilTU\x14\u00FE\u00CE\u009B\u00D7Y\u0099\u00EECiR\x02B\u0084H\n"P\u0091}QQ\tT\x14\u00A5\x14!"FH\u0091\x02)5\u00FC!1\x18\x13PP\x14\u00C5\x10!\u0080&\u0084E\x01\u00A51\u0090\u00B2\x05e\u0084\x10\u00DB\u008AHY\\J)e)\u00C5af\u00DA\u00E9L\u00DF\u00CC\x1C\x7F\u00DC\u00B7\u00CE\u00B4\u00FF\u00EE\u00BB\u00EFl\u00F7\u00DC\u00F3}\u00F7\u00A3\u00A6U\u00D9D\x001\x11\u0088@\u00C4 \x101\x11\u00F4\x05A7\x10\x7F\u00D3\fL\u00FBV\x03\u0096\u0099\x01\u0080@\f\x06\x00\x10\u0081\x19\x040\x01\x10\u00FB\u00A4\x1B\x10\u0081!\u00B6T\x03\u00E1&\u00BC\u00D4\u0085\u00B6\t\x02\u00C9\x001\u00B3\u00F8\u0080\u00C9H\u00840\u00E7\u00D6\u00C2\x11\u0088\tj\x0Epzh\u0091[\u00F5\u0092\u0099Ad\r\u00AD\u009EI+\u00DF\u00C8\u00ADVm9\x1F\u00B1Q>\u00EB\x06\u00D0\u00BDdp\u00DA\x19\u0089\u008D\u00D0\u00AC\u00B7\x0E\u00A9\u00A1\u00B5c\x19\u00E5\u0093Q>\u00D4BIb&0\u0098!\x16\u00DA\x1A`b-\u00B78\u00B8\\4&o\u00F9\u00CF\u00B9\u00CB\u00FDr\u00FF\u00B1\u0086\u0081\u00E1Elrg\x16^\u0090t#6\u008CH\u00CF!\u00F6\u00C9\u0099\u009D5\u00E7\u00B3\u00FC\u008AS$;\u00C8\u0096\u0091\u00FB\u00CE\t\u00EF\u009C/\u00C9\u0095\u009B\x16\u009A\u00CC^"\u00ACme\u0089\x0B\x04q\x0F\u00E2\x1AE\u00FB\u00D45I\u009E\u00D1\u00F3\u00F3\x17\u00EF\u00B7\u00F7\x1F\u00DDq\u00E6\u0093\u00E0\u00C1\u00A5\u009D\x17wr\u00F4\u0091\u00E7\u0099\n\u00D7\u00D8eH\u00C4\u0094\u00D6:\x02\x0BWS\x042\x167*\u00F2R\u0086\x1A\u00DA\u00EC\u00DB\x0B\u0087\u00E6\u00BE\u00F6\u00A9c\u00D0\u00F8\u00AE?k\u0082G\u00D7&\u0082\u00B7\u00C9&K\u0092\u00C4\u00C9\u0098\u009C]\u00949\u00EB#\u00C7\u00B0R\u00A5\u00F9|\u00C7O\u00AB\x12mWL\u008E\x16(\u00D8*\u00C7\u00B8\u00F5\u00FCz\u00F9\u0092\u00DD\u00955\u00A3:\x7F\u00E1\u00D7\x00\x1E\u00EE[\x1A:\u00B9\u0089\u00A3a\u00D7\x13/\u00E5/9\u00E4\u0099T\u0099\u00EC|\u00A8\u00DC\u00F4G/\x1FV\u009A\u00FD\u00CE\u00E1\u00AF\u00BA\'U\u0093+Oi9\u008FD\u00B7:%\u00A2\x03D \u00D0\u00F5ey)\u0098t\x0Ez\u00BA\u00EF\u00E2\u009D6\u00AF/x\u00FA\u008B\u00D0\u00A9\u00CD\u0088G\u00E5\u009C\u00A2\u009C9\x1B]\u00C5\u00B3\u00A2W\u008F!\u00A18\u008BKc\u00D7kC5\u00D5\u0089@\u0093dwz\u00A6T\u00BB\'\u00AE\u00E6H{\u00F8\u00FB\u00C5\u00F1\x16\x7F\n\u00D4m+\u00C6xR\u00DA\u00973cuF\u00C1\u0090\u00BB[^\u0088\\\u00FA\u0081H\u00F2N}\u00D7\u00F7\u00E67\u00E4\u00CC\u00FC\u00EF@E\u00E8\u00C4\u0086\u00AE?\u008E\u00C4o\u00D7\u00B9G\u0095{&\u00AF&\u0092\u0094\u00E6\x0B\u00DD\u00FF\u009C\u008E]9\u00E2zj\x01\u00C9\u00AE\u00EE\x1B\u00C7\u00B4PjWd\x15\u008C\x1A\r\u0088\u00F9\u0089\x07Z\u0095\u00FB\x7F;\x1E+\u00F1\u0095o\u0095}\u0083\u00C3g\u00B7\x05O|\f%"\u00C0\u00DAu\u00AD6\u00F6\u00EFX\u00EF\u00B45\u009E\u00A9\u00EF9G\u00CE\x0F\u00FFX\u00D9}\u00F3\u0097D\u00F0\u00B6\x00z\n\x1E%1a0\r/4\u0086\u00C9/\u00DB\u00C2\t\u00E5\u00CE\u00A6\u00C9\u0081\u009A\u00F5\x1C\u008B\u0098\x06\u009A\u0092\u00DD]\u00A1\u00DA\x0F\u00DB\u00B7\u008E\u00E7h0\u00F3\u0095\u00AF\x04^X\u00C30\u0083\u00F4\u00B0\u0092\x19/\u00E6\x1C\u00CC\x00\u00D9"\u008D\'\u0095{\u00D7\x18*L5|\u00A8XQ\u00DA\u00FE\u008A^\u00AB\u0085dS\u00E1\x06\x03\x13\x00\t/\u0089\u00CD\u00E5k\u00FF\x00\u009D+M\u00B9\u00D5k"\x06\u00E4\u0082a\u0094\u00E1a\x06\u008B\u00C9\x11^\u00A6\u00DCzX\u00D9`\x12\u00D6\tR\u00FD\u00A7\u00F6\u0094\u00CDL\x05\u009B\u00B7 {\u00F6z\u00CF\u00A8\u00B2D\u00E8n\u00E8\u00F8\x07\x1Dg?O<ja6u\x06\x16n7\u00C8N\'a\u0086A\u00F3jg\u00B4\u00F1\u00F6NX\u0092=s\x1D\u00C7c\u0081\u00C3U\u00CE\u00A1\u00CF\u00E6\u0094mw\u008Dx9x\u00B4\u00DA\u00F02\u00C8_\u00F5\u0092\u00D2\u00D9\n:\u00EF3;\u008A\u008A\u00C9\u00D1G\x18\u00B8G\u0094\u00E6\u00CE\u00DD\u00D4Y\x7F\u00E8\u00CE\u00C6\u0092\u00F0\u00AF\u00BB\u00DB\u00F7,l\u00DFU\u0096Q8<g\u00FE.X\u008F\u00AB\u00DE\x19\u00D4KNg+\u00F5\u0092\x03\u00A7\u00B7;\x07\u008F\u00EB\u00BF\u00EE\u0082{d)\x03\u00E4\u00F0\x00x\u00F8\u00DD\u009Ad$$bu5\x1E\u008F\u00D4\x1F$\u00BB\u0087\u00F5\u00B2\u008C)\x0031 1\u00AC\u00A1\x19\u00CCl\u00CB.\u00CC\u00C8\x1B\x10\u00F4\u00EFm^?.\u00DAT\u00D7\u00EF\u00ED=\u00CE!SL\u0087S\x0B\x14!\u00A01\u00A8:\x1A\u00D6\u008A%\u00D5H\x1B\x0Ff\n\u00FA\u00F7qwt\u00E0\u00FB\u00FE\u00DC\x17\u00AB\x12\u00E1\u00F6\u00BB;\u00DE\u00BA\u00B3m^\u00B2#\u00A0\u00DD\u008Ad\u00CC\u00AB\u00F1Z \x11\u00B8\u00D5\u00F9\u00DB^\u00D3\u00FC\u00A89l\x15O\u00F6!\u008D&\b\x04B<x?x\u00EE[p2of\u0095\u00B7d\u00AEr\u00EFF\u00E4\u00EA\u0099D\u00A8M\u00CE\u00EC\u00EB-y\u00DD\u00F5\u00F8\u00C4hs}\u00B2\u00A3]\u00B2\u00D9\u00BD\u00D3*\u00B3\u00A6\u00ADR\u00EE5v\u00D6\x1F\u00EC\u00BAR\u0093\f\u00B6\x1A\x1C\u00A7>\u0099\u00A0K\u008B\n4\u00F2\u00E3\x14=b\u00F7\r((\u00DF\u00E8)~\u00AE\u00F3r\u00ED\u0083\x03\u00D5\u00F1@\u00AB{\u00C8\x04_\u00D9f\u00D970|n\u00B7k\u00E8\x14\u00D97(t\u00E6\u008B\u00D0\u00A9\u00CDP\u00BAz\u00D6;\x04[\u00C5\b\u00AFQ\u00BE\u0089\u00A4\x00JF\x1E\u0085/\x1E\u008A\u00B5\\\u00CA\x1C_\u009E\u00F3\u00FCJp2\\w8\u00EC\u00DF\u00C3\u00D1`\u00D6\u00F4\x15\u00F1\u00F6\u00A6\u00B6\u009D\u00E5\u0091\u0086#H(\u00A6GF\x7Fy\u00B4\u00AE\u00FC\u00BE\u00B0\u009FZ>z\u00C8/\u008Ees\u00BA\u00F3f\u00AF\u00CD\u009E\u00BE\u00B4\u00BB\u00B5\u00F1\u00C1\u00FE\u00AA\u00D8\u00AD\x06\u00C9\u00EE@<\u00AA?M\u00E6\u00F2\u00CD2\x0E\u00C4\u00D4\u00F0F\u00BF\x1E4\x1Dz\u0090l\u00CE\u00A2a\u00BEy\x1B\u00C0\u00C9{;\x16%c!\u00EAE\u00CA\u0089[0\u00A4b\u00C3\u0082\u00C2\u00DE\u00DA\u00D7\u00E3\x13\u00D8\u00BB\\L-\u009FH\x13^=\u00CBE\x1D\u00EEd\u0095l\u00DC\u009B\\4T\u009A\u00A1B\u0089e\u00E8\u00A2\u00CE*\u00E5\f%\n\u00EB\x1Bb\u0095r)J\u00D4\u00AA\x04\x01@6\u0098\u00C7*\u00E5\u00C8\u00B4o\u00D5t=K\u00B9\u00DE\x04\u00AEl\u00C0?MH\u008B\u00D7\'\u00ADuFg,J\u00B4\x17\u0081\u00FB?\x0B\u00ED\u00A7Pm-\u00EE\x14\x00\x00\x00\x00IEND\u00AEB`\u0082';
+}
+
+function recursiveDelete(folder) {
+    //AE's internal getFiles() returns null objects for some reason so we need to use system calls
+    if (folder == null || !folder.exists) {
+        return;
+    }
+    var command;
+    if (Folder.fs == "Windows") {
+        command = 'cmd.exe /c "rmdir /s /q ^"' + folder.fsName + '^""';
+    } else {
+        command = "/bin/sh -c 'rm -rf \"" + folder.fsName + "\"'";
+    }
+    system.callSystem(command);
+}
+
+function recursiveCopy(src, dst) {
+    //AE's internal getFiles() returns null objects for some reason so we need to use system calls
+    if (src == null || !src.exists || dst == null || !dst.exists) {
+        return;
+    }
+    var command;
+    if (Folder.fs == "Windows") {
+        command =
+            'cmd.exe /c "robocopy /s ^"' +
+            src.fsName +
+            '^" ^"' +
+            dst.fsName +
+            '^""';
+    } else {
+        command =
+            "/bin/sh -c 'cp -r " +
+            src.fsName.replace(/ /g, "\\ ") +
+            "/* " +
+            dst.fsName.replace(/ /g, "\\ ") +
+            "/'";
+    }
+    system.callSystem(command);
+}
+
+function systemCallWithErrorAlerts(cmd) {
+    var output = "";
+    if ($.os.toString().slice(0, 7) === "Windows") {
+        var tempBatFile = new File(
+            Folder.temp.fsName + "/DeadlineCloudAESubmission.bat"
+        );
+        tempBatFile.open("w");
+        tempBatFile.writeln("@echo off");
+        tempBatFile.writeln("echo:"); //this empty print statement is required to circumvent a weird bug
+        tempBatFile.writeln(cmd);
+        tempBatFile.writeln("IF %ERRORLEVEL% NEQ 0 (");
+        tempBatFile.writeln(" echo ERROR CODE: %ERRORLEVEL% ");
+        tempBatFile.writeln(")");
+        tempBatFile.close();
+
+        output = system.callSystem(tempBatFile.fsName);
+    } else {
+        //Mac
+        output = system.callSystem(cmd + ' || echo "\nERROR CODE: $?"');
+    }
+
+    if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
+        adcAlert(
+            "ERROR: Command failed!\n\nFull Command:\n" +
+            cmd +
+            "\n" +
+            output +
+            "\n\nEnsure the command can be run manually in a non-elevated command prompt or terminal and try again."
+        );
+    }
+}
+
+/**
+Creates alerts for Deadline Cloud Submitter
+**/
+function adcAlert(message) {
+    alert(message, "Deadline Cloud Submitter");
+}
+
+function __generateUtil() {
+
+    var scriptFileUtilName = "Util.jsx";
+
+    function deadlineStringToArray(str) {
+        /**
+         * Turn given string into array.
+         * @param {string} str - String to turn into an array
+         * Return converted string as an array.
+         */
+        str = str.replace("\r", "");
+        var tempArray = str.split('\n');
+        var array;
+
+        if (tempArray.length > 0) {
+            array = new Array(tempArray.length - 1);
+
+            // Only loop to second last item in tempArray, because the last item is always empty.
+            for (var i = 0; i < tempArray.length - 1; i++)
+                array[i] = tempArray[i].replace("\n", "").replace("\r", "");
+        } else
+            array = new Array(0);
+
+        return array;
+    }
+
+    function toBooleanString(value) {
+        /**
+         * Check if given value is true or false.
+         * Return result
+         * @param {string} value - "true" or "false" given as a string.
+         */
+        if (value)
+            return "true";
+        else
+            return "false";
+    }
+
+    function parseBool(value) {
+        /**
+         * Changes string given value into a boolean and return it.
+         * @param {string} value - Given value to transform in boolean type.
+         * Returns boolean transformed value
+         */
+        value = value.toLowerCase();
+        if (value == "1" || value == "t" || value == "true")
+            return true;
+
+        return false;
+    }
+
+    function trim(stringToTrim) {
+        /**
+         * Changes certain characters to empty string("")
+         * @param {stringToTrim} stringToTrim - Given string to replace illegal characters with "".
+         * Returns trimmed string
+         */
+        return stringToTrim.replace(/^\s+|\s+$/g, "");
+    }
+
+    function trimIllegalChars(stringToTrim) {
+        /**
+         * Trims certain characters out of a given string
+         * @param {string} stringToTrim - Given string to trim illegal characters from.
+         * Returns trimmed string
+         */
+        // \ / : * ? " < > |
+        return stringToTrim.replace(/([\*\?\|:\"<>\/\\%£])/g, "");
+    }
+
+    function sliderTextSync(sliderObj, textObj, minValue, maxValue) {
+        /**
+         * Create a link between slider value and text value. If you change one the other changes with the same value.
+         * @param {slider} sliderObj - Slider object
+         * @param {edittext} textObj - Text object
+         * @param {int} minValue - Minimum value that the slider/edittext can have.
+         * @param {int} maxValue - Maximum value that the slider/edittext can have
+         */
+        textObj.onChange = function() {
+            var newValue = parseFloat(textObj.text);
+            if (!isNaN(newValue) && newValue >= minValue && newValue <= maxValue) {
+                sliderObj.value = newValue;
+                logger.log("Changed editText(" + textObj.name + ") value to: " + newValue, scriptFileUtilName, LOG_LEVEL.DEBUG);
+            }
+        }
+        //this.text = Math.round( sliderObj.value ); 
+
+
+        sliderObj.onChange = function() {
+            textObj.text = Math.round(this.value);
+            logger.log("Changed sliderObject(" + sliderObj.name + ") value to: " + Math.round(this.value), scriptFileUtilName, LOG_LEVEL.DEBUG);
+        }
+    }
+
+    function changeTextValue(sliderObj, textObj, minValue, maxValue) {
+        /**
+         * Create a link between slider value and text value. If you change one the other changes with the same value.
+         * @param {slider} sliderObj - Slider object
+         * @param {edittext} textObj - Text object
+         * @param {int} minValue - Minimum value that the slider/edittext can have.
+         * @param {int} maxValue - Maximum value that the slider/edittext can have
+         */
+        var sliderValue = Math.round(sliderObj.value);
+        if (!isNaN(sliderValue) && sliderValue >= minValue && sliderValue <= maxValue) {
+            textObj.text = sliderValue;
+        }
+
+    }
+
+    function changeSliderValue(sliderObj, textObj, minValue, maxValue) {
+        /**
+         * Create a link between slider value and text value. If you change one the other changes with the same value.
+         * @param {slider} sliderObj - Slider object
+         * @param {edittext} textObj - Text object
+         * @param {int} minValue - Minimum value that the slider/edittext can have.
+         * @param {int} maxValue - Maximum value that the slider/edittext can have
+         */
+
+        var newValue = parseFloat(textObj.text);
+        if (newValue < minValue) {
+            textObj.text = minValue;
+            sliderObj.value = minValue;
+        } else if (newValue > maxValue) {
+            textObj.text = maxValue;
+            sliderObj.value = maxValue;
+        }
+        if (!isNaN(newValue) && newValue >= minValue && newValue <= maxValue) {
+            sliderObj.value = newValue;
+        }
+    }
+
+    function spinBoxLimiterMin(minValue, maxValue) {
+        /**
+         * Limits spinbox minimum value.
+         * @param {int} minValue - Minimum value allowed for the spinbox.
+         * @param {int} maxValue - Maximum value allowed for the spinbox.
+         */
+        minValue.text = minValue.text.replace(/[^\d]/g, '');
+
+        if (parseInt(minValue.text) > parseInt(maxValue.text)) {
+            minValue.text = maxValue.text;
+        }
+    }
+
+    function spinBoxLimiterMax(minValue, maxValue) {
+        /**
+         * Limits spinbox maximum value.
+         * @param {int} minValue - Minimum value allowed for the spinbox.
+         * @param {int} maxValue - Maximum value allowed for the spinbox.
+         */
+        maxValue.text = maxValue.text.replace(/[^\d]/g, '');
+        if (parseInt(maxValue.text) < parseInt(minValue.text)) {
+            maxValue.text = minValue.text
+        }
+    }
+
+    function editTextIntValidation(editTextObject, sliderObject) {
+        /**
+         * Validates edit text widget data to be able to use in slider object.
+         * @param {Object} editTextObject - Target object to set data for.
+         * @param {Object} sliderObject - Source object to retrieve data from.
+         */
+        editTextObject.text = editTextObject.text.replace(/[^\d]/g, '');
+        if (editTextObject.text == "") {
+            editTextObject.text = Math.round(sliderObject.value);
+        }
+    }
+
+    function getAssetsInScene(listBox) {
+        /**
+         * Gets available assets in the scene that have been previously added to a listbox,
+         * and adds the; into a list
+         * @param {Object} listBox - Source object to retrieve data from.
+         * Returns array with assets available in the scene.
+         */
+        var _assetsList = []
+        for (var i = 0; i < listBox.items.length; i++) {
+            _assetsList.push(listBox.items[i].text);
+        }
+        return _assetsList;
+    }
+
+    function validateSkipExistingFrames(renderQueueItem, renderSettings, renderValidation) {
+        /**
+         * For given renderQueueItem checks if option 'Skip Existing Frame' has been enabled or not.
+         * If disabled, force enable.
+         * @param {Object} renderQueueItem - Target renderQueueItem.
+         * @param {Object} renderSettings - Target renderQueueItem Settings.
+         * @param {boolean} renderValidation
+         * Returns boolean to proceed or halt the submission process.
+         */
+        if (renderSettings["Skip Existing Files"] == "false") {
+            var skipWindow = new Window("dialog", "Skip Existing Files Setting");
+            var skipText = skipWindow.add("statictext", undefined, "Skip Existing Files has not been enabled in the Render Settings for the RenderQueueItem. Please enable to continue.");
+            skipWindow.skipButtonsGroup = skipWindow.add("group", undefined);
+            skipWindow.skipButtonsGroup.orientation = "row";
+
+            var buttonContinue = skipWindow.skipButtonsGroup.add("button", undefined, "Continue");
+            buttonContinue.size = [60, 20];
+            var buttonCancel = skipWindow.skipButtonsGroup.add("button", undefined, "Cancel");
+            buttonCancel.size = [60, 20];
+
+            buttonCancel.onClick = function() {
+                renderValidation = false;
+                skipWindow.close();
+            }
+
+            buttonContinue.onClick = function() {
+                // Update Skip Existing Files to true.
+                var newSettings = {
+                    "Skip Existing Files": true
+                };
+                renderQueueItem.setSettings(newSettings);
+                renderValidation = true;
+                skipWindow.close();
+            }
+            skipWindow.center();
+            skipWindow.show();
+            return renderValidation;
+        }
+        return true;
+    }
+
+    function validateAutoAccept() {
+        /**
+         * Opens up window that shows how many items will be uploaded with the submission.
+         * Allows user to accept or decline. Based on choice return boolean value.
+         */
+        var amountFiles = dcProperties.jobAttachments.userAddedInputFiles.get().concat(dcProperties.jobAttachments.autoDetectedInputFiles.get());
+        var autoAcceptValidation = false;
+        var autoAcceptWindow = new Window("dialog", "Job Attachments Upload Confirmation");
+        var labelText = 'Job submission contains ' + amountFiles.length + " files. All files will be uploaded to S3 if they are not already present in the job attachments bucket."
+        var autoAcceptLabel = autoAcceptWindow.add('statictext', undefined, labelText);
+        autoAcceptWindow.skipButtonsGroup = autoAcceptWindow.add("group", undefined);
+        autoAcceptWindow.skipButtonsGroup.orientation = "row";
+
+        var buttonOK = autoAcceptWindow.skipButtonsGroup.add("button", undefined, "OK");
+        buttonOK.size = [60, 20];
+        var buttonCancel = autoAcceptWindow.skipButtonsGroup.add("button", undefined, "Cancel");
+        buttonCancel.size = [60, 20];
+
+        buttonCancel.onClick = function() {
+            autoAcceptValidation = false;
+            autoAcceptWindow.close();
+        }
+
+        buttonOK.onClick = function() {
+            autoAcceptValidation = true;
+            autoAcceptWindow.close();
+        }
+        autoAcceptWindow.center();
+        autoAcceptWindow.show();
+
+        return autoAcceptValidation;
+    }
+
+    function getDescription() {
+        /**
+         * Get description data from UI.
+         * Returns either data or empty string, depending on the user given description.
+         */
+        if (descriptionGroup.textComment.text) {
+            return descriptionGroup.textComment.text;
+        }
+        return "";
+    }
+
+    function checkGPUAccelType(submitScene, ignoreGPUAccelWarning) {
+        var gpuType = app.project.gpuAccelType;
+        var changeGPUType = false;
+
+        if (!ignoreGPUAccelWarning && typeof gpuType != "undefined" && gpuType != GpuAccelType.SOFTWARE) {
+            if (submitScene) {
+                if (confirm("This After Effects project is currently configured to take advantage of gpu acceleration, which means every machine NEEDS a mercury enabled gpu.\n\nWould you like to disable this by changing it to 'Mercury Software Only'? Click 'YES' to temporarily convert this project to use CPU processing only. Click 'NO' to leave the setting as is and continue submission.\n\nThis warning can be disabled by toggling 'Ignore GPU Acceleration Warning' under the 'Advanced' tab.")) {
+                    changeGPUType = true;
+                }
+            } else {
+                if (confirm("This After Effects project is currently configured to take advantage of gpu acceleration, which means every machine NEEDS a mercury enabled gpu.\n\nWould you like to disable this by changing it to 'Mercury Software Only'? Click 'YES' to convert this project to use CPU processing only. Click 'NO' to leave the setting as is and continue submission.\n\nThis WILL NOT be reverted automatically after submission.\n\nThis warning can be disabled by toggling 'Ignore GPU Acceleration Warning' under the 'Advanced' tab.")) {
+                    changeGPUType = true;
+                    gpuType = null; // Since we don't want to restore the old value
+                }
+            }
+            if (changeGPUType) {
+                app.project.gpuAccelType = GpuAccelType.SOFTWARE;
+            } else {
+                gpuType = null;
+            }
+        } else {
+            gpuType = null;
+        }
+        return gpuType;
+    }
+
+    function invertObject(jsObject) {
+        /**
+         * Inverts a given JavaScript object.
+         * Only inverts the first level, does not handle nested objects properly.
+         */
+        var ret = {};
+        for (var key in jsObject) {
+            ret[jsObject[key]] = key;
+        }
+        return ret;
+    }
+
+    function getTempFile(fileName) {
+        /**
+         * Return File instance from temporary directory with the given name.
+         */
+        var _tempFilePath = normalizePath(Folder.temp.fsName + "/" + fileName);
+        var _tempFile = File(_tempFilePath);
+        return _tempFile;
+    }
+
+    function wrappedCallSystem(cmd) {
+        /**
+         * Wraps system.callSystem command as required to get output from it.
+         *
+         * For Windows, wraps it into __two__ "cmd /c " calls.
+         *
+         * For MacOS, returns the command as-is.
+         */
+        if (system.osName == "MacOS") {
+            return _wrappedCallSystemMac(cmd);
+        }
+        return _wrappedCallSystemWindows(cmd);
+    }
+
+    function _wrappedCallSystemWindows(cmd) {
+
+        var tempOutputFile = getTempFile("deadline_cloud_ae_pipe.txt");
+        var tempBootstrapBatFile = getTempFile("aeCallSystemBootstrap.bat");
+        var tempBatFile = getTempFile("aeCallSystem.bat");
+        logger.debug("Command output path: " + tempOutputFile.fsName, scriptFileUtilName);
+        _makeBootstrapBatFile(tempBootstrapBatFile, tempBatFile);
+        // Wrapped command with error code output
+        cmd = cmd + " > " + tempOutputFile.fsName;
+        cmd += "\nIF %ERRORLEVEL% NEQ 0 ("
+        cmd += "\n echo ERROR CODE: %ERRORLEVEL% >> " + tempOutputFile.fsName
+        cmd += "\n)"
+        cmd += "\nexit"
+        tempBatFile.open("w");
+        tempBatFile.writeln(cmd);
+        tempBatFile.close();
+
+        logger.debug("Running command (file):", scriptFileUtilName);
+        logger.debug(tempBootstrapBatFile.fsName, scriptFileUtilName);
+        logger.debug("Command: ", scriptFileUtilName);
+        logger.debug(cmd, scriptFileUtilName);
+        // Call bootstrap script and return result via intermediary file.
+        system.callSystem(tempBootstrapBatFile.fsName);
+        var output = system.callSystem("cmd /c \"type " + tempOutputFile.fsName + "\"");
+        return output;
+    }
+
+    function _makeBootstrapBatFile(bootstrapFile, tempFile) {
+        var _cmd = "@echo off" + "\nstart /min /wait " + tempFile.fsName + "\nexit"
+        bootstrapFile.open("w");
+        bootstrapFile.writeln(_cmd);
+        bootstrapFile.close();
+    }
+
+    function _wrappedCallSystemMac(cmd) {
+        // Add error code in the output if the command errors.
+        cmd = cmd + " || echo \"ERROR CODE: $?\"";
+        return system.callSystem(cmd);
+    }
+
+    function parseErrorData(output, cmd) {
+        /**
+         * Parses output string gotten from login/logout.
+         * Depending on error code found or not return return_code, error message, result.
+         * @param {string} output: String gotten from wrappedCallSystem. Contains error code and message.
+         * @param {string} cmd: name of the command that calls upon this function. Used to write message.
+         */
+
+        var result = "";
+        var message = "";
+        var return_code = 0;
+        var errorIndex = output.indexOf("ERROR CODE:");
+        if (errorIndex !== -1) {
+            // Extract the word and everything behind it
+            result = output.substring(errorIndex);
+            message = cmd + " Failed. Error has occurred.";
+            var regex = /ERROR CODE:(.*)/;
+            return_code = regex.exec(result);
+            return {
+                "return_code": return_code,
+                "message": message,
+                "result": result
+            }
+        }
+        result = "";
+        message = cmd + " Successful."
+        return {
+            "return_code": return_code,
+            "message": message,
+            "result": result
+        }
+    }
+
+    function parseCredsData(output) {
+        /**
+         * Parses output string gotten from deadline creds status command.
+         * @param {string} output: String gotten from wrappedCallSystem. Contains error code, data, and message.
+         * Returns object with authentication status for credentials, status, and api.
+         */
+        var sourceRegex = /Source:\s*(.*?)(\n|$)/;
+        var statusRegex = /Status:\s*(.*?)(\n|$)/;
+        var apiRegex = /API Availability:\s*(.*?)(\n|$)/;
+
+        var sourceMatch = getMatch(output, sourceRegex);
+        var statusMatch = getMatch(output, statusRegex);
+        var apiMatch = getMatch(output, apiRegex);
+        return {
+            "source": sourceMatch,
+            "status": statusMatch,
+            "api": apiMatch
+        };
+    }
+
+    function parseListData(output) {
+        /** Return object of <id>: <name> of some given CLI output. */
+
+        var parsedObject = {};
+        // Split string in array if lines
+        var lines = output.split("\n");
+
+        // loop through each line, and look for specific data.
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            // Check if the line contains a dash '-'
+            if (line.indexOf('-') === 0) {
+                // Look for 'queueID:' and 'displayName:' on the next lines
+                var nextLineItemID = lines[i];
+                var nextLineDisplayName = lines[i + 1];
+
+                // Extract the data after 'queueID:' and 'displayName:'
+                var itemIDData = nextLineItemID.substring(nextLineItemID.indexOf(':') + 1);
+                itemIDData = itemIDData.replace(" ", "").trim();
+                var displayNameData = nextLineDisplayName.substring(nextLineDisplayName.indexOf(':') + 1);
+                displayNameData = displayNameData.replace(" '", "").replace("'", "").trim();
+
+                parsedObject[itemIDData] = displayNameData;
+                logger.debug('itemID found after dash: ' + itemIDData, scriptFileUtilName);
+                logger.debug('DisplayName found after dash: ' + displayNameData, scriptFileUtilName);
+            }
+        }
+        return parsedObject
+    }
+
+    function parseVersionData(output) {
+        /**
+        * Returns list of version numbers in the following order:
+        [MAJOR, MINOR, PATCH]
+        */
+        // Regular expression to match "version " followed by version number
+        var regex = /version\s+(\d+)\.(\d+)\.(\d+)/i;
+
+        // Test if the inputString matches the pattern
+        var parsedVersionNumberOutput = output.match(regex);
+
+        // Output the result
+        if (parsedVersionNumberOutput) {
+            var versionNumbers = [
+                parseInt(parsedVersionNumberOutput[1]), // Major
+                parseInt(parsedVersionNumberOutput[2]), // Minor
+                parseInt(parsedVersionNumberOutput[3]) // Path
+            ];
+            return versionNumbers;
+        } else {
+            return [];
+        }
+    }
+
+    function createExportBundleDir(exportBundleDir, fileName) {
+        /**
+         * Creates export bundle directory based on given job history directory and the name of the job.
+         * Depending on error code found or not return return_code, error message, result.
+         * @param {string} exportBundleDir: Job history directory
+         * @param {string} fileName: Job name
+         * Returns export directory
+         */
+        var partialDir = getPartialExportDir(exportBundleDir);
+        var dir = getPath(partialDir, fileName, exportBundleDir);
+        return dir.fsName;
+    }
+
+    function getConfigSettingData(config, setting) {
+        /**
+         * Parses config for specific setting name and returns data linked to the setting.
+         * Depending on error code found or not return return_code, error message, result.
+         * @param {Object} config: Config object.
+         * @param {string} setting: Name of the setting to get data from
+         * Returns data linked to setting name.
+         */
+        // Create a regular expression pattern with the search string
+        var regexPattern = new RegExp(setting, 'g');
+
+        // Use the match method to find all matches
+        var matches = config.match(regexPattern);
+
+        // If matches are found
+        if (matches) {
+            // Loop through each match
+            for (var i = 0; i < matches.length; i++) {
+                var match = matches[i];
+
+                // Get the index of the match
+                var matchIndex = config.indexOf(match);
+
+                // Find the index of the next line break after the match
+                var nextLineBreakIndex = config.indexOf('\n', matchIndex);
+
+                // If a line break is found after the match
+                if (nextLineBreakIndex !== -1) {
+                    // Extract the next line after the match
+                    var nextLine = config.substring(nextLineBreakIndex + 1, config.indexOf('\n', nextLineBreakIndex + 1));
+
+                    // Return the next line
+                    nextLine = nextLine.replace(/[\x0A\x0D]/g, '');
+                    nextLine = trim(nextLine);
+                    if (nextLine.length == 0) return null;
+                    return nextLine;
+                }
+            }
+        }
+        // If no match is found, return null
+        return null;
+    }
+
+    function getAWSProfileList(profilesString) {
+        /**
+         * Parses string data into an array.
+         * @param {string} profilesString: Config object.
+         * Returns array that contains all available profiles.
+         */
+        // Split the multi-line string into an array of lines
+        var lines = profilesString.split('\n');
+
+        // Create a list to store the lines
+        var lineList = [];
+
+        // Loop over each line and add it to the list
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            line = line.replace(/[\x0A\x0D]/g, '');
+            line = trim(line);
+            if (line == "default") {
+                continue;
+            }
+            if (line.length == 0) {
+                continue;
+            }
+            lineList.push(line);
+        }
+        return lineList;
+    }
+
+    function removeLineBreak(string) {
+        /**
+         * Replaces illegal characters in given string
+         * @param {string} string: String that contains \n and \r
+         * Returns parsed string with no illegal characters.
+         */
+        var newStr = "";
+
+        // Loop and traverse string
+        for (var i = 0; i < string.length; i++) {
+            if (!(string[i] == "\n" || string[i] == "\r")) {
+                newStr += string[i];
+            }
+        }
+        return newStr;
+    }
+
+    function getMatchName(type, config_search_id) {
+        /**
+         * Looks for id match in list of possible id's. This for either 'Farm' or 'Queue' type.
+         * @param {string} type: String that tells function to either check in farm list or queue list
+         * @param {string} config_search_id: Farm or Queue id to check in id list.
+         * Returns Object that contains boolean(match found or not) and farm/queue name the matched id is linked to
+         */
+        var result;
+        var itemList = [];
+        itemList.length = 0;
+        if (type == "Farm") {
+            logger.info('Retrieving data from dcProperties', scriptFileUtilName);
+            result = dcUtil.invertObject(dcProperties.farmList.get());
+        } else {
+            result = dcUtil.invertObject(dcProperties.queueList.get());
+        }
+        var keys = Object.keys(result);
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            itemList.push(key);
+            result[key] = result[key].replace(/[\x0A\x0D]/g, '');
+            if (config_search_id.indexOf(result[key]) !== -1) {
+                logger.debug("Match found", scriptFileUtilName);
+                return {
+                    "match": true,
+                    "keyName": key
+                };
+            }
+            if (config_search_id.length === 0) {
+                logger.debug("No default setting value found in config", scriptFileUtilName);
+                return null;
+            }
+        }
+        logger.debug("No Match found", scriptFileUtilName);
+        return {
+            "match": false,
+            "keyName": null
+        };
+    }
+
+    function setListBoxSelection(listbox, configData) {
+        /**
+         * Sets correct item selection in given listbox when name of the item matches config data name.
+         * @param {Object} listbox: Listbox object that contains all possible farms/queues
+         * @param {string} configData: Name of the default farm/queue
+         */
+        for (var i = 0; i < listbox.items.length; i++) {
+            if (configData == listbox.items[i].text) {
+                listbox.selection = i;
+            }
+        }
+    }
+
+    function getPath(toCheckDir, fileName, rootDir) {
+        // 1. Find highest sequence number used for today.
+        var splitDir = toCheckDir.split("//");
+        var toCheckFolderName = splitDir[splitDir.length - 1];
+        var parentDir = toCheckDir.replace(toCheckFolderName, "");
+        var mainDir = new Folder(parentDir);
+        var subFolders = mainDir.getFiles();
+        // var filePrefix = "2024-01-04-" // <-- this should come from today (new Date()... ?)
+        var regex = new RegExp(toCheckFolderName + "(\\d+)-.*");
+        // identical to /2024-01-04-(\d+)-.*/
+        var maxSeqNumber = 0;
+        var folderName = "";
+        for (var idx = 0; idx < subFolders.length; idx++) {
+            folderName = subFolders[idx].fullName
+            var match = folderName.match(regex)
+            if (!match) {
+                continue;
+            }
+            var seqNr = parseInt(match[1]) // Convert first capture group to int
+            if (seqNr > maxSeqNumber) {
+                maxSeqNumber = seqNr
+            }
+        }
+        // 2. Create new export directory with next sequence number
+        var nextSeqNumber = maxSeqNumber + 1
+        // Sequence numbers under 10 are zero-padded.
+        if (nextSeqNumber < 10) {
+            nextSeqNumber = "0" + nextSeqNumber;
+        }
+        var folder = new Folder(toCheckDir + nextSeqNumber + "-AfterEffects-" + fileName);
+        if (!folder.exists) {
+            folder.create();
+        }
+        return folder;
+    }
+
+    function getPartialExportDir(job_history_dir) {
+        /**
+         * Creates string with correct name and format to be used in job history directory creation.
+         * @param {string} job_history_dir: Directory where job bundles is written to on submission.
+         * Returns partial job history directory.
+         */
+        var currentDate = new Date();
+        var year = currentDate.getFullYear();
+        // Zero pad all integers to a length of 2
+        var month = ("0" + (currentDate.getMonth() + 1)).slice(-2); // Months are zero-based
+        var day = ("0" + currentDate.getDate()).slice(-2);
+        // Create the formatted string
+        var formattedYearMonth = year + '-' + month;
+        var formattedDate = year + '-' + month + '-' + day;
+        var dir = job_history_dir + "//" + formattedYearMonth + "//" + formattedDate + "-";
+        return dir;
+    }
+
+    function collectHostRequirements() {
+        // Remark: gpu memory and worker memory need to be scaled with *1024, for some of the amount capabilities, the unit displayed on the UI is different
+        // then the unit used within template, so use this factor to scale the input values.
+
+        var hostRequirements = {
+            "attributes": [{
+                    "name": "attr.worker.os.family",
+                    "anyOf": [
+                        osGroup.OSDropdownList.selection.text.toLowerCase()
+                    ]
+                },
+                {
+                    "name": "attr.worker.cpu.arch",
+                    "anyOf": [
+                        cpuArchGroup.cpuDropdownList.selection.text
+                    ]
+                }
+            ],
+            "amounts": [{
+                    "name": "amount.worker.vcpu",
+                    "min": parseInt(cpuGroup.cpuMinText.text),
+                    "max": parseInt(cpuGroup.cpuMaxText.text)
+                },
+                {
+                    "name": "amount.worker.memory",
+                    "min": parseInt(memoryGroup.memoryMinText.text) * 1024,
+                    "max": parseInt(memoryGroup.memoryMaxText.text) * 1024
+                },
+                {
+                    "name": "amount.worker.gpu",
+                    "min": parseInt(gpuGroup.gpuMinText.text),
+                    "max": parseInt(gpuGroup.gpuMaxText.text)
+                },
+                {
+                    "name": "amount.worker.gpu.memory",
+                    "min": parseInt(gpuMemoryGroup.gpuMemoryMinText.text) * 1024,
+                    "max": parseInt(gpuMemoryGroup.gpuMemoryMaxText.text) * 1024
+                },
+                {
+                    "name": "amount.worker.disk.scratch",
+                    "min": parseInt(scratchSpaceGroup.scratchSpaceMinText.text),
+                    "max": parseInt(scratchSpaceGroup.scratchSpaceMaxText.text)
+                }
+            ]
+        }
+
+        if (cpuArchGroup.cpuDropdownList.selection == 0 && osGroup.OSDropdownList.selection == 0) {
+            delete hostRequirements.attributes;
+        } else if (cpuArchGroup.cpuDropdownList.selection == 0) {
+            hostRequirements.attributes.splice(1, 1);
+        } else if (osGroup.OSDropdownList.selection == 0) {
+            hostRequirements.attributes.splice(0, 1);
+        }
+
+        return hostRequirements;
+    }
+
+    function deepCopy(obj) {
+        /**
+         * Creates deep copy of given object to avoid 2 copies overwriting one another.
+         * @param {Object} obj: Given object that has to be copied. Extendscript does not have deep copy.
+         * Returns deep copy of an object
+         */
+        if (obj === null || typeof obj !== 'object') {
+            return obj;
+        }
+
+        if (obj instanceof Array) {
+            var copyArray = [];
+            for (var i = 0; i < obj.length; i++) {
+                copyArray[i] = deepCopy(obj[i]);
+            }
+            return copyArray;
+        }
+
+        if (obj instanceof Object) {
+            var copyObject = {};
+            for (var key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    copyObject[key] = deepCopy(obj[key]);
+                }
+            }
+            return copyObject;
+        }
+    }
+
+    function getActiveComp(itemName) {
+        /**
+         * Get the active comp item that matches given name.
+         * @param {string} itemName: Target comp name.
+         * Returns comp object that matches target comp name.
+         */
+        // If submit layers pressed -> itemName is not comp name and therefore comp will not be found with render command
+        // Check if itemName is an available comp in the project, if not, it is a layer submission
+        var comp = itemName;
+        var compList = [];
+        for (var i = 1; i <= app.project.rootFolder.items.length; i++) {
+            var item = app.project.rootFolder.items[i];
+
+            if (item instanceof CompItem) {
+                compList.push(app.project.activeItem.name);
+            }
+        }
+        if (compList.indexOf(itemName) !== -1) {
+            comp = app.project.activeItem.name;
+        }
+        return comp;
+    }
+
+    function normalizePath(path) {
+        var _file = new File(path);
+        if (system.osName == "MacOS") {
+            _file.changePath(_file.fsName.replace(/\\/g, "/"));
+            return _file.fsName;
+        }
+        // else: Windows
+        _file.changePath(_file.fsName.replace(/\//g, "\\"));
+        return _file.fsName;
+    }
+
+    function enforceForwardSlashes(path) {
+        return path.replace(/(\\)+/g, "/");
+    }
+
+    function removeIllegalCharacters(inputString) {
+        var outputString = inputString.replace(/[.\-\s]/g, "_");
+
+        return outputString;
+    }
+
+    function removePercentageFromFileName(fileName) {
+        var fileName = fileName.replace(/%20/g, " ");
+        return fileName;
+    }
+
+    function getDuplicateFrames(frameList) {
+        /**
+         * Checks for given frame list if duplicate frames are present.
+         * @param {string} frameList: List of frames given in the UI or entire frame range of the comp.
+         * Returns either array filled with duplicates, or if no duplicates have been found empty string.
+         */
+        var duplicates = [];
+        var framesToRender = [];
+        var splitList = frameList.split(",");
+
+        for (var i = 0; i < splitList.length; i++) {
+            if (splitList[i].indexOf("-") == -1) {
+                if (arrayIncludes(framesToRender, parseInt(splitList[i]))) {
+                    duplicates.push(parseInt(splitList[i]));
+                } else {
+                    framesToRender.push(parseInt(splitList[i]));
+                }
+            } else {
+                var numbers = splitList[i].split("-");
+                if (parseInt(numbers[0]) > parseInt(numbers[1])) {
+                    // Frame range is wrong, first frame is larger than second
+                    duplicates.push(numbers[0]);
+                    return duplicates;
+                }
+                for (var j = parseInt(numbers[0]); j < parseInt(numbers[1]) - parseInt(numbers[0]) + 1; j++) {
+                    if (arrayIncludes(framesToRender, j)) {
+                        duplicates.push(j);
+                    } else {
+                        framesToRender.push(j);
+                    }
+                }
+            }
+        }
+        return duplicates;
+    }
+
+    function arrayIncludes(array, value) {
+        for (var i = 0; i < array.length; i++) {
+            if (array[i] === value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function getMatch(string, regex) {
+        // Remove illegal characters from given string
+        var match = string.match(regex);
+        if (match && match[1]) {
+            var result = match[1].replace("\n", "").replace("\r", "");
+        }
+        return result;
+    }
+
+    function getUserDirectory() {
+        /* Return OS specific user home directory. */
+        if (system.osName == "MacOS") {
+            return $.getenv("HOME")
+        }
+        // Windows:
+        return $.getenv("USERPROFILE");
+    }
+
+    return {
+        "invertObject": invertObject,
+        "deadlineStringToArray": deadlineStringToArray,
+        "toBooleanString": toBooleanString,
+        "parseBool": parseBool,
+        "trim": trim,
+        "trimIllegalChars": trimIllegalChars,
+        "sliderTextSync": sliderTextSync,
+        "changeTextValue": changeTextValue,
+        "changeSliderValue": changeSliderValue,
+        "checkGPUAccelType": checkGPUAccelType,
+        "spinBoxLimiterMin": spinBoxLimiterMin,
+        "spinBoxLimiterMax": spinBoxLimiterMax,
+        "getAssetsInScene": getAssetsInScene,
+        "editTextIntValidation": editTextIntValidation,
+        "getDescription": getDescription,
+        "validateSkipExistingFrames": validateSkipExistingFrames,
+        "validateAutoAccept": validateAutoAccept,
+        "wrappedCallSystem": wrappedCallSystem,
+        "parseErrorData": parseErrorData,
+        "parseVersionData": parseVersionData,
+        "parseCredsData": parseCredsData,
+        "createExportBundleDir": createExportBundleDir,
+        "parseListData": parseListData,
+        "removeLineBreak": removeLineBreak,
+        "getConfigSettingData": getConfigSettingData,
+        "getMatchName": getMatchName,
+        "getAWSProfileList": getAWSProfileList,
+        "setListBoxSelection": setListBoxSelection,
+        "getPath": getPath,
+        "getPartialExportDir": getPartialExportDir,
+        "collectHostRequirements": collectHostRequirements,
+        "deepCopy": deepCopy,
+        "getActiveComp": getActiveComp,
+        "normalizePath": normalizePath,
+        "normPath": normalizePath,
+        "enforceForwardSlashes": enforceForwardSlashes,
+        "removeIllegalCharacters": removeIllegalCharacters,
+        "removePercentageFromFileName": removePercentageFromFileName,
+        "getDuplicateFrames": getDuplicateFrames,
+        "getTempFile": getTempFile,
+        "getUserDirectory": getUserDirectory
+    }
+}
+
+dcUtil = __generateUtil();
+
+
+var LOG_LEVEL = {
+    ERROR: 1,
+    WARNING: 2,
+    INFO: 3,
+    DEBUG: 4
+};
+
+var LOG_LEVEL_MAP = dcUtil.invertObject(LOG_LEVEL)
+
+// Global log level
+// Set the desired logging level
+var CURRENT_LOG_LEVEL = LOG_LEVEL.DEBUG;
+
+var _DC_LOGGER_DEFAULT_MAX_BYTES = 10 * 1024 * 1024 // 10 MiB
+var _DC_LOGGER_DEFAULT_BACKUP_COUNT = 5
+
+function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
+    /**
+     * Basic logger implementation with file rotation based on byte size.
+     * 
+     * Rollover implementation is based on Python's RotatingFileHandler for behavioural compatibility
+     * with the Python-based submitters.
+     *
+     * The system will save old log files by appending the extensions ‘.1’, ‘.2’ etc., to the filename. 
+     * For example, with a backupCount of 5 and a base file name of app.log, you would get 
+     * app.log, app.log.1, app.log.2, up to app.log.5. The file being written to is always app.log. 
+     * When this file is filled, it is closed and renamed to app.log.1, 
+     * and if files app.log.1, app.log.2, etc. exist, then they are renamed to app.log.2, app.log.3 etc. respectively.
+     * 
+     * If backupCount or maxBytes are zero or less, rollover behaviour is disabled.
+     * 
+     * @param {string} logFileName - Log file name.
+     * @param {string} logDirectoryPath - Log directory path.
+     * @param {int} maxBytes - Number of bytes before a file rotation is performed.
+     * @param {int} backupCount - Number of file rotations to keep.
+     */
+
+    var logFilePath;
+    var logFile;
+
+    function init() {
+        maxBytes = maxBytes || _DC_LOGGER_DEFAULT_MAX_BYTES;
+        backupCount = backupCount || _DC_LOGGER_DEFAULT_BACKUP_COUNT;
+        logDirectoryPath = logDirectoryPath || dcUtil.getUserDirectory() + "/.deadline/logs/submitters";
+        logDirectoryPath = dcUtil.normPath(logDirectoryPath);
+        var folderObject = new Folder(logDirectoryPath);
+        if (!folderObject.exists) {
+            folderObject.create();
+        }
+        logFilePath = logDirectoryPath + "/" + logFileName;
+        logFilePath = dcUtil.normPath(logFilePath);
+        logFile = new File(logFilePath);
+        _fileRotate();
+    }
+    init();
+
+    function _fileRotate() {
+        /* Performs a file rotation if the size of the active log file is higher
+         * than maxBytes.
+         * 
+         * If maxBytes is zero or less, no file rotation will ever occur.
+         */
+        if (maxBytes <= 0) { // If maxBytes is invalid, don't rotate.
+            return;
+        }
+        if (logFile.length < maxBytes) {
+            return;
+        }
+        doRollover();
+    }
+
+    function doRollover() {
+        /* Perform a file rollover. See above for the implementation details. */
+        if (backupCount <= 0) {
+            return;
+        }
+        // Rollover older files first
+        var rolloverFile;
+        for (var i = backupCount - 1; i > 0; i--) { // Last file does not need rollover, it is allowed to get overwritten.
+            rolloverFile = new File(logDirectoryPath + logFileName + "." + i)
+            if (!rolloverFile.exists) {
+                continue;
+            }
+            var j = i + 1;
+            var rolloverTargetPath = logDirectoryPath + logFileName + "." + j
+            rolloverFile.copy(rolloverTargetPath);
+        }
+        // Rollover active file
+        logFile.copy(logDirectoryPath + logFileName + "." + 1)
+        logFile.open("w"); // Erase contents of active log file
+        logFile.close();
+    }
+
+    function log(msg, src_module, level) {
+        /**
+         * Create logger that based on logging level writes information to logging file.
+         * @param {string} msg - Information that needs to be written to log file.
+         * @param {string} src_module - Name of the file where the logging function is being called.
+         * @param {int} level - The value for the log level assigned to the message.
+         */
+        src_module = src_module || "undef";
+        if (level <= CURRENT_LOG_LEVEL) {
+
+            var levelName = LOG_LEVEL_MAP[level];
+            // Check the length of the string
+            var currentLength = levelName.length;
+
+            // If the length is less than the target length, pad with spaces
+            if (currentLength < 8) {
+                var spacesToAdd = 8 - currentLength;
+                for (var i = 0; i < spacesToAdd; i++) {
+                    levelName += " ";
+                }
+            }
+            var logMessage = getCurrentTimeAsStr() + " - " + "[" + levelName + "] " + " " + src_module + ": " + msg;
+
+            logFile.open("a");
+            logFile.writeln(logMessage);
+            logFile.close();
+            _fileRotate();
+        }
+    }
+
+    function debug(msg, src_module) {
+        log(msg, src_module, LOG_LEVEL.DEBUG);
+    }
+
+    function info(msg, src_module) {
+        log(msg, src_module, LOG_LEVEL.INFO);
+    }
+
+    function warning(msg, src_module) {
+        log(msg, src_module, LOG_LEVEL.WARNING);
+    }
+
+    function error(msg, src_module) {
+        log(msg, src_module, LOG_LEVEL.ERROR);
+    }
+
+    return {
+        "debug": debug,
+        "info": info,
+        "warning": warning,
+        "warn": warning,
+        "error": error,
+        "err": error,
+        "log": log,
+        "doRollover": doRollover
+    }
+}
+
+function getCurrentTimeAsStr() {
+    var date = new Date();
+    var year = date.getFullYear();
+    // Zero pad all integers to a length of 2
+    var month = ("0" + (date.getMonth() + 1)).slice(-2); // Months are zero-based
+    var day = ("0" + date.getDate()).slice(-2);
+
+    var currentDate = year + "-" + month + "-" + day;
+    var hours = ("0" + date.getHours()).slice(-2);
+    var minutes = ("0" + date.getMinutes()).slice(-2);
+    var seconds = ("0" + date.getSeconds()).slice(-2);
+    var currentTime = hours + ":" + minutes + ":" + seconds;
+    var logDateTime = currentDate + " " + currentTime;
+    return logDateTime;
+}
+
+
+// Setup logger
+var _scriptFileName = "OpenAeSubmitter.jsx";
+var logFileName = "aftereffects" + ".log";
+var logDirectoryPath = dcUtil.getUserDirectory() + "/.deadline/logs/submitters/";
+logDirectoryPath = dcUtil.normPath(logDirectoryPath)
+
+var logger = Logger(logFileName, logDirectoryPath);
+logger.log("Running driver file", _scriptFileName, LOG_LEVEL.INFO);
+
+// THIS FILE IS AUTO-GENERATED BY "hatch_custom_hook.py".
+// Manual changes in this file will be overwritten at build time.
+var __DEADLINE_CLOUD_MINIMUM_VERSION__ = [0, 40, 0];
+
+
+
+
+/**
+ * Generates the basic paramterValue file for the job template
+ **/
+function parameterValues(
+    renderQueueIndex,
+    projectFile,
+    outputPaths,
+    startFrame,
+    endFrame,
+    framesPerTask,
+    multiFramePercentage
+) {
+    var frameStarts;
+    var frameEnds;
+    var re = new RegExp(".*[#+].*"); //checks for output patterns with [####] in them which usually indicates an image sequence
+    var isSequence = false;
+    for (var i = 0; i < outputPaths.length; i++) {
+        isSequence = re.test(outputPaths[i]);
+        if (isSequence) {
+            break;
+        }
+    }
+
+    var outputPathStr = outputPaths.join(",");
+    if (framesPerTask < 1 || !isSequence) {
+        frameStarts = startFrame.toString();
+        frameEnds = endFrame.toString();
+    } else if (framesPerTask == 1) {
+        frameStarts = startFrame.toString() + "-" + endFrame.toString();
+        frameEnds = frameStarts;
+    } else {
+        var frame = startFrame;
+        var startArray = [];
+        var endArray = [];
+        while (frame <= endFrame) {
+            startArray.push(frame.toString());
+            frame = Math.min(endFrame + 1, frame + framesPerTask);
+            endArray.push((frame - 1).toString());
+        }
+        frameStarts = startArray.join(",");
+        frameEnds = endArray.join(",");
+    }
+
+    return JSON.stringify({
+        parameterValues: [{
+                name: "CondaPackages",
+                value: "",
+            },
+            {
+                name: "deadline:targetTaskRunStatus",
+                value: "READY",
+            },
+            {
+                name: "deadline:maxFailedTasksCount",
+                value: 20,
+            },
+            {
+                name: "deadline:maxRetriesPerTask",
+                value: 5,
+            },
+            {
+                name: "deadline:priority",
+                value: 50,
+            },
+            {
+                name: "ProjectFile",
+                value: projectFile,
+            },
+            {
+                name: "RenderQueueIndex",
+                value: renderQueueIndex,
+            },
+            {
+                name: "OutputFiles",
+                value: outputPathStr,
+            },
+            {
+                name: "FrameStarts",
+                value: frameStarts,
+            },
+            {
+                name: "FrameEnds",
+                value: frameEnds,
+            },
+            {
+                name: "MultiFrameMaxCPU",
+                value: multiFramePercentage,
+            },
+        ],
+    });
+}
+
+/**
+ * Generates the basic format of the asset reference for job template.
+ **/
+function jobAttachmentsJson(inputFiles, outputFolders) {
+    return JSON.stringify({
+        assetReferences: {
+            inputs: {
+                directories: [],
+                filenames: inputFiles,
+            },
+            outputs: {
+                directories: outputFolders,
+            },
+            referencedPaths: [],
+        },
+    });
+}
+
+/**
+ * Breadth first sweep through the root composition to find all footage references
+ * More efficient than just iterating through items in the project when 
+ * there is a lot of unused footage in the project   
+ **/
+function findJobAttachments(rootComp) {
+    if (rootComp == null) {
+        return [];
+    }
+    var attachments = [];
+    var exploredItems = {}; //using this object as a set because AE doesn't support sets
+    attachments.push(app.project.file.fsName);
+    exploredItems[rootComp.id] = true;
+    var queue = [rootComp];
+    while (queue.length > 0) {
+        var comp = queue.pop();
+        for (var i = 1; i <= comp.numLayers; i++) {
+            var layer = comp.layer(i);
+            var shouldShowPopup = true; //only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
+            if (
+                layer != null &&
+                layer instanceof AVLayer &&
+                layer.source != null
+            ) {
+                var src = layer.source;
+                if (src.id in exploredItems) {
+                    continue;
+                }
+                exploredItems[src.id] = true;
+                if (src instanceof CompItem) {
+                    queue.push(src);
+                } else if (
+                    src instanceof FootageItem &&
+                    src.mainSource instanceof FileSource
+                ) {
+                    if (src.footageMissing) {
+                        if (shouldShowPopup) {
+                            adcAlert(
+                                "Missing Footage: " +
+                                src.name +
+                                " (" +
+                                src.missingFootagePath +
+                                ")"
+                            );
+                            shouldShowPopup = false;
+                        }
+                    } else {
+                        attachments.push(src.file.fsName);
+                    }
+                }
+            }
+        }
+    }
+    return attachments;
+}
+
+
+/**
+ * Submit the selected render queue item
+ **/
+function SubmitSelection(selection, framesPerTask, multiFramePercentage) {
+    // first we must verify that our selection is valid
+    if (selection == null) {
+        adcAlert("Error: No selection");
+        return false;
+    }
+
+    var renderQueueIndex = selection.renderQueueIndex;
+    // var outputIndex = selection.outputModuleIndex;
+    // var outputSettings;
+    var rqi;
+
+    //because our panel is updated independently of the render queue, the two may become out of sync
+    //we need to verify that the selection made actually matches what is in the render queue
+    if (
+        renderQueueIndex < 1 ||
+        renderQueueIndex > app.project.renderQueue.numItems
+    ) {
+        adcAlert(
+            "Error: Render Queue has changed since last refreshing. Refreshing panel now. Please try again."
+        );
+        updateList();
+        return;
+    }
+    rqi = app.project.renderQueue.item(renderQueueIndex);
+    if (rqi == null || rqi.comp.id != selection.compId) {
+        adcAlert(
+            "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again."
+        );
+        updateList();
+        return;
+    }
+    if (rqi.numOutputModules > 1) {
+        var r = confirm(
+            "Warning: Multiple output modules detected. Rendering multiple output modules at once could result in undefined behavior. Continue?"
+        );
+        if (!r) {
+            return;
+        }
+    }
+
+    //We have a valid selection
+    var r = confirm("Project must be saved before submitting. Continue?");
+    if (!r) {
+        return;
+    } else {
+        app.project.save();
+    }
+    if (app.project.file == null) {
+        //If the user hit yes to the prompt, but the file had never been saved, a second prompt would appear asking where they would want to save the project. If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
+        return;
+    }
+    var outputPaths = [];
+    for (var j = 1; j <= rqi.numOutputModules; j++) {
+        var outputModule = rqi.outputModule(j).file;
+        if (outputModule == null) {
+            if (rqi.numOutputModules > 1) {
+                adcAlert("Error: Output module does not have its output file set");
+            } else {
+                adcAlert(
+                    "Error: One of your output modules does not have its output file set"
+                );
+            }
+            return;
+        } else {
+            outputPaths.push(outputModule.fsName);
+        }
+    }
+    var renderSettings = rqi.getSettings(GetSettingsFormat.STRING_SETTABLE);
+    var dependencies = findJobAttachments(rqi.comp); //list of filenames
+
+    /**
+     * Generates the job bundle
+     **/
+    function generateBundle() {
+        var bundleRoot = new Folder(
+            Folder.temp.fsName + "/DeadlineCloudAESubmission"
+        ); //forward slash works on all operating systems
+        recursiveDelete(bundleRoot);
+        bundleRoot.create();
+
+        var jobTemplateSourceFolder = new Folder(
+            scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
+        );
+        if (!jobTemplateSourceFolder.exists) {
+            adcAlert(
+                "Error: Missing job template at " + jobTemplateSourceFolder.fsName
+            );
+            return null;
+        }
+
+        recursiveCopy(jobTemplateSourceFolder, bundleRoot);
+
+        var template = new File(bundleRoot.fsName + "/template.yaml");
+        template.open("r");
+        var templateContents = template.read();
+        templateContents = templateContents.replace(
+            "{{JOBNAME}}",
+            File.decode(app.project.file.name) + " [" + rqi.comp.name + "]"
+        );
+        template.close();
+        template.remove();
+        template.open("w");
+        template.write(templateContents);
+        template.close();
+
+        var sanitizedOutputs = sanitizeOutputs(outputPaths);
+
+        var jobAttachmentsContents = jobAttachmentsJson(
+            dependencies,
+            sanitizedOutputs
+        );
+        var attachmentJson = new File(
+            bundleRoot.fsName + "/asset_references.json"
+        );
+        attachmentJson.open("w");
+        attachmentJson.write(jobAttachmentsContents);
+        attachmentJson.close();
+
+        var startFrame = Number(
+            timeToFrames(
+                Number(renderSettings["Time Span Start"]),
+                Number(renderSettings["Use this frame rate"])
+            )
+        );
+        var endFrame =
+            Number(
+                timeToFrames(
+                    Number(renderSettings["Time Span End"]),
+                    Number(renderSettings["Use this frame rate"])
+                )
+            ) - 1; //end frame is inclusive so we subtract 1
+        var parametersContents = parameterValues(
+            renderQueueIndex,
+            app.project.file.fsName,
+            sanitizedOutputs,
+            startFrame,
+            endFrame,
+            framesPerTask,
+            multiFramePercentage
+        );
+        var parametersJson = new File(
+            bundleRoot.fsName + "/parameter_values.json"
+        );
+        parametersJson.open("w");
+        parametersJson.write(parametersContents);
+        parametersJson.close();
+
+        return bundleRoot;
+    }
+    var bundle = generateBundle();
+
+    //Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
+    // The following commented-out line will block the UI until the submission window is closed, but it doesn't require extra permissions
+    // systemCallWithErrorAlerts("deadline bundle gui-submit \"" + bundle.fsName + "\"")
+    if ($.os.toString().slice(0, 7) === "Windows") {
+        var submitScript = new File(Folder.temp.fsName + "/submit.bat");
+        var submitScriptContents =
+            'deadline bundle gui-submit "' + bundle.fsName + '"';
+        submitScript.open("w");
+        submitScript.write(
+            'deadline bundle gui-submit "' + bundle.fsName + '"'
+        );
+        submitScript.close();
+        submitScript.execute();
+    } else {
+        //On mac we fall back to directly calling the command to get around file execute permission errors
+        systemCallWithErrorAlerts(
+            'deadline bundle gui-submit "' + bundle.fsName + '"'
+        );
+    }
+}
+
+
+/**
+This file is sourced from https://github.com/ExtendScript/extendscript-es5-shim .
+
+This file is provided under the MIT license which is reproduced here:
+
+  The MIT License (MIT)
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+//json2.js
+//  json2.js
+//  2017-06-12
+//  Public Domain.
+//  NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+
+//  USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO
+//  NOT CONTROL.
+
+//  This file creates a global JSON object containing two methods: stringify
+//  and parse. This file provides the ES5 JSON capability to ES3 systems.
+//  If a project might run on IE8 or earlier, then this file should be included.
+//  This file does nothing on ES5 systems.
+
+//      JSON.stringify(value, replacer, space)
+//          value       any JavaScript value, usually an object or array.
+//          replacer    an optional parameter that determines how object
+//                      values are stringified for objects. It can be a
+//                      function or an array of strings.
+//          space       an optional parameter that specifies the indentation
+//                      of nested structures. If it is omitted, the text will
+//                      be packed without extra whitespace. If it is a number,
+//                      it will specify the number of spaces to indent at each
+//                      level. If it is a string (such as "\t" or "&nbsp;"),
+//                      it contains the characters used to indent at each level.
+//          This method produces a JSON text from a JavaScript value.
+//          When an object value is found, if the object contains a toJSON
+//          method, its toJSON method will be called and the result will be
+//          stringified. A toJSON method does not serialize: it returns the
+//          value represented by the name/value pair that should be serialized,
+//          or undefined if nothing should be serialized. The toJSON method
+//          will be passed the key associated with the value, and this will be
+//          bound to the value.
+
+//          For example, this would serialize Dates as ISO strings.
+
+//              Date.prototype.toJSON = function (key) {
+//                  function f(n) {
+//                      // Format integers to have at least two digits.
+//                      return (n < 10)
+//                          ? "0" + n
+//                          : n;
+//                  }
+//                  return this.getUTCFullYear()   + "-" +
+//                       f(this.getUTCMonth() + 1) + "-" +
+//                       f(this.getUTCDate())      + "T" +
+//                       f(this.getUTCHours())     + ":" +
+//                       f(this.getUTCMinutes())   + ":" +
+//                       f(this.getUTCSeconds())   + "Z";
+//              };
+
+//          You can provide an optional replacer method. It will be passed the
+//          key and value of each member, with this bound to the containing
+//          object. The value that is returned from your method will be
+//          serialized. If your method returns undefined, then the member will
+//          be excluded from the serialization.
+
+//          If the replacer parameter is an array of strings, then it will be
+//          used to select the members to be serialized. It filters the results
+//          such that only members with keys listed in the replacer array are
+//          stringified.
+
+//          Values that do not have JSON representations, such as undefined or
+//          functions, will not be serialized. Such values in objects will be
+//          dropped; in arrays they will be replaced with null. You can use
+//          a replacer function to replace those with JSON values.
+
+//          JSON.stringify(undefined) returns undefined.
+
+//          The optional space parameter produces a stringification of the
+//          value that is filled with line breaks and indentation to make it
+//          easier to read.
+
+//          If the space parameter is a non-empty string, then that string will
+//          be used for indentation. If the space parameter is a number, then
+//          the indentation will be that many spaces.
+
+//          Example:
+
+//          text = JSON.stringify(["e", {pluribus: "unum"}]);
+//          // text is '["e",{"pluribus":"unum"}]'
+
+//          text = JSON.stringify(["e", {pluribus: "unum"}], null, "\t");
+//          // text is '[\n\t"e",\n\t{\n\t\t"pluribus": "unum"\n\t}\n]'
+
+//          text = JSON.stringify([new Date()], function (key, value) {
+//              return this[key] instanceof Date
+//                  ? "Date(" + this[key] + ")"
+//                  : value;
+//          });
+//          // text is '["Date(---current time---)"]'
+
+//      JSON.parse(text, reviver)
+//          This method parses a JSON text to produce an object or array.
+//          It can throw a SyntaxError exception.
+
+//          The optional reviver parameter is a function that can filter and
+//          transform the results. It receives each of the keys and values,
+//          and its return value is used instead of the original value.
+//          If it returns what it received, then the structure is not modified.
+//          If it returns undefined then the member is deleted.
+
+//          Example:
+
+//          // Parse the text. Values that look like ISO date strings will
+//          // be converted to Date objects.
+
+//          myData = JSON.parse(text, function (key, value) {
+//              var a;
+//              if (typeof value === "string") {
+//                  a =
+//   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
+//                  if (a) {
+//                      return new Date(Date.UTC(
+//                         +a[1], +a[2] - 1, +a[3], +a[4], +a[5], +a[6]
+//                      ));
+//                  }
+//                  return value;
+//              }
+//          });
+
+//          myData = JSON.parse(
+//              "[\"Date(09/09/2001)\"]",
+//              function (key, value) {
+//                  var d;
+//                  if (
+//                      typeof value === "string"
+//                      && value.slice(0, 5) === "Date("
+//                      && value.slice(-1) === ")"
+//                  ) {
+//                      d = new Date(value.slice(5, -1));
+//                      if (d) {
+//                          return d;
+//                      }
+//                  }
+//                  return value;
+//              }
+//          );
+
+//  This is a reference implementation. You are free to copy, modify, or
+//  redistribute.
+
+/*jslint
+    eval, for, this
+*/
+
+/*property
+    JSON, apply, call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,
+    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,
+    lastIndex, length, parse, prototype, push, replace, slice, stringify,
+    test, toJSON, toString, valueOf
+*/
+
+
+// Create a JSON object only if one does not already exist. We create the
+// methods in a closure to avoid creating global variables.
+
+if (typeof JSON !== "object") {
+    JSON = {};
+}
+
+(function () {
+    "use strict";
+
+    var rx_one = /^[\],:{}\s]*$/;
+    var rx_two = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;
+    var rx_three = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;
+    var rx_four = /(?:^|:|,)(?:\s*\[)+/g;
+    var rx_escapable = /[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+    var rx_dangerous = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+
+    function f(n) {
+        // Format integers to have at least two digits.
+        return (n < 10)
+            ? "0" + n
+            : n;
+    }
+
+    function this_value() {
+        return this.valueOf();
+    }
+
+    if (typeof Date.prototype.toJSON !== "function") {
+
+        Date.prototype.toJSON = function () {
+
+            return isFinite(this.valueOf())
+                ? (
+                    this.getUTCFullYear()
+                    + "-"
+                    + f(this.getUTCMonth() + 1)
+                    + "-"
+                    + f(this.getUTCDate())
+                    + "T"
+                    + f(this.getUTCHours())
+                    + ":"
+                    + f(this.getUTCMinutes())
+                    + ":"
+                    + f(this.getUTCSeconds())
+                    + "Z"
+                )
+                : null;
+        };
+
+        Boolean.prototype.toJSON = this_value;
+        Number.prototype.toJSON = this_value;
+        String.prototype.toJSON = this_value;
+    }
+
+    var gap;
+    var indent;
+    var meta;
+    var rep;
+
+
+    function quote(string) {
+
+// If the string contains no control characters, no quote characters, and no
+// backslash characters, then we can safely slap some quotes around it.
+// Otherwise we must also replace the offending characters with safe escape
+// sequences.
+
+        rx_escapable.lastIndex = 0;
+        return rx_escapable.test(string)
+            ? "\"" + string.replace(rx_escapable, function (a) {
+                var c = meta[a];
+                return typeof c === "string"
+                    ? c
+                    : "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
+            }) + "\""
+            : "\"" + string + "\"";
+    }
+
+
+    function str(key, holder) {
+
+// Produce a string from holder[key].
+
+        var i;          // The loop counter.
+        var k;          // The member key.
+        var v;          // The member value.
+        var length;
+        var mind = gap;
+        var partial;
+        var value = holder[key];
+
+// If the value has a toJSON method, call it to obtain a replacement value.
+
+        if (
+            value
+            && typeof value === "object"
+            && typeof value.toJSON === "function"
+        ) {
+            value = value.toJSON(key);
+        }
+
+// If we were called with a replacer function, then call the replacer to
+// obtain a replacement value.
+
+        if (typeof rep === "function") {
+            value = rep.call(holder, key, value);
+        }
+
+// What happens next depends on the value's type.
+
+        switch (typeof value) {
+        case "string":
+            return quote(value);
+
+        case "number":
+
+// JSON numbers must be finite. Encode non-finite numbers as null.
+
+            return (isFinite(value))
+                ? String(value)
+                : "null";
+
+        case "boolean":
+        case "null":
+
+// If the value is a boolean or null, convert it to a string. Note:
+// typeof null does not produce "null". The case is included here in
+// the remote chance that this gets fixed someday.
+
+            return String(value);
+
+// If the type is "object", we might be dealing with an object or an array or
+// null.
+
+        case "object":
+
+// Due to a specification blunder in ECMAScript, typeof null is "object",
+// so watch out for that case.
+
+            if (!value) {
+                return "null";
+            }
+
+// Make an array to hold the partial results of stringifying this object value.
+
+            gap += indent;
+            partial = [];
+
+// Is the value an array?
+
+            if (Object.prototype.toString.apply(value) === "[object Array]") {
+
+// The value is an array. Stringify every element. Use null as a placeholder
+// for non-JSON values.
+
+                length = value.length;
+                for (i = 0; i < length; i += 1) {
+                    partial[i] = str(i, value) || "null";
+                }
+
+// Join all of the elements together, separated with commas, and wrap them in
+// brackets.
+
+                v = partial.length === 0
+                    ? "[]"
+                    : gap
+                        ? (
+                            "[\n"
+                            + gap
+                            + partial.join(",\n" + gap)
+                            + "\n"
+                            + mind
+                            + "]"
+                        )
+                        : "[" + partial.join(",") + "]";
+                gap = mind;
+                return v;
+            }
+
+// If the replacer is an array, use it to select the members to be stringified.
+
+            if (rep && typeof rep === "object") {
+                length = rep.length;
+                for (i = 0; i < length; i += 1) {
+                    if (typeof rep[i] === "string") {
+                        k = rep[i];
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (
+                                (gap)
+                                    ? ": "
+                                    : ":"
+                            ) + v);
+                        }
+                    }
+                }
+            } else {
+
+// Otherwise, iterate through all of the keys in the object.
+
+                for (k in value) {
+                    if (Object.prototype.hasOwnProperty.call(value, k)) {
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (
+                                (gap)
+                                    ? ": "
+                                    : ":"
+                            ) + v);
+                        }
+                    }
+                }
+            }
+
+// Join all of the member texts together, separated with commas,
+// and wrap them in braces.
+
+            v = partial.length === 0
+                ? "{}"
+                : gap
+                    ? "{\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "}"
+                    : "{" + partial.join(",") + "}";
+            gap = mind;
+            return v;
+        }
+    }
+
+// If the JSON object does not yet have a stringify method, give it one.
+
+    if (typeof JSON.stringify !== "function") {
+        meta = {    // table of character substitutions
+            "\b": "\\b",
+            "\t": "\\t",
+            "\n": "\\n",
+            "\f": "\\f",
+            "\r": "\\r",
+            "\"": "\\\"",
+            "\\": "\\\\"
+        };
+        JSON.stringify = function (value, replacer, space) {
+
+// The stringify method takes a value and an optional replacer, and an optional
+// space parameter, and returns a JSON text. The replacer can be a function
+// that can replace values, or an array of strings that will select the keys.
+// A default replacer method can be provided. Use of the space parameter can
+// produce text that is more easily readable.
+
+            var i;
+            gap = "";
+            indent = "";
+
+// If the space parameter is a number, make an indent string containing that
+// many spaces.
+
+            if (typeof space === "number") {
+                for (i = 0; i < space; i += 1) {
+                    indent += " ";
+                }
+
+// If the space parameter is a string, it will be used as the indent string.
+
+            } else if (typeof space === "string") {
+                indent = space;
+            }
+
+// If there is a replacer, it must be a function or an array.
+// Otherwise, throw an error.
+
+            rep = replacer;
+            if (replacer && typeof replacer !== "function" && (
+                typeof replacer !== "object"
+                || typeof replacer.length !== "number"
+            )) {
+                throw new Error("JSON.stringify");
+            }
+
+// Make a fake root object containing our value under the key of "".
+// Return the result of stringifying the value.
+
+            return str("", {"": value});
+        };
+    }
+
+
+// If the JSON object does not yet have a parse method, give it one.
+
+    if (typeof JSON.parse !== "function") {
+        JSON.parse = function (text, reviver) {
+
+// The parse method takes a text and an optional reviver function, and returns
+// a JavaScript value if the text is a valid JSON text.
+
+            var j;
+
+            function walk(holder, key) {
+
+// The walk method is used to recursively walk the resulting structure so
+// that modifications can be made.
+
+                var k;
+                var v;
+                var value = holder[key];
+                if (value && typeof value === "object") {
+                    for (k in value) {
+                        if (Object.prototype.hasOwnProperty.call(value, k)) {
+                            v = walk(value, k);
+                            if (v !== undefined) {
+                                value[k] = v;
+                            } else {
+                                delete value[k];
+                            }
+                        }
+                    }
+                }
+                return reviver.call(holder, key, value);
+            }
+
+
+// Parsing happens in four stages. In the first stage, we replace certain
+// Unicode characters with escape sequences. JavaScript handles many characters
+// incorrectly, either silently deleting them, or treating them as line endings.
+
+            text = String(text);
+            rx_dangerous.lastIndex = 0;
+            if (rx_dangerous.test(text)) {
+                text = text.replace(rx_dangerous, function (a) {
+                    return (
+                        "\\u"
+                        + ("0000" + a.charCodeAt(0).toString(16)).slice(-4)
+                    );
+                });
+            }
+
+// In the second stage, we run the text against regular expressions that look
+// for non-JSON patterns. We are especially concerned with "()" and "new"
+// because they can cause invocation, and "=" because it can cause mutation.
+// But just to be safe, we want to reject all unexpected forms.
+
+// We split the second stage into 4 regexp operations in order to work around
+// crippling inefficiencies in IE's and Safari's regexp engines. First we
+// replace the JSON backslash pairs with "@" (a non-JSON character). Second, we
+// replace all simple value tokens with "]" characters. Third, we delete all
+// open brackets that follow a colon or comma or that begin the text. Finally,
+// we look to see that the remaining characters are only whitespace or "]" or
+// "," or ":" or "{" or "}". If that is so, then the text is safe for eval.
+
+            if (
+                rx_one.test(
+                    text
+                        .replace(rx_two, "@")
+                        .replace(rx_three, "]")
+                        .replace(rx_four, "")
+                )
+            ) {
+
+// In the third stage we use the eval function to compile the text into a
+// JavaScript structure. The "{" operator is subject to a syntactic ambiguity
+// in JavaScript: it can begin a block or an object literal. We wrap the text
+// in parens to eliminate the ambiguity.
+
+                j = eval("(" + text + ")");
+
+// In the optional fourth stage, we recursively walk the new structure, passing
+// each name/value pair to a reviver function for possible transformation.
+
+                return (typeof reviver === "function")
+                    ? walk({"": j}, "")
+                    : j;
+            }
+
+// If the text is not JSON parseable, then a SyntaxError is thrown.
+
+            throw new SyntaxError("JSON.parse");
+        };
+    }
+}());
+
+
+
+
+
+
+// Variables for runChecks
+var safeToRunScript = true;
+var version = app.version.substring(0, app.version.indexOf('x'));
+
+function isSecurityPrefSet() {
+    var securitySetting = app.preferences.getPrefAsLong(
+        "Main Pref Section",
+        "Pref_SCRIPTING_FILE_NETWORK_SECURITY"
+    );
+    return securitySetting == 1;
+}
+
+// global constant
+if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
+    const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
+}
+if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
+    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
+}
+if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
+    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
+}
+if (typeof DEADLINECLOUD_MULTIFRAMERENDERING === "undefined") {
+    const DEADLINECLOUD_MULTIFRAMERENDERING = "multiFrame";
+}
+if (typeof DEADLINECLOUD_MULTIFRAMERENDERINGMAX === "undefined") {
+    const DEADLINECLOUD_MULTIFRAMERENDERINGMAX = "multiFrameMaxCpu";
+}
+
+/**
+ * Builds the Script UI for the Deadline Cloud Submitter
+ **/
+function buildUI(thisObj) {
+    var submitterPanel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Submit Queue to AWS Deadline Cloud", undefined, {
+        resizable: true,
+        closeButton: true
+    });
+
+    var root = submitterPanel.add("group");
+    root.orientation = "column";
+    root.alignment = ['fill', 'fill'];
+    root.alignChildren = ['fill', 'top']
+    var logoGroup = root.add("group");
+    logoGroup.alignment = 'left';
+    var logoImage = logoGroup.add("image", undefined, logoData());
+    var logoText = logoGroup.add("statictext", undefined, "AWS Deadline Cloud");
+    var arialBold24Font = ScriptUI.newFont("Arial", ScriptUI.FontStyle.BOLD, 64);
+    logoText.graphics.font = arialBold24Font;
+    var headerButtonGroup = root.add("group");
+    var focusRenderQueueButton = headerButtonGroup.add("button", undefined, "Open Render Queue");
+    focusRenderQueueButton.onClick = function() {
+        //we quickly toggle the window to make sure it gains focus
+        //sometimes this causes a flicker
+        app.project.renderQueue.showWindow(false);
+        app.project.renderQueue.showWindow(true);
+    }
+    var refreshButton = headerButtonGroup.add("button", undefined, "⟳");
+    var listGroup = root.add("panel", undefined, "");
+    listGroup.alignment = ['fill', 'fill'];
+    listGroup.alignChildren = ['fill', 'fill']
+    var list = null;
+    var controlsGroup = root.add("group", undefined, "");
+    controlsGroup.orientation = 'column';
+    controlsGroup.alignment = ['fill', 'bottom'];
+
+    var controlsPanel = controlsGroup.add("panel", undefined, "");
+    controlsPanel.alignment = ['fill', 'top'];
+
+    var separateFramesGroup = controlsPanel.add("group", undefined, "");
+    separateFramesGroup.orientation = "row";
+    separateFramesGroup.alignment = ['fill', 'top'];
+    separateFramesGroup.alignChildren = ['left', 'top'];
+    var separateFramesCheckbox = separateFramesGroup.add("checkbox", undefined, "");
+    var persistedCheckboxState = app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_SEPARATEFRAMESINTOTASKS) ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_SEPARATEFRAMESINTOTASKS) === 'true' : true;
+    separateFramesCheckbox.value = persistedCheckboxState; //Retrive the lockStateKey
+    separateFramesCheckbox.alignment = ['left', 'center'];
+    var separateFramesLabel = separateFramesGroup.add("statictext", undefined, "Separate frames into tasks (only affects image sequences)");
+    separateFramesLabel.alignment = ['left', 'top'];
+
+    var framesPerTaskOption = controlsPanel.add("group", undefined, "");
+    framesPerTaskOption.orientation = "row";
+    framesPerTaskOption.alignment = ['fill', 'top'];
+    framesPerTaskOption.alignChildren = ['left', 'top'];
+    var framesPerTaskLabel = framesPerTaskOption.add("statictext", undefined, "Images per task:");
+    framesPerTaskLabel.alignment = ['left', 'center'];
+    var persistentFramesPerTask = app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK) ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK) : "10";
+    var framesPerTaskValue = framesPerTaskOption.add("edittext", undefined, persistentFramesPerTask);
+    framesPerTaskValue.alignment = ['fill', 'top'];
+    framesPerTaskValue.onChange = function() {
+        framesPerTaskValue.text = String(Math.abs(parseInt(framesPerTaskValue.text)));
+        if (framesPerTaskValue.text == "NaN") {
+            framesPerTaskValue.text = "10";
+        }
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskValue.text);
+    }
+    framesPerTaskValue.enabled = separateFramesCheckbox.value;
+
+    separateFramesCheckbox.onClick = function() {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_SEPARATEFRAMESINTOTASKS, separateFramesCheckbox.value.toString())
+        framesPerTaskValue.enabled = separateFramesCheckbox.value;
+    }
+
+    var multiframeGroup = controlsPanel.add("group", undefined, "");
+    multiframeGroup.orientation = "row";
+    multiframeGroup.alignment = ['fill', 'top'];
+    multiframeGroup.alignChildren = ['left', 'top'];
+    var multiFrameCheckbox = multiframeGroup.add("checkbox", undefined, "");
+    var persistedCheckboxState = app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERING) ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERING) === 'true' : true;
+    multiFrameCheckbox.value = persistedCheckboxState; //Retrive the lockStateKey
+    multiFrameCheckbox.alignment = ['left', 'center'];
+    var multiFrameCheckboxLabel = multiframeGroup.add("statictext", undefined, "Multi-Frame Rendering");
+    multiFrameCheckboxLabel.alignment = ['left', 'top'];
+
+    var multiFrameMaxCPUGroup = controlsPanel.add("group", undefined, "");
+    multiFrameMaxCPUGroup.orientation = "row";
+    multiFrameMaxCPUGroup.alignment = ['fill', 'top'];
+    multiFrameMaxCPUGroup.alignChildren = ['left', 'top'];
+    var multiFrameMaxCPULabel = multiFrameMaxCPUGroup.add("statictext", undefined, "Max CPU Percentage:");
+    multiFrameMaxCPULabel.alignment = ['left', 'center'];
+    var persistentMultiFrameMax = app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERINGMAX) ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERINGMAX) : "90";
+    var multiFrameMaxCPUValue = multiFrameMaxCPUGroup.add("edittext", undefined, persistentMultiFrameMax);
+    multiFrameMaxCPUValue.alignment = ['fill', 'top'];
+    multiFrameMaxCPUValue.onChange = function() {
+        multiFrameMaxCPUValue.text = String(Math.max(1, Math.min(100, Math.abs(parseInt(multiFrameMaxCPUValue.text)))));
+        if (multiFrameMaxCPUValue.text == "NaN") {
+            multiFrameMaxCPUValue.text = "90";
+        }
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERINGMAX, multiFrameMaxCPUValue.text);
+    }
+    multiFrameMaxCPUValue.enabled = multiFrameCheckbox.value;
+
+    multiFrameCheckbox.onClick = function() {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERING, multiFrameCheckbox.value.toString())
+        multiFrameMaxCPUValue.enabled = multiFrameCheckbox.value;
+    }
+
+    var submitButton = controlsGroup.add("button", undefined, "Submit");
+    submitButton.onClick = function() {
+        SubmitSelection(list.selection, separateFramesCheckbox.value ? parseInt(framesPerTaskValue.text) : 1, multiFrameCheckbox.value ? parseInt(multiFrameMaxCPUValue.text) : 0);
+        list.selection = null;
+    }
+    submitButton.alignment = 'right';
+    submitButton.enabled = false;
+
+    function updateList() {
+        var bounds = list == null ? undefined : list.bounds;
+        var newList = listGroup.add("listbox", bounds, "", {
+            numberOfColumns: 4,
+            showHeaders: true,
+            columnTitles: ['#', 'Name', 'Frames', 'Output Path'],
+            columnWidths: [32, 160, 120, 240],
+        });
+        for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
+            var rqi = app.project.renderQueue.item(i);
+            if (rqi == null) {
+                continue;
+            }
+            if (rqi.status == RQItemStatus.RENDERING || rqi.status == RQItemStatus.WILL_CONTINUE || rqi.status == RQItemStatus.USER_STOPPED || rqi.status == RQItemStatus.ERR_STOPPED || rqi.status == RQItemStatus.DONE) {
+                continue;
+            }
+            var item = newList.add('item', i.toString());
+            item.renderQueueIndex = i;
+            item.compId = rqi.comp.id;
+            item.subItems[0].text = rqi.comp.name;
+            var renderSettings = rqi.getSettings(GetSettingsFormat.STRING_SETTABLE);
+            var startFrame = Number(timeToFrames(Number(renderSettings["Time Span Start"]), Number(renderSettings["Use this frame rate"])));
+            var endFrame = Number(timeToFrames(Number(renderSettings["Time Span End"]), Number(renderSettings["Use this frame rate"]))) - 1; //end frame is inclusive so we subtract 1
+            item.subItems[1].text = startFrame == endFrame ? startFrame.toString() : startFrame + "-" + endFrame;
+            if (rqi.numOutputModules <= 0) {
+                item.subItems[2].text = "<not set>";
+            } else if (rqi.numOutputModules == 1) {
+                var outputFile = rqi.outputModule(1).file;
+                item.subItems[2].text = outputFile == null ? "<not set>" : outputFile.fsName;
+            } else {
+                item.subItems[2].text = "<multiple output modules>";
+                item.subItems[2].graphics.foregroundColor = errorText.graphics.newPen(errorText.graphics.PenType.SOLID_COLOR, [1.0, 0.2, 0.2], 1);
+            }
+        }
+
+        if (list != null) {
+            listGroup.remove(list);
+        }
+        list = newList;
+        list.onChange = function() {
+            if (list.selection == null) {
+                updateList();
+            }
+            submitButton.enabled = list.selection != null;
+            submitButton.active = false;
+            submitButton.active = true;
+        }
+        list.selection = null;
+    }
+
+    updateList()
+
+    refreshButton.onClick = function() {
+        updateList();
+    }
+
+    submitterPanel.addEventListener('click', function() {
+        updateList();
+    }, true);
+
+    submitterPanel.layout.layout(true);
+    submitterPanel.onResizing = function() {
+        this.layout.resize();
+    }
+    return submitterPanel;
+}
+
+
+if (isSecurityPrefSet()) {
+    buildUI(this);
+} else {
+    //Print an error message and instructions for changing security preferences
+    var submitterPanel =
+        thisObj instanceof Panel ?
+        thisObj :
+        new Window(
+            "palette",
+            "Submit Queue to AWS Deadline Cloud",
+            undefined, {
+                resizable: true,
+                closeButton: true,
+            }
+        );
+    var root = submitterPanel.add("group");
+    root.orientation = "column";
+    root.alignment = ["fill", "fill"];
+    root.alignChildren = ["fill", "top"];
+    var errorText = root.add("statictext", undefined, "", {
+        multiline: true,
+    });
+    errorText.graphics.foregroundColor = errorText.graphics.newPen(
+        errorText.graphics.PenType.SOLID_COLOR,
+        [1.0, 0.2, 0.2],
+        1
+    );
+    errorText.text = "⚠ ERROR: Insufficient Script Permissions ⚠";
+    var errorText2 = root.add("statictext", undefined, "", {
+        multiline: true,
+    });
+    errorText2.text = [
+        "Please allow script networking and file access:",
+        '  1)  Go to "Edit > Preferences > Scripting & Expressions"',
+        '  2)  Check "Allow Scripts to Write Files and Access Network"',
+        "  3)  Close this window and try again.",
+    ].join("\n");
+    errorText2.alignment = ["fill", "fill"];
+    errorText2.minimumSize.height = 300;
+
+    submitterPanel.layout.layout(true);
+    submitterPanel.onResizing = function() {
+        this.layout.resize();
+    };
+}
+
