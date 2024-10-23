@@ -21,7 +21,7 @@ This submitter creates and submits [OpenJD](https://github.com/OpenJobDescriptio
 ## Installation
 
 1. Install the Deadline CLI and Deadline Cloud Monitor by running the Deadline Submitter and Deadline Monitor installers from the downloads section of the Deadline Cloud service in your AWS Console.
-2. Copy DeadlineCloudSubmitter.jsx and the DeadlineCloudSubmitter_Assets folder to the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
+2. Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
 
    Windows: Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels
    macOS: Applications/Adobe After Effects <version>/Scripts/Script UI Panels
@@ -55,6 +55,16 @@ By default, After Effects scripts are not allowed to perform these actions. To a
 Multi-Frame Rendering will spin up multiple render processes in order to fully utilize all of a render machine's resources. After Effects provides options for choosing the percentage of the CPU power to utilize but unfortunately, this functionality is broken as of After Effects 2024 such that Multi-Frame Rendering will always use 100% of your CPU if turned on.
 
 In order for Multi-Frame Rendering to work, each task needs to have multiple frames, preferably more than the number of cores on the render machines. However, if your render machines are bottle-necked by RAM, maxing out your CPU cores may result in an "Out of memory" failure. Make sure to either use machines with plenty of free ram, or only assign a few frames per task. If the option to choose CPU percentage worked, you would have also been able to prevent "Out of memory" issues with that option.
+
+### DEVELOPMENT
+
+Once you make the change of the submitter, you can run
+
+```bash
+python jsxbundler.py --source src/OpenAESubmitter.jsx --destination dist/DeadlineCloudSubmitter.jsx
+```
+
+under `deadline-cloud-for-after-effects` path to generate a new `DeadlineCloudSubmitter.jsx` file
 
 ## License
 
