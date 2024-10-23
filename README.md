@@ -1,117 +1,60 @@
-# AWS Deadline Cloud for After Effects
-
-[![pypi](https://img.shields.io/pypi/v/deadline-cloud-for-after-effects.svg?style=flat)](https://pypi.python.org/pypi/deadline-cloud-for-after-effects)
-[![python](https://img.shields.io/pypi/pyversions/deadline-cloud-for-after-effects.svg?style=flat)](https://pypi.python.org/pypi/deadline-cloud-for-after-effects)
-[![license](https://img.shields.io/pypi/l/deadline-cloud-for-after-effects.svg?style=flat)](https://github.com/aws-deadline/deadline-cloud-for-after-effects/blob/mainline/LICENSE)
+# AWS Deadline CLoud for After Effects: Dockable Submitter
 
 ### Disclaimer
+
 ---
+
 This GitHub repository is an example integration with AWS Deadline Cloud that is intended to only be used for testing and is subject to change. This code is an alpha release. It is not a commercial release and may contain bugs, errors, defects, or harmful components. Accordingly, the code in this repository is provided as-is. Use within a production environment is at your own risk!
- 
+
 Our focus is to explore a variety of software applications to ensure we have good coverage across common workflows. We prioritized making this example available earlier to users rather than being feature complete.
 
 This example has been used by at least one internal or external development team to create a series of jobs that successfully rendered. However, your mileage may vary. If you have questions or issues with this example, please start a discussion or cut an issue.
 
 ---
-AWS Deadline Cloud for After Effects is a package that allows users to create [AWS Deadline Cloud][deadline-cloud] jobs from within After Effects. Using the [Open Job Description (OpenJD) Adaptor Runtime][openjd-adaptor-runtime] this package also provides a command line application that adapts to After Effects' command line interface to support the [OpenJD specification][openjd].
+
+This submitter creates and submits [OpenJD](https://github.com/OpenJobDescription/openjd-specifications) job bundles for rendering After Effects jobs. The job bundles it creates utilizes the aerender executable that comes with After Effects
 
 [deadline-cloud]: https://docs.aws.amazon.com/deadline-cloud/latest/userguide/what-is-deadline-cloud.html
 [deadline-cloud-client]: https://github.com/aws-deadline/deadline-cloud
 [openjd]: https://github.com/OpenJobDescription/openjd-specifications/wiki
-[openjd-adaptor-runtime]: https://github.com/OpenJobDescription/openjd-adaptor-runtime-for-python
-[openjd-adaptor-runtime-lifecycle]: https://github.com/OpenJobDescription/openjd-adaptor-runtime-for-python/blob/release/README.md#adaptor-lifecycle
+
+## Installation
+
+1. Install the Deadline CLI and Deadline Cloud Monitor by running the Deadline Submitter and Deadline Monitor installers from the downloads section of the Deadline Cloud service in your AWS Console.
+2. Copy DeadlineCloudSubmitter.jsx and the DeadlineCloudSubmitter_Assets folder to the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
+
+   Windows: Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels
+   macOS: Applications/Adobe After Effects <version>/Scripts/Script UI Panels
+
+3. Restart After Effects if it was open.
 
 ## Compatibility
 
-This library requires:
-
-**Submitter:**
-1. After Effects 24.3
+1. After Effects 24
 1. Python3.9 or higher; and
 1. Windows or a MacOS operating System
 
-**Adaptor:**
-1. After Effects 24.3
-1. Python3.9 or higher; and
-1. A Windows operating system
+## Usage
 
-## Submitter
+1. Add a composition to your render queue and set up your render settings, output module, and output path.
+2. Open the Deadline Cloud Submitter Panel by clicking _Windows > DeadlineCloudSubmitter.jsx_
+3. Select your composition from the list and click _Submit_. You may need to hit the _⟳_ refresh button.
+4. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
+5. Set the farm and queue you are submitting to with the Settings button, and click _Submit_.
 
-This package provides a JavaScript based After Effects plugin that creates jobs for AWS Deadline Cloud using the [AWS Deadline Cloud client library][deadline-cloud-client]. Based on the loaded project it determines the files required, allows the user to specify render options, and builds an [OpenJD template][openjd] that defines the workflow.
+### Script Permissions
 
-## Adaptor
+This submitter requires the ability to write files and send communication over the network in order to function properly.
+By default, After Effects scripts are not allowed to perform these actions. To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
 
-The After Effects Adaptor implements the [OpenJD][openjd-adaptor-runtime] interface that allows render workloads to launch After Effects and feed it commands. This gives the following benefits:
-* a standardized render application interface,
-* sticky rendering, where the application stays open between tasks,
-  * See [adaptor IPC](https://github.com/aws-deadline/deadline-cloud-for-after-effects/blob/release/docs/adaptor_ipc.md) for more information.
-* path mapping, that enables cross-platform rendering
+    Windows: Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network.
+    macOS: Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network.
 
-Jobs created by the submitter use this adaptor by default. 
+### Render Optimization
 
-## Getting Started
+Multi-Frame Rendering will spin up multiple render processes in order to fully utilize all of a render machine's resources. After Effects provides options for choosing the percentage of the CPU power to utilize but unfortunately, this functionality is broken as of After Effects 2024 such that Multi-Frame Rendering will always use 100% of your CPU if turned on.
 
-### Adaptor
----
-The adaptor can be installed by the standard python packaging mechanisms:
-```sh
-$ pip install deadline-cloud-for-after-effects
-```
-
-After installation it can then be used as a command line tool:
-```sh
-$ afterfx-openjd --help
-```
-### Submitter
----
-### Build & Install
-
-Bundle the JSX and JS files together with the `jsxbundler.py` script:
-
-```
-python jsxbundler.py --source src/deadline/ae_submitter/OpenAESubmitter.jsx --destination dist/jsxbundle/DeadlineCloudSubmitter.jsx
-```
-
-This will create a bundle file at `dist/jsxbundle/DeadlineCloudSubmitter.jsx`.
-Copy the generated bundle file into the scripts location for After Effects.
-
-Alternatively, you can specify the output path for the bundler directly with the `--destination` option. 
-See `python jsxbundler.py --help` for details. This may require elevated permissions.
-
-The default scripts location is at `<AE_INSTALL_LOCATION>/Support Files/Scripts`. For example, on Windows this would be: `C:\Program Files\Adobe\Adobe After Effects 2023\Support Files\Scripts`
-
-### Submitter Usage
-
-Before using the script you must configure the following options in After Effects:
-
-Navigate to the `Edit` menu > `Preferences` > `Scripting & Expressions` and enable the following options:
-
-- Allow Scripts to Write Files and Access Network
-- Enable JavaScript Debugger (optional, for development)
-
-To run the script:
-
-1. Open an After Effects project.
-2. Once inside the project, navigate to the `File` Panel at the top.
-3. Under the `Scripts` sub-menu, select the `DeadlineCloudSubmitter.jsx` script to start it.
-
-## Versioning
-
-This package's version follows [Semantic Versioning 2.0](https://semver.org/), but is still considered to be in its 
-initial development, thus backwards incompatible versions are denoted by minor version bumps. To help illustrate how
-versions will increment during this initial development stage, they are described below:
-
-1. The MAJOR version is currently 0, indicating initial development. 
-2. The MINOR version is currently incremented when backwards incompatible changes are introduced to the public API. 
-3. The PATCH version is currently incremented when bug fixes or backwards compatible changes are introduced to the public API. 
-
-## Security
-
-See [CONTRIBUTING](https://github.com/aws-deadline/deadline-cloud-for-after-effects/blob/release/CONTRIBUTING.md#security-issue-notifications) for more information.
-
-## Telemetry
-
-See [telemetry](https://github.com/aws-deadline/deadline-cloud-for-after-effects/blob/release/docs/telemetry.md) for more information.
+In order for Multi-Frame Rendering to work, each task needs to have multiple frames, preferably more than the number of cores on the render machines. However, if your render machines are bottle-necked by RAM, maxing out your CPU cores may result in an "Out of memory" failure. Make sure to either use machines with plenty of free ram, or only assign a few frames per task. If the option to choose CPU percentage worked, you would have also been able to prevent "Out of memory" issues with that option.
 
 ## License
 
