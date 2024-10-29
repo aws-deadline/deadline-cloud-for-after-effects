@@ -18,10 +18,9 @@ function sanitizeOutputs(outputPaths) {
     var sanitized = [];
     for (var i = 0; i < outputPaths.length; i++) {
         var sanitizedPath = outputPaths[i]
-            .replace(/^\s+/, "")
-            .replace(/\s+$/, "")
-            .replace(/([\/\\])\s+/, "$1")
-            .replace(/\s+([\/\\])/, "$1");
+            .replace(/^\s+|\s+$/g, "") // Combined trim using alternation
+            .replace(/\s*\/\s*/g, "/") // Handle forward slashes
+            .replace(/\s*\\\s*/g, "\\"); // Handle backslashes
         if (sanitizedPath) {
             sanitized.push(sanitizedPath);
         }

@@ -64,7 +64,7 @@ Once you make the change of the submitter, you can run
 python jsxbundler.py --source src/OpenAESubmitter.jsx --destination dist/DeadlineCloudSubmitter.jsx
 ```
 
-under `deadline-cloud-for-after-effects` path to generate a new `DeadlineCloudSubmitter.jsx` file
+under `deadline-cloud-for-after-effects` path to generate a new `DeadlineCloudSubmitter.jsx` file.
 
 ## License
 
