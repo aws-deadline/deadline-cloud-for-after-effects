@@ -12,7 +12,7 @@ function parameterValues(
 ) {
     var frameStarts;
     var frameEnds;
-    var re = new RegExp(".*[#+].*"); //checks for output patterns with [####] in them which usually indicates an image sequence
+    var re = new RegExp("^[^#]*#{5}[^#]*$"); //checks for output patterns with [####] in them which usually indicates an image sequence
     var isSequence = false;
     for (var i = 0; i < outputPaths.length; i++) {
         isSequence = re.test(outputPaths[i]);

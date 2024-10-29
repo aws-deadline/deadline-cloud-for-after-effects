@@ -166,15 +166,6 @@ function __generateUtil() {
         return false;
     }
 
-    function trim(stringToTrim) {
-        /**
-         * Changes certain characters to empty string("")
-         * @param {stringToTrim} stringToTrim - Given string to replace illegal characters with "".
-         * Returns trimmed string
-         */
-        return stringToTrim.replace(/^\s+|\s+$/g, "");
-    }
-
     function trimIllegalChars(stringToTrim) {
         /**
          * Trims certain characters out of a given string
@@ -516,26 +507,6 @@ function __generateUtil() {
         }
     }
 
-    function parseCredsData(output) {
-        /**
-         * Parses output string gotten from deadline creds status command.
-         * @param {string} output: String gotten from wrappedCallSystem. Contains error code, data, and message.
-         * Returns object with authentication status for credentials, status, and api.
-         */
-        var sourceRegex = /Source:\s*(.*?)(\n|$)/;
-        var statusRegex = /Status:\s*(.*?)(\n|$)/;
-        var apiRegex = /API Availability:\s*(.*?)(\n|$)/;
-
-        var sourceMatch = getMatch(output, sourceRegex);
-        var statusMatch = getMatch(output, statusRegex);
-        var apiMatch = getMatch(output, apiRegex);
-        return {
-            "source": sourceMatch,
-            "status": statusMatch,
-            "api": apiMatch
-        };
-    }
-
     function parseListData(output) {
         /** Return object of <id>: <name> of some given CLI output. */
 
@@ -603,77 +574,6 @@ function __generateUtil() {
         return dir.fsName;
     }
 
-    function getConfigSettingData(config, setting) {
-        /**
-         * Parses config for specific setting name and returns data linked to the setting.
-         * Depending on error code found or not return return_code, error message, result.
-         * @param {Object} config: Config object.
-         * @param {string} setting: Name of the setting to get data from
-         * Returns data linked to setting name.
-         */
-        // Create a regular expression pattern with the search string
-        var regexPattern = new RegExp(setting, 'g');
-
-        // Use the match method to find all matches
-        var matches = config.match(regexPattern);
-
-        // If matches are found
-        if (matches) {
-            // Loop through each match
-            for (var i = 0; i < matches.length; i++) {
-                var match = matches[i];
-
-                // Get the index of the match
-                var matchIndex = config.indexOf(match);
-
-                // Find the index of the next line break after the match
-                var nextLineBreakIndex = config.indexOf('\n', matchIndex);
-
-                // If a line break is found after the match
-                if (nextLineBreakIndex !== -1) {
-                    // Extract the next line after the match
-                    var nextLine = config.substring(nextLineBreakIndex + 1, config.indexOf('\n', nextLineBreakIndex + 1));
-
-                    // Return the next line
-                    nextLine = nextLine.replace(/[\x0A\x0D]/g, '');
-                    nextLine = trim(nextLine);
-                    if (nextLine.length == 0) return null;
-                    return nextLine;
-                }
-            }
-        }
-        // If no match is found, return null
-        return null;
-    }
-
-    function getAWSProfileList(profilesString) {
-        /**
-         * Parses string data into an array.
-         * @param {string} profilesString: Config object.
-         * Returns array that contains all available profiles.
-         */
-        // Split the multi-line string into an array of lines
-        var lines = profilesString.split('\n');
-
-        // Create a list to store the lines
-        var lineList = [];
-
-        // Loop over each line and add it to the list
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
-            line = line.replace(/[\x0A\x0D]/g, '');
-            line = trim(line);
-            if (line == "default") {
-                continue;
-            }
-            if (line.length == 0) {
-                continue;
-            }
-            lineList.push(line);
-        }
-        return lineList;
-    }
-
     function removeLineBreak(string) {
         /**
          * Replaces illegal characters in given string
@@ -689,46 +589,6 @@ function __generateUtil() {
             }
         }
         return newStr;
-    }
-
-    function getMatchName(type, config_search_id) {
-        /**
-         * Looks for id match in list of possible id's. This for either 'Farm' or 'Queue' type.
-         * @param {string} type: String that tells function to either check in farm list or queue list
-         * @param {string} config_search_id: Farm or Queue id to check in id list.
-         * Returns Object that contains boolean(match found or not) and farm/queue name the matched id is linked to
-         */
-        var result;
-        var itemList = [];
-        itemList.length = 0;
-        if (type == "Farm") {
-            logger.info('Retrieving data from dcProperties', scriptFileUtilName);
-            result = dcUtil.invertObject(dcProperties.farmList.get());
-        } else {
-            result = dcUtil.invertObject(dcProperties.queueList.get());
-        }
-        var keys = Object.keys(result);
-        for (var i = 0; i < keys.length; i++) {
-            var key = keys[i];
-            itemList.push(key);
-            result[key] = result[key].replace(/[\x0A\x0D]/g, '');
-            if (config_search_id.indexOf(result[key]) !== -1) {
-                logger.debug("Match found", scriptFileUtilName);
-                return {
-                    "match": true,
-                    "keyName": key
-                };
-            }
-            if (config_search_id.length === 0) {
-                logger.debug("No default setting value found in config", scriptFileUtilName);
-                return null;
-            }
-        }
-        logger.debug("No Match found", scriptFileUtilName);
-        return {
-            "match": false,
-            "keyName": null
-        };
     }
 
     function setListBoxSelection(listbox, configData) {
@@ -1001,7 +861,6 @@ function __generateUtil() {
         "deadlineStringToArray": deadlineStringToArray,
         "toBooleanString": toBooleanString,
         "parseBool": parseBool,
-        "trim": trim,
         "trimIllegalChars": trimIllegalChars,
         "sliderTextSync": sliderTextSync,
         "changeTextValue": changeTextValue,
@@ -1017,13 +876,9 @@ function __generateUtil() {
         "wrappedCallSystem": wrappedCallSystem,
         "parseErrorData": parseErrorData,
         "parseVersionData": parseVersionData,
-        "parseCredsData": parseCredsData,
         "createExportBundleDir": createExportBundleDir,
         "parseListData": parseListData,
         "removeLineBreak": removeLineBreak,
-        "getConfigSettingData": getConfigSettingData,
-        "getMatchName": getMatchName,
-        "getAWSProfileList": getAWSProfileList,
         "setListBoxSelection": setListBoxSelection,
         "getPath": getPath,
         "getPartialExportDir": getPartialExportDir,
@@ -1242,7 +1097,7 @@ function parameterValues(
 ) {
     var frameStarts;
     var frameEnds;
-    var re = new RegExp(".*[#+].*"); //checks for output patterns with [####] in them which usually indicates an image sequence
+    var re = new RegExp("^[^#]*#{5}[^#]*$"); //checks for output patterns with [####] in them which usually indicates an image sequence
     var isSequence = false;
     for (var i = 0; i < outputPaths.length; i++) {
         isSequence = re.test(outputPaths[i]);

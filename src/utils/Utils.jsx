@@ -162,15 +162,6 @@ function __generateUtil() {
         return false;
     }
 
-    function trim(stringToTrim) {
-        /**
-         * Changes certain characters to empty string("")
-         * @param {stringToTrim} stringToTrim - Given string to replace illegal characters with "".
-         * Returns trimmed string
-         */
-        return stringToTrim.replace(/^\s+|\s+$/g, "");
-    }
-
     function trimIllegalChars(stringToTrim) {
         /**
          * Trims certain characters out of a given string
@@ -510,26 +501,6 @@ function __generateUtil() {
             "message": message,
             "result": result
         }
-    }
-
-    function parseCredsData(output) {
-        /**
-         * Parses output string gotten from deadline creds status command.
-         * @param {string} output: String gotten from wrappedCallSystem. Contains error code, data, and message.
-         * Returns object with authentication status for credentials, status, and api.
-         */
-        var sourceRegex = /Source:\s*(.*?)(\n|$)/;
-        var statusRegex = /Status:\s*(.*?)(\n|$)/;
-        var apiRegex = /API Availability:\s*(.*?)(\n|$)/;
-
-        var sourceMatch = getMatch(output, sourceRegex);
-        var statusMatch = getMatch(output, statusRegex);
-        var apiMatch = getMatch(output, apiRegex);
-        return {
-            "source": sourceMatch,
-            "status": statusMatch,
-            "api": apiMatch
-        };
     }
 
     function parseListData(output) {
@@ -886,7 +857,6 @@ function __generateUtil() {
         "deadlineStringToArray": deadlineStringToArray,
         "toBooleanString": toBooleanString,
         "parseBool": parseBool,
-        "trim": trim,
         "trimIllegalChars": trimIllegalChars,
         "sliderTextSync": sliderTextSync,
         "changeTextValue": changeTextValue,
@@ -902,7 +872,6 @@ function __generateUtil() {
         "wrappedCallSystem": wrappedCallSystem,
         "parseErrorData": parseErrorData,
         "parseVersionData": parseVersionData,
-        "parseCredsData": parseCredsData,
         "createExportBundleDir": createExportBundleDir,
         "parseListData": parseListData,
         "removeLineBreak": removeLineBreak,
