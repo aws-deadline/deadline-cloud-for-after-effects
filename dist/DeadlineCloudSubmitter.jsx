@@ -3,7 +3,6 @@
 // Please change the source files and regenerate this file instead.
 
 var scriptFolder = Folder.current.fsName;
-alert("scriptFolder is " + scriptFolder)
 
 function timeToFrames(time, fps) {
     //temporarily change display format so we can convert seconds to frames
@@ -1092,8 +1091,7 @@ function parameterValues(
     outputPaths,
     startFrame,
     endFrame,
-    framesPerTask,
-    multiFramePercentage
+    framesPerTask
 ) {
     var frameStarts;
     var frameEnds;
@@ -1166,11 +1164,7 @@ function parameterValues(
             {
                 name: "FrameEnds",
                 value: frameEnds,
-            },
-            {
-                name: "MultiFrameMaxCPU",
-                value: multiFramePercentage,
-            },
+            }
         ],
     });
 }
@@ -1253,7 +1247,7 @@ function findJobAttachments(rootComp) {
 /**
  * Submit the selected render queue item
  **/
-function SubmitSelection(selection, framesPerTask, multiFramePercentage) {
+function SubmitSelection(selection, framesPerTask) {
     // first we must verify that our selection is valid
     if (selection == null) {
         adcAlert("Error: No selection");
@@ -1392,7 +1386,6 @@ function SubmitSelection(selection, framesPerTask, multiFramePercentage) {
             startFrame,
             endFrame,
             framesPerTask,
-            multiFramePercentage
         );
         var parametersJson = new File(
             bundleRoot.fsName + "/parameter_values.json"
@@ -1601,7 +1594,7 @@ if (typeof JSON !== "object") {
     JSON = {};
 }
 
-(function () {
+(function() {
     "use strict";
 
     var rx_one = /^[\],:{}\s]*$/;
@@ -1613,9 +1606,9 @@ if (typeof JSON !== "object") {
 
     function f(n) {
         // Format integers to have at least two digits.
-        return (n < 10)
-            ? "0" + n
-            : n;
+        return (n < 10) ?
+            "0" + n :
+            n;
     }
 
     function this_value() {
@@ -1624,24 +1617,24 @@ if (typeof JSON !== "object") {
 
     if (typeof Date.prototype.toJSON !== "function") {
 
-        Date.prototype.toJSON = function () {
+        Date.prototype.toJSON = function() {
 
-            return isFinite(this.valueOf())
-                ? (
-                    this.getUTCFullYear()
-                    + "-"
-                    + f(this.getUTCMonth() + 1)
-                    + "-"
-                    + f(this.getUTCDate())
-                    + "T"
-                    + f(this.getUTCHours())
-                    + ":"
-                    + f(this.getUTCMinutes())
-                    + ":"
-                    + f(this.getUTCSeconds())
-                    + "Z"
-                )
-                : null;
+            return isFinite(this.valueOf()) ?
+                (
+                    this.getUTCFullYear() +
+                    "-" +
+                    f(this.getUTCMonth() + 1) +
+                    "-" +
+                    f(this.getUTCDate()) +
+                    "T" +
+                    f(this.getUTCHours()) +
+                    ":" +
+                    f(this.getUTCMinutes()) +
+                    ":" +
+                    f(this.getUTCSeconds()) +
+                    "Z"
+                ) :
+                null;
         };
 
         Boolean.prototype.toJSON = this_value;
@@ -1657,175 +1650,175 @@ if (typeof JSON !== "object") {
 
     function quote(string) {
 
-// If the string contains no control characters, no quote characters, and no
-// backslash characters, then we can safely slap some quotes around it.
-// Otherwise we must also replace the offending characters with safe escape
-// sequences.
+        // If the string contains no control characters, no quote characters, and no
+        // backslash characters, then we can safely slap some quotes around it.
+        // Otherwise we must also replace the offending characters with safe escape
+        // sequences.
 
         rx_escapable.lastIndex = 0;
-        return rx_escapable.test(string)
-            ? "\"" + string.replace(rx_escapable, function (a) {
+        return rx_escapable.test(string) ?
+            "\"" + string.replace(rx_escapable, function(a) {
                 var c = meta[a];
-                return typeof c === "string"
-                    ? c
-                    : "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
-            }) + "\""
-            : "\"" + string + "\"";
+                return typeof c === "string" ?
+                    c :
+                    "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
+            }) + "\"" :
+            "\"" + string + "\"";
     }
 
 
     function str(key, holder) {
 
-// Produce a string from holder[key].
+        // Produce a string from holder[key].
 
-        var i;          // The loop counter.
-        var k;          // The member key.
-        var v;          // The member value.
+        var i; // The loop counter.
+        var k; // The member key.
+        var v; // The member value.
         var length;
         var mind = gap;
         var partial;
         var value = holder[key];
 
-// If the value has a toJSON method, call it to obtain a replacement value.
+        // If the value has a toJSON method, call it to obtain a replacement value.
 
         if (
-            value
-            && typeof value === "object"
-            && typeof value.toJSON === "function"
+            value &&
+            typeof value === "object" &&
+            typeof value.toJSON === "function"
         ) {
             value = value.toJSON(key);
         }
 
-// If we were called with a replacer function, then call the replacer to
-// obtain a replacement value.
+        // If we were called with a replacer function, then call the replacer to
+        // obtain a replacement value.
 
         if (typeof rep === "function") {
             value = rep.call(holder, key, value);
         }
 
-// What happens next depends on the value's type.
+        // What happens next depends on the value's type.
 
         switch (typeof value) {
-        case "string":
-            return quote(value);
+            case "string":
+                return quote(value);
 
-        case "number":
+            case "number":
 
-// JSON numbers must be finite. Encode non-finite numbers as null.
+                // JSON numbers must be finite. Encode non-finite numbers as null.
 
-            return (isFinite(value))
-                ? String(value)
-                : "null";
+                return (isFinite(value)) ?
+                    String(value) :
+                    "null";
 
-        case "boolean":
-        case "null":
+            case "boolean":
+            case "null":
 
-// If the value is a boolean or null, convert it to a string. Note:
-// typeof null does not produce "null". The case is included here in
-// the remote chance that this gets fixed someday.
+                // If the value is a boolean or null, convert it to a string. Note:
+                // typeof null does not produce "null". The case is included here in
+                // the remote chance that this gets fixed someday.
 
-            return String(value);
+                return String(value);
 
-// If the type is "object", we might be dealing with an object or an array or
-// null.
+                // If the type is "object", we might be dealing with an object or an array or
+                // null.
 
-        case "object":
+            case "object":
 
-// Due to a specification blunder in ECMAScript, typeof null is "object",
-// so watch out for that case.
+                // Due to a specification blunder in ECMAScript, typeof null is "object",
+                // so watch out for that case.
 
-            if (!value) {
-                return "null";
-            }
-
-// Make an array to hold the partial results of stringifying this object value.
-
-            gap += indent;
-            partial = [];
-
-// Is the value an array?
-
-            if (Object.prototype.toString.apply(value) === "[object Array]") {
-
-// The value is an array. Stringify every element. Use null as a placeholder
-// for non-JSON values.
-
-                length = value.length;
-                for (i = 0; i < length; i += 1) {
-                    partial[i] = str(i, value) || "null";
+                if (!value) {
+                    return "null";
                 }
 
-// Join all of the elements together, separated with commas, and wrap them in
-// brackets.
+                // Make an array to hold the partial results of stringifying this object value.
 
-                v = partial.length === 0
-                    ? "[]"
-                    : gap
-                        ? (
-                            "[\n"
-                            + gap
-                            + partial.join(",\n" + gap)
-                            + "\n"
-                            + mind
-                            + "]"
-                        )
-                        : "[" + partial.join(",") + "]";
+                gap += indent;
+                partial = [];
+
+                // Is the value an array?
+
+                if (Object.prototype.toString.apply(value) === "[object Array]") {
+
+                    // The value is an array. Stringify every element. Use null as a placeholder
+                    // for non-JSON values.
+
+                    length = value.length;
+                    for (i = 0; i < length; i += 1) {
+                        partial[i] = str(i, value) || "null";
+                    }
+
+                    // Join all of the elements together, separated with commas, and wrap them in
+                    // brackets.
+
+                    v = partial.length === 0 ?
+                        "[]" :
+                        gap ?
+                        (
+                            "[\n" +
+                            gap +
+                            partial.join(",\n" + gap) +
+                            "\n" +
+                            mind +
+                            "]"
+                        ) :
+                        "[" + partial.join(",") + "]";
+                    gap = mind;
+                    return v;
+                }
+
+                // If the replacer is an array, use it to select the members to be stringified.
+
+                if (rep && typeof rep === "object") {
+                    length = rep.length;
+                    for (i = 0; i < length; i += 1) {
+                        if (typeof rep[i] === "string") {
+                            k = rep[i];
+                            v = str(k, value);
+                            if (v) {
+                                partial.push(quote(k) + (
+                                    (gap) ?
+                                    ": " :
+                                    ":"
+                                ) + v);
+                            }
+                        }
+                    }
+                } else {
+
+                    // Otherwise, iterate through all of the keys in the object.
+
+                    for (k in value) {
+                        if (Object.prototype.hasOwnProperty.call(value, k)) {
+                            v = str(k, value);
+                            if (v) {
+                                partial.push(quote(k) + (
+                                    (gap) ?
+                                    ": " :
+                                    ":"
+                                ) + v);
+                            }
+                        }
+                    }
+                }
+
+                // Join all of the member texts together, separated with commas,
+                // and wrap them in braces.
+
+                v = partial.length === 0 ?
+                    "{}" :
+                    gap ?
+                    "{\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "}" :
+                    "{" + partial.join(",") + "}";
                 gap = mind;
                 return v;
-            }
-
-// If the replacer is an array, use it to select the members to be stringified.
-
-            if (rep && typeof rep === "object") {
-                length = rep.length;
-                for (i = 0; i < length; i += 1) {
-                    if (typeof rep[i] === "string") {
-                        k = rep[i];
-                        v = str(k, value);
-                        if (v) {
-                            partial.push(quote(k) + (
-                                (gap)
-                                    ? ": "
-                                    : ":"
-                            ) + v);
-                        }
-                    }
-                }
-            } else {
-
-// Otherwise, iterate through all of the keys in the object.
-
-                for (k in value) {
-                    if (Object.prototype.hasOwnProperty.call(value, k)) {
-                        v = str(k, value);
-                        if (v) {
-                            partial.push(quote(k) + (
-                                (gap)
-                                    ? ": "
-                                    : ":"
-                            ) + v);
-                        }
-                    }
-                }
-            }
-
-// Join all of the member texts together, separated with commas,
-// and wrap them in braces.
-
-            v = partial.length === 0
-                ? "{}"
-                : gap
-                    ? "{\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "}"
-                    : "{" + partial.join(",") + "}";
-            gap = mind;
-            return v;
         }
     }
 
-// If the JSON object does not yet have a stringify method, give it one.
+    // If the JSON object does not yet have a stringify method, give it one.
 
     if (typeof JSON.stringify !== "function") {
-        meta = {    // table of character substitutions
+        meta = { // table of character substitutions
             "\b": "\\b",
             "\t": "\\t",
             "\n": "\\n",
@@ -1834,65 +1827,67 @@ if (typeof JSON !== "object") {
             "\"": "\\\"",
             "\\": "\\\\"
         };
-        JSON.stringify = function (value, replacer, space) {
+        JSON.stringify = function(value, replacer, space) {
 
-// The stringify method takes a value and an optional replacer, and an optional
-// space parameter, and returns a JSON text. The replacer can be a function
-// that can replace values, or an array of strings that will select the keys.
-// A default replacer method can be provided. Use of the space parameter can
-// produce text that is more easily readable.
+            // The stringify method takes a value and an optional replacer, and an optional
+            // space parameter, and returns a JSON text. The replacer can be a function
+            // that can replace values, or an array of strings that will select the keys.
+            // A default replacer method can be provided. Use of the space parameter can
+            // produce text that is more easily readable.
 
             var i;
             gap = "";
             indent = "";
 
-// If the space parameter is a number, make an indent string containing that
-// many spaces.
+            // If the space parameter is a number, make an indent string containing that
+            // many spaces.
 
             if (typeof space === "number") {
                 for (i = 0; i < space; i += 1) {
                     indent += " ";
                 }
 
-// If the space parameter is a string, it will be used as the indent string.
+                // If the space parameter is a string, it will be used as the indent string.
 
             } else if (typeof space === "string") {
                 indent = space;
             }
 
-// If there is a replacer, it must be a function or an array.
-// Otherwise, throw an error.
+            // If there is a replacer, it must be a function or an array.
+            // Otherwise, throw an error.
 
             rep = replacer;
             if (replacer && typeof replacer !== "function" && (
-                typeof replacer !== "object"
-                || typeof replacer.length !== "number"
-            )) {
+                    typeof replacer !== "object" ||
+                    typeof replacer.length !== "number"
+                )) {
                 throw new Error("JSON.stringify");
             }
 
-// Make a fake root object containing our value under the key of "".
-// Return the result of stringifying the value.
+            // Make a fake root object containing our value under the key of "".
+            // Return the result of stringifying the value.
 
-            return str("", {"": value});
+            return str("", {
+                "": value
+            });
         };
     }
 
 
-// If the JSON object does not yet have a parse method, give it one.
+    // If the JSON object does not yet have a parse method, give it one.
 
     if (typeof JSON.parse !== "function") {
-        JSON.parse = function (text, reviver) {
+        JSON.parse = function(text, reviver) {
 
-// The parse method takes a text and an optional reviver function, and returns
-// a JavaScript value if the text is a valid JSON text.
+            // The parse method takes a text and an optional reviver function, and returns
+            // a JavaScript value if the text is a valid JSON text.
 
             var j;
 
             function walk(holder, key) {
 
-// The walk method is used to recursively walk the resulting structure so
-// that modifications can be made.
+                // The walk method is used to recursively walk the resulting structure so
+                // that modifications can be made.
 
                 var k;
                 var v;
@@ -1913,59 +1908,61 @@ if (typeof JSON !== "object") {
             }
 
 
-// Parsing happens in four stages. In the first stage, we replace certain
-// Unicode characters with escape sequences. JavaScript handles many characters
-// incorrectly, either silently deleting them, or treating them as line endings.
+            // Parsing happens in four stages. In the first stage, we replace certain
+            // Unicode characters with escape sequences. JavaScript handles many characters
+            // incorrectly, either silently deleting them, or treating them as line endings.
 
             text = String(text);
             rx_dangerous.lastIndex = 0;
             if (rx_dangerous.test(text)) {
-                text = text.replace(rx_dangerous, function (a) {
+                text = text.replace(rx_dangerous, function(a) {
                     return (
-                        "\\u"
-                        + ("0000" + a.charCodeAt(0).toString(16)).slice(-4)
+                        "\\u" +
+                        ("0000" + a.charCodeAt(0).toString(16)).slice(-4)
                     );
                 });
             }
 
-// In the second stage, we run the text against regular expressions that look
-// for non-JSON patterns. We are especially concerned with "()" and "new"
-// because they can cause invocation, and "=" because it can cause mutation.
-// But just to be safe, we want to reject all unexpected forms.
+            // In the second stage, we run the text against regular expressions that look
+            // for non-JSON patterns. We are especially concerned with "()" and "new"
+            // because they can cause invocation, and "=" because it can cause mutation.
+            // But just to be safe, we want to reject all unexpected forms.
 
-// We split the second stage into 4 regexp operations in order to work around
-// crippling inefficiencies in IE's and Safari's regexp engines. First we
-// replace the JSON backslash pairs with "@" (a non-JSON character). Second, we
-// replace all simple value tokens with "]" characters. Third, we delete all
-// open brackets that follow a colon or comma or that begin the text. Finally,
-// we look to see that the remaining characters are only whitespace or "]" or
-// "," or ":" or "{" or "}". If that is so, then the text is safe for eval.
+            // We split the second stage into 4 regexp operations in order to work around
+            // crippling inefficiencies in IE's and Safari's regexp engines. First we
+            // replace the JSON backslash pairs with "@" (a non-JSON character). Second, we
+            // replace all simple value tokens with "]" characters. Third, we delete all
+            // open brackets that follow a colon or comma or that begin the text. Finally,
+            // we look to see that the remaining characters are only whitespace or "]" or
+            // "," or ":" or "{" or "}". If that is so, then the text is safe for eval.
 
             if (
                 rx_one.test(
                     text
-                        .replace(rx_two, "@")
-                        .replace(rx_three, "]")
-                        .replace(rx_four, "")
+                    .replace(rx_two, "@")
+                    .replace(rx_three, "]")
+                    .replace(rx_four, "")
                 )
             ) {
 
-// In the third stage we use the eval function to compile the text into a
-// JavaScript structure. The "{" operator is subject to a syntactic ambiguity
-// in JavaScript: it can begin a block or an object literal. We wrap the text
-// in parens to eliminate the ambiguity.
+                // In the third stage we use the eval function to compile the text into a
+                // JavaScript structure. The "{" operator is subject to a syntactic ambiguity
+                // in JavaScript: it can begin a block or an object literal. We wrap the text
+                // in parens to eliminate the ambiguity.
 
                 j = eval("(" + text + ")");
 
-// In the optional fourth stage, we recursively walk the new structure, passing
-// each name/value pair to a reviver function for possible transformation.
+                // In the optional fourth stage, we recursively walk the new structure, passing
+                // each name/value pair to a reviver function for possible transformation.
 
-                return (typeof reviver === "function")
-                    ? walk({"": j}, "")
-                    : j;
+                return (typeof reviver === "function") ?
+                    walk({
+                        "": j
+                    }, "") :
+                    j;
             }
 
-// If the text is not JSON parseable, then a SyntaxError is thrown.
+            // If the text is not JSON parseable, then a SyntaxError is thrown.
 
             throw new SyntaxError("JSON.parse");
         };
@@ -1999,20 +1996,13 @@ if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
 if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
     const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
 }
-if (typeof DEADLINECLOUD_MULTIFRAMERENDERING === "undefined") {
-    const DEADLINECLOUD_MULTIFRAMERENDERING = "multiFrame";
-}
-if (typeof DEADLINECLOUD_MULTIFRAMERENDERINGMAX === "undefined") {
-    const DEADLINECLOUD_MULTIFRAMERENDERINGMAX = "multiFrameMaxCpu";
-}
 
 /**
  * Builds the Script UI for the Deadline Cloud Submitter
  **/
 function buildUI(thisObj) {
-    var submitterPanel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Submit Queue to AWS Deadline Cloud", undefined, {
-        resizable: true,
-        closeButton: true
+    var submitterPanel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Submit to AWS Deadline Cloud", undefined, {
+        resizable: true
     });
 
     var root = submitterPanel.add("group");
@@ -2079,43 +2069,9 @@ function buildUI(thisObj) {
         framesPerTaskValue.enabled = separateFramesCheckbox.value;
     }
 
-    var multiframeGroup = controlsPanel.add("group", undefined, "");
-    multiframeGroup.orientation = "row";
-    multiframeGroup.alignment = ['fill', 'top'];
-    multiframeGroup.alignChildren = ['left', 'top'];
-    var multiFrameCheckbox = multiframeGroup.add("checkbox", undefined, "");
-    var persistedCheckboxState = app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERING) ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERING) === 'true' : true;
-    multiFrameCheckbox.value = persistedCheckboxState; //Retrive the lockStateKey
-    multiFrameCheckbox.alignment = ['left', 'center'];
-    var multiFrameCheckboxLabel = multiframeGroup.add("statictext", undefined, "Multi-Frame Rendering");
-    multiFrameCheckboxLabel.alignment = ['left', 'top'];
-
-    var multiFrameMaxCPUGroup = controlsPanel.add("group", undefined, "");
-    multiFrameMaxCPUGroup.orientation = "row";
-    multiFrameMaxCPUGroup.alignment = ['fill', 'top'];
-    multiFrameMaxCPUGroup.alignChildren = ['left', 'top'];
-    var multiFrameMaxCPULabel = multiFrameMaxCPUGroup.add("statictext", undefined, "Max CPU Percentage:");
-    multiFrameMaxCPULabel.alignment = ['left', 'center'];
-    var persistentMultiFrameMax = app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERINGMAX) ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERINGMAX) : "90";
-    var multiFrameMaxCPUValue = multiFrameMaxCPUGroup.add("edittext", undefined, persistentMultiFrameMax);
-    multiFrameMaxCPUValue.alignment = ['fill', 'top'];
-    multiFrameMaxCPUValue.onChange = function() {
-        multiFrameMaxCPUValue.text = String(Math.max(1, Math.min(100, Math.abs(parseInt(multiFrameMaxCPUValue.text)))));
-        if (multiFrameMaxCPUValue.text == "NaN") {
-            multiFrameMaxCPUValue.text = "90";
-        }
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERINGMAX, multiFrameMaxCPUValue.text);
-    }
-    multiFrameMaxCPUValue.enabled = multiFrameCheckbox.value;
-
-    multiFrameCheckbox.onClick = function() {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERING, multiFrameCheckbox.value.toString())
-        multiFrameMaxCPUValue.enabled = multiFrameCheckbox.value;
-    }
-
     var submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
-        SubmitSelection(list.selection, separateFramesCheckbox.value ? parseInt(framesPerTaskValue.text) : 1, multiFrameCheckbox.value ? parseInt(multiFrameMaxCPUValue.text) : 0);
+        SubmitSelection(list.selection, separateFramesCheckbox.value ? parseInt(framesPerTaskValue.text) : 1);
         list.selection = null;
     }
     submitButton.alignment = 'right';
@@ -2182,9 +2138,16 @@ function buildUI(thisObj) {
     }, true);
 
     submitterPanel.layout.layout(true);
+
     submitterPanel.onResizing = function() {
         this.layout.resize();
     }
+    if (!(thisObj instanceof Panel)) {
+        submitterPanel.center()
+        submitterPanel.show();
+        submitterPanel.update();
+    }
+
     return submitterPanel;
 }
 
@@ -2234,4 +2197,3 @@ if (isSecurityPrefSet()) {
         this.layout.resize();
     };
 }
-

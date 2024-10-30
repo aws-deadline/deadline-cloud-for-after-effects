@@ -8,20 +8,13 @@ if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
 if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
     const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
 }
-if (typeof DEADLINECLOUD_MULTIFRAMERENDERING === "undefined") {
-    const DEADLINECLOUD_MULTIFRAMERENDERING = "multiFrame";
-}
-if (typeof DEADLINECLOUD_MULTIFRAMERENDERINGMAX === "undefined") {
-    const DEADLINECLOUD_MULTIFRAMERENDERINGMAX = "multiFrameMaxCpu";
-}
 
 /**
  * Builds the Script UI for the Deadline Cloud Submitter
  **/
 function buildUI(thisObj) {
-    var submitterPanel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Submit Queue to AWS Deadline Cloud", undefined, {
-        resizable: true,
-        closeButton: true
+    var submitterPanel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Submit to AWS Deadline Cloud", undefined, {
+        resizable: true
     });
 
     var root = submitterPanel.add("group");
@@ -88,43 +81,9 @@ function buildUI(thisObj) {
         framesPerTaskValue.enabled = separateFramesCheckbox.value;
     }
 
-    var multiframeGroup = controlsPanel.add("group", undefined, "");
-    multiframeGroup.orientation = "row";
-    multiframeGroup.alignment = ['fill', 'top'];
-    multiframeGroup.alignChildren = ['left', 'top'];
-    var multiFrameCheckbox = multiframeGroup.add("checkbox", undefined, "");
-    var persistedCheckboxState = app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERING) ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERING) === 'true' : true;
-    multiFrameCheckbox.value = persistedCheckboxState; //Retrive the lockStateKey
-    multiFrameCheckbox.alignment = ['left', 'center'];
-    var multiFrameCheckboxLabel = multiframeGroup.add("statictext", undefined, "Multi-Frame Rendering");
-    multiFrameCheckboxLabel.alignment = ['left', 'top'];
-
-    var multiFrameMaxCPUGroup = controlsPanel.add("group", undefined, "");
-    multiFrameMaxCPUGroup.orientation = "row";
-    multiFrameMaxCPUGroup.alignment = ['fill', 'top'];
-    multiFrameMaxCPUGroup.alignChildren = ['left', 'top'];
-    var multiFrameMaxCPULabel = multiFrameMaxCPUGroup.add("statictext", undefined, "Max CPU Percentage:");
-    multiFrameMaxCPULabel.alignment = ['left', 'center'];
-    var persistentMultiFrameMax = app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERINGMAX) ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERINGMAX) : "90";
-    var multiFrameMaxCPUValue = multiFrameMaxCPUGroup.add("edittext", undefined, persistentMultiFrameMax);
-    multiFrameMaxCPUValue.alignment = ['fill', 'top'];
-    multiFrameMaxCPUValue.onChange = function() {
-        multiFrameMaxCPUValue.text = String(Math.max(1, Math.min(100, Math.abs(parseInt(multiFrameMaxCPUValue.text)))));
-        if (multiFrameMaxCPUValue.text == "NaN") {
-            multiFrameMaxCPUValue.text = "90";
-        }
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERINGMAX, multiFrameMaxCPUValue.text);
-    }
-    multiFrameMaxCPUValue.enabled = multiFrameCheckbox.value;
-
-    multiFrameCheckbox.onClick = function() {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTIFRAMERENDERING, multiFrameCheckbox.value.toString())
-        multiFrameMaxCPUValue.enabled = multiFrameCheckbox.value;
-    }
-
     var submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
-        SubmitSelection(list.selection, separateFramesCheckbox.value ? parseInt(framesPerTaskValue.text) : 1, multiFrameCheckbox.value ? parseInt(multiFrameMaxCPUValue.text) : 0);
+        SubmitSelection(list.selection, separateFramesCheckbox.value ? parseInt(framesPerTaskValue.text) : 1);
         list.selection = null;
     }
     submitButton.alignment = 'right';
@@ -191,8 +150,15 @@ function buildUI(thisObj) {
     }, true);
 
     submitterPanel.layout.layout(true);
+
     submitterPanel.onResizing = function() {
         this.layout.resize();
     }
+    if (!(thisObj instanceof Panel)) {
+        submitterPanel.center()
+        submitterPanel.show();
+        submitterPanel.update();
+    }
+
     return submitterPanel;
 }

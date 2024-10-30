@@ -52,14 +52,6 @@ parameterDefinitions:
       label: Ending Frames
       groupLabel: Frame Range
     default: 1-10
-  - name: MultiFrameMaxCPU
-    type: INT
-    userInterface:
-      control: SPIN_BOX
-      label: Multi-Frame Max CPU Percentage
-      groupLabel: Source
-    description: The maximum percentage of the CPU Multi-Frame Rendering is allowed to use. Set to 0 to disable Multi-Frame Rendering. Max is 100.
-    default: 90
 
   # Hidden Controls
   - name: JobScriptDir
@@ -105,5 +97,4 @@ steps:
             - '{{Param.RenderQueueIndex}}'
             - '{{Task.Param.FrameStart}}'
             - '{{Task.Param.FrameEnd}}'
-            - '{{Param.MultiFrameMaxCPU}}'
             - '{{Param.OutputFiles}}'

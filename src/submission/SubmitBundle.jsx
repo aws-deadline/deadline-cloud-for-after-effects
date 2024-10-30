@@ -1,7 +1,7 @@
 /**
  * Submit the selected render queue item
  **/
-function SubmitSelection(selection, framesPerTask, multiFramePercentage) {
+function SubmitSelection(selection, framesPerTask) {
     // first we must verify that our selection is valid
     if (selection == null) {
         adcAlert("Error: No selection");
@@ -140,7 +140,6 @@ function SubmitSelection(selection, framesPerTask, multiFramePercentage) {
             startFrame,
             endFrame,
             framesPerTask,
-            multiFramePercentage
         );
         var parametersJson = new File(
             bundleRoot.fsName + "/parameter_values.json"

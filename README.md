@@ -1,4 +1,4 @@
-# AWS Deadline CLoud for After Effects: Dockable Submitter
+# AWS Deadline Cloud for After Effects
 
 ### Disclaimer
 
@@ -12,7 +12,7 @@ This example has been used by at least one internal or external development team
 
 ---
 
-This submitter creates and submits [OpenJD](https://github.com/OpenJobDescription/openjd-specifications) job bundles for rendering After Effects jobs. The job bundles it creates utilizes the aerender executable that comes with After Effects
+This submitter creates and submits [OpenJD](https://github.com/OpenJobDescription/openjd-specifications) job bundles for rendering After Effects jobs. The job bundles it creates utilizes the `aerender` executable that comes with After Effects
 
 [deadline-cloud]: https://docs.aws.amazon.com/deadline-cloud/latest/userguide/what-is-deadline-cloud.html
 [deadline-cloud-client]: https://github.com/aws-deadline/deadline-cloud
@@ -20,19 +20,26 @@ This submitter creates and submits [OpenJD](https://github.com/OpenJobDescriptio
 
 ## Installation
 
-1. Install the Deadline CLI and Deadline Cloud Monitor by running the Deadline Submitter and Deadline Monitor installers from the downloads section of the Deadline Cloud service in your AWS Console.
-2. Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
+1.  Install the Deadline CLI and Deadline Cloud Monitor by running the Deadline Submitter and Deadline Monitor installers from the downloads section of the Deadline Cloud service in your AWS Console.
 
-   Windows: Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels
-   macOS: Applications/Adobe After Effects <version>/Scripts/Script UI Panels
+2.  This submitter requires the ability to write files and send communication over the network in order to function properly.
+    By default, After Effects scripts are not allowed to perform these actions. To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
 
-3. Restart After Effects if it was open.
+    - Windows: Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network.
+    - Mac: Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network.
+
+3.  Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
+
+    Windows: Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels
+    Mac: Applications/Adobe After Effects <version>/Scripts/Script UI Panels
+
+4.  Restart After Effects if it was open.
 
 ## Compatibility
 
 1. After Effects 24
 1. Python3.9 or higher; and
-1. Windows or a MacOS operating System
+1. Windows or Mac operating System
 
 ## Usage
 
@@ -41,14 +48,6 @@ This submitter creates and submits [OpenJD](https://github.com/OpenJobDescriptio
 3. Select your composition from the list and click _Submit_. You may need to hit the _⟳_ refresh button.
 4. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
 5. Set the farm and queue you are submitting to with the Settings button, and click _Submit_.
-
-### Script Permissions
-
-This submitter requires the ability to write files and send communication over the network in order to function properly.
-By default, After Effects scripts are not allowed to perform these actions. To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
-
-    Windows: Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network.
-    macOS: Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network.
 
 ### Render Optimization
 

@@ -1,5 +1,4 @@
 var scriptFolder = Folder.current.fsName;
-alert("scriptFolder is " + scriptFolder)
 
 function timeToFrames(time, fps) {
     //temporarily change display format so we can convert seconds to frames

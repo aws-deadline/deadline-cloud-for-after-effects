@@ -3,7 +3,6 @@ param (
     [int]$rqindex,
     [int]$start,
     [int]$end,
-    [int]$multiframe,
     [string]$outputpath = ""
 )
 
@@ -28,12 +27,6 @@ $renderarg = @("-project", "`"$project`"", "-rqindex", $rqindex, "-s", $start, "
 
 if (-Not "$outputpath".Contains(",")) {
     $renderarg += "-output", "`"$outputpath`""
-}
-
-if ($multiframe -le 0) {
-    $renderarg += "-mfr", "OFF", "100"
-} else {
-    $renderarg += "-mfr", "ON", $multiframe
 }
 
 aerender.exe $renderarg 2>&1 | ForEach-Object ($_) {

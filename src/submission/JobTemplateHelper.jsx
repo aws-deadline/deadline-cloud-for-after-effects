@@ -7,8 +7,7 @@ function parameterValues(
     outputPaths,
     startFrame,
     endFrame,
-    framesPerTask,
-    multiFramePercentage
+    framesPerTask
 ) {
     var frameStarts;
     var frameEnds;
@@ -81,11 +80,7 @@ function parameterValues(
             {
                 name: "FrameEnds",
                 value: frameEnds,
-            },
-            {
-                name: "MultiFrameMaxCPU",
-                value: multiFramePercentage,
-            },
+            }
         ],
     });
 }
