@@ -2,11 +2,11 @@
 
 // Setup logger
 var _scriptFileName = "OpenAeSubmitter.jsx";
-var logFileName = "aftereffects" + ".log";
+var logFileName = "aftereffects.log";
 var logDirectoryPath = dcUtil.getUserDirectory() + "/.deadline/logs/submitters/";
-logDirectoryPath = dcUtil.normPath(logDirectoryPath)
+var logNormDirectoryPath = dcUtil.normPath(logDirectoryPath)
 
-var logger = Logger(logFileName, logDirectoryPath);
+var logger = Logger(logFileName, logNormDirectoryPath);
 logger.log("Running driver file", _scriptFileName, LOG_LEVEL.INFO);
 
 #include "Imports.jsx"
@@ -52,7 +52,7 @@ if (isSecurityPrefSet()) {
         [1.0, 0.2, 0.2],
         1
     );
-    errorText.text = "⚠ ERROR: Insufficient Script Permissions ⚠";
+    errorText.text = "ERROR: Insufficient Script Permissions";
     var errorText2 = root.add("statictext", undefined, "", {
         multiline: true,
     });

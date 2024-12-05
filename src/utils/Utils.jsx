@@ -15,17 +15,22 @@ function timeToFrames(time, fps) {
 
 function sanitizeOutputs(outputPaths) {
     var sanitized = [];
+    var sanitizedPath = "";
     for (var i = 0; i < outputPaths.length; i++) {
-        var sanitizedPath = outputPaths[i]
-            .replace(/^\s+/, "")
-            .replace(/\s+$/, "")
-            .replace(/([\/\\])\s+/, "$1")
-            .replace(/\s+([\/\\])/, "$1");
+        sanitizedPath = sanitizeFilePath(outputPaths[i]);
         if (sanitizedPath) {
             sanitized.push(sanitizedPath);
         }
     }
     return sanitized;
+}
+
+function sanitizeFilePath(filePath) {
+    return filePath
+        .replace(/^\s+/, "")
+        .replace(/\s+$/, "")
+        .replace(/([\/\\])\s+/, "$1")
+        .replace(/\s+([\/\\])/, "$1");
 }
 
 //Binary data for the Deadline Cloud logo
