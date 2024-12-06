@@ -4,7 +4,7 @@
 function parameterValues(
     renderQueueIndex,
     projectFile,
-    outputPaths,
+    outputPath,
     startFrame,
     endFrame,
     framesPerTask
@@ -13,14 +13,8 @@ function parameterValues(
     var frameEnds;
     var re = new RegExp("^[^#]*#{5}[^#]*$"); //checks for output patterns with [####] in them which usually indicates an image sequence
     var isSequence = false;
-    for (var i = 0; i < outputPaths.length; i++) {
-        isSequence = re.test(outputPaths[i]);
-        if (isSequence) {
-            break;
-        }
-    }
+    isSequence = re.test(outputPath);
 
-    var outputPathStr = outputPaths.join(",");
     if (framesPerTask < 1 || !isSequence) {
         frameStarts = startFrame.toString();
         frameEnds = endFrame.toString();
@@ -70,8 +64,8 @@ function parameterValues(
                 value: renderQueueIndex,
             },
             {
-                name: "OutputFiles",
-                value: outputPathStr,
+                name: "OutputFile",
+                value: outputPath,
             },
             {
                 name: "FrameStarts",
@@ -88,7 +82,7 @@ function parameterValues(
 /**
  * Generates the basic format of the asset reference for job template.
  **/
-function jobAttachmentsJson(inputFiles, outputFolders) {
+function jobAttachmentsJson(inputFiles, outputFolder) {
     return JSON.stringify({
         assetReferences: {
             inputs: {
@@ -96,7 +90,7 @@ function jobAttachmentsJson(inputFiles, outputFolders) {
                 filenames: inputFiles,
             },
             outputs: {
-                directories: outputFolders,
+                directories: [outputFolder],
             },
             referencedPaths: [],
         },

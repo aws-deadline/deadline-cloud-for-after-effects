@@ -34,12 +34,10 @@ function SubmitSelection(selection, framesPerTask) {
         return;
     }
     if (rqi.numOutputModules > 1) {
-        var r = confirm(
-            "Warning: Multiple output modules detected. Rendering multiple output modules at once could result in undefined behavior. Continue?"
+        adcAlert(
+            "Warning: Multiple output modules detected. It is not supported in current submitter. Please raise an issue on Github repo for feature request."
         );
-        if (!r) {
-            return;
-        }
+        return;
     }
 
     //We have a valid selection
@@ -53,7 +51,8 @@ function SubmitSelection(selection, framesPerTask) {
         //If the user hit yes to the prompt, but the file had never been saved, a second prompt would appear asking where they would want to save the project. If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
         return;
     }
-    var outputPaths = [];
+    var outputPath = "";
+    var outputFolder = "";
     for (var j = 1; j <= rqi.numOutputModules; j++) {
         var outputModule = rqi.outputModule(j).file;
         if (outputModule == null) {
@@ -66,7 +65,8 @@ function SubmitSelection(selection, framesPerTask) {
             }
             return;
         } else {
-            outputPaths.push(outputModule.fsName);
+            outputPath = outputModule.fsName;
+            outputFolder = outputModule.parent.fsName;
         }
     }
     var renderSettings = rqi.getSettings(GetSettingsFormat.STRING_SETTABLE);
@@ -107,11 +107,11 @@ function SubmitSelection(selection, framesPerTask) {
         template.write(templateContents);
         template.close();
 
-        var sanitizedOutputs = sanitizeOutputs(outputPaths);
-
+        var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
+        var sanitizedOutputFilePath = sanitizeFilePath(outputPath);
         var jobAttachmentsContents = jobAttachmentsJson(
             dependencies,
-            sanitizedOutputs
+            sanitizedOutputFolder
         );
         var attachmentJson = new File(
             bundleRoot.fsName + "/asset_references.json"
@@ -136,7 +136,7 @@ function SubmitSelection(selection, framesPerTask) {
         var parametersContents = parameterValues(
             renderQueueIndex,
             app.project.file.fsName,
-            sanitizedOutputs,
+            sanitizedOutputFilePath,
             startFrame,
             endFrame,
             framesPerTask,

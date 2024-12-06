@@ -28,13 +28,13 @@ parameterDefinitions:
       groupLabel: Source
     description: The index of the item in the render queue to render.
     default: 1
-  - name: OutputFiles
+  - name: OutputFile
     type: PATH
     objectType: FILE
     dataFlow: OUT
     userInterface:
       control: HIDDEN
-      label: Output File(s)
+      label: Output File
       groupLabel: Frame Range
     default: ~\Desktop\output
     description: The render output destination
@@ -73,7 +73,7 @@ jobEnvironments:
           args:
             - "-File"
             - "{{Param.JobScriptDir}}/start.ps1"
-            - "{{Param.OutputFiles}}"
+            - "{{Param.OutputFile}}"
 
 steps:
   - name: Call AERender
@@ -97,4 +97,4 @@ steps:
             - '{{Param.RenderQueueIndex}}'
             - '{{Task.Param.FrameStart}}'
             - '{{Task.Param.FrameEnd}}'
-            - '{{Param.OutputFiles}}'
+            - '{{Param.OutputFile}}'

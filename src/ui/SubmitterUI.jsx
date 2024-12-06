@@ -120,7 +120,6 @@ function buildUI(thisObj) {
                 item.subItems[2].text = outputFile == null ? "<not set>" : outputFile.fsName;
             } else {
                 item.subItems[2].text = "<multiple output modules>";
-                item.subItems[2].graphics.foregroundColor = errorText.graphics.newPen(errorText.graphics.PenType.SOLID_COLOR, [1.0, 0.2, 0.2], 1);
             }
         }
 
