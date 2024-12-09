@@ -166,3 +166,11 @@ function getCurrentTimeAsStr() {
     var logDateTime = currentDate + " " + currentTime;
     return logDateTime;
 }
+
+
+// Setup logger
+var _scriptFileName = "OpenAeSubmitter.jsx";
+var logFileName = "aftereffects.log";
+var logDirectoryPath = dcUtil.getUserDirectory() + "/.deadline/logs/submitters/";
+var logNormDirectoryPath = dcUtil.normPath(logDirectoryPath)
+var logger = Logger(logFileName, logNormDirectoryPath);

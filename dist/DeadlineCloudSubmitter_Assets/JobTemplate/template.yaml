@@ -76,7 +76,7 @@ jobEnvironments:
             - "{{Param.OutputFile}}"
 
 steps:
-  - name: Call AERender
+  - name: {{COMPNAME}}
     parameterSpace:
       taskParameterDefinitions:
       - name: FrameStart

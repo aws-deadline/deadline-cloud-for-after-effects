@@ -1,5 +1,5 @@
 /**
- * Generates the basic paramterValue file for the job template
+ * Generates the basic parameterValue file for the job template
  **/
 function parameterValues(
     renderQueueIndex,
@@ -107,7 +107,7 @@ function findJobAttachments(rootComp) {
         return [];
     }
     var attachments = [];
-    var exploredItems = {}; //using this object as a set because AE doesn't support sets
+    var exploredItems = {}; // using this object as a set because AE doesn't support sets
     attachments.push(app.project.file.fsName);
     exploredItems[rootComp.id] = true;
     var queue = [rootComp];
@@ -115,7 +115,7 @@ function findJobAttachments(rootComp) {
         var comp = queue.pop();
         for (var i = 1; i <= comp.numLayers; i++) {
             var layer = comp.layer(i);
-            var shouldShowPopup = true; //only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
+            var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
             if (
                 layer != null &&
                 layer instanceof AVLayer &&

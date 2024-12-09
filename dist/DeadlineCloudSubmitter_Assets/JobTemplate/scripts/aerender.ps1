@@ -12,16 +12,21 @@ function Check-Output {
         [int]$exitCode
     )
     Write-Output $output
+
+    # Throw actual errors instead of just exiting
     if ($exitCode -ne 0) {
-        exit $exitCode
+        throw "Process exited with code: $exitCode"
     }
     if(($output) -match "^WARNING:After Effects warning: logged (.+) errors"){
-        exit 1
+        throw "After Effects Warning: $($matches[1])"
     }
     if(($output) -match "^aerender ERROR"){
-        exit 2
+        throw "Aerender Error: $output"
     }
 }
+
+# Add error action preference
+$ErrorActionPreference = "Stop"
 
 $renderarg = @("-project", "`"$project`"", "-rqindex", $rqindex, "-s", $start, "-e", $end, "-v", "ERRORS_AND_PROGRESS", "-close", "DO_NOT_SAVE_CHANGES", "-sound", "OFF")
 
@@ -29,8 +34,15 @@ if (-Not "$outputpath".Contains(",")) {
     $renderarg += "-output", "`"$outputpath`""
 }
 
-aerender.exe $renderarg 2>&1 | ForEach-Object ($_) {
-    Check-Output -output "$_" -exitCode $global:lastExitCode
+try {
+    aerender.exe $renderarg 2>&1 | ForEach-Object {
+        Check-Output -output "$_" -exitCode $LASTEXITCODE
+    }
+} catch {
+    Write-Error $_.Exception.Message
+    exit 1
 }
 
-exit $global:lastExitCode
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+}

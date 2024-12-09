@@ -5,16 +5,14 @@ function SubmitSelection(selection, framesPerTask) {
     // first we must verify that our selection is valid
     if (selection == null) {
         adcAlert("Error: No selection");
-        return false;
+        return;
     }
 
     var renderQueueIndex = selection.renderQueueIndex;
-    // var outputIndex = selection.outputModuleIndex;
-    // var outputSettings;
     var rqi;
 
-    //because our panel is updated independently of the render queue, the two may become out of sync
-    //we need to verify that the selection made actually matches what is in the render queue
+    // because our panel is updated independently of the render queue, the two may become out of sync
+    // we need to verify that the selection made actually matches what is in the render queue
     if (
         renderQueueIndex < 1 ||
         renderQueueIndex > app.project.renderQueue.numItems
@@ -71,6 +69,7 @@ function SubmitSelection(selection, framesPerTask) {
     }
     var renderSettings = rqi.getSettings(GetSettingsFormat.STRING_SETTABLE);
     var dependencies = findJobAttachments(rqi.comp); //list of filenames
+    var compName = rqi.comp.name;
 
     /**
      * Generates the job bundle
@@ -99,7 +98,10 @@ function SubmitSelection(selection, framesPerTask) {
         var templateContents = template.read();
         templateContents = templateContents.replace(
             "{{JOBNAME}}",
-            File.decode(app.project.file.name) + " [" + rqi.comp.name + "]"
+            File.decode(app.project.file.name) + " [" + compName + "]"
+        );
+        templateContents = templateContents.replace(
+            "{{COMPNAME}}", compName
         );
         template.close();
         template.remove();
@@ -152,7 +154,7 @@ function SubmitSelection(selection, framesPerTask) {
     }
     var bundle = generateBundle();
 
-    //Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
+    // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
     // The following commented-out line will block the UI until the submission window is closed, but it doesn't require extra permissions
     // systemCallWithErrorAlerts("deadline bundle gui-submit \"" + bundle.fsName + "\"")
     if ($.os.toString().slice(0, 7) === "Windows") {

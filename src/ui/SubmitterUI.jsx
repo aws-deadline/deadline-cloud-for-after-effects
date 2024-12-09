@@ -35,7 +35,7 @@ function buildUI(thisObj) {
         app.project.renderQueue.showWindow(false);
         app.project.renderQueue.showWindow(true);
     }
-    var refreshButton = headerButtonGroup.add("button", undefined, "⟳");
+    var refreshButton = headerButtonGroup.add("button", undefined, "Refresh");
     var listGroup = root.add("panel", undefined, "");
     listGroup.alignment = ['fill', 'fill'];
     listGroup.alignChildren = ['fill', 'fill']

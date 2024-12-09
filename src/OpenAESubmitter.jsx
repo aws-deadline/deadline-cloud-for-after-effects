@@ -1,19 +1,8 @@
 #include "utils/Logger.jsx"
-
-// Setup logger
-var _scriptFileName = "OpenAeSubmitter.jsx";
-var logFileName = "aftereffects.log";
-var logDirectoryPath = dcUtil.getUserDirectory() + "/.deadline/logs/submitters/";
-var logNormDirectoryPath = dcUtil.normPath(logDirectoryPath)
-
-var logger = Logger(logFileName, logNormDirectoryPath);
-logger.log("Running driver file", _scriptFileName, LOG_LEVEL.INFO);
-
 #include "Imports.jsx"
+#include "UI/SubmitterUI.jsx"
 
-// Variables for runChecks
-var safeToRunScript = true;
-var version = app.version.substring(0, app.version.indexOf('x'));
+logger.log("Running driver file", _scriptFileName, LOG_LEVEL.INFO);
 
 function isSecurityPrefSet() {
     var securitySetting = app.preferences.getPrefAsLong(
@@ -22,8 +11,6 @@ function isSecurityPrefSet() {
     );
     return securitySetting == 1;
 }
-
-#include "UI/SubmitterUI.jsx"
 
 if (isSecurityPrefSet()) {
     buildUI(this);
