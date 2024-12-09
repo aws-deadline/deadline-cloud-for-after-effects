@@ -270,6 +270,7 @@ function __generateUtil() {
         return _assetsList;
     }
 
+
     function getDescription() {
         /**
          * Get description data from UI.
@@ -672,7 +673,6 @@ function __generateUtil() {
         var fileName = fileName.replace(/%20/g, " ");
         return fileName;
     }
-
 
     function arrayIncludes(array, value) {
         for (var i = 0; i < array.length; i++) {
