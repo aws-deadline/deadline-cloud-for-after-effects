@@ -270,6 +270,80 @@ function __generateUtil() {
         return _assetsList;
     }
 
+    function validateSkipExistingFrames(renderQueueItem, renderSettings, renderValidation) {
+        /**
+         * For given renderQueueItem checks if option 'Skip Existing Frame' has been enabled or not.
+         * If disabled, force enable.
+         * @param {Object} renderQueueItem - Target renderQueueItem.
+         * @param {Object} renderSettings - Target renderQueueItem Settings.
+         * @param {boolean} renderValidation
+         * Returns boolean to proceed or halt the submission process.
+         */
+        if (renderSettings["Skip Existing Files"] == "false") {
+            var skipWindow = new Window("dialog", "Skip Existing Files Setting");
+            var skipText = skipWindow.add("statictext", undefined, "Skip Existing Files has not been enabled in the Render Settings for the RenderQueueItem. Please enable to continue.");
+            skipWindow.skipButtonsGroup = skipWindow.add("group", undefined);
+            skipWindow.skipButtonsGroup.orientation = "row";
+
+            var buttonContinue = skipWindow.skipButtonsGroup.add("button", undefined, "Continue");
+            buttonContinue.size = [60, 20];
+            var buttonCancel = skipWindow.skipButtonsGroup.add("button", undefined, "Cancel");
+            buttonCancel.size = [60, 20];
+
+            buttonCancel.onClick = function() {
+                renderValidation = false;
+                skipWindow.close();
+            }
+
+            buttonContinue.onClick = function() {
+                // Update Skip Existing Files to true.
+                var newSettings = {
+                    "Skip Existing Files": true
+                };
+                renderQueueItem.setSettings(newSettings);
+                renderValidation = true;
+                skipWindow.close();
+            }
+            skipWindow.center();
+            skipWindow.show();
+            return renderValidation;
+        }
+        return true;
+    }
+
+    function validateAutoAccept() {
+        /**
+         * Opens up window that shows how many items will be uploaded with the submission.
+         * Allows user to accept or decline. Based on choice return boolean value.
+         */
+        var amountFiles = dcProperties.jobAttachments.userAddedInputFiles.get().concat(dcProperties.jobAttachments.autoDetectedInputFiles.get());
+        var autoAcceptValidation = false;
+        var autoAcceptWindow = new Window("dialog", "Job Attachments Upload Confirmation");
+        var labelText = 'Job submission contains ' + amountFiles.length + " files. All files will be uploaded to S3 if they are not already present in the job attachments bucket."
+        var autoAcceptLabel = autoAcceptWindow.add('statictext', undefined, labelText);
+        autoAcceptWindow.skipButtonsGroup = autoAcceptWindow.add("group", undefined);
+        autoAcceptWindow.skipButtonsGroup.orientation = "row";
+
+        var buttonOK = autoAcceptWindow.skipButtonsGroup.add("button", undefined, "OK");
+        buttonOK.size = [60, 20];
+        var buttonCancel = autoAcceptWindow.skipButtonsGroup.add("button", undefined, "Cancel");
+        buttonCancel.size = [60, 20];
+
+        buttonCancel.onClick = function() {
+            autoAcceptValidation = false;
+            autoAcceptWindow.close();
+        }
+
+        buttonOK.onClick = function() {
+            autoAcceptValidation = true;
+            autoAcceptWindow.close();
+        }
+        autoAcceptWindow.center();
+        autoAcceptWindow.show();
+
+        return autoAcceptValidation;
+    }
+
     function getDescription() {
         /**
          * Get description data from UI.
@@ -672,7 +746,6 @@ function __generateUtil() {
         var fileName = fileName.replace(/%20/g, " ");
         return fileName;
     }
-
 
     function arrayIncludes(array, value) {
         for (var i = 0; i < array.length; i++) {
