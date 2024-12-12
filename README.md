@@ -12,58 +12,92 @@ This example has been used by at least one internal or external development team
 
 ---
 
-This submitter creates and submits [OpenJD](https://github.com/OpenJobDescription/openjd-specifications) job bundles for rendering After Effects jobs. The job bundles it creates utilizes the `aerender` executable that comes with After Effects
+This submitter creates and submits [OpenJD](https://github.com/OpenJobDescription/openjd-specifications) job bundles for rendering After Effects jobs. The job bundles it creates utilizes the `aerender` executable that comes with Adobe After Effects.
 
 [deadline-cloud]: https://docs.aws.amazon.com/deadline-cloud/latest/userguide/what-is-deadline-cloud.html
 [deadline-cloud-client]: https://github.com/aws-deadline/deadline-cloud
 [openjd]: https://github.com/OpenJobDescription/openjd-specifications/wiki
 
-## Installation
-
-1.  Install the Deadline CLI and Deadline Cloud Monitor by running the Deadline Submitter and Deadline Monitor installers from the downloads section of the Deadline Cloud service in your AWS Console.
-
-2.  This submitter requires the ability to write files and send communication over the network in order to function properly.
-    By default, After Effects scripts are not allowed to perform these actions. To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
-
-    - Windows: Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network.
-    - Mac: Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network.
-
-3.  Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
-
-    Windows: Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels
-    Mac: Applications/Adobe After Effects <version>/Scripts/Script UI Panels
-
-4.  Restart After Effects if it was open.
-
 ## Compatibility
 
-1. After Effects 24
-1. Python3.9 or higher; and
-1. Windows or Mac operating System
+1. After Effects 24 - 25,
+1. Python 3.9 or higher; and
+1. Windows or macOS operating system.
 
-## Usage
+## Versioning
+
+This package's version follows [Semantic Versioning 2.0](https://semver.org/), but is still considered to be in its initial development, thus backwards incompatible versions are denoted by minor version bumps. To help illustrate how versions will increment during this initial development stage, they are described below:
+
+1. The MAJOR version is currently 0, indicating initial development.
+1. The MINOR version is currently incremented when backwards incompatible changes are introduced to the public API.
+1. The PATCH version is currently incremented when bug fixes or backwards compatible changes are introduced to the public API.
+
+## Getting Started
+
+This After Effects integration for AWS Deadline Cloud has a submitter script that you will need to install.
+
+Before submitting any large, complex, or otherwise compute-heavy After Effects render jobs to your farm using
+the submitter that you setup, we strongly recommend that you construct a simple test scene that can be rendered
+quickly and submit renders of that scene to your farm to ensure that your setup is correctly functioning.
+
+### After Effects Submitter
+
+The After Effects submitter creates a dockable panel in your After Effects application that can be used to
+submit jobs to AWS Deadline Cloud. Clicking the submit button reveals a UI to create a job submission for 
+AWS Deadline Cloud using [AWS Deadline Cloud client library submission UI](https://github.com/aws-deadline/deadline-cloud). 
+It automatically determines the files required based on the loaded scene, allows the user to specify render options, 
+builds an [Open Job Description template](https://github.com/OpenJobDescription/openjd-specifications/wiki) that 
+defines the workflow, and submits the job to the farm and queue of your choosing.
+
+The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `DeadlineCloudSubmitter.jsx`.
+1. `DeadlineCloudSubmitter_Assets` folder include default job template yaml file with two Powershell scripts that will be run as tasks of the job.
+2. `DeadlineCloudSubmitter.jsx` is the After Effects script written by 
+ExtendScript.
+
+#### To install the submitter:
+
+1. Install the Deadline CLI and Deadline Cloud Monitor by running the Deadline Submitter and Deadline Monitor 
+installers from the downloads section of the Deadline Cloud service in your AWS Console.
+1. This submitter requires the ability to write files and send communication over the network in order to function properly.
+By default, After Effects scripts are not allowed to perform these actions. [Reference link](https://helpx.adobe.com/after-effects/using/scripts.html). 
+To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
+    - Windows: `Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
+    - macOS: `Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
+1. Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to 
+the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
+    - Windows: `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
+    - macOS: `Applications/Adobe After Effects <version>/Scripts/Script UI Panels`
+1. Restart After Effects if it was open.
+
+#### To use the submitter:
 
 1. Add a composition to your render queue and set up your render settings, output module, and output path.
-2. Open the Deadline Cloud Submitter Panel by clicking _Windows > DeadlineCloudSubmitter.jsx_
-3. Select your composition from the list and click _Submit_. You may need to hit the _⟳_ refresh button.
-4. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
-5. Set the farm and queue you are submitting to with the Settings button, and click _Submit_.
+1. Open the Deadline Cloud Submitter Panel by clicking **Windows > DeadlineCloudSubmitter.jsx**.
+1. Select your composition from the list and click **Submit**. You can hit the **Refresh** button to refresh the list.
+1. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
+1. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
 
-### Render Optimization
+## After Effects Software is not available in AWS Deadline Cloud Service Managed Fleets
+Even though After Effects is not available in AWS Deadline Cloud Service Managed Fleets yet (See this link for more information 
+on which software is supported), but you can either use Customer Managed Fleets with After Effects installed in your worker
+instances or building a conda channel that contains After Effects conda package following 
+[the instruction](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html). 
+You can use After Effects conda recipe in 
+[deadline-cloud-sample package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.0) 
+as a reference when building the package.
 
-Multi-Frame Rendering will spin up multiple render processes in order to fully utilize all of a render machine's resources. After Effects provides options for choosing the percentage of the CPU power to utilize but unfortunately, this functionality is broken as of After Effects 2024 such that Multi-Frame Rendering will always use 100% of your CPU if turned on.
+## Viewing the Job Bundle that will be submitted
+To submit a job, the submitter first generates a Job Bundle, and then uses functionality 
+from the Deadline package to submit the Job Bundle to your render farm to run. 
+If you would like to see the job that will be submitted to your farm, then you can 
+use the "Export Bundle" button in the submitter to export the Job Bundle 
+in the job history directory (default: ~/.deadline/job_history).
+If you want to submit the job from the export, rather than through the submitter
+then you can use the Deadline Cloud application to submit that bundle to your farm.
 
-In order for Multi-Frame Rendering to work, each task needs to have multiple frames, preferably more than the number of cores on the render machines. However, if your render machines are bottle-necked by RAM, maxing out your CPU cores may result in an "Out of memory" failure. Make sure to either use machines with plenty of free ram, or only assign a few frames per task. If the option to choose CPU percentage worked, you would have also been able to prevent "Out of memory" issues with that option.
-
-### DEVELOPMENT
-
-Once you make the change of the submitter, you can run
-
-```bash
-python jsxbundler.py --source src/OpenAESubmitter.jsx --destination dist/DeadlineCloudSubmitter.jsx
-```
-
-under `deadline-cloud-for-after-effects` path to generate a new `DeadlineCloudSubmitter.jsx` file.
+## Telemetry
+See [telemetry](https://github.com/aws-deadline/deadline-cloud-for-after-effects/blob/release/docs/telemetry.md) 
+for more information.
 
 ## License
 
