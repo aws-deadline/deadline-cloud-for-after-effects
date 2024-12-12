@@ -94,6 +94,11 @@ in the job history directory (default: ~/.deadline/job_history).
 If you want to submit the job from the export, rather than through the submitter
 then you can use the Deadline Cloud application to submit that bundle to your farm.
 
+## Telemetry
+
+See [telemetry](https://github.com/aws-deadline/deadline-cloud-for-after-effects/blob/release/docs/telemetry.md)
+for more information.
+
 ## License
 
 This project is licensed under the Apache-2.0 License.
