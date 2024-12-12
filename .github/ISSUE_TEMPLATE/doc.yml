@@ -5,3 +5,8 @@ labels: ["documenation", "needs triage"]
 body:
   - type: textarea
     id: documentation_issue
+    attributes:
+      label: Documentation Issue
+      description: Describe the issue
+    validations:
+      required: true

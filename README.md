@@ -43,30 +43,27 @@ quickly and submit renders of that scene to your farm to ensure that your setup 
 ### After Effects Submitter
 
 The After Effects submitter creates a dockable panel in your After Effects application that can be used to
-submit jobs to AWS Deadline Cloud. Clicking the submit button reveals a UI to create a job submission for 
-AWS Deadline Cloud using [AWS Deadline Cloud client library submission UI](https://github.com/aws-deadline/deadline-cloud). 
-It automatically determines the files required based on the loaded scene, allows the user to specify render options, 
-builds an [Open Job Description template](https://github.com/OpenJobDescription/openjd-specifications/wiki) that 
+submit jobs to AWS Deadline Cloud. Clicking the submit button reveals a UI to create a job submission for
+AWS Deadline Cloud using [AWS Deadline Cloud client library submission UI](https://github.com/aws-deadline/deadline-cloud).
+It automatically determines the files required based on the loaded scene, allows the user to specify render options,
+builds an [Open Job Description template](https://github.com/OpenJobDescription/openjd-specifications/wiki) that
 defines the workflow, and submits the job to the farm and queue of your choosing.
 
 The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `DeadlineCloudSubmitter.jsx`.
+
 1. `DeadlineCloudSubmitter_Assets` folder include default job template yaml file with two Powershell scripts that will be run as tasks of the job.
-2. `DeadlineCloudSubmitter.jsx` is the After Effects script written by 
-ExtendScript.
+2. `DeadlineCloudSubmitter.jsx` is the After Effects script written by
+   ExtendScript.
 
 #### To install the submitter:
 
-1. Install the Deadline CLI and Deadline Cloud Monitor by running the Deadline Submitter and Deadline Monitor 
-installers from the downloads section of the Deadline Cloud service in your AWS Console.
+1. Install the Deadline CLI and Deadline Cloud Monitor by running the Deadline Submitter and Deadline Monitor
+   installers from the downloads section of the Deadline Cloud service in your AWS Console.
 1. This submitter requires the ability to write files and send communication over the network in order to function properly.
-By default, After Effects scripts are not allowed to perform these actions. [Reference link](https://helpx.adobe.com/after-effects/using/scripts.html). 
-To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
-    - Windows: `Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
-    - macOS: `Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
-1. Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to 
-the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
-    - Windows: `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
-    - macOS: `Applications/Adobe After Effects <version>/Scripts/Script UI Panels`
+   By default, After Effects scripts are not allowed to perform these actions. [Reference link](https://helpx.adobe.com/after-effects/using/scripts.html).
+   To allow scripts to write files or send communication over a network, edit the following settings within After Effects: - Windows: `Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network` - macOS: `Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
+1. Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to
+   the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path: - Windows: `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels` - macOS: `Applications/Adobe After Effects <version>/Scripts/Script UI Panels`
 1. Restart After Effects if it was open.
 
 #### To use the submitter:
@@ -77,27 +74,25 @@ the **ScriptUI Panels** folder within your After Effects installation. This fold
 1. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
 1. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
 
-## After Effects Software is not available in AWS Deadline Cloud Service Managed Fleets
-Even though After Effects is not available in AWS Deadline Cloud Service Managed Fleets yet (See this link for more information 
-on which software is supported), but you can either use Customer Managed Fleets with After Effects installed in your worker
-instances or building a conda channel that contains After Effects conda package following 
-[the instruction](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html). 
-You can use After Effects conda recipe in 
-[deadline-cloud-sample package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.0) 
+## Setting up After Effects with your Deadline Cloud Farm
+
+Even though After Effects is not available in AWS Deadline Cloud Service Managed Fleet yet (See this [link](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/create-queue-environment.html) for more information
+on which software is supported), but you can either use Customer Managed Fleet with After Effects installed in your worker
+instances or building a conda channel that contains After Effects conda package following
+[the instruction](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html) with Service Managed Fleet.
+You can use After Effects conda recipe in
+[deadline-cloud-sample package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.0)
 as a reference when building the package.
 
 ## Viewing the Job Bundle that will be submitted
-To submit a job, the submitter first generates a Job Bundle, and then uses functionality 
-from the Deadline package to submit the Job Bundle to your render farm to run. 
-If you would like to see the job that will be submitted to your farm, then you can 
-use the "Export Bundle" button in the submitter to export the Job Bundle 
+
+To submit a job, the submitter first generates a Job Bundle, and then uses functionality
+from the Deadline package to submit the Job Bundle to your render farm to run.
+If you would like to see the job that will be submitted to your farm, then you can
+use the "Export Bundle" button in the submitter to export the Job Bundle
 in the job history directory (default: ~/.deadline/job_history).
 If you want to submit the job from the export, rather than through the submitter
 then you can use the Deadline Cloud application to submit that bundle to your farm.
-
-## Telemetry
-See [telemetry](https://github.com/aws-deadline/deadline-cloud-for-after-effects/blob/release/docs/telemetry.md) 
-for more information.
 
 ## License
 
