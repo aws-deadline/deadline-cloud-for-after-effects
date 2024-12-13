@@ -84,6 +84,8 @@ You can use After Effects conda recipe in
 [deadline-cloud-sample package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.0)
 as a reference when building the package.
 
+Jobs created by this submitter require aerender executable be available on the PATH of the user that will be running your jobs. Or you can set the AERENDER_EXECUTABLE to point to the aerender executable.
+
 ## Viewing the Job Bundle that will be submitted
 
 To submit a job, the submitter first generates a Job Bundle, and then uses functionality
