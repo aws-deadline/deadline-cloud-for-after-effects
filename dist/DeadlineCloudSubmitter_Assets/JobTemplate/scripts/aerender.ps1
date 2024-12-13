@@ -34,8 +34,10 @@ if (-Not "$outputpath".Contains(",")) {
     $renderarg += "-output", "`"$outputpath`""
 }
 
+$aerender_exe = if ($env:AERENDER_EXECUTABLE) { $env:AERENDER_EXECUTABLE } else { "aerender.exe" }
+
 try {
-    aerender.exe $renderarg 2>&1 | ForEach-Object {
+    & $aerender_exe $renderarg 2>&1 | ForEach-Object {
         Check-Output -output "$_" -exitCode $LASTEXITCODE
     }
 } catch {
