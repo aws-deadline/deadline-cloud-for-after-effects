@@ -2,8 +2,6 @@
 #include "Imports.jsx"
 #include "UI/SubmitterUI.jsx"
 
-logger.log("Running driver file", _scriptFileName, LOG_LEVEL.INFO);
-
 function isSecurityPrefSet() {
     var securitySetting = app.preferences.getPrefAsLong(
         "Main Pref Section",
