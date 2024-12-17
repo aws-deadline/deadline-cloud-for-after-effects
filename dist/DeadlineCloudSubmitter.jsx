@@ -1395,7 +1395,6 @@ function SubmitSelection(selection, framesPerTask) {
     var bundle = generateBundle();
 
     // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
-    // The following commented-out line will block the UI until the submission window is closed, but it doesn't require extra permissions
     var submitScriptContents =
         'deadline bundle gui-submit "' + bundle.fsName + "\" --output json --install-gui";
     if ($.os.toString().slice(0, 7) === "Windows") {
