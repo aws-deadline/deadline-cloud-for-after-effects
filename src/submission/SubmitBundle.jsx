@@ -156,21 +156,20 @@ function SubmitSelection(selection, framesPerTask) {
 
     // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
     // The following commented-out line will block the UI until the submission window is closed, but it doesn't require extra permissions
-    // systemCallWithErrorAlerts("deadline bundle gui-submit \"" + bundle.fsName + "\"")
+    var submitScriptContents =
+            'deadline bundle gui-submit "' + bundle.fsName + "\" --output json --install-gui";
     if ($.os.toString().slice(0, 7) === "Windows") {
         var submitScript = new File(Folder.temp.fsName + "/submit.bat");
-        var submitScriptContents =
-            'deadline bundle gui-submit "' + bundle.fsName + '"';
+        
         submitScript.open("w");
-        submitScript.write(
-            'deadline bundle gui-submit "' + bundle.fsName + '"'
-        );
+        submitScript.write(submitScriptContents);
         submitScript.close();
         submitScript.execute();
     } else {
-        //On mac we fall back to directly calling the command to get around file execute permission errors
-        systemCallWithErrorAlerts(
-            'deadline bundle gui-submit "' + bundle.fsName + '"'
-        );
+        // Execute the command using a bash in the interactive mode so it loads the bash profile to set
+        // the PATH correctly.
+        var shellPath = $.getenv("SHELL") || "/bin/bash";
+        var cmd = shellPath + " -i -c 'echo \"START_DEADLINE_OUTPUT\";" + submitScriptContents + "'";
+        systemCallWithErrorAlerts(cmd);
     }
 }
