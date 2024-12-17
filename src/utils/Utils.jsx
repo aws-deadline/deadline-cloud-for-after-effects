@@ -119,27 +119,6 @@ function __generateUtil() {
 
     var scriptFileUtilName = "Util.jsx";
 
-    function deadlineStringToArray(str) {
-        /**
-         * Turn given string into array.
-         * @param {string} str - String to turn into an array
-         * Return converted string as an array.
-         */
-        str = str.replace("\r", "");
-        var tempArray = str.split('\n');
-        var array;
-
-        if (tempArray.length > 0) {
-            array = new Array(tempArray.length - 1);
-
-            // Only loop to second last item in tempArray, because the last item is always empty.
-            for (var i = 0; i < tempArray.length - 1; i++)
-                array[i] = tempArray[i].replace("\n", "").replace("\r", "");
-        } else
-            array = new Array(0);
-
-        return array;
-    }
 
     function toBooleanString(value) {
         /**
@@ -287,80 +266,6 @@ function __generateUtil() {
         return _assetsList;
     }
 
-    function validateSkipExistingFrames(renderQueueItem, renderSettings, renderValidation) {
-        /**
-         * For given renderQueueItem checks if option 'Skip Existing Frame' has been enabled or not.
-         * If disabled, force enable.
-         * @param {Object} renderQueueItem - Target renderQueueItem.
-         * @param {Object} renderSettings - Target renderQueueItem Settings.
-         * @param {boolean} renderValidation
-         * Returns boolean to proceed or halt the submission process.
-         */
-        if (renderSettings["Skip Existing Files"] == "false") {
-            var skipWindow = new Window("dialog", "Skip Existing Files Setting");
-            var skipText = skipWindow.add("statictext", undefined, "Skip Existing Files has not been enabled in the Render Settings for the RenderQueueItem. Please enable to continue.");
-            skipWindow.skipButtonsGroup = skipWindow.add("group", undefined);
-            skipWindow.skipButtonsGroup.orientation = "row";
-
-            var buttonContinue = skipWindow.skipButtonsGroup.add("button", undefined, "Continue");
-            buttonContinue.size = [60, 20];
-            var buttonCancel = skipWindow.skipButtonsGroup.add("button", undefined, "Cancel");
-            buttonCancel.size = [60, 20];
-
-            buttonCancel.onClick = function() {
-                renderValidation = false;
-                skipWindow.close();
-            }
-
-            buttonContinue.onClick = function() {
-                // Update Skip Existing Files to true.
-                var newSettings = {
-                    "Skip Existing Files": true
-                };
-                renderQueueItem.setSettings(newSettings);
-                renderValidation = true;
-                skipWindow.close();
-            }
-            skipWindow.center();
-            skipWindow.show();
-            return renderValidation;
-        }
-        return true;
-    }
-
-    function validateAutoAccept() {
-        /**
-         * Opens up window that shows how many items will be uploaded with the submission.
-         * Allows user to accept or decline. Based on choice return boolean value.
-         */
-        var amountFiles = dcProperties.jobAttachments.userAddedInputFiles.get().concat(dcProperties.jobAttachments.autoDetectedInputFiles.get());
-        var autoAcceptValidation = false;
-        var autoAcceptWindow = new Window("dialog", "Job Attachments Upload Confirmation");
-        var labelText = 'Job submission contains ' + amountFiles.length + " files. All files will be uploaded to S3 if they are not already present in the job attachments bucket."
-        var autoAcceptLabel = autoAcceptWindow.add('statictext', undefined, labelText);
-        autoAcceptWindow.skipButtonsGroup = autoAcceptWindow.add("group", undefined);
-        autoAcceptWindow.skipButtonsGroup.orientation = "row";
-
-        var buttonOK = autoAcceptWindow.skipButtonsGroup.add("button", undefined, "OK");
-        buttonOK.size = [60, 20];
-        var buttonCancel = autoAcceptWindow.skipButtonsGroup.add("button", undefined, "Cancel");
-        buttonCancel.size = [60, 20];
-
-        buttonCancel.onClick = function() {
-            autoAcceptValidation = false;
-            autoAcceptWindow.close();
-        }
-
-        buttonOK.onClick = function() {
-            autoAcceptValidation = true;
-            autoAcceptWindow.close();
-        }
-        autoAcceptWindow.center();
-        autoAcceptWindow.show();
-
-        return autoAcceptValidation;
-    }
-
     function getDescription() {
         /**
          * Get description data from UI.
@@ -506,35 +411,6 @@ function __generateUtil() {
         }
     }
 
-    function parseListData(output) {
-        /** Return object of <id>: <name> of some given CLI output. */
-
-        var parsedObject = {};
-        // Split string in array if lines
-        var lines = output.split("\n");
-
-        // loop through each line, and look for specific data.
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
-            // Check if the line contains a dash '-'
-            if (line.indexOf('-') === 0) {
-                // Look for 'queueID:' and 'displayName:' on the next lines
-                var nextLineItemID = lines[i];
-                var nextLineDisplayName = lines[i + 1];
-
-                // Extract the data after 'queueID:' and 'displayName:'
-                var itemIDData = nextLineItemID.substring(nextLineItemID.indexOf(':') + 1);
-                itemIDData = itemIDData.replace(" ", "").trim();
-                var displayNameData = nextLineDisplayName.substring(nextLineDisplayName.indexOf(':') + 1);
-                displayNameData = displayNameData.replace(" '", "").replace("'", "").trim();
-
-                parsedObject[itemIDData] = displayNameData;
-                logger.debug('itemID found after dash: ' + itemIDData, scriptFileUtilName);
-                logger.debug('DisplayName found after dash: ' + displayNameData, scriptFileUtilName);
-            }
-        }
-        return parsedObject
-    }
 
     function parseVersionData(output) {
         /**
@@ -835,15 +711,6 @@ function __generateUtil() {
         return false;
     }
 
-    function getMatch(string, regex) {
-        // Remove illegal characters from given string
-        var match = string.match(regex);
-        if (match && match[1]) {
-            var result = match[1].replace("\n", "").replace("\r", "");
-        }
-        return result;
-    }
-
     function getUserDirectory() {
         /* Return OS specific user home directory. */
         if (system.osName == "MacOS") {
@@ -855,7 +722,6 @@ function __generateUtil() {
 
     return {
         "invertObject": invertObject,
-        "deadlineStringToArray": deadlineStringToArray,
         "toBooleanString": toBooleanString,
         "parseBool": parseBool,
         "trimIllegalChars": trimIllegalChars,
@@ -868,13 +734,10 @@ function __generateUtil() {
         "getAssetsInScene": getAssetsInScene,
         "editTextIntValidation": editTextIntValidation,
         "getDescription": getDescription,
-        "validateSkipExistingFrames": validateSkipExistingFrames,
-        "validateAutoAccept": validateAutoAccept,
         "wrappedCallSystem": wrappedCallSystem,
         "parseErrorData": parseErrorData,
         "parseVersionData": parseVersionData,
         "createExportBundleDir": createExportBundleDir,
-        "parseListData": parseListData,
         "removeLineBreak": removeLineBreak,
         "setListBoxSelection": setListBoxSelection,
         "getPath": getPath,

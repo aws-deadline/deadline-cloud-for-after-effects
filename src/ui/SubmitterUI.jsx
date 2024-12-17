@@ -23,7 +23,7 @@ function buildUI(thisObj) {
     root.alignChildren = ['fill', 'top']
     var logoGroup = root.add("group");
     logoGroup.alignment = 'left';
-    var logoImage = logoGroup.add("image", undefined, logoData());
+    logoGroup.add("image", undefined, logoData());
     var logoText = logoGroup.add("statictext", undefined, "AWS Deadline Cloud");
     var arialBold24Font = ScriptUI.newFont("Arial", ScriptUI.FontStyle.BOLD, 64);
     logoText.graphics.font = arialBold24Font;
@@ -134,7 +134,7 @@ function buildUI(thisObj) {
             submitButton.enabled = list.selection != null;
             submitButton.active = false;
             submitButton.active = true;
-        }
+        };
         list.selection = null;
     }
 

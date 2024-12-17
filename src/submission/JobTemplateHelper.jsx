@@ -113,9 +113,9 @@ function findJobAttachments(rootComp) {
     var queue = [rootComp];
     while (queue.length > 0) {
         var comp = queue.pop();
+        var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
         for (var i = 1; i <= comp.numLayers; i++) {
             var layer = comp.layer(i);
-            var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
             if (
                 layer != null &&
                 layer instanceof AVLayer &&
