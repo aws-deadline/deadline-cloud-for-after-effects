@@ -44,6 +44,7 @@ parameterDefinitions:
       control: LINE_EDIT
       label: Starting Frames
       groupLabel: Frame Range
+    description: The start frame to render.
     default: 1-10
   - name: FrameEnds
     type: STRING
@@ -51,7 +52,32 @@ parameterDefinitions:
       control: LINE_EDIT
       label: Ending Frames
       groupLabel: Frame Range
+    description: The end frame to render.
     default: 1-10
+  - name: ChunkSize
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Chunk Size
+      groupLabel: Frame Range
+    description: The chunk size of frames to render per task.
+    default: 1
+  - name: FrameStartPlusChunkSizeMinusOne
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: FrameStart + ChunkSize - 1
+      groupLabel: Frame Range
+    description: This value needs to equal FrameStart + ChunkSize - 1
+    default: FrameStart + ChunkSize - 1
+  - name: FrameEndMinusOne
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: FrameEnd - 1
+      groupLabel: Frame Range
+    description: This value needs to equal FrameEnd - 1
+    default: FrameEnd - 1
 
   # Hidden Controls
   - name: JobScriptDir
