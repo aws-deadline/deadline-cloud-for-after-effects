@@ -77,6 +77,11 @@ jobEnvironments:
 
 steps:
   - name: {{COMPNAME}}
+    hostRequirements:
+      attributes:
+      - name: attr.worker.os.family
+        anyOf:
+        - windows
     parameterSpace:
       taskParameterDefinitions:
       - name: FrameStart
