@@ -61,9 +61,17 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
    installers from the downloads section of the Deadline Cloud service in your AWS Console.
 1. This submitter requires the ability to write files and send communication over the network in order to function properly.
    By default, After Effects scripts are not allowed to perform these actions. [Reference link](https://helpx.adobe.com/after-effects/using/scripts.html).
-   To allow scripts to write files or send communication over a network, edit the following settings within After Effects: - Windows: `Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network` - macOS: `Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
+   To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
+
+   - Windows: `Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
+   - macOS: `Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
+
 1. Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to
-   the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path: - Windows: `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels` - macOS: `Applications/Adobe After Effects <version>/Scripts/Script UI Panels`
+   the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
+
+   - Windows: `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
+   - macOS: `Applications/Adobe After Effects <version>/Scripts/Script UI Panels`
+
 1. Restart After Effects if it was open.
 
 #### To use the submitter:
