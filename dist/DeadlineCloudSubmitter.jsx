@@ -983,6 +983,10 @@ function parameterValues(
 
     return JSON.stringify({
         parameterValues: [{
+                name: "CondaPackages",
+                value: "aftereffects",
+            },
+            {
                 name: "deadline:targetTaskRunStatus",
                 value: "READY",
             },
