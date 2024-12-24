@@ -113,8 +113,8 @@ function systemCallWithErrorAlerts(cmd) {
 }
 
 /**
- * Creates alerts for Deadline Cloud Submitter
- **/
+* Creates alerts for Deadline Cloud Submitter
+**/
 function adcAlert(message) {
     alert(message, "Deadline Cloud Submitter");
 }
@@ -167,7 +167,7 @@ function __generateUtil() {
          * @param {int} minValue - Minimum value that the slider/edittext can have.
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
-        textObj.onChange = function() {
+        textObj.onChange = function () {
             var newValue = parseFloat(textObj.text);
             if (!isNaN(newValue) && newValue >= minValue && newValue <= maxValue) {
                 sliderObj.value = newValue;
@@ -176,7 +176,7 @@ function __generateUtil() {
         }
 
 
-        sliderObj.onChange = function() {
+        sliderObj.onChange = function () {
             textObj.text = Math.round(this.value);
             logger.log("Changed sliderObject(" + sliderObj.name + ") value to: " + Math.round(this.value), scriptFileUtilName, LOG_LEVEL.DEBUG);
         }
@@ -418,9 +418,9 @@ function __generateUtil() {
 
     function parseVersionData(output) {
         /**
-         * Returns list of version numbers in the following order:
-         * [MAJOR, MINOR, PATCH]
-         */
+        * Returns list of version numbers in the following order:
+        * [MAJOR, MINOR, PATCH]
+        */
         // Regular expression to match "version " followed by version number
         var regex = /version\s+(\d+)\.(\d+)\.(\d+)/i;
 
@@ -541,43 +541,43 @@ function __generateUtil() {
 
         var hostRequirements = {
             "attributes": [{
-                    "name": "attr.worker.os.family",
-                    "anyOf": [
-                        osGroup.OSDropdownList.selection.text.toLowerCase()
-                    ]
-                },
-                {
-                    "name": "attr.worker.cpu.arch",
-                    "anyOf": [
-                        cpuArchGroup.cpuDropdownList.selection.text
-                    ]
-                }
+                "name": "attr.worker.os.family",
+                "anyOf": [
+                    osGroup.OSDropdownList.selection.text.toLowerCase()
+                ]
+            },
+            {
+                "name": "attr.worker.cpu.arch",
+                "anyOf": [
+                    cpuArchGroup.cpuDropdownList.selection.text
+                ]
+            }
             ],
             "amounts": [{
-                    "name": "amount.worker.vcpu",
-                    "min": parseInt(cpuGroup.cpuMinText.text),
-                    "max": parseInt(cpuGroup.cpuMaxText.text)
-                },
-                {
-                    "name": "amount.worker.memory",
-                    "min": parseInt(memoryGroup.memoryMinText.text) * 1024,
-                    "max": parseInt(memoryGroup.memoryMaxText.text) * 1024
-                },
-                {
-                    "name": "amount.worker.gpu",
-                    "min": parseInt(gpuGroup.gpuMinText.text),
-                    "max": parseInt(gpuGroup.gpuMaxText.text)
-                },
-                {
-                    "name": "amount.worker.gpu.memory",
-                    "min": parseInt(gpuMemoryGroup.gpuMemoryMinText.text) * 1024,
-                    "max": parseInt(gpuMemoryGroup.gpuMemoryMaxText.text) * 1024
-                },
-                {
-                    "name": "amount.worker.disk.scratch",
-                    "min": parseInt(scratchSpaceGroup.scratchSpaceMinText.text),
-                    "max": parseInt(scratchSpaceGroup.scratchSpaceMaxText.text)
-                }
+                "name": "amount.worker.vcpu",
+                "min": parseInt(cpuGroup.cpuMinText.text),
+                "max": parseInt(cpuGroup.cpuMaxText.text)
+            },
+            {
+                "name": "amount.worker.memory",
+                "min": parseInt(memoryGroup.memoryMinText.text) * 1024,
+                "max": parseInt(memoryGroup.memoryMaxText.text) * 1024
+            },
+            {
+                "name": "amount.worker.gpu",
+                "min": parseInt(gpuGroup.gpuMinText.text),
+                "max": parseInt(gpuGroup.gpuMaxText.text)
+            },
+            {
+                "name": "amount.worker.gpu.memory",
+                "min": parseInt(gpuMemoryGroup.gpuMemoryMinText.text) * 1024,
+                "max": parseInt(gpuMemoryGroup.gpuMemoryMaxText.text) * 1024
+            },
+            {
+                "name": "amount.worker.disk.scratch",
+                "min": parseInt(scratchSpaceGroup.scratchSpaceMinText.text),
+                "max": parseInt(scratchSpaceGroup.scratchSpaceMaxText.text)
+            }
             ]
         }
 
@@ -982,10 +982,7 @@ function parameterValues(
     }
 
     return JSON.stringify({
-        parameterValues: [{
-                name: "CondaPackages",
-                value: "",
-            },
+        parameterValues: [
             {
                 name: "deadline:targetTaskRunStatus",
                 value: "READY",
@@ -1450,7 +1447,7 @@ if (typeof JSON !== "object") {
     JSON = {};
 }
 
-(function() {
+(function () {
     "use strict";
 
     var rx_one = /^[\],:{}\s]*$/;
@@ -1473,9 +1470,9 @@ if (typeof JSON !== "object") {
     }
 
     if (typeof Date.prototype.toJSON !== "function") {
-        Date.prototype.toJSON = function() {
-            return isFinite(this.valueOf()) ?
-                this.getUTCFullYear() +
+        Date.prototype.toJSON = function () {
+            return isFinite(this.valueOf())
+                ? this.getUTCFullYear() +
                 "-" +
                 f(this.getUTCMonth() + 1) +
                 "-" +
@@ -1486,8 +1483,8 @@ if (typeof JSON !== "object") {
                 f(this.getUTCMinutes()) +
                 ":" +
                 f(this.getUTCSeconds()) +
-                "Z" :
-                null;
+                "Z"
+                : null;
         };
 
         Boolean.prototype.toJSON = this_value;
@@ -1507,16 +1504,16 @@ if (typeof JSON !== "object") {
         // sequences.
 
         rx_escapable.lastIndex = 0;
-        return rx_escapable.test(string) ?
-            '"' +
-            string.replace(rx_escapable, function(a) {
+        return rx_escapable.test(string)
+            ? '"' +
+            string.replace(rx_escapable, function (a) {
                 var c = meta[a];
-                return typeof c === "string" ?
-                    c :
-                    "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
+                return typeof c === "string"
+                    ? c
+                    : "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
             }) +
-            '"' :
-            '"' + string + '"';
+            '"'
+            : '"' + string + '"';
     }
 
     function str(key, holder) {
@@ -1566,8 +1563,8 @@ if (typeof JSON !== "object") {
 
                 return String(value);
 
-                // If the type is "object", we might be dealing with an object or an array or
-                // null.
+            // If the type is "object", we might be dealing with an object or an array or
+            // null.
 
             case "object":
                 // Due to a specification blunder in ECMAScript, typeof null is "object",
@@ -1597,11 +1594,11 @@ if (typeof JSON !== "object") {
                     // brackets.
 
                     v =
-                        partial.length === 0 ?
-                        "[]" :
-                        gap ?
-                        "[\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "]" :
-                        "[" + partial.join(",") + "]";
+                        partial.length === 0
+                            ? "[]"
+                            : gap
+                                ? "[\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "]"
+                                : "[" + partial.join(",") + "]";
                     gap = mind;
                     return v;
                 }
@@ -1636,11 +1633,11 @@ if (typeof JSON !== "object") {
                 // and wrap them in braces.
 
                 v =
-                    partial.length === 0 ?
-                    "{}" :
-                    gap ?
-                    "{\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "}" :
-                    "{" + partial.join(",") + "}";
+                    partial.length === 0
+                        ? "{}"
+                        : gap
+                            ? "{\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "}"
+                            : "{" + partial.join(",") + "}";
                 gap = mind;
                 return v;
         }
@@ -1659,7 +1656,7 @@ if (typeof JSON !== "object") {
             '"': '\\"',
             "\\": "\\\\",
         };
-        JSON.stringify = function(value, replacer, space) {
+        JSON.stringify = function (value, replacer, space) {
             // The stringify method takes a value and an optional replacer, and an optional
             // space parameter, and returns a JSON text. The replacer can be a function
             // that can replace values, or an array of strings that will select the keys.
@@ -1698,16 +1695,14 @@ if (typeof JSON !== "object") {
             // Make a fake root object containing our value under the key of "".
             // Return the result of stringifying the value.
 
-            return str("", {
-                "": value
-            });
+            return str("", { "": value });
         };
     }
 
     // If the JSON object does not yet have a parse method, give it one.
 
     if (typeof JSON.parse !== "function") {
-        JSON.parse = function(text, reviver) {
+        JSON.parse = function (text, reviver) {
             // The parse method takes a text and an optional reviver function, and returns
             // a JavaScript value if the text is a valid JSON text.
 
@@ -1742,7 +1737,7 @@ if (typeof JSON !== "object") {
             text = String(text);
             rx_dangerous.lastIndex = 0;
             if (rx_dangerous.test(text)) {
-                text = text.replace(rx_dangerous, function(a) {
+                text = text.replace(rx_dangerous, function (a) {
                     return "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
                 });
             }
@@ -1775,9 +1770,7 @@ if (typeof JSON !== "object") {
                 // In the optional fourth stage, we recursively walk the new structure, passing
                 // each name/value pair to a reviver function for possible transformation.
 
-                return typeof reviver === "function" ? walk({
-                    "": j
-                }, "") : j;
+                return typeof reviver === "function" ? walk({ "": j }, "") : j;
             }
 
             // If the text is not JSON parseable, then a SyntaxError is thrown.
@@ -1821,7 +1814,7 @@ function buildUI(thisObj) {
     logoText.graphics.font = arialBold24Font;
     var headerButtonGroup = root.add("group");
     var focusRenderQueueButton = headerButtonGroup.add("button", undefined, "Open Render Queue");
-    focusRenderQueueButton.onClick = function() {
+    focusRenderQueueButton.onClick = function () {
         //we quickly toggle the window to make sure it gains focus
         //sometimes this causes a flicker
         app.project.renderQueue.showWindow(false);
@@ -1859,7 +1852,7 @@ function buildUI(thisObj) {
     var persistentFramesPerTask = app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK) ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK) : "10";
     var framesPerTaskValue = framesPerTaskOption.add("edittext", undefined, persistentFramesPerTask);
     framesPerTaskValue.alignment = ['fill', 'top'];
-    framesPerTaskValue.onChange = function() {
+    framesPerTaskValue.onChange = function () {
         framesPerTaskValue.text = String(Math.abs(parseInt(framesPerTaskValue.text)));
         if (framesPerTaskValue.text == "NaN") {
             framesPerTaskValue.text = "10";
@@ -1868,13 +1861,13 @@ function buildUI(thisObj) {
     }
     framesPerTaskValue.enabled = separateFramesCheckbox.value;
 
-    separateFramesCheckbox.onClick = function() {
+    separateFramesCheckbox.onClick = function () {
         app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_SEPARATEFRAMESINTOTASKS, separateFramesCheckbox.value.toString())
         framesPerTaskValue.enabled = separateFramesCheckbox.value;
     }
 
     var submitButton = controlsGroup.add("button", undefined, "Submit");
-    submitButton.onClick = function() {
+    submitButton.onClick = function () {
         SubmitSelection(list.selection, separateFramesCheckbox.value ? parseInt(framesPerTaskValue.text) : 1);
         list.selection = null;
     }
@@ -1919,7 +1912,7 @@ function buildUI(thisObj) {
             listGroup.remove(list);
         }
         list = newList;
-        list.onChange = function() {
+        list.onChange = function () {
             if (list.selection == null) {
                 updateList();
             }
@@ -1932,17 +1925,17 @@ function buildUI(thisObj) {
 
     updateList()
 
-    refreshButton.onClick = function() {
+    refreshButton.onClick = function () {
         updateList();
     }
 
-    submitterPanel.addEventListener('click', function() {
+    submitterPanel.addEventListener('click', function () {
         updateList();
     }, true);
 
     submitterPanel.layout.layout(true);
 
-    submitterPanel.onResizing = function() {
+    submitterPanel.onResizing = function () {
         this.layout.resize();
     }
     if (!(thisObj instanceof Panel)) {
@@ -1969,15 +1962,15 @@ if (isSecurityPrefSet()) {
     //Print an error message and instructions for changing security preferences
     var submitterPanel =
         thisObj instanceof Panel ?
-        thisObj :
-        new Window(
-            "palette",
-            "Submit Queue to AWS Deadline Cloud",
-            undefined, {
+            thisObj :
+            new Window(
+                "palette",
+                "Submit Queue to AWS Deadline Cloud",
+                undefined, {
                 resizable: true,
                 closeButton: true,
             }
-        );
+            );
     var root = submitterPanel.add("group");
     root.orientation = "column";
     root.alignment = ["fill", "fill"];
@@ -2004,7 +1997,8 @@ if (isSecurityPrefSet()) {
     errorText2.minimumSize.height = 300;
 
     submitterPanel.layout.layout(true);
-    submitterPanel.onResizing = function() {
+    submitterPanel.onResizing = function () {
         this.layout.resize();
     };
 }
+

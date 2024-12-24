@@ -35,10 +35,7 @@ function parameterValues(
     }
 
     return JSON.stringify({
-        parameterValues: [{
-                name: "CondaPackages",
-                value: "",
-            },
+        parameterValues: [
             {
                 name: "deadline:targetTaskRunStatus",
                 value: "READY",
