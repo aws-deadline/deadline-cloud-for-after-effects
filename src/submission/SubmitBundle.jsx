@@ -93,35 +93,31 @@ function SubmitSelection(selection, framesPerTask) {
 
         recursiveCopy(jobTemplateSourceFolder, bundleRoot);
 
-        var template = new File(bundleRoot.fsName + "/template.yaml");
-        template.open("r");
-        var templateContents = template.read();
-        templateContents = templateContents.replace(
+        // Write the template.json file
+        var templateOutDir = bundleRoot.fsName + "/template.json";
+
+        var jobTemplateStr = JSON.stringify(AE_JOB_TEMPLATE);
+        var templateContents = jobTemplateStr.replace(
             "{{JOBNAME}}",
             File.decode(app.project.file.name) + " [" + compName + "]"
         );
         templateContents = templateContents.replace(
             "{{COMPNAME}}", compName
         );
-        template.close();
-        template.remove();
-        template.open("w");
-        template.write(templateContents);
-        template.close();
+        writeJSONFile(JSON.parse(templateContents), templateOutDir);
 
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
         var sanitizedOutputFilePath = sanitizeFilePath(outputPath);
+
+        // Write the asset_references.json file
         var jobAttachmentsContents = jobAttachmentsJson(
             dependencies,
             sanitizedOutputFolder
         );
-        var attachmentJson = new File(
-            bundleRoot.fsName + "/asset_references.json"
-        );
-        attachmentJson.open("w");
-        attachmentJson.write(jobAttachmentsContents);
-        attachmentJson.close();
+        var assetReferencesOutDir = bundleRoot.fsName + "/asset_references.json";
+        writeJSONFile(jobAttachmentsContents, assetReferencesOutDir);
 
+        // Write the parameter_values.json file
         var startFrame = Number(
             timeToFrames(
                 Number(renderSettings["Time Span Start"]),
@@ -143,12 +139,8 @@ function SubmitSelection(selection, framesPerTask) {
             endFrame,
             framesPerTask,
         );
-        var parametersJson = new File(
-            bundleRoot.fsName + "/parameter_values.json"
-        );
-        parametersJson.open("w");
-        parametersJson.write(parametersContents);
-        parametersJson.close();
+        var parametersOutDir = bundleRoot.fsName + "/parameter_values.json";
+        writeJSONFile(parametersContents, parametersOutDir);
 
         return bundleRoot;
     }
@@ -156,10 +148,10 @@ function SubmitSelection(selection, framesPerTask) {
 
     // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
     var submitScriptContents =
-            'deadline bundle gui-submit "' + bundle.fsName + "\" --output json --install-gui";
+        'deadline bundle gui-submit "' + bundle.fsName + "\" --output json --install-gui";
     if ($.os.toString().slice(0, 7) === "Windows") {
         var submitScript = new File(Folder.temp.fsName + "/submit.bat");
-        
+
         submitScript.open("w");
         submitScript.write(submitScriptContents);
         submitScript.close();

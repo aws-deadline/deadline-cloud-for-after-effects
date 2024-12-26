@@ -9,18 +9,18 @@ function parameterValues(
     endFrame,
     framesPerTask
 ) {
-    var frameStarts;
-    var frameEnds;
+    var frameStart;
+    var frameEnd;
     var re = new RegExp("^[^#]*#{5}[^#]*$"); //checks for output patterns with [####] in them which usually indicates an image sequence
     var isSequence = false;
     isSequence = re.test(outputPath);
 
     if (framesPerTask < 1 || !isSequence) {
-        frameStarts = startFrame.toString();
-        frameEnds = endFrame.toString();
+        frameStart = startFrame.toString();
+        frameEnd = endFrame.toString();
     } else if (framesPerTask == 1) {
-        frameStarts = startFrame.toString() + "-" + endFrame.toString();
-        frameEnds = frameStarts;
+        frameStart = startFrame.toString() + "-" + endFrame.toString();
+        frameEnd = frameStart;
     } else {
         var frame = startFrame;
         var startArray = [];
@@ -30,13 +30,12 @@ function parameterValues(
             frame = Math.min(endFrame + 1, frame + framesPerTask);
             endArray.push((frame - 1).toString());
         }
-        frameStarts = startArray.join(",");
-        frameEnds = endArray.join(",");
+        frameStart = startArray.join(",");
+        frameEnd = endArray.join(",");
     }
 
-    return JSON.stringify({
-        parameterValues: [
-            {
+    return {
+        parameterValues: [{
                 name: "CondaPackages",
                 value: "aftereffects",
             },
@@ -69,22 +68,22 @@ function parameterValues(
                 value: outputPath,
             },
             {
-                name: "FrameStarts",
-                value: frameStarts,
+                name: "FrameStart",
+                value: frameStart,
             },
             {
-                name: "FrameEnds",
-                value: frameEnds,
+                name: "FrameEnd",
+                value: frameEnd,
             }
         ],
-    });
+    };
 }
 
 /**
  * Generates the basic format of the asset reference for job template.
  **/
 function jobAttachmentsJson(inputFiles, outputFolder) {
-    return JSON.stringify({
+    return {
         assetReferences: {
             inputs: {
                 directories: [],
@@ -95,7 +94,7 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
             },
             referencedPaths: [],
         },
-    });
+    };
 }
 
 /**
@@ -152,4 +151,160 @@ function findJobAttachments(rootComp) {
         }
     }
     return attachments;
+}
+
+var AE_JOB_TEMPLATE = {
+    "specificationVersion": "jobtemplate-2023-09",
+    "name": "{{JOBNAME}}",
+    "description": "A simple job bundle that allows a user to select a project and comp to render with aerender.",
+    "parameterDefinitions": [{
+            "name": "ProjectFile",
+            "type": "PATH",
+            "objectType": "FILE",
+            "dataFlow": "IN",
+            "userInterface": {
+                "control": "CHOOSE_INPUT_FILE",
+                "label": "Project file",
+                "groupLabel": "Source",
+                "fileFilters": [{
+                        "label": "After Effects project files",
+                        "patterns": [
+                            "*.aep",
+                            "*.aepx"
+                        ]
+                    },
+                    {
+                        "label": "All Files",
+                        "patterns": [
+                            "*"
+                        ]
+                    }
+                ]
+            },
+            "description": "The After Effects project file to render."
+        },
+        {
+            "name": "RenderQueueIndex",
+            "type": "INT",
+            "userInterface": {
+                "control": "SPIN_BOX",
+                "label": "Render Queue Index",
+                "groupLabel": "Source"
+            },
+            "description": "The index of the item in the render queue to render.",
+            "default": 1
+        },
+        {
+            "name": "OutputFile",
+            "type": "PATH",
+            "objectType": "FILE",
+            "dataFlow": "OUT",
+            "userInterface": {
+                "control": "HIDDEN",
+                "label": "Output File",
+                "groupLabel": "Frame Range"
+            },
+            "default": "~\\Desktop\\output",
+            "description": "The render output destination"
+        },
+        {
+            "name": "FrameStart",
+            "type": "STRING",
+            "userInterface": {
+                "control": "LINE_EDIT",
+                "label": "Start Frame",
+                "groupLabel": "Frame Range"
+            },
+            "default": "1-10",
+        },
+        {
+            "name": "FrameEnd",
+            "type": "STRING",
+            "userInterface": {
+                "control": "LINE_EDIT",
+                "label": "End Frame",
+                "groupLabel": "Frame Range"
+            },
+            "default": "1-10",
+        },
+        {
+            "name": "JobScriptDir",
+            "description": "Directory containing embedded scripts.",
+            "userInterface": {
+                "control": "HIDDEN"
+            },
+            "type": "PATH",
+            "objectType": "DIRECTORY",
+            "dataFlow": "IN",
+            "default": "scripts"
+        }
+    ],
+    "jobEnvironments": [{
+        "name": "Create Output Directories",
+        "description": "Create Output Directories",
+        "script": {
+            "actions": {
+                "onEnter": {
+                    "command": "powershell",
+                    "args": [
+                        "-File",
+                        "{{Param.JobScriptDir}}/start.ps1",
+                        "{{Param.OutputFile}}"
+                    ]
+                }
+            }
+        }
+    }],
+    "steps": [{
+        "name": "{{COMPNAME}}",
+        "hostRequirements": {
+            "attributes": [{
+                "name": "attr.worker.os.family",
+                "anyOf": [
+                    "windows"
+                ]
+            }]
+        },
+        "parameterSpace": {
+            "taskParameterDefinitions": [{
+                    "name": "FrameChunkStart",
+                    "type": "INT",
+                    "range": "{{Param.FrameStart}}"
+                },
+                {
+                    "name": "FrameChunkEnd",
+                    "type": "INT",
+                    "range": "{{Param.FrameEnd}}"
+                }
+            ],
+            "combination": "(FrameChunkStart, FrameChunkEnd)"
+        },
+        "script": {
+            "actions": {
+                "onRun": {
+                    "command": "powershell",
+                    "args": [
+                        "-File",
+                        "{{Param.JobScriptDir}}/aerender.ps1",
+                        "{{Param.ProjectFile}}",
+                        "{{Param.RenderQueueIndex}}",
+                        "{{Task.Param.FrameChunkStart}}",
+                        "{{Task.Param.FrameChunkEnd}}",
+                        "{{Param.OutputFile}}"
+                    ]
+                }
+            }
+        }
+    }]
+};
+
+/**
+* Write the JSON file to the file path
+*/
+function writeJSONFile(jsonData, filePath) {
+
+    var file = File(filePath);
+    file.open('w');
+    file.write(JSON.stringify(jsonData, null, 4));
+    file.close();
 }
