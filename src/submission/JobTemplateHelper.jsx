@@ -35,10 +35,7 @@ function parameterValues(
     }
 
     return {
-        parameterValues: [{
-                name: "CondaPackages",
-                value: "aftereffects",
-            },
+        parameterValues: [
             {
                 name: "deadline:targetTaskRunStatus",
                 value: "READY",
@@ -155,7 +152,7 @@ function findJobAttachments(rootComp) {
 
 var AE_JOB_TEMPLATE = {
     "specificationVersion": "jobtemplate-2023-09",
-    "name": "{{JOBNAME}}",
+    "name": "{{JOB_NAME}}",
     "description": "A simple job bundle that allows a user to select a project and comp to render with aerender.",
     "parameterDefinitions": [{
             "name": "ProjectFile",
@@ -237,7 +234,16 @@ var AE_JOB_TEMPLATE = {
             "objectType": "DIRECTORY",
             "dataFlow": "IN",
             "default": "scripts"
-        }
+        },
+        {
+            "name": "CondaPackages",
+            "type": "STRING",
+            "userInterface": {
+                "control": "HIDDEN",
+            },
+            "default": "aftereffects={{AE_VERSION}}",
+            "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
+        },
     ],
     "jobEnvironments": [{
         "name": "Create Output Directories",
@@ -256,12 +262,13 @@ var AE_JOB_TEMPLATE = {
         }
     }],
     "steps": [{
-        "name": "{{COMPNAME}}",
+        "name": "{{COMP_NAME}}",
         "hostRequirements": {
             "attributes": [{
                 "name": "attr.worker.os.family",
                 "anyOf": [
-                    "windows"
+                    "windows",
+                    "macos"
                 ]
             }]
         },
@@ -299,8 +306,8 @@ var AE_JOB_TEMPLATE = {
 };
 
 /**
-* Write the JSON file to the file path
-*/
+ * Write the JSON file to the file path
+ */
 function writeJSONFile(jsonData, filePath) {
 
     var file = File(filePath);

@@ -1,5 +1,7 @@
 #include "utils/Logger.jsx"
+
 #include "Imports.jsx"
+
 #include "UI/SubmitterUI.jsx"
 
 function isSecurityPrefSet() {

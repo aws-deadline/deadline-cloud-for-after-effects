@@ -98,11 +98,16 @@ function SubmitSelection(selection, framesPerTask) {
 
         var jobTemplateStr = JSON.stringify(AE_JOB_TEMPLATE);
         var templateContents = jobTemplateStr.replace(
-            "{{JOBNAME}}",
+            "{{JOB_NAME}}",
             File.decode(app.project.file.name) + " [" + compName + "]"
         );
         templateContents = templateContents.replace(
-            "{{COMPNAME}}", compName
+            "{{COMP_NAME}}", compName
+        );
+        const aftereffectsVersion = app.version[0] + app.version[1];
+        logger.debug("The major version of After Effects is " + aftereffectsVersion, "SubmitButton.jsx");
+        templateContents = templateContents.replace(
+            "{{AE_VERSION}}", aftereffectsVersion
         );
         writeJSONFile(JSON.parse(templateContents), templateOutDir);
 

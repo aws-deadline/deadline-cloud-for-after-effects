@@ -109,8 +109,8 @@ function systemCallWithErrorAlerts(cmd) {
 }
 
 /**
-* Creates alerts for Deadline Cloud Submitter
-**/
+ * Creates alerts for Deadline Cloud Submitter
+ **/
 function adcAlert(message) {
     alert(message, "Deadline Cloud Submitter");
 }
@@ -414,9 +414,9 @@ function __generateUtil() {
 
     function parseVersionData(output) {
         /**
-        * Returns list of version numbers in the following order:
-        * [MAJOR, MINOR, PATCH]
-        */
+         * Returns list of version numbers in the following order:
+         * [MAJOR, MINOR, PATCH]
+         */
         // Regular expression to match "version " followed by version number
         var regex = /version\s+(\d+)\.(\d+)\.(\d+)/i;
 
