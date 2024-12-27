@@ -1096,161 +1096,6 @@ function findJobAttachments(rootComp) {
     return attachments;
 }
 
-var AE_JOB_TEMPLATE = {
-    "specificationVersion": "jobtemplate-2023-09",
-    "name": "{{JOB_NAME}}",
-    "description": "A simple job bundle that allows a user to select a project and comp to render with aerender.",
-    "parameterDefinitions": [{
-            "name": "ProjectFile",
-            "type": "PATH",
-            "objectType": "FILE",
-            "dataFlow": "IN",
-            "userInterface": {
-                "control": "CHOOSE_INPUT_FILE",
-                "label": "Project file",
-                "groupLabel": "Source",
-                "fileFilters": [{
-                        "label": "After Effects project files",
-                        "patterns": [
-                            "*.aep",
-                            "*.aepx"
-                        ]
-                    },
-                    {
-                        "label": "All Files",
-                        "patterns": [
-                            "*"
-                        ]
-                    }
-                ]
-            },
-            "description": "The After Effects project file to render."
-        },
-        {
-            "name": "RenderQueueIndex",
-            "type": "INT",
-            "userInterface": {
-                "control": "SPIN_BOX",
-                "label": "Render Queue Index",
-                "groupLabel": "Source"
-            },
-            "description": "The index of the item in the render queue to render.",
-            "default": 1
-        },
-        {
-            "name": "OutputFile",
-            "type": "PATH",
-            "objectType": "FILE",
-            "dataFlow": "OUT",
-            "userInterface": {
-                "control": "HIDDEN",
-                "label": "Output File",
-                "groupLabel": "Frame Range"
-            },
-            "default": "~\\Desktop\\output",
-            "description": "The render output destination"
-        },
-        {
-            "name": "FrameStart",
-            "type": "STRING",
-            "userInterface": {
-                "control": "LINE_EDIT",
-                "label": "Start Frame",
-                "groupLabel": "Frame Range"
-            },
-            "default": "1-10",
-        },
-        {
-            "name": "FrameEnd",
-            "type": "STRING",
-            "userInterface": {
-                "control": "LINE_EDIT",
-                "label": "End Frame",
-                "groupLabel": "Frame Range"
-            },
-            "default": "1-10",
-        },
-        {
-            "name": "JobScriptDir",
-            "description": "Directory containing embedded scripts.",
-            "userInterface": {
-                "control": "HIDDEN"
-            },
-            "type": "PATH",
-            "objectType": "DIRECTORY",
-            "dataFlow": "IN",
-            "default": "scripts"
-        },
-        {
-            "name": "CondaPackages",
-            "type": "STRING",
-            "userInterface": {
-                "control": "HIDDEN",
-            },
-            "default": "aftereffects={{AE_VERSION}}",
-            "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
-        },
-    ],
-    "jobEnvironments": [{
-        "name": "Create Output Directories",
-        "description": "Create Output Directories",
-        "script": {
-            "actions": {
-                "onEnter": {
-                    "command": "powershell",
-                    "args": [
-                        "-File",
-                        "{{Param.JobScriptDir}}/start.ps1",
-                        "{{Param.OutputFile}}"
-                    ]
-                }
-            }
-        }
-    }],
-    "steps": [{
-        "name": "{{COMP_NAME}}",
-        "hostRequirements": {
-            "attributes": [{
-                "name": "attr.worker.os.family",
-                "anyOf": [
-                    "windows",
-                    "macos"
-                ]
-            }]
-        },
-        "parameterSpace": {
-            "taskParameterDefinitions": [{
-                    "name": "FrameChunkStart",
-                    "type": "INT",
-                    "range": "{{Param.FrameStart}}"
-                },
-                {
-                    "name": "FrameChunkEnd",
-                    "type": "INT",
-                    "range": "{{Param.FrameEnd}}"
-                }
-            ],
-            "combination": "(FrameChunkStart, FrameChunkEnd)"
-        },
-        "script": {
-            "actions": {
-                "onRun": {
-                    "command": "powershell",
-                    "args": [
-                        "-File",
-                        "{{Param.JobScriptDir}}/aerender.ps1",
-                        "{{Param.ProjectFile}}",
-                        "{{Param.RenderQueueIndex}}",
-                        "{{Task.Param.FrameChunkStart}}",
-                        "{{Task.Param.FrameChunkEnd}}",
-                        "{{Param.OutputFile}}"
-                    ]
-                }
-            }
-        }
-    }]
-};
-
 /**
  * Write the JSON file to the file path
  */
@@ -1262,6 +1107,8 @@ function writeJSONFile(jsonData, filePath) {
     file.close();
 }
 
+
+const SubmitBundleFile = "SubmitButton.jsx";
 
 /**
  * Submit the selected render queue item
@@ -1359,10 +1206,10 @@ function SubmitSelection(selection, framesPerTask) {
         recursiveCopy(jobTemplateSourceFolder, bundleRoot);
 
         // Write the template.json file
-        var templateOutDir = bundleRoot.fsName + "/template.json";
-
-        var jobTemplateStr = JSON.stringify(AE_JOB_TEMPLATE);
-        var templateContents = jobTemplateStr.replace(
+        var template = new File(bundleRoot.fsName + "/template.json");
+        template.open("r");
+        var templateContents = template.read();
+        templateContents = templateContents.replace(
             "{{JOB_NAME}}",
             File.decode(app.project.file.name) + " [" + compName + "]"
         );
@@ -1370,11 +1217,14 @@ function SubmitSelection(selection, framesPerTask) {
             "{{COMP_NAME}}", compName
         );
         const aftereffectsVersion = app.version[0] + app.version[1];
-        logger.debug("The major version of After Effects is " + aftereffectsVersion, "SubmitButton.jsx");
+        logger.debug("The major version of After Effects is " + aftereffectsVersion, SubmitBundleFile);
         templateContents = templateContents.replace(
             "{{AE_VERSION}}", aftereffectsVersion
         );
-        writeJSONFile(JSON.parse(templateContents), templateOutDir);
+        template.open("w");
+        template.write(templateContents);
+        template.close();
+        logger.debug("Wrote the template.json file", SubmitBundleFile);
 
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
         var sanitizedOutputFilePath = sanitizeFilePath(outputPath);

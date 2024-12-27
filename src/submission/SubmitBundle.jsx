@@ -1,3 +1,5 @@
+const SubmitBundleFile = "SubmitButton.jsx";
+
 /**
  * Submit the selected render queue item
  **/
@@ -94,10 +96,10 @@ function SubmitSelection(selection, framesPerTask) {
         recursiveCopy(jobTemplateSourceFolder, bundleRoot);
 
         // Write the template.json file
-        var templateOutDir = bundleRoot.fsName + "/template.json";
-
-        var jobTemplateStr = JSON.stringify(AE_JOB_TEMPLATE);
-        var templateContents = jobTemplateStr.replace(
+        var template = new File(bundleRoot.fsName + "/template.json");
+        template.open("r");
+        var templateContents = template.read();
+        templateContents = templateContents.replace(
             "{{JOB_NAME}}",
             File.decode(app.project.file.name) + " [" + compName + "]"
         );
@@ -105,11 +107,14 @@ function SubmitSelection(selection, framesPerTask) {
             "{{COMP_NAME}}", compName
         );
         const aftereffectsVersion = app.version[0] + app.version[1];
-        logger.debug("The major version of After Effects is " + aftereffectsVersion, "SubmitButton.jsx");
+        logger.debug("The major version of After Effects is " + aftereffectsVersion, SubmitBundleFile);
         templateContents = templateContents.replace(
             "{{AE_VERSION}}", aftereffectsVersion
         );
-        writeJSONFile(JSON.parse(templateContents), templateOutDir);
+        template.open("w");
+        template.write(templateContents);
+        template.close();
+        logger.debug("Wrote the template.json file", SubmitBundleFile);
 
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
         var sanitizedOutputFilePath = sanitizeFilePath(outputPath);
