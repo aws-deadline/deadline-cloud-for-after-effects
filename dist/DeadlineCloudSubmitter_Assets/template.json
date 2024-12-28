@@ -91,6 +91,15 @@
             },
             "default": "aftereffects={{AE_VERSION}}",
             "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
+        },
+        {
+            "name": "RezPackages",
+            "type": "STRING",
+            "userInterface": {
+                "control": "HIDDEN"
+            },
+            "default": "aftereffects-{{AE_VERSION}}",
+            "description": "If a queue accepts this parameter, it will create a Rez environment from it."
         }
     ],
     "jobEnvironments": [{
