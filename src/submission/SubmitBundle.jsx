@@ -72,63 +72,22 @@ function SubmitSelection(selection, framesPerTask) {
     var dependencies = findJobAttachments(rqi.comp); //list of filenames
     var compName = rqi.comp.name;
 
-    /**
-     * Generates the job bundle
-     **/
-    function generateBundle() {
-        var bundleRoot = new Folder(
-            Folder.temp.fsName + "/DeadlineCloudAESubmission"
-        ); //forward slash works on all operating systems
-        recursiveDelete(bundleRoot);
-        bundleRoot.create();
-
-        var jobTemplateSourceFolder = new Folder(
-            scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
-        );
-        if (!jobTemplateSourceFolder.exists) {
-            adcAlert(
-                "Error: Missing job template at " + jobTemplateSourceFolder.fsName
-            );
-            return null;
-        }
-
-        recursiveCopy(jobTemplateSourceFolder, bundleRoot);
-
-        // Write the template.json file
-        var template = new File(bundleRoot.fsName + "/template.json");
-        template.open("r");
-        var templateContents = template.read();
-        // Convert the template string to JSON dict.
-        var templateDict = JSON.parse(templateContents);
-        alert("what is templateDict" + templateDict);
-        alert("what is templateDict name " + templateDict);
-        templateDict.name = File.decode(app.project.file.name) + " [" + compName + "]";
-        if (templateDict.steps.length != 0 && templateDict.steps[0] != 0) {
-            templateDict.steps.name = compName;
-        }
-        alert("new templateDict is " + templateDict);
-        const aftereffectsVersion = app.version[0] + app.version[1];
-        logger.debug("The major version of After Effects is " + aftereffectsVersion, submitBundleFile);
-        templateContents = templateContents.replace(
-            /{{AE_VERSION}}/g, aftereffectsVersion
-        );
-        template.open("w");
-        template.write(templateContents);
-        template.close();
-        logger.debug("Wrote the template.json file", submitBundleFile);
-
+    function generateAssetReferences(bundlePath) {
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
-        var sanitizedOutputFilePath = sanitizeFilePath(outputPath);
 
         // Write the asset_references.json file
         var jobAttachmentsContents = jobAttachmentsJson(
             dependencies,
             sanitizedOutputFolder
         );
-        var assetReferencesOutDir = bundleRoot.fsName + "/asset_references.json";
+        var assetReferencesOutDir = bundlePath + "/asset_references.json";
         writeJSONFile(jobAttachmentsContents, assetReferencesOutDir);
+    }
 
-        // Write the parameter_values.json file
+    /**
+     * Generates parameter_values json file
+     **/
+    function generateParameterValues(bundlePath) {
         var startFrame = Number(
             timeToFrames(
                 Number(renderSettings["Time Span Start"]),
@@ -142,6 +101,8 @@ function SubmitSelection(selection, framesPerTask) {
                     Number(renderSettings["Use this frame rate"])
                 )
             ) - 1; //end frame is inclusive so we subtract 1
+
+        var sanitizedOutputFilePath = sanitizeFilePath(outputPath);
         var parametersContents = parameterValues(
             renderQueueIndex,
             app.project.file.fsName,
@@ -150,9 +111,78 @@ function SubmitSelection(selection, framesPerTask) {
             endFrame,
             framesPerTask,
         );
-        var parametersOutDir = bundleRoot.fsName + "/parameter_values.json";
+        var parametersOutDir = bundlePath + "/parameter_values.json";
         writeJSONFile(parametersContents, parametersOutDir);
+    }
 
+    /**
+     * Generates job template json file
+     **/
+    function generateTemplate(bundlePath) {
+        // Write the template.json file
+        var template = new File(bundlePath + "/template.json");
+        template.open("r");
+        var templateContents = template.read();
+        template.close();
+        // Parse the template string to JSON dict.
+        var templateDict = JSON.parse(templateContents);
+        templateDict.name = File.decode(app.project.file.name) + " [" + compName + "]";
+        logger.debug("The template name is " + templateDict.name, submitBundleFile);
+        try {
+            templateDict.steps.name = compName;
+            logger.debug("The step name is " + templateDict.steps.name, submitBundleFile);
+        } catch (e) {
+            adcAlert("CompName was not successfully written to the template's step. \nPlease check your template.json and make sure you have name under steps");
+        }
+        const aftereffectsVersion = app.version[0] + app.version[1];
+        logger.debug("The major version of After Effects is " + aftereffectsVersion, submitBundleFile);
+
+        var paramDefCopy = templateDict.parameterDefinitions;
+        for (var i = paramDefCopy.length - 1; i >= 0; i--) {
+            if (paramDefCopy[i].name == "CondaPackages") {
+                paramDefCopy[i].default = "aftereffects=" + aftereffectsVersion;
+                alert(paramDefCopy[i].default);
+            }
+            if (paramDefCopy[i].name == "RezPackages") {
+                paramDefCopy[i].default = "aftereffects-" + aftereffectsVersion;
+                alert(paramDefCopy[i].default);
+            }
+        }
+
+        template.open("w");
+        template.write(JSON.stringify(templateDict));
+        template.close();
+        logger.debug("Wrote the template.json file to the bundle folder " + bundlePath, submitBundleFile);
+    }
+
+    /**
+     * Generates the job bundle, including template.json, parameter_values.json
+     * and asset_references.json
+     **/
+    function generateBundle() {
+        // create the job bundle folder
+        var bundleRoot = new Folder(
+            Folder.temp.fsName + "/DeadlineCloudAESubmission"
+        ); //forward slash works on all operating systems
+        recursiveDelete(bundleRoot);
+        bundleRoot.create();
+        var bundlePath = bundleRoot.fsName;
+
+        generateAssetReferences(bundlePath);
+        generateParameterValues(bundlePath);
+
+        var jobTemplateSourceFolder = new Folder(
+            scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
+        );
+        if (!jobTemplateSourceFolder.exists) {
+            adcAlert(
+                "Error: Missing job template at " + jobTemplateSourceFolder.fsName
+            );
+            return null;
+        }
+        recursiveCopy(jobTemplateSourceFolder, bundleRoot);
+
+        generateTemplate(bundlePath);
         return bundleRoot;
     }
     var bundle = generateBundle();
