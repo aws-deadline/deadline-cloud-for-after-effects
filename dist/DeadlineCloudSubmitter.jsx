@@ -1108,12 +1108,11 @@ function writeJSONFile(jsonData, filePath) {
 }
 
 
-const SubmitBundleFile = "SubmitButton.jsx";
-
 /**
  * Submit the selected render queue item
  **/
 function SubmitSelection(selection, framesPerTask) {
+    const SubmitBundleFile = "SubmitButton.jsx";
     // first we must verify that our selection is valid
     if (selection == null) {
         adcAlert("Error: No selection");
@@ -1219,7 +1218,7 @@ function SubmitSelection(selection, framesPerTask) {
         const aftereffectsVersion = app.version[0] + app.version[1];
         logger.debug("The major version of After Effects is " + aftereffectsVersion, SubmitBundleFile);
         templateContents = templateContents.replace(
-            "{{AE_VERSION}}", aftereffectsVersion
+            /{{AE_VERSION}}/g, aftereffectsVersion
         );
         template.open("w");
         template.write(templateContents);
