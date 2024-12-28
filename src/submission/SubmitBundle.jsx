@@ -2,7 +2,7 @@
  * Submit the selected render queue item
  **/
 function SubmitSelection(selection, framesPerTask) {
-    const SubmitBundleFile = "SubmitButton.jsx";
+    const submitBundleFile = "SubmitButton.jsx";
     // first we must verify that our selection is valid
     if (selection == null) {
         adcAlert("Error: No selection");
@@ -98,22 +98,24 @@ function SubmitSelection(selection, framesPerTask) {
         var template = new File(bundleRoot.fsName + "/template.json");
         template.open("r");
         var templateContents = template.read();
-        templateContents = templateContents.replace(
-            "{{JOB_NAME}}",
-            File.decode(app.project.file.name) + " [" + compName + "]"
-        );
-        templateContents = templateContents.replace(
-            "{{COMP_NAME}}", compName
-        );
+        // Convert the template string to JSON dict.
+        var templateDict = JSON.parse(templateContents);
+        alert("what is templateDict" + templateDict);
+        alert("what is templateDict name " + templateDict);
+        templateDict.name = File.decode(app.project.file.name) + " [" + compName + "]";
+        if (templateDict.steps.length != 0 && templateDict.steps[0] != 0) {
+            templateDict.steps.name = compName;
+        }
+        alert("new templateDict is " + templateDict);
         const aftereffectsVersion = app.version[0] + app.version[1];
-        logger.debug("The major version of After Effects is " + aftereffectsVersion, SubmitBundleFile);
+        logger.debug("The major version of After Effects is " + aftereffectsVersion, submitBundleFile);
         templateContents = templateContents.replace(
             /{{AE_VERSION}}/g, aftereffectsVersion
         );
         template.open("w");
         template.write(templateContents);
         template.close();
-        logger.debug("Wrote the template.json file", SubmitBundleFile);
+        logger.debug("Wrote the template.json file", submitBundleFile);
 
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
         var sanitizedOutputFilePath = sanitizeFilePath(outputPath);
