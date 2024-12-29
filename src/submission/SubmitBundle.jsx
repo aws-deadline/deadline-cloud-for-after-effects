@@ -129,10 +129,13 @@ function SubmitSelection(selection, framesPerTask) {
         templateDict.name = File.decode(app.project.file.name) + " [" + compName + "]";
         logger.debug("The template name is " + templateDict.name, submitBundleFile);
         try {
-            templateDict.steps.name = compName;
-            logger.debug("The step name is " + templateDict.steps.name, submitBundleFile);
+            if (templateDict.steps[0].name) {
+                templateDict.steps[0].name = compName;
+                logger.debug("The step name is " + templateDict.steps[0].name, submitBundleFile);
+            }
         } catch (e) {
-            adcAlert("CompName was not successfully written to the template's step. \nPlease check your template.json and make sure you have name under steps");
+            adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.");
+            logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
         }
         const aftereffectsVersion = app.version[0] + app.version[1];
         logger.debug("The major version of After Effects is " + aftereffectsVersion, submitBundleFile);
