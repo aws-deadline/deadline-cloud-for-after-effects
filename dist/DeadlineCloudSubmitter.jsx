@@ -1256,10 +1256,6 @@ function SubmitSelection(selection, framesPerTask) {
                 paramDefCopy[i].default = "aftereffects=" + aftereffectsVersion;
                 alert(paramDefCopy[i].default);
             }
-            if (paramDefCopy[i].name == "RezPackages") {
-                paramDefCopy[i].default = "aftereffects-" + aftereffectsVersion;
-                alert(paramDefCopy[i].default);
-            }
         }
 
         template.open("w");
