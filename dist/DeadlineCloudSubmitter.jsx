@@ -1254,7 +1254,6 @@ function SubmitSelection(selection, framesPerTask) {
         for (var i = paramDefCopy.length - 1; i >= 0; i--) {
             if (paramDefCopy[i].name == "CondaPackages") {
                 paramDefCopy[i].default = "aftereffects=" + aftereffectsVersion;
-                alert(paramDefCopy[i].default);
             }
         }
 
