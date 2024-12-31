@@ -1235,13 +1235,13 @@ function SubmitSelection(selection, framesPerTask) {
         var templateContents = template.read();
         template.close();
         // Parse the template string to JSON dict.
-        var templateDict = JSON.parse(templateContents);
-        templateDict.name = File.decode(app.project.file.name) + " [" + compName + "]";
-        logger.debug("The template name is " + templateDict.name, submitBundleFile);
+        var templateObject = JSON.parse(templateContents);
+        templateObject.name = File.decode(app.project.file.name) + " [" + compName + "]";
+        logger.debug("The template name is " + templateObject.name, submitBundleFile);
         try {
-            if (templateDict.steps[0].name) {
-                templateDict.steps[0].name = compName;
-                logger.debug("The step name is " + templateDict.steps[0].name, submitBundleFile);
+            if (templateObject.steps[0].name) {
+                templateObject.steps[0].name = compName;
+                logger.debug("The step name is " + templateObject.steps[0].name, submitBundleFile);
             }
         } catch (e) {
             adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.");
@@ -1250,7 +1250,7 @@ function SubmitSelection(selection, framesPerTask) {
         const aftereffectsVersion = app.version[0] + app.version[1];
         logger.debug("The major version of After Effects is " + aftereffectsVersion, submitBundleFile);
 
-        var paramDefCopy = templateDict.parameterDefinitions;
+        var paramDefCopy = templateObject.parameterDefinitions;
         for (var i = paramDefCopy.length - 1; i >= 0; i--) {
             if (paramDefCopy[i].name == "CondaPackages") {
                 paramDefCopy[i].default = "aftereffects=" + aftereffectsVersion;
@@ -1258,7 +1258,7 @@ function SubmitSelection(selection, framesPerTask) {
         }
 
         template.open("w");
-        template.write(JSON.stringify(templateDict));
+        template.write(JSON.stringify(templateObject, null, 4));
         template.close();
         logger.debug("Wrote the template.json file to the bundle folder " + bundlePath, submitBundleFile);
     }
