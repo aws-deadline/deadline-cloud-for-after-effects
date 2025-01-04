@@ -720,7 +720,16 @@ function __generateUtil() {
         return $.getenv("USERPROFILE");
     }
 
+    function getAEVersion() {
+        /* Return After Effects version as int */
+        var version = parseInt(app.version[0] + app.version[1]);
+
+        return version;
+    }
+
+
     return {
+        "invertObject": invertObject,
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
         "parseBool": parseBool,
@@ -752,7 +761,8 @@ function __generateUtil() {
         "removePercentageFromFileName": removePercentageFromFileName,
         "getDuplicateFrames": getDuplicateFrames,
         "getTempFile": getTempFile,
-        "getUserDirectory": getUserDirectory
+        "getUserDirectory": getUserDirectory,
+        "getAEVersion": getAEVersion
     }
 }
 

@@ -94,7 +94,7 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
 }
 
 /**
- * Breadth first sweep through the root composition to find all footage references
+ * Breadth first sweep through the root composition to find all footage and font references
  * More efficient than just iterating through items in the project when 
  * there is a lot of unused footage in the project   
  **/
@@ -103,7 +103,8 @@ function findJobAttachments(rootComp) {
         return [];
     }
     var attachments = [];
-    var exploredItems = {}; // using this object as a set because AE doesn't support sets
+    var fontsInComp = [];
+    var exploredItems = {}; //using this object as a set because AE doesn't support sets
     attachments.push(app.project.file.fsName);
     exploredItems[rootComp.id] = true;
     var queue = [rootComp];
@@ -144,12 +145,69 @@ function findJobAttachments(rootComp) {
                     }
                 }
             }
+            if (layer instanceof TextLayer){
+                var font = layer.text.sourceText.value;
+                var fontLocation = font.fontLocation;
+                // If the font location has a font extension, use the actual file name
+                if(fontLocation.indexOf(".otf") !== -1 || fontLocation.indexOf(".ttf") !== -1) {
+                    var fontLocationSplit = fontLocation.split("\\");
+                    var fontName = fontLocationSplit[fontLocationSplit.length - 1];
+                }
+                // Else use the family name for the temp file that will be created 
+                else {
+                    if (dcUtil.getAEVersion() >= 24){
+                        var fontName = font.font + ".otf";
+                    } 
+                    else {
+                        var fontFamilyName = font.familyName;
+                        var familyStyle = font.styleName;
+                        var fontName = fontFamilyName + " " + familyStyle + ".otf";
+                    }
+                }
+                fontsInComp.push([fontName, fontLocation]);
+            }
         }
     }
+
+    if (fontsInComp.length > 0){
+        // formatting collected fonts
+        var fontReferences = generateFontReferences(fontsInComp);
+        for (var j = 0; j < fontReferences.length; j++){
+            attachments.push(fontReferences[j]);
+        }
+    }
+
     return attachments;
 }
 
 /**
+ * Copies given fonts to a temp folder. 
+ * @param fontPaths an array containing the actual location of the font file and the name that should be given to the temp copy per font
+ * @return an array of the temp font paths that were created
+ **/
+function generateFontReferences(fontPaths){
+    // Create a temp folder where all used fonts get gathered
+    var _tempFontsFolder = dcUtil.normPath(Folder.temp.fsName + '/' + "tempFonts");
+    var formattedFontsPaths = [];
+    var tempFontPath = new Folder(_tempFontsFolder);
+    if(!tempFontPath.exists){
+        tempFontPath.create();
+    }
+
+    // Copy the font files to the temp folder
+    for (var i = 0; i < fontPaths.length; i++){
+        var fontName = fontPaths[i][0];
+        var fontLocation = fontPaths[i][1];
+
+        var fontFile = File(fontLocation);
+        var _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
+        fontFile.copy(_tempFontPath);
+        formattedFontsPaths.push(_tempFontPath);
+    }
+    return formattedFontsPaths;
+}
+
+/*
  * Write the JSON file to the file path
  */
 function writeJSONFile(jsonData, filePath) {

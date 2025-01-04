@@ -51,7 +51,7 @@ defines the workflow, and submits the job to the farm and queue of your choosing
 
 The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `DeadlineCloudSubmitter.jsx`.
 
-1. `DeadlineCloudSubmitter_Assets` folder include default job template yaml file with two Powershell scripts that will be run as tasks of the job.
+1. `DeadlineCloudSubmitter_Assets` folder include default job template json file with four Powershell scripts and one Python file that will be run as tasks of the job.
 2. `DeadlineCloudSubmitter.jsx` is the After Effects script written by
    ExtendScript.
 
@@ -81,6 +81,9 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 1. Select your composition from the list and click **Submit**. You can hit the **Refresh** button to refresh the list.
 1. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
 1. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
+
+#### Font attachment system:
+Fonts used in the submitted composition are detected by the submitter and are automatically added as job attachments on submission. These get installed on the worker before the render starts and get removed again when the job ends. If fonts are missing at render time, first check that they're installed (on the system or your user), and then check they're being included in the job attachments tab in the submitter.
 
 ## Setting up After Effects with your Deadline Cloud Farm
 

@@ -108,6 +108,32 @@
                 }
             }
         }
+    },
+    {
+        "name": "Install Fonts to Worker",
+        "description": "Install Fonts to Worker",
+        "script": {
+            "actions": {
+                "onEnter": {
+                    "command": "powershell",
+                    "args": [
+                        "-File",
+                        "{{Param.JobScriptDir}}/installfonts.ps1",
+                        "{{Param.JobScriptDir}}",
+                        "{{Session.WorkingDirectory}}"
+                    ]
+                },
+                "onExit": {
+                   "command": "powershell",
+                    "args": [
+                        "-File",
+                        "{{Param.JobScriptDir}}/removefonts.ps1",
+                        "{{Param.JobScriptDir}}",
+                        "{{Session.WorkingDirectory}}"
+                    ] 
+                }
+            }
+        }
     }],
     "steps": [{
         "name": "{{COMP_NAME}}",
