@@ -53,21 +53,11 @@
             "description": "The render output destination"
         },
         {
-            "name": "FrameStart",
+            "name": "Frames",
             "type": "STRING",
             "userInterface": {
                 "control": "LINE_EDIT",
-                "label": "Start Frame",
-                "groupLabel": "Frame Range"
-            },
-            "default": "1-10"
-        },
-        {
-            "name": "FrameEnd",
-            "type": "STRING",
-            "userInterface": {
-                "control": "LINE_EDIT",
-                "label": "End Frame",
+                "label": "Start Frame - End Frame",
                 "groupLabel": "Frame Range"
             },
             "default": "1-10"
@@ -99,10 +89,9 @@
         "script": {
             "actions": {
                 "onEnter": {
-                    "command": "powershell",
+                    "command": "python",
                     "args": [
-                        "-File",
-                        "{{Param.JobScriptDir}}/start.ps1",
+                        "{{Param.JobScriptDir}}/create_output_directory.py",
                         "{{Param.OutputFile}}"
                     ]
                 }
@@ -120,32 +109,16 @@
                 ]
             }]
         },
-        "parameterSpace": {
-            "taskParameterDefinitions": [{
-                    "name": "FrameChunkStart",
-                    "type": "INT",
-                    "range": "{{Param.FrameStart}}"
-                },
-                {
-                    "name": "FrameChunkEnd",
-                    "type": "INT",
-                    "range": "{{Param.FrameEnd}}"
-                }
-            ],
-            "combination": "(FrameChunkStart, FrameChunkEnd)"
-        },
         "script": {
             "actions": {
                 "onRun": {
-                    "command": "powershell",
+                    "command": "python",
                     "args": [
-                        "-File",
-                        "{{Param.JobScriptDir}}/aerender.ps1",
+                        "{{Param.JobScriptDir}}/call_aerender.py",
                         "{{Param.ProjectFile}}",
                         "{{Param.RenderQueueIndex}}",
-                        "{{Task.Param.FrameChunkStart}}",
-                        "{{Task.Param.FrameChunkEnd}}",
-                        "{{Param.OutputFile}}"
+                        "{{Param.OutputFile}}",
+                        "{{Param.Frames}}"
                     ]
                 }
             }

@@ -40,14 +40,15 @@ function SubmitSelection(selection, framesPerTask) {
     }
 
     //We have a valid selection
-    var r = confirm("Project must be saved before submitting. Continue?");
-    if (!r) {
+    var confirmation = confirm("Project must be saved before submitting. Continue?");
+    if (!confirmation) {
         return;
     } else {
         app.project.save();
     }
     if (app.project.file == null) {
-        //If the user hit yes to the prompt, but the file had never been saved, a second prompt would appear asking where they would want to save the project. If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
+        // If the user hit yes to the prompt, but the file had never been saved, a second prompt would appear asking where they would want to save the project.
+        // If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
         return;
     }
     var outputPath = "";
@@ -69,7 +70,21 @@ function SubmitSelection(selection, framesPerTask) {
         }
     }
     var renderSettings = rqi.getSettings(GetSettingsFormat.STRING_SETTABLE);
-    var dependencies = findJobAttachments(rqi.comp); //list of filenames
+    var startFrame = Number(
+        timeToFrames(
+            Number(renderSettings["Time Span Start"]),
+            Number(renderSettings["Use this frame rate"])
+        )
+    );
+    var endFrame =
+        Number(
+            timeToFrames(
+                Number(renderSettings["Time Span End"]),
+                Number(renderSettings["Use this frame rate"])
+            )
+        ) - 1; // end frame is inclusive so we subtract 1
+
+    var dependencies = findJobAttachments(rqi.comp); // list of filenames
     var compName = rqi.comp.name;
 
     function generateAssetReferences(bundlePath) {
@@ -87,29 +102,15 @@ function SubmitSelection(selection, framesPerTask) {
     /**
      * Generates parameter_values json file
      **/
-    function generateParameterValues(bundlePath) {
-        var startFrame = Number(
-            timeToFrames(
-                Number(renderSettings["Time Span Start"]),
-                Number(renderSettings["Use this frame rate"])
-            )
-        );
-        var endFrame =
-            Number(
-                timeToFrames(
-                    Number(renderSettings["Time Span End"]),
-                    Number(renderSettings["Use this frame rate"])
-                )
-            ) - 1; //end frame is inclusive so we subtract 1
-
-        var sanitizedOutputFilePath = sanitizeFilePath(outputPath);
+    function generateParameterValues(bundlePath, sanitizedOutputFilePath, isImageSeq) {
         var parametersContents = parameterValues(
             renderQueueIndex,
             app.project.file.fsName,
             sanitizedOutputFilePath,
+            isImageSeq,
             startFrame,
             endFrame,
-            framesPerTask,
+            framesPerTask
         );
         var parametersOutDir = bundlePath + "/parameter_values.json";
         writeJSONFile(parametersContents, parametersOutDir);
@@ -118,13 +119,16 @@ function SubmitSelection(selection, framesPerTask) {
     /**
      * Generates job template json file
      **/
-    function generateTemplate(bundlePath) {
-        // Write the template.json file
-        var template = new File(bundlePath + "/template.json");
+    function generateTemplate(bundlePath, isImageSeq) {
+        // Open the template depending on the output type
+        var template = new File(bundlePath + "/video_template.json");
+        if (isImageSeq) {
+            template = new File(bundlePath + "/image_template.json");
+        }
         template.open("r");
         var templateContents = template.read();
         template.close();
-        // Parse the template string to JSON dict.
+        // Parse the template string to a JSON object
         var templateObject = JSON.parse(templateContents);
         templateObject.name = File.decode(app.project.file.name) + " [" + compName + "]";
         logger.debug("The template name is " + templateObject.name, submitBundleFile);
@@ -141,15 +145,17 @@ function SubmitSelection(selection, framesPerTask) {
         logger.debug("The major version of After Effects is " + aftereffectsVersion, submitBundleFile);
 
         var paramDefCopy = templateObject.parameterDefinitions;
+
         for (var i = paramDefCopy.length - 1; i >= 0; i--) {
             if (paramDefCopy[i].name == "CondaPackages") {
                 paramDefCopy[i].default = "aftereffects=" + aftereffectsVersion;
             }
         }
 
-        template.open("w");
-        template.write(JSON.stringify(templateObject, null, 4));
-        template.close();
+        var newTemplate = new File(bundlePath + "/template.json");
+        newTemplate.open("w");
+        newTemplate.write(JSON.stringify(templateObject, null, 4));
+        newTemplate.close();
         logger.debug("Wrote the template.json file to the bundle folder " + bundlePath, submitBundleFile);
     }
 
@@ -165,9 +171,20 @@ function SubmitSelection(selection, framesPerTask) {
         recursiveDelete(bundleRoot);
         bundleRoot.create();
         var bundlePath = bundleRoot.fsName;
+        var sanitizedOutputFilePath = sanitizeFilePath(outputPath);
 
+        // sanitizedOutputFilePath is the file path with the extension like myFolder/output.mov
+        // Split the file path to extract the file name and extension
+        // Create lastIndex and regex to remove unwanted parts in the name. 
+        var lastIndex = sanitizedOutputFilePath.lastIndexOf(".");
+        var outputFileNameNoExtension = sanitizedOutputFilePath.substring(0, lastIndex);
+        var extension = sanitizedOutputFilePath.substring(lastIndex + 1);
+        logger.debug("Output File Name set to: " + sanitizedOutputFilePath, submitBundleFile);
+        logger.debug("Extension set to: " + extension, submitBundleFile);
+
+        var isImageSeq = isImageOutput(extension);
         generateAssetReferences(bundlePath);
-        generateParameterValues(bundlePath);
+        generateParameterValues(bundlePath, sanitizedOutputFilePath, isImageSeq);
 
         var jobTemplateSourceFolder = new Folder(
             scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
@@ -180,7 +197,7 @@ function SubmitSelection(selection, framesPerTask) {
         }
         recursiveCopy(jobTemplateSourceFolder, bundleRoot);
 
-        generateTemplate(bundlePath);
+        generateTemplate(bundlePath, isImageSeq);
         return bundleRoot;
     }
     var bundle = generateBundle();

@@ -1,3 +1,4 @@
+var jobTemplateHelperFile = "JobTemplateHelper.json";
 /**
  * Generates the basic parameterValue file for the job template
  **/
@@ -5,73 +6,52 @@ function parameterValues(
     renderQueueIndex,
     projectFile,
     outputPath,
+    isImageSeq,
     startFrame,
     endFrame,
-    framesPerTask
+    chunkSize
 ) {
-    var frameStart;
-    var frameEnd;
-    var re = new RegExp("^[^#]*#{5}[^#]*$"); //checks for output patterns with [####] in them which usually indicates an image sequence
-    var isSequence = false;
-    isSequence = re.test(outputPath);
-
-    if (framesPerTask < 1 || !isSequence) {
-        frameStart = startFrame.toString();
-        frameEnd = endFrame.toString();
-    } else if (framesPerTask == 1) {
-        frameStart = startFrame.toString() + "-" + endFrame.toString();
-        frameEnd = frameStart;
-    } else {
-        var frame = startFrame;
-        var startArray = [];
-        var endArray = [];
-        while (frame <= endFrame) {
-            startArray.push(frame.toString());
-            frame = Math.min(endFrame + 1, frame + framesPerTask);
-            endArray.push((frame - 1).toString());
+    var parameterValuesList = [{
+            name: "deadline:targetTaskRunStatus",
+            value: "READY",
+        },
+        {
+            name: "deadline:maxFailedTasksCount",
+            value: 20,
+        },
+        {
+            name: "deadline:maxRetriesPerTask",
+            value: 1,
+        },
+        {
+            name: "deadline:priority",
+            value: 50,
+        },
+        {
+            name: "ProjectFile",
+            value: projectFile,
+        },
+        {
+            name: "RenderQueueIndex",
+            value: renderQueueIndex,
+        },
+        {
+            name: "OutputFile",
+            value: outputPath,
+        },
+        {
+            name: "Frames",
+            value: startFrame.toString() + "-" + endFrame.toString(),
         }
-        frameStart = startArray.join(",");
-        frameEnd = endArray.join(",");
+    ];
+    if (isImageSeq) {
+        parameterValuesList.push({
+            name: "ChunkSize",
+            value: chunkSize,
+        });
     }
-
     return {
-        parameterValues: [{
-                name: "deadline:targetTaskRunStatus",
-                value: "READY",
-            },
-            {
-                name: "deadline:maxFailedTasksCount",
-                value: 20,
-            },
-            {
-                name: "deadline:maxRetriesPerTask",
-                value: 5,
-            },
-            {
-                name: "deadline:priority",
-                value: 50,
-            },
-            {
-                name: "ProjectFile",
-                value: projectFile,
-            },
-            {
-                name: "RenderQueueIndex",
-                value: renderQueueIndex,
-            },
-            {
-                name: "OutputFile",
-                value: outputPath,
-            },
-            {
-                name: "FrameStart",
-                value: frameStart,
-            },
-            {
-                name: "FrameEnd",
-                value: frameEnd,
-            }
-        ],
+        parameterValues: parameterValuesList
     };
 }
 
@@ -158,4 +138,19 @@ function writeJSONFile(jsonData, filePath) {
     file.open('w');
     file.write(JSON.stringify(jsonData, null, 4));
     file.close();
+}
+
+function isVideoOutput(extension) {
+    const VideoOutputExtensions = ["avi", "mp4", "mov"];
+    return VideoOutputExtensions.indexOf(extension) >= 0;
+}
+
+function isAudioOutput(extension) {
+    const AudioOutputExtensions = ["aif", "mp3", "wav"];
+    return AudioOutputExtensions.indexOf(extension) >= 0;
+}
+
+function isImageOutput(extension) {
+    const FrameOutputExtensions = ["dpx", "iff", "jpg", "jpeg", "exr", "png", "psd", "hdr", "sgi", "tif", "tiff", "tga"];
+    return FrameOutputExtensions.indexOf(extension) >= 0;
 }
