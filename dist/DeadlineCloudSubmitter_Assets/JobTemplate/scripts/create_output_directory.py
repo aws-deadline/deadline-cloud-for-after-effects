@@ -13,7 +13,7 @@ args = parser.parse_args()
 # Split the comma-separated paths into a list
 output_list = args.outputs.split(",")
 
-print("Creating output folders.")
+print(f"Creating output folders {output_list}")
 
 # Loop through each output path and create the necessary folder
 for output in output_list:
