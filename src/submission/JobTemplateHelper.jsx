@@ -21,7 +21,7 @@ function parameterValues(
         },
         {
             name: "deadline:maxRetriesPerTask",
-            value: 1,
+            value: 5,
         },
         {
             name: "deadline:priority",
