@@ -79,8 +79,11 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 1. Add a composition to your render queue and set up your render settings, output module, and output path.
 1. Open the Deadline Cloud Submitter Panel by clicking **Windows > DeadlineCloudSubmitter.jsx**.
 1. Select your composition from the list and click **Submit**. You can hit the **Refresh** button to refresh the list.
+1. (Optional: for image sequences output types) you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the number and then Deadline Cloud will assign the tasks to available workers to delegate the load.
 1. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
 1. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
+
+**Note**: After Effects submitter is calling Deadline GUI Submitter under the scene. If you hit any issues on the GUI submitter, please refer to [deadline-cloud](https://github.com/aws-deadline/deadline-cloud) library for the help.
 
 ## Setting up After Effects with your Deadline Cloud Farm
 
