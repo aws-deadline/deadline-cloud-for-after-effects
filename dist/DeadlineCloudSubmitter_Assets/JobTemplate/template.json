@@ -115,20 +115,18 @@
         "script": {
             "actions": {
                 "onEnter": {
-                    "command": "powershell",
+                    "command": "python",
                     "args": [
-                        "-File",
-                        "{{Param.JobScriptDir}}/installfonts.ps1",
-                        "{{Param.JobScriptDir}}",
+                        "{{Param.JobScriptDir}}/font_manager.py",
+                        "install",
                         "{{Session.WorkingDirectory}}"
                     ]
                 },
                 "onExit": {
-                   "command": "powershell",
+                   "command": "python",
                     "args": [
-                        "-File",
-                        "{{Param.JobScriptDir}}/removefonts.ps1",
-                        "{{Param.JobScriptDir}}",
+                        "{{Param.JobScriptDir}}/font_manager.py",
+                        "remove",
                         "{{Session.WorkingDirectory}}"
                     ] 
                 }

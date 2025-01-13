@@ -9,6 +9,7 @@ import os
 import shutil
 import ctypes
 from ctypes import wintypes
+import logging
 
 try:
     import winreg
@@ -32,12 +33,10 @@ INSTALL_SCOPE_SYSTEM = "SYSTEM"
 FONT_LOCATION_SYSTEM = os.path.join(os.environ.get("SystemRoot"), "Fonts")
 FONT_LOCATION_USER = os.path.join(os.environ.get("LocalAppData"), "Microsoft", "Windows", "Fonts")
 
-FONT_EXTENSIONS = [".otf", ".ttf"]
+# Font extensions supported in gdi32.AddFontResourceW 
+FONT_EXTENSIONS = [".otf", ".ttf", ".ttc", ".fon", ".fnt", ".fot"]
 
-# Re-assign sys stdout and stderr to have prints show up in session logs
-sys.stdout = sys.__stdout__
-sys.stderr = sys.__stderr__
-
+logger = logging.getLogger(__name__)
 
 def find_fonts(session_dir):
     """
@@ -60,19 +59,21 @@ def find_fonts(session_dir):
             for d in dirs:
                 if "tempFonts" in d:
                     full_sub_dir = os.path.join(path, d)
-                    print(f"tempFonts: {full_sub_dir}")
+                    logger.debug(f"tempFonts directory: {full_sub_dir}")
                     break
         
         if not full_sub_dir:
-            print(f"Warning: couldn't recursively find tempFonts in subfolder: {subfolder}")
+            logger.debug(f"Couldn't recursively find tempFonts in subfolder: {subfolder}")
             continue
         
         for file_name in os.listdir(full_sub_dir):
             full_assetpath = os.path.join(full_sub_dir, file_name)
             _, ext = os.path.splitext(full_assetpath)
             if ext.lower() in FONT_EXTENSIONS:
-                print(f"Adding: {full_assetpath}")
+                logger.debug(f"Adding: {full_assetpath}")
                 fonts.add(full_assetpath)
+            else:
+                logger.warning(f"A file that is not a supported font was found in the tempFonts folder: {full_assetpath}")
     
     return fonts
 
@@ -82,6 +83,8 @@ def install_font(src_path, scope=INSTALL_SCOPE_USER):
     Install provided font to the worker machine
 
     :param src_path: path of font that needs to be installed
+
+    :returns: boolean that represents if the font was installed and a string with any traceback that was created
     """
     try:
         # Determine font destination 
@@ -91,7 +94,7 @@ def install_font(src_path, scope=INSTALL_SCOPE_USER):
         else:
             # Check if the Fonts folder exists, create it if it doesn't
             if not os.path.exists(FONT_LOCATION_USER):
-                print("Creating User Fonts folder: %s" % FONT_LOCATION_USER, flush=True)
+                logger.info(f"Creating User Fonts folder: {FONT_LOCATION_USER}")
                 os.makedirs(FONT_LOCATION_USER)
 
             dst_dir = FONT_LOCATION_USER
@@ -105,7 +108,7 @@ def install_font(src_path, scope=INSTALL_SCOPE_USER):
         # Load the font in the current session, remove font when loading fails
         if not gdi32.AddFontResourceW(dst_path):
             os.remove(dst_path)
-            raise WindowsError('AddFontResource failed to load "%s"' % src_path)
+            raise WindowsError(f'AddFontResource failed to load "{src_path}"')
 
         # Notify running programs
         user32.SendMessageTimeoutW(
@@ -145,6 +148,8 @@ def uninstall_font(src_path, scope=INSTALL_SCOPE_USER):
     Uninstall provided font from the worker machine
 
     :param src_path: path of font that needs to be removed
+
+    :returns: boolean that represents if the font was uninstalled and a string with any traceback that was created
     """
     try:
         # Determine where the font was installed
@@ -179,7 +184,7 @@ def uninstall_font(src_path, scope=INSTALL_SCOPE_USER):
         # Unload the font in the current session
         if not gdi32.RemoveFontResourceW(dst_path):
             os.remove(dst_path)
-            raise WindowsError('RemoveFontResourceW failed to load "%s"' % src_path)
+            raise WindowsError(f'RemoveFontResourceW failed to load "{src_path}"')
 
         if os.path.exists(dst_path):
             os.remove(dst_path)
@@ -201,17 +206,18 @@ def _install_fonts(session_dir):
 
     :param session_dir: directory of the session
     """
+    logger.info("Looking for fonts to install...")
     fonts = find_fonts(session_dir)
 
     if not fonts:
-        print("No custom fonts found, continuing task...")
+        logger.info("No custom fonts found, continuing task...")
         return
     
     for font in fonts:
-        print("Installing font: " + font)
+        logger.info("Installing font: " + font)
         installed, msg = install_font(font)
         if not installed:
-            raise RuntimeError("Error installing font: " + msg)
+            raise RuntimeError(f"Error installing font: {msg}")
 
 
 def _remove_fonts(session_dir):
@@ -220,24 +226,37 @@ def _remove_fonts(session_dir):
 
     :param session_dir: directory of the session
     """
+    logger.info("Looking for fonts to uninstall...")
     fonts = find_fonts(session_dir)
     
     if not fonts:
-        print("No custom fonts found, finishing task...")
+        logger.info("No custom fonts found, finishing task...")
         return
     
     for font in fonts:
-        print("Uninstalling font: " + font)
+        logger.info("Uninstalling font: " + font)
         removed, msg = uninstall_font(font)
         if not removed:
             # Don't fail task if font didn't get uninstalled
-            print("Error uninstalling font: " + msg)
+            logger.error(f"Error uninstalling font: {msg}")
+
+
+def setup_logger():
+    """
+    Does a basic setup for a logger
+    """
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(levelname)s:%(message)s')
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
 
 if __name__ == "__main__":
+    setup_logger()
     session_dir = sys.argv[2]
 
-    print("Running font script job: " + sys.argv[1])
+    logger.debug(f"Running font script job: {sys.argv[1]}")
 
     if sys.argv[1] == "install":
         _install_fonts(session_dir)

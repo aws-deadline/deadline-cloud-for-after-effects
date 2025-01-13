@@ -145,35 +145,51 @@ function findJobAttachments(rootComp) {
                     }
                 }
             }
-            if (layer instanceof TextLayer){
-                var font = layer.text.sourceText.value;
-                var fontLocation = font.fontLocation;
-                // If the font location has a font extension, use the actual file name
-                if(fontLocation.indexOf(".otf") !== -1 || fontLocation.indexOf(".ttf") !== -1) {
-                    var fontLocationSplit = fontLocation.split("\\");
-                    var fontName = fontLocationSplit[fontLocationSplit.length - 1];
-                }
-                // Else use the family name for the temp file that will be created 
-                else {
-                    if (dcUtil.getAEVersion() >= 24){
-                        var fontName = font.font + ".otf";
-                    } 
-                    else {
-                        var fontFamilyName = font.familyName;
-                        var familyStyle = font.styleName;
-                        var fontName = fontFamilyName + " " + familyStyle + ".otf";
+            if (layer instanceof TextLayer) {
+                var text = layer.text.sourceText.value;
+                var fontLocation = text.fontLocation;
+
+                // Matches a period followed by one or more alphanumeric characters at the end
+                var extensionRegex = /\.[a-zA-Z]+$/;
+                var os = $.os.toLowerCase();
+
+                // If the font location has an extension, use the actual file name
+                if (extensionRegex.test(fontLocation)) {
+                    // Determine on which slashes paths should be split
+                    if (os.indexOf("mac") !== -1) {
+                        var fontPrefixSplit = fontLocation.split("/");
+                        var font = fontPrefixSplit[fontPrefixSplit.length - 1];
+                    } else {
+                        var fontLocationSplit = fontLocation.split("\\");
+                        var font = fontLocationSplit[fontLocationSplit.length - 1];
                     }
+                } else { 
+                    // Else use the family name for the temp file that will be created 
+                    if (os.indexOf("mac") !== -1) {
+                        // Mac prefixes the full source path to the name. Use only the file name
+                        var fontPrefixSplit = text.font.split("/");
+                        var font = fontPrefixSplit[fontPrefixSplit.length - 1];
+                    } else {
+                        // Windows doesn't need file name adjustment
+                        var font = text.font;
+                    }
+                    
+                    // Adobe fonts have no font extensions. Adding an extension makes them installable by font_manager.py
+                    font = font + ".otf";
                 }
-                fontsInComp.push([fontName, fontLocation]);
+                fontsInComp.push([font, fontLocation]);
             }
         }
     }
 
-    if (fontsInComp.length > 0){
+    if (fontsInComp.length > 0) {
+        if (app.fonts.missingOrSubstitutedFonts != "") {
+            adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString());
+        }
         // formatting collected fonts
         var fontReferences = generateFontReferences(fontsInComp);
-        for (var j = 0; j < fontReferences.length; j++){
-            attachments.push(fontReferences[j]);
+        for (var i = 0; i < fontReferences.length; i++) {
+            attachments.push(fontReferences[i]);
         }
     }
 
@@ -185,17 +201,17 @@ function findJobAttachments(rootComp) {
  * @param fontPaths an array containing the actual location of the font file and the name that should be given to the temp copy per font
  * @return an array of the temp font paths that were created
  **/
-function generateFontReferences(fontPaths){
+function generateFontReferences(fontPaths) {
     // Create a temp folder where all used fonts get gathered
     var _tempFontsFolder = dcUtil.normPath(Folder.temp.fsName + '/' + "tempFonts");
     var formattedFontsPaths = [];
     var tempFontPath = new Folder(_tempFontsFolder);
-    if(!tempFontPath.exists){
+    if (!tempFontPath.exists) {
         tempFontPath.create();
     }
 
     // Copy the font files to the temp folder
-    for (var i = 0; i < fontPaths.length; i++){
+    for (var i = 0; i < fontPaths.length; i++) {
         var fontName = fontPaths[i][0];
         var fontLocation = fontPaths[i][1];
 
