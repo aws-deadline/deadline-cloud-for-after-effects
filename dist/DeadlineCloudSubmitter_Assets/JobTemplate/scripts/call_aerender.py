@@ -19,10 +19,10 @@ def main():
         "frames",
         type=str,
         default="0-100",
-        help="The range of frames, the format is start-frame-end-frame",
+        help="The range of frames, the format is startFrame-endFrame",
     )
     parser.add_argument("--chunk-size", type=int, help="The number of frames per task")
-    parser.add_argument("--index", type=int, help="The index of the current task")
+    parser.add_argument("--index", type=int, help="The starting frame of the chunk")
 
     args = parser.parse_args()
     print(f"Args: {args}", flush=True)
@@ -33,9 +33,8 @@ def main():
 
     if args.chunk_size is not None and args.index is not None:
         try:
-            frames_length = end_frame - start_frame + 1
             # if there is only 1 frame in the chunk
-            if args.chunk_size == 1 or args.index == frames_length:
+            if args.chunk_size == 1:
                 start_frame = args.index
                 end_frame = args.index
             else:
@@ -91,8 +90,6 @@ def main():
             # Check for specific errors or warnings in stdout
             if "WARNING:After Effects warning" in line:
                 print(f"After Effects Warning: {line.strip()}", file=sys.stderr)
-            if line.startswith("aerender ERROR"):
-                print(f"Aerender Error: {line.strip()}", file=sys.stderr)
 
         # Also handle stderr (errors)
         for line in process.stderr:

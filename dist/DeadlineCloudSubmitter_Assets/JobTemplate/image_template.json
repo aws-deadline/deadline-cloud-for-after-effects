@@ -61,8 +61,7 @@
                 "control": "LINE_EDIT",
                 "label": "Start Frame - End Frame",
                 "groupLabel": "Frame Range"
-            },
-            "default": "1-10"
+            }
         },
         {
             "name": "ChunkSize",
