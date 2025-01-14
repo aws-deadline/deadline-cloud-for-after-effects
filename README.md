@@ -51,7 +51,7 @@ defines the workflow, and submits the job to the farm and queue of your choosing
 
 The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `DeadlineCloudSubmitter.jsx`.
 
-1. `DeadlineCloudSubmitter_Assets` folder include default job template yaml file with two Powershell scripts that will be run as tasks of the job.
+1. `DeadlineCloudSubmitter_Assets` folder include default job template json file (`image_template.json` or `video_template.json` depending on the output type) with two Python scripts that will be run as tasks of the job.
 2. `DeadlineCloudSubmitter.jsx` is the After Effects script written by
    ExtendScript.
 
