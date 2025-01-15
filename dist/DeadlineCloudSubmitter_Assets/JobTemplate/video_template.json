@@ -2,7 +2,8 @@
     "specificationVersion": "jobtemplate-2023-09",
     "name": "{{JOB_NAME}}",
     "description": "A simple job bundle that allows a user to select a project and comp to render with aerender.",
-    "parameterDefinitions": [{
+    "parameterDefinitions": [
+        {
             "name": "ProjectFile",
             "type": "PATH",
             "objectType": "FILE",
@@ -11,7 +12,8 @@
                 "control": "CHOOSE_INPUT_FILE",
                 "label": "Project file",
                 "groupLabel": "Source",
-                "fileFilters": [{
+                "fileFilters": [
+                    {
                         "label": "After Effects project files",
                         "patterns": [
                             "*.aep",
@@ -110,45 +112,51 @@
             "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
         }
     ],
-    "jobEnvironments": [{
-        "name": "Create Output Directories",
-        "description": "Create Output Directories",
-        "script": {
-            "actions": {
-                "onEnter": {
-                    "command": "python",
-                    "args": [
-                        "{{Param.JobScriptDir}}/create_output_directory.py",
-                        "{{Param.OutputDir}}"
-                    ]
+    "jobEnvironments": [
+        {
+            "name": "Create Output Directories",
+            "description": "Create Output Directories",
+            "script": {
+                "actions": {
+                    "onEnter": {
+                        "command": "python",
+                        "args": [
+                            "{{Param.JobScriptDir}}/create_output_directory.py",
+                            "{{Param.OutputDir}}"
+                        ]
+                    }
                 }
             }
         }
-    }],
-    "steps": [{
-        "name": "{{COMP_NAME}}",
-        "hostRequirements": {
-            "attributes": [{
-                "name": "attr.worker.os.family",
-                "anyOf": [
-                    "windows",
-                    "macos"
+    ],
+    "steps": [
+        {
+            "name": "{{COMP_NAME}}",
+            "hostRequirements": {
+                "attributes": [
+                    {
+                        "name": "attr.worker.os.family",
+                        "anyOf": [
+                            "windows",
+                            "macos"
+                        ]
+                    }
                 ]
-            }]
-        },
-        "script": {
-            "actions": {
-                "onRun": {
-                    "command": "python",
-                    "args": [
-                        "{{Param.JobScriptDir}}/call_aerender.py",
-                        "{{Param.ProjectFile}}",
-                        "{{Param.RenderQueueIndex}}",
-                        "{{Param.OutputDir}}/{{Param.OutputPattern}}.{{Param.Format}}",
-                        "{{Param.Frames}}"
-                    ]
+            },
+            "script": {
+                "actions": {
+                    "onRun": {
+                        "command": "python",
+                        "args": [
+                            "{{Param.JobScriptDir}}/call_aerender.py",
+                            "{{Param.ProjectFile}}",
+                            "{{Param.RenderQueueIndex}}",
+                            "{{Param.OutputDir}}/{{Param.OutputPattern}}.{{Param.Format}}",
+                            "{{Param.Frames}}"
+                        ]
+                    }
                 }
             }
         }
-    }]
+    ]
 }
