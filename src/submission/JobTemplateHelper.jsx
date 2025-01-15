@@ -5,7 +5,9 @@ var jobTemplateHelperFile = "JobTemplateHelper.json";
 function parameterValues(
     renderQueueIndex,
     projectFile,
-    outputPath,
+    outputDir,
+    outputPattern,
+    format,
     isImageSeq,
     startFrame,
     endFrame,
@@ -36,8 +38,16 @@ function parameterValues(
             value: renderQueueIndex,
         },
         {
-            name: "OutputFile",
-            value: outputPath,
+            name: "OutputDir",
+            value: outputDir,
+        },
+        {
+            name: "OutputPattern",
+            value: outputPattern,
+        },
+        {
+            name: "Format",
+            value: format,
         },
         {
             name: "Frames",

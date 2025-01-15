@@ -52,6 +52,7 @@ function SubmitSelection(selection, framesPerTask) {
         return;
     }
     var outputPath = "";
+    var outputFile = "";
     var outputFolder = "";
     for (var j = 1; j <= rqi.numOutputModules; j++) {
         var outputModule = rqi.outputModule(j).file;
@@ -66,7 +67,11 @@ function SubmitSelection(selection, framesPerTask) {
             return;
         } else {
             outputPath = outputModule.fsName;
+            outputFile = outputModule.name;
             outputFolder = outputModule.parent.fsName;
+            logger.debug("OutputPath is: " + outputPath, submitBundleFile);
+            logger.debug("OutputFile is: " + outputFile, submitBundleFile);
+            logger.debug("outputFolder is: " + outputFolder, submitBundleFile);
         }
     }
     var renderSettings = rqi.getSettings(GetSettingsFormat.STRING_SETTABLE);
@@ -87,9 +92,7 @@ function SubmitSelection(selection, framesPerTask) {
     var dependencies = findJobAttachments(rqi.comp); // list of filenames
     var compName = rqi.comp.name;
 
-    function generateAssetReferences(bundlePath) {
-        var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
-
+    function generateAssetReferences(bundlePath, sanitizedOutputFolder) {
         // Write the asset_references.json file
         var jobAttachmentsContents = jobAttachmentsJson(
             dependencies,
@@ -102,11 +105,13 @@ function SubmitSelection(selection, framesPerTask) {
     /**
      * Generates parameter_values json file
      **/
-    function generateParameterValues(bundlePath, sanitizedOutputFilePath, isImageSeq) {
+    function generateParameterValues(bundlePath, sanitizedOutputFolder, outputFileNameNoExtension, extension, isImageSeq) {
         var parametersContents = parameterValues(
             renderQueueIndex,
             app.project.file.fsName,
-            sanitizedOutputFilePath,
+            sanitizedOutputFolder,
+            outputFileNameNoExtension,
+            extension,
             isImageSeq,
             startFrame,
             endFrame,
@@ -171,20 +176,24 @@ function SubmitSelection(selection, framesPerTask) {
         recursiveDelete(bundleRoot);
         bundleRoot.create();
         var bundlePath = bundleRoot.fsName;
-        var sanitizedOutputFilePath = sanitizeFilePath(outputPath);
 
-        // sanitizedOutputFilePath is the file path with the extension like myFolder/output.mov
-        // Split the file path to extract the file name and extension
+        var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
+
+        // The image sequence output file has the pattern "[#####]" which will be printed out as
+        // "%5B#####%5D" so we need to replace them.
+        var regex = new RegExp('\\b' + "%5B#####%5D" + '\\b', 'g');
+        var outputFileNameNoRegex = outputFile.replace(regex, "[#####]");
+        // Split the file name to extract the file name and extension
         // Create lastIndex and regex to remove unwanted parts in the name. 
-        var lastIndex = sanitizedOutputFilePath.lastIndexOf(".");
-        var outputFileNameNoExtension = sanitizedOutputFilePath.substring(0, lastIndex);
-        var extension = sanitizedOutputFilePath.substring(lastIndex + 1);
-        logger.debug("Output File Name set to: " + sanitizedOutputFilePath, submitBundleFile);
-        logger.debug("Extension set to: " + extension, submitBundleFile);
-
+        var lastIndex = outputFileNameNoRegex.lastIndexOf(".");
+        var outputFileNameNoExtension = outputFileNameNoRegex.substring(0, lastIndex);
+        var extension = outputFileNameNoRegex.substring(lastIndex + 1);
+        logger.debug("outputFileNameNoExtension is " + outputFileNameNoExtension, submitBundleFile);
+        logger.debug("extension set to: " + extension, submitBundleFile);
         var isImageSeq = isImageOutput(extension);
-        generateAssetReferences(bundlePath);
-        generateParameterValues(bundlePath, sanitizedOutputFilePath, isImageSeq);
+
+        generateAssetReferences(bundlePath, sanitizedOutputFolder);
+        generateParameterValues(bundlePath, sanitizedOutputFolder, outputFileNameNoExtension, extension, isImageSeq);
 
         var jobTemplateSourceFolder = new Folder(
             scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"

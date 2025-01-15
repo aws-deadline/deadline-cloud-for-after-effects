@@ -42,17 +42,53 @@
             "default": 1
         },
         {
-            "name": "OutputFile",
+            "name": "OutputDir",
             "type": "PATH",
-            "objectType": "FILE",
+            "objectType": "DIRECTORY",
             "dataFlow": "OUT",
             "userInterface": {
-                "control": "HIDDEN",
-                "label": "Output File",
-                "groupLabel": "Frame Range"
+                "control": "CHOOSE_DIRECTORY",
+                "label": "Output Directory",
+                "groupLabel": "Render Parameters"
             },
-            "default": "~\\Desktop\\output",
-            "description": "The render output destination"
+            "default": "./output",
+            "description": "Choose the render output directory."
+        },
+        {
+            "name": "OutputPattern",
+            "type": "STRING",
+            "userInterface": {
+                "control": "LINE_EDIT",
+                "label": "Output File Pattern",
+                "groupLabel": "Render Parameters"
+            },
+            "default": "output_####",
+            "description": "Enter the output filename pattern (without extension)."
+        },
+        {
+            "name": "Format",
+            "type": "STRING",
+            "userInterface": {
+                "control": "DROPDOWN_LIST",
+                "label": "Output File Format",
+                "groupLabel": "Render Parameters"
+            },
+            "description": "Choose the file format to render as.",
+            "default": "jpeg",
+            "allowedValues": [
+                "dpx",
+                "iff",
+                "jpg",
+                "jpeg",
+                "exr",
+                "png",
+                "psd",
+                "hdr",
+                "sgi",
+                "tif",
+                "tiff",
+                "tga"
+            ]
         },
         {
             "name": "Frames",
@@ -105,7 +141,7 @@
                         "command": "python",
                         "args": [
                             "{{Param.JobScriptDir}}/create_output_directory.py",
-                            "{{Param.OutputFile}}"
+                            "{{Param.OutputDir}}"
                         ]
                     }
                 }
@@ -143,7 +179,7 @@
                             "{{Param.JobScriptDir}}/call_aerender.py",
                             "{{Param.ProjectFile}}",
                             "{{Param.RenderQueueIndex}}",
-                            "{{Param.OutputFile}}",
+                            "{{Param.OutputDir}}/{{Param.OutputPattern}}.{{Param.Format}}",
                             "{{Param.Frames}}",
                             "--chunk-size",
                             "{{Param.ChunkSize}}",
