@@ -55,31 +55,15 @@
             "description": "Choose the render output directory."
         },
         {
-            "name": "OutputPattern",
+            "name": "OutputFileName",
             "type": "STRING",
             "userInterface": {
-                "control": "LINE_EDIT",
+                "control": "HIDDEN",
                 "label": "Output File Pattern",
                 "groupLabel": "Render Parameters"
             },
-            "default": "output",
-            "description": "Enter the output filename pattern (without extension)."
-        },
-        {
-            "name": "Format",
-            "type": "STRING",
-            "userInterface": {
-                "control": "DROPDOWN_LIST",
-                "label": "Output File Format",
-                "groupLabel": "Render Parameters"
-            },
-            "description": "Choose the file format to render as.",
-            "default": "mp4",
-            "allowedValues": [
-                "avi",
-                "mp4",
-                "mov"
-            ]
+            "default": "output.mp4",
+            "description": "The file name used for aerender cmd. Not a changeable parameter."
         },
         {
             "name": "Frames",
@@ -151,7 +135,7 @@
                             "{{Param.JobScriptDir}}/call_aerender.py",
                             "{{Param.ProjectFile}}",
                             "{{Param.RenderQueueIndex}}",
-                            "{{Param.OutputDir}}/{{Param.OutputPattern}}.{{Param.Format}}",
+                            "{{Param.OutputDir}}/{{Param.OutputFileName}}",
                             "{{Param.Frames}}"
                         ]
                     }

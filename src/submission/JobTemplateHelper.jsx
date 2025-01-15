@@ -6,8 +6,7 @@ function parameterValues(
     renderQueueIndex,
     projectFile,
     outputDir,
-    outputPattern,
-    format,
+    outputFileName,
     isImageSeq,
     startFrame,
     endFrame,
@@ -42,12 +41,8 @@ function parameterValues(
             value: outputDir,
         },
         {
-            name: "OutputPattern",
-            value: outputPattern,
-        },
-        {
-            name: "Format",
-            value: format,
+            name: "OutputFileName",
+            value: outputFileName,
         },
         {
             name: "Frames",

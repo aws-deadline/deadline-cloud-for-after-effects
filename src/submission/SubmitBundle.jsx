@@ -105,13 +105,12 @@ function SubmitSelection(selection, framesPerTask) {
     /**
      * Generates parameter_values json file
      **/
-    function generateParameterValues(bundlePath, sanitizedOutputFolder, outputFileNameNoExtension, extension, isImageSeq) {
+    function generateParameterValues(bundlePath, outputFolder, outputFileName, isImageSeq) {
         var parametersContents = parameterValues(
             renderQueueIndex,
             app.project.file.fsName,
-            sanitizedOutputFolder,
-            outputFileNameNoExtension,
-            extension,
+            outputFolder,
+            outputFileName,
             isImageSeq,
             startFrame,
             endFrame,
@@ -186,14 +185,12 @@ function SubmitSelection(selection, framesPerTask) {
         // Split the file name to extract the file name and extension
         // Create lastIndex and regex to remove unwanted parts in the name. 
         var lastIndex = outputFileNameNoRegex.lastIndexOf(".");
-        var outputFileNameNoExtension = outputFileNameNoRegex.substring(0, lastIndex);
         var extension = outputFileNameNoRegex.substring(lastIndex + 1);
-        logger.debug("outputFileNameNoExtension is " + outputFileNameNoExtension, submitBundleFile);
         logger.debug("extension set to: " + extension, submitBundleFile);
         var isImageSeq = isImageOutput(extension);
 
         generateAssetReferences(bundlePath, sanitizedOutputFolder);
-        generateParameterValues(bundlePath, sanitizedOutputFolder, outputFileNameNoExtension, extension, isImageSeq);
+        generateParameterValues(bundlePath, sanitizedOutputFolder, outputFileNameNoRegex, isImageSeq);
 
         var jobTemplateSourceFolder = new Folder(
             scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
