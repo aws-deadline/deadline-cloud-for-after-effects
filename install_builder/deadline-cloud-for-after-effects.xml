@@ -18,18 +18,6 @@
                 </distributionDirectory>
             </distributionFileList>
         </folder>
-        <!-- <folder>
-            <description>After Effects Plug-in Script</description>
-            <destination>${after_effects_script_ui_directory}</destination>
-            <name>aftereffectspluginscript</name>
-            <platforms>all</platforms>
-            <distributionFileList>
-                <distributionFile>
-                    <origin>
-                        components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter.jsx</origin>
-                </distributionFile>
-            </distributionFileList>
-        </folder> -->
     </folderList>
     <initializationActionList>
         <if>
@@ -57,6 +45,14 @@
             </conditionRuleList>
             <actionList>
                 <setInstallerVariable name="after_effects_deps_platform" value="windows" />
+            </actionList>
+        </if>
+        <if>
+            <conditionRuleList>
+                <fileExists negate="1" path="${after_effects_script_ui_directory}" />
+            </conditionRuleList>
+            <actionList>
+                <setInstallerVariable name="after_effects_script_ui_directory" value="" />
             </actionList>
         </if>
     </initializationActionList>
