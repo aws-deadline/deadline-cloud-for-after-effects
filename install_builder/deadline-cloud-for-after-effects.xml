@@ -7,20 +7,20 @@
     <show>1</show>
     <folderList>
         <folder>
-            <description>After Effects Plug-in assets</description>
-            <destination>${after_effects_scripts_ui_directory}</destination>
+            <description>After Effects Plug-in</description>
+            <destination>${after_effects_script_ui_directory}</destination>
             <name>aftereffectpluginsassets</name>
             <platforms>all</platforms>
             <distributionFileList>
                 <distributionDirectory allowWildcards="1">
                     <origin>
-                        components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter_Assets/*</origin>
+                        components/deadline-cloud-for-after-effects/dist/*</origin>
                 </distributionDirectory>
             </distributionFileList>
         </folder>
-        <folder>
+        <!-- <folder>
             <description>After Effects Plug-in Script</description>
-            <destination>${after_effects_scripts_ui_directory}</destination>
+            <destination>${after_effects_script_ui_directory}</destination>
             <name>aftereffectspluginscript</name>
             <platforms>all</platforms>
             <distributionFileList>
@@ -29,7 +29,7 @@
                         components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter.jsx</origin>
                 </distributionFile>
             </distributionFileList>
-        </folder>
+        </folder> -->
     </folderList>
     <initializationActionList>
         <if>
@@ -68,7 +68,7 @@
             </value>
         </stringParameter>
         <directoryParameter>
-            <name>after_effects_scripts_directory</name>
+            <name>after_effects_script_ui_directory</name>
             <description>After Effects Scripts Directory</description>
             <explanation>Path to scripts directory in the After Effects resources directory. For
                 easiest
@@ -77,8 +77,8 @@
                 After Effects 2024\Support Files\Scripts\ScriptUI Panels". </explanation>
             <allowEmptyValue>0</allowEmptyValue>
             <ask>yes</ask>
-            <cliOptionName>after-effects-scripts-directory</cliOptionName>
-            <cliOptionText>Path to scripts directory in the After Effects resources directory.</cliOptionText>
+            <cliOptionName>after-effects-script-directory</cliOptionName>
+            <cliOptionText>Path to ScriptUI directory in the After Effects application directory.</cliOptionText>
             <mustBeWritable>yes</mustBeWritable>
             <mustExist>1</mustExist>
         </directoryParameter>
