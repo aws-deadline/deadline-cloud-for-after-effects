@@ -83,7 +83,10 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 1. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
 
 #### Font attachment system:
+
 Fonts used in the submitted composition are detected by the submitter and are automatically added as job attachments on submission. These get installed on the worker before the render starts and get removed again when the job ends. If fonts are missing at render time, first check that they're installed (on the system or your user), and then check they're being included in the job attachments tab in the submitter.
+Supported font types include: OpenType (`.otf`), TrueType (`.ttf`), and [Adobe Fonts](https://fonts.adobe.com/).
+Windows bitmap fonts (`.fon`) are only supported on Windows machines.
 
 ## Setting up After Effects with your Deadline Cloud Farm
 
