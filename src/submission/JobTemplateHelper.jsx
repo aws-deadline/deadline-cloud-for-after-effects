@@ -243,7 +243,7 @@ function getFontsFromFileLegacy() {
                 continue;
             }
             var sourceText = layer.text.sourceText;
-            // Check if the sourceText property has keys. 
+            // Check if the sourceText property has keys.
             // If it has keys, the font can change overtime and we need to check all keys for their font
             if (sourceText.numKeys) {
                 var oldLocation = ""
@@ -293,7 +293,7 @@ function getFontsFromFileLegacy() {
 }
 
 /**
- * Copies given fonts to a temp folder. 
+ * Copies given fonts to a temp folder.
  * @param fontPaths an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
  * @return an array of the temp font paths that were created
  **/
