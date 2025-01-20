@@ -80,8 +80,8 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
 
 /**
  * Breadth first sweep through the root composition to find all footage and font references
- * More efficient than just iterating through items in the project when 
- * there is a lot of unused footage in the project   
+ * More efficient than just iterating through items in the project when
+ * there is a lot of unused footage in the project
  **/
 function findJobAttachments(rootComp) {
     if (rootComp == null) {
