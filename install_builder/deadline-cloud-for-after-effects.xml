@@ -13,8 +13,7 @@
             <platforms>all</platforms>
             <distributionFileList>
                 <distributionDirectory allowWildcards="1">
-                    <origin>
-                        components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter_Assets</origin>
+                    <origin>components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter_Assets</origin>
                 </distributionDirectory>
             </distributionFileList>
         </folder>
@@ -25,8 +24,7 @@
             <platforms>all</platforms>
             <distributionFileList>
                 <distributionFile>
-                    <origin>
-                        components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter.jsx</origin>
+                    <origin>components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter.jsx</origin>
                 </distributionFile>
             </distributionFileList>
         </folder>
