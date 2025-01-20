@@ -52,7 +52,7 @@ defines the workflow, and submits the job to the farm and queue of your choosing
 The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `DeadlineCloudSubmitter.jsx`.
 
 1. `DeadlineCloudSubmitter_Assets` folder include default job template json file (`image_template.json` or `video_template.json` depending on the output type) with two Python scripts that will be run as tasks of the job.
-2. `DeadlineCloudSubmitter.jsx` is the After Effects script written by
+1. `DeadlineCloudSubmitter.jsx` is the After Effects script written by
    ExtendScript.
 
 #### To install the submitter:
@@ -84,6 +84,12 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 1. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
 
 **Note**: After Effects submitter is calling Deadline GUI Submitter under the scene. If you hit any issues on the GUI submitter, please refer to [deadline-cloud](https://github.com/aws-deadline/deadline-cloud) library for the help.
+
+#### Font attachment system:
+
+Fonts used in the submitted composition are detected by the submitter and are automatically added as job attachments on submission. These get installed on the worker before the render starts and get removed again when the job ends. If fonts are missing at render time, first check that they're installed (on the system or your user), and then check they're being included in the job attachments tab in the submitter.
+Supported font types include: OpenType (`.otf`), TrueType (`.ttf`), and [Adobe Fonts](https://fonts.adobe.com/).
+Windows bitmap fonts (`.fon`) are only supported on Windows machines.
 
 ## Setting up After Effects with your Deadline Cloud Farm
 
