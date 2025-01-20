@@ -686,6 +686,13 @@ function __generateUtil() {
         return $.getenv("USERPROFILE");
     }
 
+    function getAEVersion() {
+        /* Return After Effects version as float, maxVersion.minVersion */
+        var versionAsString = app.version.substring(0,4);
+        var version = parseFloat(versionAsString);
+        return version
+    }
+
     return {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
@@ -717,7 +724,8 @@ function __generateUtil() {
         "removeIllegalCharacters": removeIllegalCharacters,
         "removePercentageFromFileName": removePercentageFromFileName,
         "getTempFile": getTempFile,
-        "getUserDirectory": getUserDirectory
+        "getUserDirectory": getUserDirectory,
+        "getAEVersion": getAEVersion
     }
 }
 
