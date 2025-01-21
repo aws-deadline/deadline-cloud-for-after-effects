@@ -112,9 +112,9 @@
             <name>after_effects_script_ui_directory</name>
             <description>After Effects Scripts Directory</description>
             <explanation>Path to scripts directory in the After Effects resources directory. For
-                easiest installation, After Effects should be installed before installing Deadline Cloud for
-                After Effects. The default ScriptUI directory looks like "C:\Program Files\Adobe\Adobe
-                After Effects 2025\Support Files\Scripts\ScriptUI Panels".</explanation>
+easiest installation, After Effects should be installed before installing Deadline Cloud for
+After Effects. The default ScriptUI directory looks like "C:\Program Files\Adobe\Adobe
+After Effects 2025\Support Files\Scripts\ScriptUI Panels".</explanation>
             <allowEmptyValue>0</allowEmptyValue>
             <ask>yes</ask>
             <cliOptionName>after-effects-script-directory</cliOptionName>
