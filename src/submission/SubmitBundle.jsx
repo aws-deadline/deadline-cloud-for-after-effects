@@ -90,7 +90,7 @@ function SubmitSelection(selection, framesPerTask) {
         ) - 1; // end frame is inclusive so we subtract 1
 
     var dependencies = findJobAttachments(rqi.comp); // list of filenames
-    var compName = rqi.comp.name;
+    var compName = dcUtil.removeIllegalCharacters(rqi.comp.name);
 
     function generateAssetReferences(bundlePath, sanitizedOutputFolder) {
         // Write the asset_references.json file
@@ -183,14 +183,16 @@ function SubmitSelection(selection, framesPerTask) {
         var regex = new RegExp('\\b' + "%5B#####%5D" + '\\b', 'g');
         var outputFileNameNoRegex = outputFile.replace(regex, "[#####]");
         // Split the file name to extract the file name and extension
-        // Create lastIndex and regex to remove unwanted parts in the name. 
+        // Create lastIndex and regex to remove unwanted parts in the name.
         var lastIndex = outputFileNameNoRegex.lastIndexOf(".");
         var extension = outputFileNameNoRegex.substring(lastIndex + 1);
         logger.debug("extension set to: " + extension, submitBundleFile);
+        var sanitizedOutputFileName = dcUtil.removePercentageFromFileName(outputFileNameNoRegex);
+        logger.debug("sanitizedOutputFileName is " + sanitizedOutputFileName, submitBundleFile);
         var isImageSeq = isImageOutput(extension);
 
         generateAssetReferences(bundlePath, sanitizedOutputFolder);
-        generateParameterValues(bundlePath, sanitizedOutputFolder, outputFileNameNoRegex, isImageSeq);
+        generateParameterValues(bundlePath, sanitizedOutputFolder, sanitizedOutputFileName, isImageSeq);
 
         var jobTemplateSourceFolder = new Folder(
             scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"

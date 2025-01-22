@@ -660,18 +660,21 @@ function __generateUtil() {
 
         return outputString;
     }
-
+    /**
+     * Replace %20 percentage back to space from the file name for Windows os.
+     */
     function removePercentageFromFileName(fileName) {
         var fileName = fileName.replace(/%20/g, " ");
         return fileName;
     }
 
+    /**
+     * Checks for given frame list if duplicate frames are present.
+     * @param {string} frameList: List of frames given in the UI or entire frame range of the comp.
+     * Returns either array filled with duplicates, or if no duplicates have been found empty string.
+     */
     function getDuplicateFrames(frameList) {
-        /**
-         * Checks for given frame list if duplicate frames are present.
-         * @param {string} frameList: List of frames given in the UI or entire frame range of the comp.
-         * Returns either array filled with duplicates, or if no duplicates have been found empty string.
-         */
+
         var duplicates = [];
         var framesToRender = [];
         var splitList = frameList.split(",");
