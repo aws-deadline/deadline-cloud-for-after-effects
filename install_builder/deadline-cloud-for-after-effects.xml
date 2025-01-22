@@ -1,6 +1,6 @@
 <component>
     <name>deadline_cloud_for_after_effects</name>
-    <description>Deadline Cloud for After Effects 2024/2025</description>
+    <description>Deadline Cloud for After Effects 2024-2025</description>
     <detailedDescription>After Effects plugin for submitting jobs to AWS Deadline Cloud.</detailedDescription>
     <canBeEdited>1</canBeEdited>
     <selected>0</selected>
