@@ -79,6 +79,19 @@
 
         <if>
             <conditionRuleEvaluationLogic>or</conditionRuleEvaluationLogic>
+            <conditionRuleList>
+                <fileExists>
+                    <path>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</path>
+                </fileExists>
+                <fileExists>
+                    <path>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</path>
+                </fileExists>
+            </conditionRuleList>
+            <ruleList>
+                <platformTest>
+                    <type>windows</type>
+                </platformTest>
+            </ruleList>
             <actionList>
                 <!-- After Effects 2024 selection and script directory -->
                 <componentSelection>
@@ -112,19 +125,6 @@
                     </ruleList>
                 </setInstallerVariable>
             </actionList>
-            <conditionRuleList>
-                <fileExists>
-                    <path>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</path>
-                </fileExists>
-                <fileExists>
-                    <path>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</path>
-                </fileExists>
-            </conditionRuleList>
-            <ruleList>
-                <platformTest>
-                    <type>windows</type>
-                </platformTest>
-            </ruleList>
         </if>
 
         <if>
@@ -145,12 +145,11 @@
             </actionList>
         </if>
     </initializationActionList>
-
     <parameterList>
         <stringParameter name="deadline_cloud_for_after_effects_summary" ask="0" cliOptionShow="0">
             <value>Deadline Cloud for After Effects
-                - Register the plug-in with After Effects by moving the script to the After Effects
-                ScriptUI folder.
+- Register the plug-in with After Effects by moving the script to the After Effects
+ScriptUI folder.
             </value>
         </stringParameter>
 
@@ -159,8 +158,8 @@
             <name>after_effects_script_ui_directory_2024</name>
             <description>After Effects 2024 Scripts Directory</description>
             <explanation>Path to the scripts directory in After Effects 2024 resources. Default
-                directory: "C:\Program Files\Adobe\Adobe After Effects 2024\Support
-                Files\Scripts\ScriptUI Panels".</explanation>
+directory: "C:\Program Files\Adobe\Adobe After Effects 2024\Support
+Files\Scripts\ScriptUI Panels".</explanation>
             <allowEmptyValue>1</allowEmptyValue>
             <ask>yes</ask>
         </directoryParameter>
@@ -170,8 +169,8 @@
             <name>after_effects_script_ui_directory_2025</name>
             <description>After Effects 2025 Scripts Directory</description>
             <explanation>Path to the scripts directory in After Effects 2025 resources. Default
-                directory: "C:\Program Files\Adobe\Adobe After Effects 2025\Support
-                Files\Scripts\ScriptUI Panels".</explanation>
+directory: "C:\Program Files\Adobe\Adobe After Effects 2025\Support
+Files\Scripts\ScriptUI Panels".</explanation>
             <allowEmptyValue>1</allowEmptyValue>
             <ask>yes</ask>
         </directoryParameter>
