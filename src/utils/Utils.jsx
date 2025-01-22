@@ -660,6 +660,7 @@ function __generateUtil() {
 
         return outputString;
     }
+
     /**
      * Replace %20 percentage back to space from the file name for Windows os.
      */
@@ -688,7 +689,7 @@ function __generateUtil() {
 
     function getAEVersion() {
         /* Return After Effects version as float, maxVersion.minVersion */
-        var versionAsString = app.version.substring(0,4);
+        var versionAsString = app.version.substring(0, 4);
         var version = parseFloat(versionAsString);
         return version
     }

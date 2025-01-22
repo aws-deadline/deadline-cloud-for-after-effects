@@ -664,6 +664,7 @@ function __generateUtil() {
 
         return outputString;
     }
+
     /**
      * Replace %20 percentage back to space from the file name for Windows os.
      */
@@ -671,6 +672,7 @@ function __generateUtil() {
         var fileName = fileName.replace(/%20/g, " ");
         return fileName;
     }
+
 
     function arrayIncludes(array, value) {
         for (var i = 0; i < array.length; i++) {
