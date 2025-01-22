@@ -14,8 +14,7 @@
             <platforms>all</platforms>
             <distributionFileList>
                 <distributionDirectory allowWildcards="1">
-                    <origin>
-                        components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter_Assets</origin>
+                    <origin>components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter_Assets</origin>
                 </distributionDirectory>
             </distributionFileList>
         </folder>
@@ -27,8 +26,7 @@
             <platforms>all</platforms>
             <distributionFileList>
                 <distributionDirectory allowWildcards="1">
-                    <origin>
-                        components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter_Assets</origin>
+                    <origin>components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter_Assets</origin>
                 </distributionDirectory>
             </distributionFileList>
         </folder>
@@ -41,8 +39,7 @@
             <platforms>all</platforms>
             <distributionFileList>
                 <distributionFile>
-                    <origin>
-                        components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter.jsx</origin>
+                    <origin>components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter.jsx</origin>
                 </distributionFile>
             </distributionFileList>
         </folder>
@@ -55,8 +52,7 @@
             <platforms>all</platforms>
             <distributionFileList>
                 <distributionFile>
-                    <origin>
-                        components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter.jsx</origin>
+                    <origin>components/deadline-cloud-for-after-effects/dist/DeadlineCloudSubmitter.jsx</origin>
                 </distributionFile>
             </distributionFileList>
         </folder>
@@ -92,12 +88,10 @@
                 <setInstallerVariable>
                     <name>after_effects_script_ui_directory_2024</name>
                     <ruleEvaluationLogic>or</ruleEvaluationLogic>
-                    <value>C:\Program Files\Adobe\Adobe After Effects 2024\Support
-                        Files\Scripts\ScriptUI Panels</value>
+                    <value>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</value>
                     <ruleList>
                         <fileExists>
-                            <path>C:\Program Files\Adobe\Adobe After Effects 2024\Support
-                                Files\Scripts\ScriptUI Panels</path>
+                            <path>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</path>
                         </fileExists>
                     </ruleList>
                 </setInstallerVariable>
@@ -110,24 +104,20 @@
                 <setInstallerVariable>
                     <name>after_effects_script_ui_directory_2025</name>
                     <ruleEvaluationLogic>or</ruleEvaluationLogic>
-                    <value>C:\Program Files\Adobe\Adobe After Effects 2025\Support
-                        Files\Scripts\ScriptUI Panels</value>
+                    <value>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</value>
                     <ruleList>
                         <fileExists>
-                            <path>C:\Program Files\Adobe\Adobe After Effects 2025\Support
-                                Files\Scripts\ScriptUI Panels</path>
+                            <path>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</path>
                         </fileExists>
                     </ruleList>
                 </setInstallerVariable>
             </actionList>
             <conditionRuleList>
                 <fileExists>
-                    <path>C:\Program Files\Adobe\Adobe After Effects 2025\Support
-                        Files\Scripts\ScriptUI Panels</path>
+                    <path>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</path>
                 </fileExists>
                 <fileExists>
-                    <path>C:\Program Files\Adobe\Adobe After Effects 2024\Support
-                        Files\Scripts\ScriptUI Panels</path>
+                    <path>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</path>
                 </fileExists>
             </conditionRuleList>
             <ruleList>
