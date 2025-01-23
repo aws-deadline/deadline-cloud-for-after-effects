@@ -147,10 +147,9 @@
     </initializationActionList>
     <parameterList>
         <stringParameter name="deadline_cloud_for_after_effects_summary" ask="0" cliOptionShow="0">
-            <value>Deadline Cloud for After Effects
-- Register the plug-in with After Effects by moving the script to the After Effects
-ScriptUI folder.
-            </value>
+            <value>Deadline Cloud for After Effects 2024-2025
+- Compatible with Adobe After Effects 2024-2025
+- Register the plug-in with After Effects by moving the script to the After Effects ScriptUI Panel directory.</value>
         </stringParameter>
 
         <!-- Directory parameter for After Effects 2024 -->
