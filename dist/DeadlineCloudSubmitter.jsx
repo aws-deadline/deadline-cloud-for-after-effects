@@ -664,46 +664,12 @@ function __generateUtil() {
 
         return outputString;
     }
-
+    /**
+     * Replace %20 percentage back to space from the file name for Windows os.
+     */
     function removePercentageFromFileName(fileName) {
         var fileName = fileName.replace(/%20/g, " ");
         return fileName;
-    }
-
-    function getDuplicateFrames(frameList) {
-        /**
-         * Checks for given frame list if duplicate frames are present.
-         * @param {string} frameList: List of frames given in the UI or entire frame range of the comp.
-         * Returns either array filled with duplicates, or if no duplicates have been found empty string.
-         */
-        var duplicates = [];
-        var framesToRender = [];
-        var splitList = frameList.split(",");
-
-        for (var i = 0; i < splitList.length; i++) {
-            if (splitList[i].indexOf("-") == -1) {
-                if (arrayIncludes(framesToRender, parseInt(splitList[i]))) {
-                    duplicates.push(parseInt(splitList[i]));
-                } else {
-                    framesToRender.push(parseInt(splitList[i]));
-                }
-            } else {
-                var numbers = splitList[i].split("-");
-                if (parseInt(numbers[0]) > parseInt(numbers[1])) {
-                    // Frame range is wrong, first frame is larger than second
-                    duplicates.push(numbers[0]);
-                    return duplicates;
-                }
-                for (var j = parseInt(numbers[0]); j < parseInt(numbers[1]) - parseInt(numbers[0]) + 1; j++) {
-                    if (arrayIncludes(framesToRender, j)) {
-                        duplicates.push(j);
-                    } else {
-                        framesToRender.push(j);
-                    }
-                }
-            }
-        }
-        return duplicates;
     }
 
     function arrayIncludes(array, value) {
@@ -754,7 +720,6 @@ function __generateUtil() {
         "enforceForwardSlashes": enforceForwardSlashes,
         "removeIllegalCharacters": removeIllegalCharacters,
         "removePercentageFromFileName": removePercentageFromFileName,
-        "getDuplicateFrames": getDuplicateFrames,
         "getTempFile": getTempFile,
         "getUserDirectory": getUserDirectory
     }
@@ -782,18 +747,18 @@ var _DC_LOGGER_DEFAULT_BACKUP_COUNT = 5
 function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
     /**
      * Basic logger implementation with file rotation based on byte size.
-     * 
+     *
      * Rollover implementation is based on Python's RotatingFileHandler for behavioural compatibility
      * with the Python-based submitters.
      *
-     * The system will save old log files by appending the extensions ‘.1’, ‘.2’ etc., to the filename. 
-     * For example, with a backupCount of 5 and a base file name of app.log, you would get 
-     * app.log, app.log.1, app.log.2, up to app.log.5. The file being written to is always app.log. 
-     * When this file is filled, it is closed and renamed to app.log.1, 
+     * The system will save old log files by appending the extensions ‘.1’, ‘.2’ etc., to the filename.
+     * For example, with a backupCount of 5 and a base file name of app.log, you would get
+     * app.log, app.log.1, app.log.2, up to app.log.5. The file being written to is always app.log.
+     * When this file is filled, it is closed and renamed to app.log.1,
      * and if files app.log.1, app.log.2, etc. exist, then they are renamed to app.log.2, app.log.3 etc. respectively.
-     * 
+     *
      * If backupCount or maxBytes are zero or less, rollover behaviour is disabled.
-     * 
+     *
      * @param {string} logFileName - Log file name.
      * @param {string} logDirectoryPath - Log directory path.
      * @param {int} maxBytes - Number of bytes before a file rotation is performed.
@@ -822,7 +787,7 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
     function _fileRotate() {
         /* Performs a file rotation if the size of the active log file is higher
          * than maxBytes.
-         * 
+         *
          * If maxBytes is zero or less, no file rotation will ever occur.
          */
         if (maxBytes <= 0) { // If maxBytes is invalid, don't rotate.
@@ -1022,8 +987,8 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
 
 /**
  * Breadth first sweep through the root composition to find all footage references
- * More efficient than just iterating through items in the project when 
- * there is a lot of unused footage in the project   
+ * More efficient than just iterating through items in the project when
+ * there is a lot of unused footage in the project
  **/
 function findJobAttachments(rootComp) {
     if (rootComp == null) {
@@ -1195,7 +1160,7 @@ function SubmitSelection(selection, framesPerTask) {
         ) - 1; // end frame is inclusive so we subtract 1
 
     var dependencies = findJobAttachments(rqi.comp); // list of filenames
-    var compName = rqi.comp.name;
+    var compName = dcUtil.removeIllegalCharacters(rqi.comp.name);
 
     function generateAssetReferences(bundlePath, sanitizedOutputFolder) {
         // Write the asset_references.json file
@@ -1288,14 +1253,16 @@ function SubmitSelection(selection, framesPerTask) {
         var regex = new RegExp('\\b' + "%5B#####%5D" + '\\b', 'g');
         var outputFileNameNoRegex = outputFile.replace(regex, "[#####]");
         // Split the file name to extract the file name and extension
-        // Create lastIndex and regex to remove unwanted parts in the name. 
+        // Create lastIndex and regex to remove unwanted parts in the name.
         var lastIndex = outputFileNameNoRegex.lastIndexOf(".");
         var extension = outputFileNameNoRegex.substring(lastIndex + 1);
         logger.debug("extension set to: " + extension, submitBundleFile);
+        var sanitizedOutputFileName = dcUtil.removePercentageFromFileName(outputFileNameNoRegex);
+        logger.debug("sanitizedOutputFileName is " + sanitizedOutputFileName, submitBundleFile);
         var isImageSeq = isImageOutput(extension);
 
         generateAssetReferences(bundlePath, sanitizedOutputFolder);
-        generateParameterValues(bundlePath, sanitizedOutputFolder, outputFileNameNoRegex, isImageSeq);
+        generateParameterValues(bundlePath, sanitizedOutputFolder, sanitizedOutputFileName, isImageSeq);
 
         var jobTemplateSourceFolder = new Folder(
             scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
