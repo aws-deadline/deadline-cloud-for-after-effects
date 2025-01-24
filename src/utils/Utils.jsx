@@ -669,42 +669,6 @@ function __generateUtil() {
         return fileName;
     }
 
-    /**
-     * Checks for given frame list if duplicate frames are present.
-     * @param {string} frameList: List of frames given in the UI or entire frame range of the comp.
-     * Returns either array filled with duplicates, or if no duplicates have been found empty string.
-     */
-    function getDuplicateFrames(frameList) {
-        var duplicates = [];
-        var framesToRender = [];
-        var splitList = frameList.split(",");
-
-        for (var i = 0; i < splitList.length; i++) {
-            if (splitList[i].indexOf("-") == -1) {
-                if (arrayIncludes(framesToRender, parseInt(splitList[i]))) {
-                    duplicates.push(parseInt(splitList[i]));
-                } else {
-                    framesToRender.push(parseInt(splitList[i]));
-                }
-            } else {
-                var numbers = splitList[i].split("-");
-                if (parseInt(numbers[0]) > parseInt(numbers[1])) {
-                    // Frame range is wrong, first frame is larger than second
-                    duplicates.push(numbers[0]);
-                    return duplicates;
-                }
-                for (var j = parseInt(numbers[0]); j < parseInt(numbers[1]) - parseInt(numbers[0]) + 1; j++) {
-                    if (arrayIncludes(framesToRender, j)) {
-                        duplicates.push(j);
-                    } else {
-                        framesToRender.push(j);
-                    }
-                }
-            }
-        }
-        return duplicates;
-    }
-
     function arrayIncludes(array, value) {
         for (var i = 0; i < array.length; i++) {
             if (array[i] === value) {
