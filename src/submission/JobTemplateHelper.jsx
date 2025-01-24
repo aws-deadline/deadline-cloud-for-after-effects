@@ -181,8 +181,8 @@ function getFontsFromFile() {
             var fontLocation = font.location;
             if (!fontLocation) {
                 adcAlert(
-                    "fontLocation for " + fontFullName + " is empty.\n" + 
-                    "This font won't be added to the job."
+                    "The path to the font " + fontFullName + " couldn't be identified.\n" + 
+                    "Please install the font for local non-Adobe apps in Creative Cloud Desktop before submitting this project."
                 );
                 continue;
             }
@@ -273,12 +273,12 @@ function getFontsFromFileLegacy() {
                     var fontFullName = fontFamilyName + "-" + familyStyle;
                     if (!fontLocation) {
                         adcAlert(
-                            "fontLocation for " + fontFullName + " is empty.\n" +
-                            "This font won't be added to the job."
+                            "The path to the font " + fontFullName + " couldn't be identified.\n" + 
+                            "Please install the font for local non-Adobe apps in Creative Cloud Desktop before submitting this project."
                         );
                         continue;
                     }
-                    var fontName =  createFontFilename(fontLocation, fontFullName);
+                    var fontName = createFontFilename(fontLocation, fontFullName);
                     if (fontName) {
                         fontLocations.push([fontName, fontLocation]);
                     }
@@ -292,8 +292,8 @@ function getFontsFromFileLegacy() {
                 var fontFullName = fontFamilyName + "-" + familyStyle;
                 if (!fontLocation) {
                     adcAlert(
-                        "fontLocation for " + fontFullName + " is empty.\n" +
-                        "This font won't be added to the job."
+                        "The path to the font " + fontFullName + " couldn't be identified.\n" + 
+                        "Please install the font for local non-Adobe apps in Creative Cloud Desktop before submitting this project."
                     );
                     continue;
                 }
