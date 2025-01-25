@@ -670,15 +670,6 @@ function __generateUtil() {
         return fileName;
     }
 
-    function arrayIncludes(array, value) {
-        for (var i = 0; i < array.length; i++) {
-            if (array[i] === value) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     function getUserDirectory() {
         /* Return OS specific user home directory. */
         if (system.osName == "MacOS") {
