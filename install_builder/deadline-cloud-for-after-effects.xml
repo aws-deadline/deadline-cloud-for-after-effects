@@ -1,0 +1,154 @@
+<componentGroup>
+    <name>deadline_cloud_for_after_effects</name>
+    <description>Deadline Cloud for After Effects 2024-2025</description>
+    <detailedDescription>After Effects plugin for submitting jobs to AWS Deadline Cloud.</detailedDescription>
+    <canBeEdited>1</canBeEdited>
+    <selected>0</selected>
+    <show>1</show>
+    <componentList>
+        <component>
+            <name>ae_2024</name>
+            <description>After Effects 2024</description>
+            <selected>0</selected>
+             <parameterList>
+                <!-- Directory parameter for After Effects 2024 -->
+                <directoryParameter>
+                    <name>after_effects_script_ui_directory_2024</name>
+                    <description>After Effects 2024 Scripts Directory</description>
+                    <explanation>Path to the scripts directory in After Effects 2024 resources. Default
+directory: "C:\Program Files\Adobe\Adobe After Effects 2024\Support
+Files\Scripts\ScriptUI Panels".</explanation>
+                    <allowEmptyValue>1</allowEmptyValue>
+                    <ask>yes</ask>
+                </directoryParameter>
+            </parameterList>
+            <folderList>
+                <!-- After Effects 2024 folder -->
+                <folder>
+                    <description>After Effects 2024 Plug-in Folder</description>
+                    <destination>${after_effects_script_ui_directory_2024}</destination>
+                    <name>aftereffects2024pluginfolder</name>
+                    <platforms>all</platforms>
+                    <distributionFileList>
+                        <distributionDirectory allowWildcards="1">
+                            <origin>components/deadline-cloud-for-after-effects/dist/*</origin>
+                        </distributionDirectory>
+                    </distributionFileList>
+                </folder>
+            </folderList>
+        </component>
+        <component>
+            <name>ae_2025</name>
+            <description>After Effects 2025</description>
+            <selected>0</selected>
+            <parameterList>
+                <!-- Directory parameter for After Effects 2025 -->
+                <directoryParameter>
+                    <name>after_effects_script_ui_directory_2025</name>
+                    <description>After Effects 2025 Scripts Directory</description>
+                    <explanation>Path to the scripts directory in After Effects 2025 resources. Default
+directory: "C:\Program Files\Adobe\Adobe After Effects 2025\Support
+Files\Scripts\ScriptUI Panels".</explanation>
+                    <allowEmptyValue>1</allowEmptyValue>
+                    <ask>yes</ask>
+                </directoryParameter>
+            </parameterList>
+            <folderList>
+                <!-- After Effects 2025 folder -->
+                <folder>
+                    <description>After Effects 2025 Plug-in Folder</description>
+                    <destination>${after_effects_script_ui_directory_2025}</destination>
+                    <name>aftereffects2025pluginfolder</name>
+                    <platforms>all</platforms>
+                    <distributionFileList>
+                        <distributionDirectory allowWildcards="1">
+                            <origin>components/deadline-cloud-for-after-effects/dist/*</origin>
+                        </distributionDirectory>
+                    </distributionFileList>
+                </folder>
+            </folderList>
+        </component>
+    </componentList>
+    <initializationActionList>
+        <!-- After Effects 2024 selection and script directory -->
+        <if>
+            <conditionRuleList>
+                <compareText>
+                    <logic>does_not_contain</logic>
+                    <text>${platform_name}</text>
+                    <value>linux</value>
+                </compareText>
+            </conditionRuleList>
+            <actionList>
+                <setInstallerVariable name="all_components"
+                    value="${all_components} deadline_cloud_for_after_effects" />
+            </actionList>
+            <elseActionList>
+                <setInstallerVariable name="component(deadline_cloud_for_after_effects).show" value="0" />
+            </elseActionList>
+        </if>
+        <if>
+            <conditionRuleList>
+                <fileExists>
+                    <path>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</path>
+                </fileExists>
+            </conditionRuleList>
+            <actionList>
+                <componentSelection>
+                    <deselect></deselect>
+                    <select>AfterEffects2024</select>
+                </componentSelection>
+                <setInstallerVariable name="after_effects_script_ui_directory_2024" value = "C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels"/>
+            </actionList>
+        </if>
+        <if>
+            <conditionRuleList>
+                <fileExists negate="1" path="${after_effects_script_ui_directory_2024}" />
+            </conditionRuleList>
+            <actionList>
+                <setInstallerVariable name="after_effects_script_ui_directory_2024" value="" />
+            </actionList>
+        </if>
+        <!-- After Effects 2025 selection and script directory -->
+        <if>
+            <conditionRuleEvaluationLogic>and</conditionRuleEvaluationLogic>
+            <conditionRuleList>
+                <fileExists>
+                    <path>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</path>
+                </fileExists>
+                <platformTest>
+                    <type>windows</type>
+                </platformTest>
+            </conditionRuleList>
+            <actionList>
+                <componentSelection>
+                    <deselect></deselect>
+                    <select>AfterEffects2025</select>
+                </componentSelection>
+                <setInstallerVariable name="after_effects_script_ui_directory_2025" value = "C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels"/>
+            </actionList>
+        </if>
+        <if>
+            <conditionRuleList>
+                <fileExists negate="1" path="${after_effects_script_ui_directory_2025}" />
+            </conditionRuleList>
+            <actionList>
+                <setInstallerVariable name="after_effects_script_ui_directory_2025" value="" />
+            </actionList>
+        </if>
+    </initializationActionList>
+    <parameterList>
+        <stringParameter name="deadline_cloud_for_after_effects_summary" ask="0" cliOptionShow="0">
+            <value>Deadline Cloud for After Effects 2024-2025
+- Compatible with Adobe After Effects 2024-2025
+- Registers the plug-in with After Effects by moving the script to the After Effects ScriptUI Panel directory.</value>
+        </stringParameter>
+    </parameterList>
+    <shouldPackRuleList>
+        <compareText>
+            <logic>does_not_contain</logic>
+            <text>${platform_name}</text>
+            <value>linux</value>
+        </compareText>
+    </shouldPackRuleList>
+</componentGroup>
