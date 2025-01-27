@@ -80,8 +80,8 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
 
 /**
  * Breadth first sweep through the root composition to find all footage and font references
- * More efficient than just iterating through items in the project when 
- * there is a lot of unused footage in the project   
+ * More efficient than just iterating through items in the project when
+ * there is a lot of unused footage in the project
  **/
 function findJobAttachments(rootComp) {
     if (rootComp == null) {
@@ -162,16 +162,16 @@ function getFontsFromFile() {
         var usedList = app.project.usedFonts;
         for (var i = 0; i < usedList.length; i++) {
             var font = usedList[i].font;
-            var fontFullName = font.fullName;
-            var fontLocation = font.location;
+            var fontPostScriptName = font.postScriptName;
+            var fontLocation = font.location || getLocationForFont(fontPostScriptName);
             if (!fontLocation) {
                 adcAlert(
-                    "The path to the font " + fontFullName + " couldn't be identified.\n" + 
-                    "Please install the font for local non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                    "The path to the font " + fontPostScriptName + " couldn't be identified.\n" + 
+                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
                 );
                 continue;
             }
-            var fontName = createFontFilename(fontLocation, fontFullName);
+            var fontName = createFontFilename(fontLocation, fontPostScriptName);
             if (fontName) {
                 fontLocations.push([fontName, fontLocation]);
             }
@@ -183,11 +183,84 @@ function getFontsFromFile() {
     return fontLocations;
 }
 
+
+
 /**
- * Generates the font filename based on the font name and the extension of the font filename.
+ * Scans user font paths for user-installed fonts and parses their name metadata.
+ * @return Font metadata object, or null if there was an error
+ **/
+function getFontPaths() {
+    var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
+    var scriptFile = new File(scriptPath);
+    if (!scriptFile.exists) {
+        adcAlert(
+            "Error: Missing font script at " + scriptFile.fsName + "\n"
+            + "\n"
+            + "Please ensure that Deadline Cloud Monitor is installed correctly.",
+            true
+        );
+        return null;
+    }
+    
+    var pythonExecutable = "python";
+    var os = $.os.toLowerCase();
+    if (os.indexOf("mac") !== -1) {
+        pythonExecutable = "python3";
+    }
+
+    var output = null;
+    try {
+        var outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\"");
+        output = JSON.parse(outputRaw);
+    } catch (e) {
+        logger.error(e.message, jobTemplateHelperFile);
+        logger.debug(output, jobTemplateHelperFile);
+    }
+    
+    if (output["error"]) {
+        adcAlert(
+            output["error"],
+            true
+        );
+        return null;
+    }
+    
+    return output;
+}
+
+/**
+ * Gets the path to a user-installed font whose PostScript name is fontPostScriptName. 
+ * @return The path to that font file or null if the path was not found
+ **/
+function getLocationForFont(fontPostScriptName) {
+    var fontPath = null;
+    
+    try {
+        // Get user-installed fonts
+        var fontPaths = getFontPaths();
+        if (!fontPaths) {
+            return null;
+        }
+        
+        for (path in fontPaths) {
+            if (fontPaths[path]["postscript_name"] == fontPostScriptName) {
+                // Found path that matches the given font's name
+                fontPath = path;
+                break;
+            }
+        }
+    } catch (e) {
+        logger.error(e.message, jobTemplateHelperFile);
+    }
+    
+    return fontPath;
+}
+
+/**
+ * Generates a font filename based on the font name and the extension of the font filename.
  * @return a string with the font filename
  **/
-function createFontFilename(fontLocation, fontFullName) {
+function createFontFilename(fontLocation, fontPostScriptName) {
     var fileExtension = "";
     var lastDotIndex = fontLocation.lastIndexOf('.');
     var extensionRegex = /\.[a-zA-Z]+$/;
@@ -203,23 +276,24 @@ function createFontFilename(fontLocation, fontFullName) {
         fontExtensions.push(".fon");
     }
 
-    // Avoid instances where the filename has a dot but no extension
-    // Some Adobe Fonts files have a dot followed by 5 numbers as its name with no extension (e.g. ".52741")
+    // Some Adobe Fonts files have a dot followed by numbers as its name with no extension (e.g. ".52741")
     if (extensionRegex.test(fontLocation)) {
-        fileExtension = fontLocation.substring(lastDotIndex);
+        fileExtension = fontLocation.substring(lastDotIndex).toLowerCase();
         var fontExtensionsAsString = fontExtensions.toString();
         if (fontExtensionsAsString.indexOf(fileExtension) == -1) {
             adcAlert(
                 "font with an unsupported extension '" + fileExtension + 
-                "' was found: " + fontFamilyName + 
-                ".\nThis font won't be added to the job."
+                "' was found: " + fontPostScriptName + ".\n" +
+                "This font won't be added to the job."
             );
             validExtension = false;
         }
     }
+    
     if (validExtension) {
-        var fontName = fontFullName + fileExtension;
+        var fontName = fontPostScriptName + fileExtension;
     }
+    
     return fontName;
 }
 
@@ -239,31 +313,34 @@ function getFontsFromFileLegacy() {
         for (var j = item.layers.length; j >= 1; j--) {
             var layer = item.layers[j];
             // Only look at TextLayers
-            if (!(layer instanceof TextLayer)){
+            if (!(layer instanceof TextLayer)) {
                 continue;
             }
             var sourceText = layer.text.sourceText;
             // Check if the sourceText property has keys. 
-            // If it has keys, the font can change overtime and we need to check all keys for their font
-            if (sourceText.numKeys){
+            // If it has keys, the font can change over time and we need to check all keys for their font
+            if (sourceText.numKeys) {
                 var oldLocation = ""
                 for (var k = 1; k <= sourceText.numKeys; k++) {
                     var textDocument = sourceText.keyValue(k);
-                    var fontLocation = textDocument.fontLocation;
+                    var fontPostScriptName = "";
+                    try {
+                        fontPostScriptName = textDocument.fontObject.postScriptName;
+                    } catch (e) {
+                        logger.error(e.message, jobTemplateHelperFile);
+                    }
+                    var fontLocation = textDocument.fontLocation || getLocationForFont(fontPostScriptName);
                     if (oldLocation == fontLocation) {
                         continue;
                     }
-                    var fontFamilyName = textDocument.fontFamily;
-                    var familyStyle = textDocument.fontStyle;
-                    var fontFullName = fontFamilyName + "-" + familyStyle;
                     if (!fontLocation) {
                         adcAlert(
-                            "The path to the font " + fontFullName + " couldn't be identified.\n" + 
-                            "Please install the font for local non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                            "The path to the font " + fontPostScriptName + " couldn't be identified.\n" + 
+                            "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
                         );
                         continue;
                     }
-                    var fontName = createFontFilename(fontLocation, fontFullName);
+                    var fontName = createFontFilename(fontLocation, fontPostScriptName);
                     if (fontName) {
                         fontLocations.push([fontName, fontLocation]);
                     }
@@ -271,18 +348,21 @@ function getFontsFromFileLegacy() {
                 } 
             } else {
                 var textDocument = sourceText.value;
-                var fontLocation = textDocument.fontLocation;
-                var fontFamilyName = textDocument.fontFamily;
-                var familyStyle = textDocument.fontStyle;
-                var fontFullName = fontFamilyName + "-" + familyStyle;
+                var fontPostScriptName = "";
+                try {
+                    fontPostScriptName = textDocument.fontObject.postScriptName;
+                } catch (e) {
+                    logger.error(e.message, jobTemplateHelperFile);
+                }
+                var fontLocation = textDocument.fontLocation || getLocationForFont(fontPostScriptName);
                 if (!fontLocation) {
                     adcAlert(
-                        "The path to the font " + fontFullName + " couldn't be identified.\n" + 
-                        "Please install the font for local non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                        "The path to the font " + fontPostScriptName + " couldn't be identified.\n" + 
+                        "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
                     );
                     continue;
                 }
-                var fontName = createFontFilename(fontLocation, fontFullName);
+                var fontName = createFontFilename(fontLocation, fontPostScriptName);
                 if (fontName) {
                     fontLocations.push([fontName, fontLocation]);
                 }
@@ -323,7 +403,7 @@ function generateFontReferences(fontPaths) {
 }
 
 /*
- * Write the JSON file to the file path
+ * Write a JSON file to the file path
  */
 function writeJSONFile(jsonData, filePath) {
 

@@ -690,6 +690,13 @@ function __generateUtil() {
         return $.getenv("USERPROFILE");
     }
 
+    function getAEVersion() {
+        /* Return After Effects version as float. */
+        var versionAsString = app.version.substring(0,4);
+        var version = parseFloat(versionAsString);
+        return version
+    }
+
     return {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
@@ -721,7 +728,8 @@ function __generateUtil() {
         "removeIllegalCharacters": removeIllegalCharacters,
         "removePercentageFromFileName": removePercentageFromFileName,
         "getTempFile": getTempFile,
-        "getUserDirectory": getUserDirectory
+        "getUserDirectory": getUserDirectory,
+        "getAEVersion": getAEVersion
     }
 }
 
@@ -747,18 +755,18 @@ var _DC_LOGGER_DEFAULT_BACKUP_COUNT = 5
 function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
     /**
      * Basic logger implementation with file rotation based on byte size.
-     *
+     * 
      * Rollover implementation is based on Python's RotatingFileHandler for behavioural compatibility
      * with the Python-based submitters.
      *
-     * The system will save old log files by appending the extensions ‘.1’, ‘.2’ etc., to the filename.
-     * For example, with a backupCount of 5 and a base file name of app.log, you would get
-     * app.log, app.log.1, app.log.2, up to app.log.5. The file being written to is always app.log.
-     * When this file is filled, it is closed and renamed to app.log.1,
+     * The system will save old log files by appending the extensions ‘.1’, ‘.2’ etc., to the filename. 
+     * For example, with a backupCount of 5 and a base file name of app.log, you would get 
+     * app.log, app.log.1, app.log.2, up to app.log.5. The file being written to is always app.log. 
+     * When this file is filled, it is closed and renamed to app.log.1, 
      * and if files app.log.1, app.log.2, etc. exist, then they are renamed to app.log.2, app.log.3 etc. respectively.
-     *
+     * 
      * If backupCount or maxBytes are zero or less, rollover behaviour is disabled.
-     *
+     * 
      * @param {string} logFileName - Log file name.
      * @param {string} logDirectoryPath - Log directory path.
      * @param {int} maxBytes - Number of bytes before a file rotation is performed.
@@ -787,7 +795,7 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
     function _fileRotate() {
         /* Performs a file rotation if the size of the active log file is higher
          * than maxBytes.
-         *
+         * 
          * If maxBytes is zero or less, no file rotation will ever occur.
          */
         if (maxBytes <= 0) { // If maxBytes is invalid, don't rotate.
@@ -986,7 +994,7 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
 }
 
 /**
- * Breadth first sweep through the root composition to find all footage references
+ * Breadth first sweep through the root composition to find all footage and font references
  * More efficient than just iterating through items in the project when
  * there is a lot of unused footage in the project
  **/
@@ -1038,11 +1046,279 @@ function findJobAttachments(rootComp) {
             }
         }
     }
+
+    var fontsInProject = getFontsFromFile();
+
+    if (fontsInProject.length > 0) {
+        // Notify the user if any fonts are missing or are substituted during the session.
+        // A substituted font is a font that was already missing when the project is opened.
+        // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
+        if (app.fonts.missingOrSubstitutedFonts != "") {
+            adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString());
+        }
+        // Formatting collected fonts
+        var fontReferences = generateFontReferences(fontsInProject);
+        for (var i = 0; i < fontReferences.length; i++) {
+            attachments.push(fontReferences[i]);
+        }
+    }
+
     return attachments;
 }
 
 /**
- * Write the JSON file to the file path
+ * Collects all fonts from the project.
+ * @return an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
+ **/
+function getFontsFromFile() {
+    var fontLocations = [];
+    // app.project.usedFonts was introduced in 24.5. Fall back to scanning text layers if version is older
+    if (dcUtil.getAEVersion() >= 24.5) {
+        var usedList = app.project.usedFonts;
+        for (var i = 0; i < usedList.length; i++) {
+            var font = usedList[i].font;
+            var fontPostScriptName = font.postScriptName;
+            var fontLocation = font.location || getLocationForFont(fontPostScriptName);
+            if (!fontLocation) {
+                adcAlert(
+                    "The path to the font " + fontPostScriptName + " couldn't be identified.\n" + 
+                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                );
+                continue;
+            }
+            var fontName = createFontFilename(fontLocation, fontPostScriptName);
+            if (fontName) {
+                fontLocations.push([fontName, fontLocation]);
+            }
+        }
+    } else {
+        fontLocations = getFontsFromFileLegacy();
+    }
+    
+    return fontLocations;
+}
+
+
+
+/**
+ * Scans user font paths for user-installed fonts and parses their name metadata.
+ * @return Font metadata object, or null if there was an error
+ **/
+function getFontPaths() {
+    var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
+    var scriptFile = new File(scriptPath);
+    if (!scriptFile.exists) {
+        adcAlert(
+            "Error: Missing font script at " + scriptFile.fsName + "\n"
+            + "\n"
+            + "Please ensure that Deadline Cloud Monitor is installed correctly.",
+            true
+        );
+        return null;
+    }
+    
+    var pythonExecutable = "python";
+    var os = $.os.toLowerCase();
+    if (os.indexOf("mac") !== -1) {
+        pythonExecutable = "python3";
+    }
+
+    var output = null;
+    try {
+        var outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\"");
+        output = JSON.parse(outputRaw);
+    } catch (e) {
+        logger.error(e.message, jobTemplateHelperFile);
+        logger.debug(output, jobTemplateHelperFile);
+    }
+    
+    if (output["error"]) {
+        adcAlert(
+            output["error"],
+            true
+        );
+        return null;
+    }
+    
+    return output;
+}
+
+/**
+ * Gets the path to a user-installed font whose PostScript name is fontPostScriptName. 
+ * @return The path to that font file or null if the path was not found
+ **/
+function getLocationForFont(fontPostScriptName) {
+    var fontPath = null;
+    
+    try {
+        // Get user-installed fonts
+        var fontPaths = getFontPaths();
+        if (!fontPaths) {
+            return null;
+        }
+        
+        for (path in fontPaths) {
+            if (fontPaths[path]["postscript_name"] == fontPostScriptName) {
+                // Found path that matches the given font's name
+                fontPath = path;
+                break;
+            }
+        }
+    } catch (e) {
+        logger.error(e.message, jobTemplateHelperFile);
+    }
+    
+    return fontPath;
+}
+
+/**
+ * Generates a font filename based on the font name and the extension of the font filename.
+ * @return a string with the font filename
+ **/
+function createFontFilename(fontLocation, fontPostScriptName) {
+    var fileExtension = "";
+    var lastDotIndex = fontLocation.lastIndexOf('.');
+    var extensionRegex = /\.[a-zA-Z]+$/;
+
+    var fontName = "";
+
+    var validExtension = true;
+    var fontExtensions = [".otf", ".ttf"];
+
+    // Windows also supports .fon files
+    var os = $.os.toLowerCase();
+    if (os.indexOf("windows") !== -1) {
+        fontExtensions.push(".fon");
+    }
+
+    // Some Adobe Fonts files have a dot followed by numbers as its name with no extension (e.g. ".52741")
+    if (extensionRegex.test(fontLocation)) {
+        fileExtension = fontLocation.substring(lastDotIndex).toLowerCase();
+        var fontExtensionsAsString = fontExtensions.toString();
+        if (fontExtensionsAsString.indexOf(fileExtension) == -1) {
+            adcAlert(
+                "font with an unsupported extension '" + fileExtension + 
+                "' was found: " + fontPostScriptName + ".\n" +
+                "This font won't be added to the job."
+            );
+            validExtension = false;
+        }
+    }
+    
+    if (validExtension) {
+        var fontName = fontPostScriptName + fileExtension;
+    }
+    
+    return fontName;
+}
+
+/**
+ * Collects all fonts from the project. After Effects versions < 24.5 do not have app.usedFonts.
+ * @return an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
+ **/
+function getFontsFromFileLegacy() {
+    var fontLocations = [];
+    var items = app.project.items;
+    for (var i = items.length; i >= 1; i--) {
+        var item = app.project.item(i);
+        // Only look at CompItems
+        if (!(item instanceof CompItem)) {
+            continue;
+        }
+        for (var j = item.layers.length; j >= 1; j--) {
+            var layer = item.layers[j];
+            // Only look at TextLayers
+            if (!(layer instanceof TextLayer)) {
+                continue;
+            }
+            var sourceText = layer.text.sourceText;
+            // Check if the sourceText property has keys. 
+            // If it has keys, the font can change over time and we need to check all keys for their font
+            if (sourceText.numKeys) {
+                var oldLocation = ""
+                for (var k = 1; k <= sourceText.numKeys; k++) {
+                    var textDocument = sourceText.keyValue(k);
+                    var fontPostScriptName = "";
+                    try {
+                        fontPostScriptName = textDocument.fontObject.postScriptName;
+                    } catch (e) {
+                        logger.error(e.message, jobTemplateHelperFile);
+                    }
+                    var fontLocation = textDocument.fontLocation || getLocationForFont(fontPostScriptName);
+                    if (oldLocation == fontLocation) {
+                        continue;
+                    }
+                    if (!fontLocation) {
+                        adcAlert(
+                            "The path to the font " + fontPostScriptName + " couldn't be identified.\n" + 
+                            "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                        );
+                        continue;
+                    }
+                    var fontName = createFontFilename(fontLocation, fontPostScriptName);
+                    if (fontName) {
+                        fontLocations.push([fontName, fontLocation]);
+                    }
+                    oldLocation = fontLocation;
+                } 
+            } else {
+                var textDocument = sourceText.value;
+                var fontPostScriptName = "";
+                try {
+                    fontPostScriptName = textDocument.fontObject.postScriptName;
+                } catch (e) {
+                    logger.error(e.message, jobTemplateHelperFile);
+                }
+                var fontLocation = textDocument.fontLocation || getLocationForFont(fontPostScriptName);
+                if (!fontLocation) {
+                    adcAlert(
+                        "The path to the font " + fontPostScriptName + " couldn't be identified.\n" + 
+                        "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                    );
+                    continue;
+                }
+                var fontName = createFontFilename(fontLocation, fontPostScriptName);
+                if (fontName) {
+                    fontLocations.push([fontName, fontLocation]);
+                }
+            }
+        }
+    }
+    return fontLocations;
+}
+
+/**
+ * Copies given fonts to a temp folder. 
+ * @param fontPaths an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
+ * @return an array of the temp font paths that were created
+ **/
+function generateFontReferences(fontPaths) {
+    // Create a temp folder where all used fonts get gathered
+    var _tempFontsFolder = dcUtil.normPath(Folder.temp.fsName + '/' + "tempFonts");
+    var formattedFontsPaths = [];
+    var tempFontPath = new Folder(_tempFontsFolder);
+    if (!tempFontPath.exists) {
+        tempFontPath.create();
+    }
+
+    // Copy the font files to the temp folder
+    for (var i = 0; i < fontPaths.length; i++) {
+        var fontName = fontPaths[i][0];
+        var fontLocation = fontPaths[i][1];
+
+        var fontFile = File(fontLocation);
+        var _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
+        var fontCopied = fontFile.copy(_tempFontPath);
+        // Check if font file was actually copied.
+        if (fontCopied) {
+            formattedFontsPaths.push(_tempFontPath);
+        }
+    }
+    return formattedFontsPaths;
+}
+
+/*
+ * Write a JSON file to the file path
  */
 function writeJSONFile(jsonData, filePath) {
 
@@ -1320,67 +1596,67 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
 // Production steps of ECMA-262, Edition 5, 15.4.4.14
 // Reference: http://es5.github.io/#x15.4.4.14
 if (!Array.prototype.indexOf) {
-    Array.prototype.indexOf = function(searchElement, fromIndex) {
-        // 1. Let o be the result of calling ToObject passing
-        //    the this value as the argument.
-        if (this === void 0 || this === null) {
-            throw new TypeError(
-                "Array.prototype.indexOf called on null or undefined"
-            );
-        }
+  Array.prototype.indexOf = function (searchElement, fromIndex) {
+    // 1. Let o be the result of calling ToObject passing
+    //    the this value as the argument.
+    if (this === void 0 || this === null) {
+      throw new TypeError(
+        "Array.prototype.indexOf called on null or undefined"
+      );
+    }
 
-        var k;
-        var o = Object(this);
+    var k;
+    var o = Object(this);
 
-        // 2. Let lenValue be the result of calling the Get
-        //    internal method of o with the argument "length".
-        // 3. Let len be ToUint32(lenValue).
-        var len = o.length >>> 0;
+    // 2. Let lenValue be the result of calling the Get
+    //    internal method of o with the argument "length".
+    // 3. Let len be ToUint32(lenValue).
+    var len = o.length >>> 0;
 
-        // 4. If len is 0, return -1.
-        if (len === 0) {
-            return -1;
-        }
+    // 4. If len is 0, return -1.
+    if (len === 0) {
+      return -1;
+    }
 
-        // 5. If argument fromIndex was passed let n be
-        //    ToInteger(fromIndex); else let n be 0.
-        var n = +fromIndex || 0;
+    // 5. If argument fromIndex was passed let n be
+    //    ToInteger(fromIndex); else let n be 0.
+    var n = +fromIndex || 0;
 
-        if (Math.abs(n) === Infinity) {
-            n = 0;
-        }
+    if (Math.abs(n) === Infinity) {
+      n = 0;
+    }
 
-        // 6. If n >= len, return -1.
-        if (n >= len) {
-            return -1;
-        }
+    // 6. If n >= len, return -1.
+    if (n >= len) {
+      return -1;
+    }
 
-        // 7. If n >= 0, then Let k be n.
-        // 8. Else, n<0, Let k be len - abs(n).
-        //    If k is less than 0, then let k be 0.
-        k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+    // 7. If n >= 0, then Let k be n.
+    // 8. Else, n<0, Let k be len - abs(n).
+    //    If k is less than 0, then let k be 0.
+    k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
 
-        // 9. Repeat, while k < len
-        while (k < len) {
-            // a. Let Pk be ToString(k).
-            //   This is implicit for LHS operands of the in operator
-            // b. Let kPresent be the result of calling the
-            //    HasProperty internal method of o with argument Pk.
-            //   This step can be combined with c
-            // c. If kPresent is true, then
-            //    i.  Let elementK be the result of calling the Get
-            //        internal method of o with the argument ToString(k).
-            //   ii.  Let same be the result of applying the
-            //        Strict Equality Comparison Algorithm to
-            //        searchElement and elementK.
-            //  iii.  If same is true, return k.
-            if (k in o && o[k] === searchElement) {
-                return k;
-            }
-            k++;
-        }
-        return -1;
-    };
+    // 9. Repeat, while k < len
+    while (k < len) {
+      // a. Let Pk be ToString(k).
+      //   This is implicit for LHS operands of the in operator
+      // b. Let kPresent be the result of calling the
+      //    HasProperty internal method of o with argument Pk.
+      //   This step can be combined with c
+      // c. If kPresent is true, then
+      //    i.  Let elementK be the result of calling the Get
+      //        internal method of o with the argument ToString(k).
+      //   ii.  Let same be the result of applying the
+      //        Strict Equality Comparison Algorithm to
+      //        searchElement and elementK.
+      //  iii.  If same is true, return k.
+      if (k in o && o[k] === searchElement) {
+        return k;
+      }
+      k++;
+    }
+    return -1;
+  };
 }
 //json2.js
 //  json2.js
@@ -1539,344 +1815,340 @@ if (!Array.prototype.indexOf) {
 // methods in a closure to avoid creating global variables.
 
 if (typeof JSON !== "object") {
-    JSON = {};
+  JSON = {};
 }
 
-(function() {
-    "use strict";
+(function () {
+  "use strict";
 
-    var rx_one = /^[\],:{}\s]*$/;
-    var rx_two = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;
-    var rx_three =
-        /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;
-    var rx_four = /(?:^|:|,)(?:\s*\[)+/g;
-    var rx_escapable =
-        /[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
-    var rx_dangerous =
-        /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+  var rx_one = /^[\],:{}\s]*$/;
+  var rx_two = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;
+  var rx_three =
+    /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;
+  var rx_four = /(?:^|:|,)(?:\s*\[)+/g;
+  var rx_escapable =
+    /[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+  var rx_dangerous =
+    /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
 
-    function f(n) {
-        // Format integers to have at least two digits.
-        return n < 10 ? "0" + n : n;
+  function f(n) {
+    // Format integers to have at least two digits.
+    return n < 10 ? "0" + n : n;
+  }
+
+  function this_value() {
+    return this.valueOf();
+  }
+
+  if (typeof Date.prototype.toJSON !== "function") {
+    Date.prototype.toJSON = function () {
+      return isFinite(this.valueOf())
+        ? this.getUTCFullYear() +
+            "-" +
+            f(this.getUTCMonth() + 1) +
+            "-" +
+            f(this.getUTCDate()) +
+            "T" +
+            f(this.getUTCHours()) +
+            ":" +
+            f(this.getUTCMinutes()) +
+            ":" +
+            f(this.getUTCSeconds()) +
+            "Z"
+        : null;
+    };
+
+    Boolean.prototype.toJSON = this_value;
+    Number.prototype.toJSON = this_value;
+    String.prototype.toJSON = this_value;
+  }
+
+  var gap;
+  var indent;
+  var meta;
+  var rep;
+
+  function quote(string) {
+    // If the string contains no control characters, no quote characters, and no
+    // backslash characters, then we can safely slap some quotes around it.
+    // Otherwise we must also replace the offending characters with safe escape
+    // sequences.
+
+    rx_escapable.lastIndex = 0;
+    return rx_escapable.test(string)
+      ? '"' +
+          string.replace(rx_escapable, function (a) {
+            var c = meta[a];
+            return typeof c === "string"
+              ? c
+              : "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
+          }) +
+          '"'
+      : '"' + string + '"';
+  }
+
+  function str(key, holder) {
+    // Produce a string from holder[key].
+
+    var i; // The loop counter.
+    var k; // The member key.
+    var v; // The member value.
+    var length;
+    var mind = gap;
+    var partial;
+    var value = holder[key];
+
+    // If the value has a toJSON method, call it to obtain a replacement value.
+
+    if (
+      value &&
+      typeof value === "object" &&
+      typeof value.toJSON === "function"
+    ) {
+      value = value.toJSON(key);
     }
 
-    function this_value() {
-        return this.valueOf();
+    // If we were called with a replacer function, then call the replacer to
+    // obtain a replacement value.
+
+    if (typeof rep === "function") {
+      value = rep.call(holder, key, value);
     }
 
-    if (typeof Date.prototype.toJSON !== "function") {
-        Date.prototype.toJSON = function() {
-            return isFinite(this.valueOf()) ?
-                this.getUTCFullYear() +
-                "-" +
-                f(this.getUTCMonth() + 1) +
-                "-" +
-                f(this.getUTCDate()) +
-                "T" +
-                f(this.getUTCHours()) +
-                ":" +
-                f(this.getUTCMinutes()) +
-                ":" +
-                f(this.getUTCSeconds()) +
-                "Z" :
-                null;
-        };
+    // What happens next depends on the value's type.
 
-        Boolean.prototype.toJSON = this_value;
-        Number.prototype.toJSON = this_value;
-        String.prototype.toJSON = this_value;
+    switch (typeof value) {
+      case "string":
+        return quote(value);
+
+      case "number":
+        // JSON numbers must be finite. Encode non-finite numbers as null.
+
+        return isFinite(value) ? String(value) : "null";
+
+      case "boolean":
+      case "null":
+        // If the value is a boolean or null, convert it to a string. Note:
+        // typeof null does not produce "null". The case is included here in
+        // the remote chance that this gets fixed someday.
+
+        return String(value);
+
+      // If the type is "object", we might be dealing with an object or an array or
+      // null.
+
+      case "object":
+        // Due to a specification blunder in ECMAScript, typeof null is "object",
+        // so watch out for that case.
+
+        if (!value) {
+          return "null";
+        }
+
+        // Make an array to hold the partial results of stringifying this object value.
+
+        gap += indent;
+        partial = [];
+
+        // Is the value an array?
+
+        if (Object.prototype.toString.apply(value) === "[object Array]") {
+          // The value is an array. Stringify every element. Use null as a placeholder
+          // for non-JSON values.
+
+          length = value.length;
+          for (i = 0; i < length; i += 1) {
+            partial[i] = str(i, value) || "null";
+          }
+
+          // Join all of the elements together, separated with commas, and wrap them in
+          // brackets.
+
+          v =
+            partial.length === 0
+              ? "[]"
+              : gap
+              ? "[\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "]"
+              : "[" + partial.join(",") + "]";
+          gap = mind;
+          return v;
+        }
+
+        // If the replacer is an array, use it to select the members to be stringified.
+
+        if (rep && typeof rep === "object") {
+          length = rep.length;
+          for (i = 0; i < length; i += 1) {
+            if (typeof rep[i] === "string") {
+              k = rep[i];
+              v = str(k, value);
+              if (v) {
+                partial.push(quote(k) + (gap ? ": " : ":") + v);
+              }
+            }
+          }
+        } else {
+          // Otherwise, iterate through all of the keys in the object.
+
+          for (k in value) {
+            if (Object.prototype.hasOwnProperty.call(value, k)) {
+              v = str(k, value);
+              if (v) {
+                partial.push(quote(k) + (gap ? ": " : ":") + v);
+              }
+            }
+          }
+        }
+
+        // Join all of the member texts together, separated with commas,
+        // and wrap them in braces.
+
+        v =
+          partial.length === 0
+            ? "{}"
+            : gap
+            ? "{\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "}"
+            : "{" + partial.join(",") + "}";
+        gap = mind;
+        return v;
     }
+  }
 
-    var gap;
-    var indent;
-    var meta;
-    var rep;
+  // If the JSON object does not yet have a stringify method, give it one.
 
-    function quote(string) {
-        // If the string contains no control characters, no quote characters, and no
-        // backslash characters, then we can safely slap some quotes around it.
-        // Otherwise we must also replace the offending characters with safe escape
-        // sequences.
+  if (typeof JSON.stringify !== "function") {
+    meta = {
+      // table of character substitutions
+      "\b": "\\b",
+      "\t": "\\t",
+      "\n": "\\n",
+      "\f": "\\f",
+      "\r": "\\r",
+      '"': '\\"',
+      "\\": "\\\\",
+    };
+    JSON.stringify = function (value, replacer, space) {
+      // The stringify method takes a value and an optional replacer, and an optional
+      // space parameter, and returns a JSON text. The replacer can be a function
+      // that can replace values, or an array of strings that will select the keys.
+      // A default replacer method can be provided. Use of the space parameter can
+      // produce text that is more easily readable.
 
-        rx_escapable.lastIndex = 0;
-        return rx_escapable.test(string) ?
-            '"' +
-            string.replace(rx_escapable, function(a) {
-                var c = meta[a];
-                return typeof c === "string" ?
-                    c :
-                    "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
-            }) +
-            '"' :
-            '"' + string + '"';
-    }
+      var i;
+      gap = "";
+      indent = "";
 
-    function str(key, holder) {
-        // Produce a string from holder[key].
+      // If the space parameter is a number, make an indent string containing that
+      // many spaces.
 
-        var i; // The loop counter.
-        var k; // The member key.
-        var v; // The member value.
-        var length;
-        var mind = gap;
-        var partial;
+      if (typeof space === "number") {
+        for (i = 0; i < space; i += 1) {
+          indent += " ";
+        }
+
+        // If the space parameter is a string, it will be used as the indent string.
+      } else if (typeof space === "string") {
+        indent = space;
+      }
+
+      // If there is a replacer, it must be a function or an array.
+      // Otherwise, throw an error.
+
+      rep = replacer;
+      if (
+        replacer &&
+        typeof replacer !== "function" &&
+        (typeof replacer !== "object" || typeof replacer.length !== "number")
+      ) {
+        throw new Error("JSON.stringify");
+      }
+
+      // Make a fake root object containing our value under the key of "".
+      // Return the result of stringifying the value.
+
+      return str("", { "": value });
+    };
+  }
+
+  // If the JSON object does not yet have a parse method, give it one.
+
+  if (typeof JSON.parse !== "function") {
+    JSON.parse = function (text, reviver) {
+      // The parse method takes a text and an optional reviver function, and returns
+      // a JavaScript value if the text is a valid JSON text.
+
+      var j;
+
+      function walk(holder, key) {
+        // The walk method is used to recursively walk the resulting structure so
+        // that modifications can be made.
+
+        var k;
+        var v;
         var value = holder[key];
-
-        // If the value has a toJSON method, call it to obtain a replacement value.
-
-        if (
-            value &&
-            typeof value === "object" &&
-            typeof value.toJSON === "function"
-        ) {
-            value = value.toJSON(key);
+        if (value && typeof value === "object") {
+          for (k in value) {
+            if (Object.prototype.hasOwnProperty.call(value, k)) {
+              v = walk(value, k);
+              if (v !== undefined) {
+                value[k] = v;
+              } else {
+                delete value[k];
+              }
+            }
+          }
         }
+        return reviver.call(holder, key, value);
+      }
 
-        // If we were called with a replacer function, then call the replacer to
-        // obtain a replacement value.
+      // Parsing happens in four stages. In the first stage, we replace certain
+      // Unicode characters with escape sequences. JavaScript handles many characters
+      // incorrectly, either silently deleting them, or treating them as line endings.
 
-        if (typeof rep === "function") {
-            value = rep.call(holder, key, value);
-        }
+      text = String(text);
+      rx_dangerous.lastIndex = 0;
+      if (rx_dangerous.test(text)) {
+        text = text.replace(rx_dangerous, function (a) {
+          return "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
+        });
+      }
 
-        // What happens next depends on the value's type.
+      // In the second stage, we run the text against regular expressions that look
+      // for non-JSON patterns. We are especially concerned with "()" and "new"
+      // because they can cause invocation, and "=" because it can cause mutation.
+      // But just to be safe, we want to reject all unexpected forms.
 
-        switch (typeof value) {
-            case "string":
-                return quote(value);
+      // We split the second stage into 4 regexp operations in order to work around
+      // crippling inefficiencies in IE's and Safari's regexp engines. First we
+      // replace the JSON backslash pairs with "@" (a non-JSON character). Second, we
+      // replace all simple value tokens with "]" characters. Third, we delete all
+      // open brackets that follow a colon or comma or that begin the text. Finally,
+      // we look to see that the remaining characters are only whitespace or "]" or
+      // "," or ":" or "{" or "}". If that is so, then the text is safe for eval.
 
-            case "number":
-                // JSON numbers must be finite. Encode non-finite numbers as null.
+      if (
+        rx_one.test(
+          text.replace(rx_two, "@").replace(rx_three, "]").replace(rx_four, "")
+        )
+      ) {
+        // In the third stage we use the eval function to compile the text into a
+        // JavaScript structure. The "{" operator is subject to a syntactic ambiguity
+        // in JavaScript: it can begin a block or an object literal. We wrap the text
+        // in parens to eliminate the ambiguity.
 
-                return isFinite(value) ? String(value) : "null";
+        j = eval("(" + text + ")");
 
-            case "boolean":
-            case "null":
-                // If the value is a boolean or null, convert it to a string. Note:
-                // typeof null does not produce "null". The case is included here in
-                // the remote chance that this gets fixed someday.
+        // In the optional fourth stage, we recursively walk the new structure, passing
+        // each name/value pair to a reviver function for possible transformation.
 
-                return String(value);
+        return typeof reviver === "function" ? walk({ "": j }, "") : j;
+      }
 
-                // If the type is "object", we might be dealing with an object or an array or
-                // null.
+      // If the text is not JSON parseable, then a SyntaxError is thrown.
 
-            case "object":
-                // Due to a specification blunder in ECMAScript, typeof null is "object",
-                // so watch out for that case.
-
-                if (!value) {
-                    return "null";
-                }
-
-                // Make an array to hold the partial results of stringifying this object value.
-
-                gap += indent;
-                partial = [];
-
-                // Is the value an array?
-
-                if (Object.prototype.toString.apply(value) === "[object Array]") {
-                    // The value is an array. Stringify every element. Use null as a placeholder
-                    // for non-JSON values.
-
-                    length = value.length;
-                    for (i = 0; i < length; i += 1) {
-                        partial[i] = str(i, value) || "null";
-                    }
-
-                    // Join all of the elements together, separated with commas, and wrap them in
-                    // brackets.
-
-                    v =
-                        partial.length === 0 ?
-                        "[]" :
-                        gap ?
-                        "[\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "]" :
-                        "[" + partial.join(",") + "]";
-                    gap = mind;
-                    return v;
-                }
-
-                // If the replacer is an array, use it to select the members to be stringified.
-
-                if (rep && typeof rep === "object") {
-                    length = rep.length;
-                    for (i = 0; i < length; i += 1) {
-                        if (typeof rep[i] === "string") {
-                            k = rep[i];
-                            v = str(k, value);
-                            if (v) {
-                                partial.push(quote(k) + (gap ? ": " : ":") + v);
-                            }
-                        }
-                    }
-                } else {
-                    // Otherwise, iterate through all of the keys in the object.
-
-                    for (k in value) {
-                        if (Object.prototype.hasOwnProperty.call(value, k)) {
-                            v = str(k, value);
-                            if (v) {
-                                partial.push(quote(k) + (gap ? ": " : ":") + v);
-                            }
-                        }
-                    }
-                }
-
-                // Join all of the member texts together, separated with commas,
-                // and wrap them in braces.
-
-                v =
-                    partial.length === 0 ?
-                    "{}" :
-                    gap ?
-                    "{\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "}" :
-                    "{" + partial.join(",") + "}";
-                gap = mind;
-                return v;
-        }
-    }
-
-    // If the JSON object does not yet have a stringify method, give it one.
-
-    if (typeof JSON.stringify !== "function") {
-        meta = {
-            // table of character substitutions
-            "\b": "\\b",
-            "\t": "\\t",
-            "\n": "\\n",
-            "\f": "\\f",
-            "\r": "\\r",
-            '"': '\\"',
-            "\\": "\\\\",
-        };
-        JSON.stringify = function(value, replacer, space) {
-            // The stringify method takes a value and an optional replacer, and an optional
-            // space parameter, and returns a JSON text. The replacer can be a function
-            // that can replace values, or an array of strings that will select the keys.
-            // A default replacer method can be provided. Use of the space parameter can
-            // produce text that is more easily readable.
-
-            var i;
-            gap = "";
-            indent = "";
-
-            // If the space parameter is a number, make an indent string containing that
-            // many spaces.
-
-            if (typeof space === "number") {
-                for (i = 0; i < space; i += 1) {
-                    indent += " ";
-                }
-
-                // If the space parameter is a string, it will be used as the indent string.
-            } else if (typeof space === "string") {
-                indent = space;
-            }
-
-            // If there is a replacer, it must be a function or an array.
-            // Otherwise, throw an error.
-
-            rep = replacer;
-            if (
-                replacer &&
-                typeof replacer !== "function" &&
-                (typeof replacer !== "object" || typeof replacer.length !== "number")
-            ) {
-                throw new Error("JSON.stringify");
-            }
-
-            // Make a fake root object containing our value under the key of "".
-            // Return the result of stringifying the value.
-
-            return str("", {
-                "": value
-            });
-        };
-    }
-
-    // If the JSON object does not yet have a parse method, give it one.
-
-    if (typeof JSON.parse !== "function") {
-        JSON.parse = function(text, reviver) {
-            // The parse method takes a text and an optional reviver function, and returns
-            // a JavaScript value if the text is a valid JSON text.
-
-            var j;
-
-            function walk(holder, key) {
-                // The walk method is used to recursively walk the resulting structure so
-                // that modifications can be made.
-
-                var k;
-                var v;
-                var value = holder[key];
-                if (value && typeof value === "object") {
-                    for (k in value) {
-                        if (Object.prototype.hasOwnProperty.call(value, k)) {
-                            v = walk(value, k);
-                            if (v !== undefined) {
-                                value[k] = v;
-                            } else {
-                                delete value[k];
-                            }
-                        }
-                    }
-                }
-                return reviver.call(holder, key, value);
-            }
-
-            // Parsing happens in four stages. In the first stage, we replace certain
-            // Unicode characters with escape sequences. JavaScript handles many characters
-            // incorrectly, either silently deleting them, or treating them as line endings.
-
-            text = String(text);
-            rx_dangerous.lastIndex = 0;
-            if (rx_dangerous.test(text)) {
-                text = text.replace(rx_dangerous, function(a) {
-                    return "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
-                });
-            }
-
-            // In the second stage, we run the text against regular expressions that look
-            // for non-JSON patterns. We are especially concerned with "()" and "new"
-            // because they can cause invocation, and "=" because it can cause mutation.
-            // But just to be safe, we want to reject all unexpected forms.
-
-            // We split the second stage into 4 regexp operations in order to work around
-            // crippling inefficiencies in IE's and Safari's regexp engines. First we
-            // replace the JSON backslash pairs with "@" (a non-JSON character). Second, we
-            // replace all simple value tokens with "]" characters. Third, we delete all
-            // open brackets that follow a colon or comma or that begin the text. Finally,
-            // we look to see that the remaining characters are only whitespace or "]" or
-            // "," or ":" or "{" or "}". If that is so, then the text is safe for eval.
-
-            if (
-                rx_one.test(
-                    text.replace(rx_two, "@").replace(rx_three, "]").replace(rx_four, "")
-                )
-            ) {
-                // In the third stage we use the eval function to compile the text into a
-                // JavaScript structure. The "{" operator is subject to a syntactic ambiguity
-                // in JavaScript: it can begin a block or an object literal. We wrap the text
-                // in parens to eliminate the ambiguity.
-
-                j = eval("(" + text + ")");
-
-                // In the optional fourth stage, we recursively walk the new structure, passing
-                // each name/value pair to a reviver function for possible transformation.
-
-                return typeof reviver === "function" ? walk({
-                    "": j
-                }, "") : j;
-            }
-
-            // If the text is not JSON parseable, then a SyntaxError is thrown.
-
-            throw new SyntaxError("JSON.parse");
-        };
-    }
+      throw new SyntaxError("JSON.parse");
+    };
+  }
 })();
 
 
@@ -2090,3 +2362,4 @@ if (isSecurityPrefSet()) {
         this.layout.resize();
     };
 }
+
