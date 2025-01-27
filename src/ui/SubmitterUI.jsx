@@ -30,8 +30,8 @@ function buildUI(thisObj) {
     var headerButtonGroup = root.add("group");
     var focusRenderQueueButton = headerButtonGroup.add("button", undefined, "Open Render Queue");
     focusRenderQueueButton.onClick = function() {
-        //we quickly toggle the window to make sure it gains focus
-        //sometimes this causes a flicker
+        // we quickly toggle the window to make sure it gains focus
+        // sometimes this causes a flicker
         app.project.renderQueue.showWindow(false);
         app.project.renderQueue.showWindow(true);
     }
@@ -47,43 +47,32 @@ function buildUI(thisObj) {
     var controlsPanel = controlsGroup.add("panel", undefined, "");
     controlsPanel.alignment = ['fill', 'top'];
 
-    var separateFramesGroup = controlsPanel.add("group", undefined, "");
-    separateFramesGroup.orientation = "row";
-    separateFramesGroup.alignment = ['fill', 'top'];
-    separateFramesGroup.alignChildren = ['left', 'top'];
-    var separateFramesCheckbox = separateFramesGroup.add("checkbox", undefined, "");
-    var persistedCheckboxState = app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_SEPARATEFRAMESINTOTASKS) ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_SEPARATEFRAMESINTOTASKS) === 'true' : true;
-    separateFramesCheckbox.value = persistedCheckboxState; //Retrive the lockStateKey
-    separateFramesCheckbox.alignment = ['left', 'center'];
-    var separateFramesLabel = separateFramesGroup.add("statictext", undefined, "Separate frames into tasks (only affects image sequences)");
-    separateFramesLabel.alignment = ['left', 'top'];
-
-    var framesPerTaskOption = controlsPanel.add("group", undefined, "");
-    framesPerTaskOption.orientation = "row";
-    framesPerTaskOption.alignment = ['fill', 'top'];
-    framesPerTaskOption.alignChildren = ['left', 'top'];
-    var framesPerTaskLabel = framesPerTaskOption.add("statictext", undefined, "Images per task:");
-    framesPerTaskLabel.alignment = ['left', 'center'];
     var persistentFramesPerTask = app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK) ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK) : "10";
-    var framesPerTaskValue = framesPerTaskOption.add("edittext", undefined, persistentFramesPerTask);
+
+    var framesPerTaskGroup = controlsPanel.add("group", undefined, "");
+    framesPerTaskGroup.orientation = "row";
+    framesPerTaskGroup.alignment = ['fill', 'top'];
+    framesPerTaskGroup.alignChildren = ['left', 'top'];
+    var framesPerTaskLabel = framesPerTaskGroup.add("statictext", undefined, "Frames per task");
+    framesPerTaskLabel.alignment = ['left', 'center'];
+    framesPerTaskLabel.helpTip = "The number of frames per task. Only affects image sequence output."
+    var framesPerTaskValue = framesPerTaskGroup.add("edittext", undefined, persistentFramesPerTask);
+
     framesPerTaskValue.alignment = ['fill', 'top'];
     framesPerTaskValue.onChange = function() {
-        framesPerTaskValue.text = String(Math.abs(parseInt(framesPerTaskValue.text)));
-        if (framesPerTaskValue.text == "NaN") {
+        var newFramesPerTaskValue = String(Math.abs(parseInt(framesPerTaskValue.text)));
+        if (newFramesPerTaskValue == "NaN") {
             framesPerTaskValue.text = "10";
         }
+        if (Math.abs(parseInt(newFramesPerTaskValue) > 9999)) {
+            framesPerTaskValue.text = "9999";
+        }
         app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskValue.text);
-    }
-    framesPerTaskValue.enabled = separateFramesCheckbox.value;
-
-    separateFramesCheckbox.onClick = function() {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_SEPARATEFRAMESINTOTASKS, separateFramesCheckbox.value.toString())
-        framesPerTaskValue.enabled = separateFramesCheckbox.value;
     }
 
     var submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
-        SubmitSelection(list.selection, separateFramesCheckbox.value ? parseInt(framesPerTaskValue.text) : 1);
+        SubmitSelection(list.selection, parseInt(framesPerTaskValue.text));
         list.selection = null;
     }
     submitButton.alignment = 'right';
