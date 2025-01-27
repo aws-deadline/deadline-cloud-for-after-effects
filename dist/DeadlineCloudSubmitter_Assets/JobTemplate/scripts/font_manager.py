@@ -52,7 +52,6 @@ def find_fonts(session_dir):
         # Only look in assetroot folders
         if not subfolder.startswith("assetroot-"):
             continue
-
         # Look for the tempFonts folder
         asset_dir = os.path.join(session_dir, subfolder)
         full_sub_dir = None
@@ -75,7 +74,6 @@ def find_fonts(session_dir):
                 fonts.add(full_assetpath)
             else:
                 logger.warning(f"A file that is not a supported font was found in the tempFonts folder: {full_assetpath}")
-
     return fonts
 
 
@@ -100,7 +98,6 @@ def install_font(src_path, scope=INSTALL_SCOPE_USER):
 
             dst_dir = FONT_LOCATION_USER
             registry_scope = winreg.HKEY_CURRENT_USER
-
         dst_path = os.path.join(dst_dir, os.path.basename(src_path))
 
         # Copy the font to the Windows Fonts folder
@@ -213,7 +210,6 @@ def _install_fonts(session_dir):
     if not fonts:
         logger.info("No custom fonts found, continuing task...")
         return
-
     for font in fonts:
         logger.info("Installing font: " + font)
         installed, msg = install_font(font)

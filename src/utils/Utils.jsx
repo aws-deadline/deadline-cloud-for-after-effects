@@ -680,7 +680,7 @@ function __generateUtil() {
     }
 
     function getAEVersion() {
-        /* Return After Effects version as float, maxVersion.minVersion */
+        /* Return After Effects version as float. */
         var versionAsString = app.version.substring(0, 4);
         var version = parseFloat(versionAsString);
         return version
