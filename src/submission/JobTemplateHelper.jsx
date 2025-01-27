@@ -314,7 +314,7 @@ function getFontsFromFileLegacy() {
             // Check if the sourceText property has keys.
             // If it has keys, the font can change over time and we need to check all keys for their font
             if (sourceText.numKeys) {
-                var oldLocation = ""
+                var oldLocation = "";
                 for (var k = 1; k <= sourceText.numKeys; k++) {
                     var textDocument = sourceText.keyValue(k);
                     var fontPostScriptName = "";
