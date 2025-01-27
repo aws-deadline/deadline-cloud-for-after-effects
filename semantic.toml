@@ -1,0 +1,37 @@
+[tool.semantic_release]
+major_on_zero = "false"
+tag_format = "{version}"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+  "build",
+  "chore",
+  "ci",
+  "docs",
+  "feat",
+  "fix",
+  "perf",
+  "style",
+  "refactor",
+  "test",
+]
+minor_tags = []
+patch_tags = [
+  "chore",
+  "feat",
+  "fix",
+  "refactor",
+]
+
+[tool.semantic_release.publish]
+upload_to_vcs_release = false
+
+[tool.semantic_release.changelog]
+template_dir = ".semantic_release"
+
+[tool.semantic_release.changelog.environment]
+trim_blocks = true
+lstrip_blocks = true
+
+[tool.semantic_release.branches.release]
+match = "(mainline|release)"

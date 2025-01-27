@@ -12,14 +12,73 @@ on:
         - patch
         - minor
         - major
-
-concurrency:
-  group: release
-
+    
 jobs:
   Bump:
-    name: Version Bump
-    uses: aws-deadline/.github/.github/workflows/reusable_bump.yml@mainline
-    secrets: inherit
-    with:
-      force_version_bump: ${{ inputs.force_version_bump }}
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: mainline
+          fetch-depth: 0
+          token: ${{ secrets.CI_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: ConfigureGit
+        run: |
+          git config --local user.email ${{secrets.EMAIL}}
+          git config --local user.name ${{secrets.USER}}
+
+      - name: NextSemver
+        run: |
+          if [[ "${{ inputs.force_version_bump }}" != "" ]]; then
+            BUMP_ARGS="$BUMP_ARGS --${{ inputs.force_version_bump }}"
+          fi
+
+          # Backup actual changelog to preserve its contents
+          touch CHANGELOG.md
+          cp CHANGELOG.md CHANGELOG.bak.md
+
+          pip install -r ./requirements-release.txt
+
+          NEXT_SEMVER=$(semantic-release -c semantic.toml -v --strict version --no-push --no-commit --no-tag --skip-build $BUMP_ARGS)
+          echo "NEXT_SEMVER=$NEXT_SEMVER" >> $GITHUB_ENV
+          git checkout -b bump/$NEXT_SEMVER
+
+      - name: GenerateChangeLog
+        run: |
+          # Grab the new version's changelog and prepend it to the original changelog contents
+          python .github/scripts/get_latest_changelog.py > NEW_LOG.md
+          cat NEW_LOG.md CHANGELOG.bak.md > CHANGELOG.md
+          rm NEW_LOG.md
+
+          git add CHANGELOG.md
+
+      - name: Commit
+        run: |
+          git commit -sm "chore(release): $NEXT_SEMVER"
+
+          {
+            echo 'RELEASE_NOTES<<EOF'
+            python .github/scripts/get_latest_changelog.py
+            echo EOF
+          } >> $GITHUB_ENV
+
+
+      - name: PushPR
+        env:
+          GH_TOKEN: ${{ secrets.CI_TOKEN }}
+        run: |
+          git push -u origin bump/$NEXT_SEMVER
+
+          # Needs "Allow GitHub Actions to create and approve pull requests" under Settings > Actions
+          gh pr create --base mainline --title "chore(release): $NEXT_SEMVER" --body "$RELEASE_NOTES"
