@@ -747,18 +747,18 @@ var _DC_LOGGER_DEFAULT_BACKUP_COUNT = 5
 function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
     /**
      * Basic logger implementation with file rotation based on byte size.
-     *
+     * 
      * Rollover implementation is based on Python's RotatingFileHandler for behavioural compatibility
      * with the Python-based submitters.
      *
-     * The system will save old log files by appending the extensions ‘.1’, ‘.2’ etc., to the filename.
-     * For example, with a backupCount of 5 and a base file name of app.log, you would get
-     * app.log, app.log.1, app.log.2, up to app.log.5. The file being written to is always app.log.
-     * When this file is filled, it is closed and renamed to app.log.1,
+     * The system will save old log files by appending the extensions ‘.1’, ‘.2’ etc., to the filename. 
+     * For example, with a backupCount of 5 and a base file name of app.log, you would get 
+     * app.log, app.log.1, app.log.2, up to app.log.5. The file being written to is always app.log. 
+     * When this file is filled, it is closed and renamed to app.log.1, 
      * and if files app.log.1, app.log.2, etc. exist, then they are renamed to app.log.2, app.log.3 etc. respectively.
-     *
+     * 
      * If backupCount or maxBytes are zero or less, rollover behaviour is disabled.
-     *
+     * 
      * @param {string} logFileName - Log file name.
      * @param {string} logDirectoryPath - Log directory path.
      * @param {int} maxBytes - Number of bytes before a file rotation is performed.
@@ -787,7 +787,7 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
     function _fileRotate() {
         /* Performs a file rotation if the size of the active log file is higher
          * than maxBytes.
-         *
+         * 
          * If maxBytes is zero or less, no file rotation will ever occur.
          */
         if (maxBytes <= 0) { // If maxBytes is invalid, don't rotate.
@@ -1092,117 +1092,18 @@ function getFontsFromFile() {
 }
 
 /**
- * Checks that the system has Python installed and version >= 3
- * @return String with executable name corresponding to Python 3, or an empty string if not found
- **/
-function getPythonExecutable() {
-    // Command that finds Python on the path
-    var findCommand = "where python";
-    var findCommandPy3 = "where python3";
-
-    // String that indicates Python was found
-    var findSuccess = "/python";
-
-    // Flags for found versions
-    var pythonFound = false;
-    var python3Found = false;
-
-    var os = $.os.toLowerCase();
-    if (os.indexOf("win") !== -1) {
-        findSuccess = "\\python";
-    }
-
-    // Find python on the path
-    var pythonExecutable = "";
-    var outputWhere = null;
-    try {
-        outputWhere = system.callSystem(findCommand);
-        if (outputWhere && outputWhere.indexOf(findSuccess) !== -1) {
-            pythonFound = true;
-            pythonExecutable = "python";
-        } else {
-            logger.warning("Couldn't find Python with executable name 'python'");
-        }
-    } catch (e) {
-        logger.error(e.message, jobTemplateHelperFile);
-        logger.debug("Where command output: " + outputWhere, jobTemplateHelperFile);
-    }
-
-    if (!pythonFound) {
-        // Python wasn't found on the path, try find python3
-        try {
-            outputWhere = system.callSystem(findCommandPy3);
-            if (outputWhere && outputWhere.indexOf(findSuccess) !== -1) {
-                python3Found = true;
-                pythonExecutable = "python3";
-            } else {
-                logger.warning("Couldn't find Python 3 with executable name 'python3'");
-            }
-        } catch (e) {
-            logger.error(e.message, jobTemplateHelperFile);
-            logger.debug("Where command output: " + outputWhere, jobTemplateHelperFile);
-        }
-    }
-
-    var errorMessage = "";
-    if (!(pythonFound || python3Found)) {
-        logger.error("No Python found on the path", jobTemplateHelperFile);
-        errorMessage =
-            "Error: Couldn't find Python on the path.\n" +
-            "\n" +
-            "Please ensure that Python 3 or higher is installed correctly.";
-        adcAlert(errorMessage, true);
-        return "";
-    }
-
-    // Get the Python version and select its executable
-    var output = null;
-    try {
-        output = system.callSystem(pythonExecutable + " --version");
-        if (output && output.indexOf("Python ") !== -1) {
-            var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
-            if (pythonVersion >= 3) {
-                // Correct version of Python is installed, use current pythonExecutable
-            } else if ((pythonVersion < 3) && python3Found) {
-                pythonExecutable = "python3";
-            } else {
-                errorMessage =
-                    "Error: Python 3 is required but only Python 2 was found.\n" +
-                    "\n" +
-                    "Please ensure that Python 3 or higher is installed correctly.";
-                adcAlert(errorMessage, true);
-            }
-        }
-    } catch (e) {
-        logger.error(e.message, jobTemplateHelperFile);
-        logger.debug("Command output: " + output, jobTemplateHelperFile);
-    }
-
-    return pythonExecutable;
-}
-
-/**
  * Scans user font paths for user-installed fonts and parses their name metadata.
  * @return Font metadata object, or null if there was an error
  **/
 function getFontPaths() {
     var errorMessage = "";
-    // Ensure Python exists and is at least version 3
-    var pythonExecutable = getPythonExecutable();
-    if (!pythonExecutable) {
+    var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
+    var scriptFile = new File(scriptPath);
+    if (!scriptFile.exists) {
         errorMessage =
-            "Error: There was a problem loading Python 3.\n" +
+            "Error: Missing font script at " + scriptFile.fsName + "\n" +
             "\n" +
-            "Please ensure that Python 3 or higher is installed correctly.";
-    } else {
-        var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
-        var scriptFile = new File(scriptPath);
-        if (!scriptFile.exists) {
-            errorMessage =
-                "Error: Missing font script at " + scriptFile.fsName + "\n" +
-                "\n" +
-                "Please ensure that the Deadline Cloud Submitter is installed correctly.";
-        }
+            "Please ensure that the Deadline Cloud Submitter is installed correctly.";
     }
     if (errorMessage) {
         adcAlert(errorMessage, true);
@@ -1211,7 +1112,10 @@ function getFontPaths() {
 
     var output = {};
     try {
-        var outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\"");
+        // Since python 3.9 is the minimum requirement to use the Deadline GUI submitter,
+        // we can safely assume the python3 CLI is available to use in the users $PATH
+        // Additionally, running "python --version" to verify version doesn't work as intended on Windows
+        var outputRaw = system.callSystem("python3 \"" + scriptFile.fsName + "\"");
         output = JSON.parse(outputRaw);
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
