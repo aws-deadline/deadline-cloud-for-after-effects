@@ -62,7 +62,7 @@ def get_font(font_path):
 
     try:
         t = ttLib.TTFont(font_path)
-    except:
+    except Exception as e:
         if verbose:
             print(traceback.format_exc())
         return result

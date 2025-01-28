@@ -4,12 +4,13 @@
 Utility functions for the handling of fonts
 """
 
-import sys
+import ctypes
+import logging
 import os
 import shutil
-import ctypes
+import sys
+import traceback
 from ctypes import wintypes
-import logging
 
 try:
     import winreg
@@ -77,6 +78,38 @@ def find_fonts(session_dir):
     return fonts
 
 
+def get_font_name(dst_path):
+    """
+    Get a font's Windows system name, which is the name stored in the registry.
+
+    :param dst_path: path of font that needs to be named
+    
+    :returns: string with the font's name
+    """
+    try:
+        filename = os.path.basename(dst_path)
+        fontname = os.path.splitext(filename)[0]
+
+        # Try to get the font's real name
+        cb = wintypes.DWORD()
+        if gdi32.GetFontResourceInfoW(filename, ctypes.byref(cb), None, GFRI_DESCRIPTION):
+            buf = (ctypes.c_wchar * cb.value)()
+            if gdi32.GetFontResourceInfoW(filename, ctypes.byref(cb), buf, GFRI_DESCRIPTION):
+                fontname = buf.value
+        is_truetype = wintypes.BOOL()
+        cb.value = ctypes.sizeof(is_truetype)
+        gdi32.GetFontResourceInfoW(
+            filename, ctypes.byref(cb), ctypes.byref(is_truetype), GFRI_ISTRUETYPE
+        )
+        if is_truetype:
+            fontname += " (TrueType)"
+
+    except Exception as e:
+        raise
+
+    return fontname
+
+
 def install_font(src_path, scope=INSTALL_SCOPE_USER):
     """
     Install provided font to the worker machine
@@ -115,28 +148,12 @@ def install_font(src_path, scope=INSTALL_SCOPE_USER):
 
         # Store the fontname/filename in the registry
         filename = os.path.basename(dst_path)
-        fontname = os.path.splitext(filename)[0]
-
-        # Try to get the font's real name
-        cb = wintypes.DWORD()
-        if gdi32.GetFontResourceInfoW(filename, ctypes.byref(cb), None, GFRI_DESCRIPTION):
-            buf = (ctypes.c_wchar * cb.value)()
-            if gdi32.GetFontResourceInfoW(filename, ctypes.byref(cb), buf, GFRI_DESCRIPTION):
-                fontname = buf.value
-        is_truetype = wintypes.BOOL()
-        cb.value = ctypes.sizeof(is_truetype)
-        gdi32.GetFontResourceInfoW(
-            filename, ctypes.byref(cb), ctypes.byref(is_truetype), GFRI_ISTRUETYPE
-        )
-        if is_truetype:
-            fontname += " (TrueType)"
+        fontname = get_font_name(dst_path)
 
         # Creates registry if it doesn't exist, opens when it does exist
         with winreg.CreateKeyEx(registry_scope, FONTS_REG_PATH, 0, access= winreg.KEY_SET_VALUE) as key:
             winreg.SetValueEx(key, fontname, 0, winreg.REG_SZ, filename)
     except Exception:
-        import traceback
-
         return False, traceback.format_exc()
     return True, ""
 
@@ -159,22 +176,7 @@ def uninstall_font(src_path, scope=INSTALL_SCOPE_USER):
             registry_scope = winreg.HKEY_CURRENT_USER
 
         # Remove the fontname/filename from the registry
-        filename = os.path.basename(dst_path)
-        fontname = os.path.splitext(filename)[0]
-
-        # Try to get the font's real name
-        cb = wintypes.DWORD()
-        if gdi32.GetFontResourceInfoW(filename, ctypes.byref(cb), None, GFRI_DESCRIPTION):
-            buf = (ctypes.c_wchar * cb.value)()
-            if gdi32.GetFontResourceInfoW(filename, ctypes.byref(cb), buf, GFRI_DESCRIPTION):
-                fontname = buf.value
-        is_truetype = wintypes.BOOL()
-        cb.value = ctypes.sizeof(is_truetype)
-        gdi32.GetFontResourceInfoW(
-            filename, ctypes.byref(cb), ctypes.byref(is_truetype), GFRI_ISTRUETYPE
-        )
-        if is_truetype:
-            fontname += " (TrueType)"
+        fontname = get_font_name(dst_path)
 
         with winreg.OpenKey(registry_scope, FONTS_REG_PATH, 0, access= winreg.KEY_SET_VALUE) as key:
             winreg.DeleteValue(key, fontname)
@@ -192,8 +194,6 @@ def uninstall_font(src_path, scope=INSTALL_SCOPE_USER):
             HWND_BROADCAST, WM_FONTCHANGE, 0, 0, SMTO_ABORTIFHUNG, 1000, None
         )
     except Exception:
-        import traceback
-
         return False, traceback.format_exc()
     return True, ""
 
