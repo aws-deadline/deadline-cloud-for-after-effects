@@ -20,7 +20,7 @@ This submitter creates and submits [OpenJD](https://github.com/OpenJobDescriptio
 
 ## Compatibility
 
-1. After Effects 24 - 25,
+1. After Effects 2024-2025,
 1. Python 3.9 or higher; and
 1. Windows or macOS operating system.
 
@@ -57,8 +57,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 
 #### To install the submitter:
 
-1. Install the Deadline CLI and Deadline Cloud Monitor by running the Deadline Submitter and Deadline Monitor
-   installers from the downloads section of the Deadline Cloud service in your AWS Console.
+1. Install the Deadline CLI and Deadline Cloud monitor by running the Deadline Cloud Submitter and Deadline Cloud monitor installers from the downloads section of the Deadline Cloud service in your AWS Console.
 1. This submitter requires the ability to write files and send communication over the network in order to function properly.
    By default, After Effects scripts are not allowed to perform these actions. [Reference link](https://helpx.adobe.com/after-effects/using/scripts.html).
    To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
@@ -80,6 +79,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 1. Open the Deadline Cloud Submitter Panel by clicking **Windows > DeadlineCloudSubmitter.jsx**.
 1. Select your composition from the list and click **Submit**. You can hit the **Refresh** button to refresh the list.
 1. (Optional: for image sequences output types) you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the number and then Deadline Cloud will assign the tasks to available workers to delegate the load.
+1. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the following message. Go to Preferences > Scripting & Expressions, and turn off the "Warn User When Executing Files" preferences, and restart After Effects.
 1. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
 1. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
 
@@ -95,6 +95,7 @@ If fonts are missing at render time, first check that they're installed (on the 
 
 Fonts distributed through Adobe Creative Cloud can be made available for all non-Adobe apps on your workstation, or only made available in Adobe apps. Cloud fonts need to be installed for all non-Adobe apps for use with Deadline Cloud.
 To install fonts for non-Adobe apps in Creative Cloud:
+
 1. Open Adobe Creative Cloud Desktop.
 1. Click "Adobe Fonts" on the account sidebar under "Your plan" to show the Adobe Fonts panel.
 1. Click "Added fonts" on the "Adobe Fonts" sidebar to show your added fonts.

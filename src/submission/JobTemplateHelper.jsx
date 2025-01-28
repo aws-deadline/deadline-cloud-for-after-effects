@@ -194,16 +194,16 @@ function getPythonExecutable() {
 
     // String that indicates Python was found
     var findSuccess = "/python";
-    
+
     // Flags for found versions
     var pythonFound = false;
     var python3Found = false;
-    
+
     var os = $.os.toLowerCase();
     if (os.indexOf("win") !== -1) {
         findSuccess = "\\python";
     }
-    
+
     // Find python on the path
     var pythonExecutable = "";
     var outputWhere = null;
@@ -236,6 +236,7 @@ function getPythonExecutable() {
         }
     }
 
+    var errorMessage = "";
     if (!(pythonFound || python3Found)) {
         logger.error("No Python found on the path", jobTemplateHelperFile);
         errorMessage =
