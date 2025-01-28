@@ -1143,9 +1143,10 @@ function getPythonExecutable() {
         }
     }
 
+    var errorMessage = "";
     if (!(pythonFound || python3Found)) {
         logger.error("No Python found on the path", jobTemplateHelperFile);
-        var errorMessage =
+        errorMessage =
             "Error: Couldn't find Python on the path.\n" +
             "\n" +
             "Please ensure that Python 3 or higher is installed correctly.";
@@ -1164,7 +1165,7 @@ function getPythonExecutable() {
             } else if ((pythonVersion < 3) && python3Found) {
                 pythonExecutable = "python3";
             } else {
-                var errorMessage =
+                errorMessage =
                     "Error: Python 3 is required but only Python 2 was found.\n" +
                     "\n" +
                     "Please ensure that Python 3 or higher is installed correctly.";
