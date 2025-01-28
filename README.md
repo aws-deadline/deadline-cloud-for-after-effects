@@ -52,7 +52,7 @@ defines the workflow, and submits the job to the farm and queue of your choosing
 The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `DeadlineCloudSubmitter.jsx`.
 
 1. `DeadlineCloudSubmitter_Assets` folder include default job template json file (`image_template.json` or `video_template.json` depending on the output type) with two Python scripts that will be run as tasks of the job.
-2. `DeadlineCloudSubmitter.jsx` is the After Effects script written by
+1. `DeadlineCloudSubmitter.jsx` is the After Effects script written by
    ExtendScript.
 
 #### To install the submitter:
@@ -99,8 +99,6 @@ To install fonts for non-Adobe apps in Creative Cloud:
 1. Click "Adobe Fonts" on the account sidebar under "Your plan" to show the Adobe Fonts panel.
 1. Click "Added fonts" on the "Adobe Fonts" sidebar to show your added fonts.
 1. Click "Install family" next to the fonts you would like to make available for non-Adobe apps.
-
-
 
 ## Setting up After Effects with your Deadline Cloud Farm
 

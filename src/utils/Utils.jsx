@@ -266,6 +266,7 @@ function __generateUtil() {
         return _assetsList;
     }
 
+
     function getDescription() {
         /**
          * Get description data from UI.
@@ -660,21 +661,13 @@ function __generateUtil() {
 
         return outputString;
     }
+
     /**
      * Replace %20 percentage back to space from the file name for Windows os.
      */
     function removePercentageFromFileName(fileName) {
         var fileName = fileName.replace(/%20/g, " ");
         return fileName;
-    }
-
-    function arrayIncludes(array, value) {
-        for (var i = 0; i < array.length; i++) {
-            if (array[i] === value) {
-                return true;
-            }
-        }
-        return false;
     }
 
     function getUserDirectory() {
@@ -688,7 +681,7 @@ function __generateUtil() {
 
     function getAEVersion() {
         /* Return After Effects version as float. */
-        var versionAsString = app.version.substring(0,4);
+        var versionAsString = app.version.substring(0, 4);
         var version = parseFloat(versionAsString);
         return version
     }

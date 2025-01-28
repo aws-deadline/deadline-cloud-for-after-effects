@@ -40,7 +40,7 @@ if sys.platform == "darwin":
         "~/Library/Fonts",
         "/Library/Fonts"
     ]
-    
+
 
 # Supported font file extensions
 FONT_EXTENSIONS = [".otf", ".ttf", ".fon", ""]
@@ -57,16 +57,16 @@ def get_font(font_path):
     Collect font metadata from the given font file.
     Returns a dictionary of metadata.
     """
-    
+
     result = {}
-    
+
     try:
         t = ttLib.TTFont(font_path)
     except:
         if verbose:
             print(traceback.format_exc())
         return result
-    
+
     # Collect name metadata from the name table
     names_table = t["name"].names
     raw_table = {}
@@ -76,7 +76,7 @@ def get_font(font_path):
         if verbose:
             print(traceback.format_exc())
         return result
-    
+
     try:
         result[font_path] = {
             "family_name": str(names_table[TTF_FAMILY_NAME]),
@@ -89,7 +89,7 @@ def get_font(font_path):
         if verbose:
             print(traceback.format_exc())
         return result
-    
+
     return result
 
 
@@ -98,9 +98,9 @@ def get_fonts(root_path, verbose=None):
     Collect font metadata from all font files under the specified root_path.
     Returns a dictionary with file paths as the keys.
     """
-    
+
     result = {}
-    
+
     try:
         if not os.path.exists(root_path):
             return result
@@ -108,23 +108,23 @@ def get_fonts(root_path, verbose=None):
         if verbose:
             print(traceback.format_exc())
         return result
-    
+
     try:
         for path, dirs, files in os.walk(root_path):
             for file in files:
                 _, ext = os.path.splitext(file)
                 if ext.lower() not in FONT_EXTENSIONS:
                     continue
-                
+
                 font_path = path + "/" + file
                 if sys.platform == "win32":
                     font_path = font_path.replace("\\", "/")
                 else:
                     pass
-                
+
                 if verbose:
                     print(f"font_path: {font_path}")
-                
+
                 font_data = {}
                 try:
                     font_data = get_font(font_path)
@@ -142,12 +142,12 @@ def get_fonts(root_path, verbose=None):
 def search_for_fonts(search_paths, verbose=None):
     """
     Searches the given paths recursively for font files and collects
-    their metadata. 
+    their metadata.
     Returns a dictionary with file paths as the keys.
     """
-    
+
     fonts = {}
-    
+
     for search_path in search_paths:
         search_root = os.path.normpath(os.path.expandvars(os.path.expanduser(search_path)))
         try:
@@ -157,13 +157,13 @@ def search_for_fonts(search_paths, verbose=None):
             if verbose:
                 print(traceback.format_exc())
             continue
-        
+
         if verbose:
             print(f"search_root: {search_root}")
-            
+
         font_results = get_fonts(search_root, verbose=verbose)
         fonts.update(font_results)
-    
+
     return fonts
 
 

@@ -126,12 +126,12 @@
                         ]
                     },
                     "onExit": {
-                       "command": "python",
+                        "command": "python",
                         "args": [
                             "{{Param.JobScriptDir}}/font_manager.py",
                             "remove",
                             "{{Session.WorkingDirectory}}"
-                        ] 
+                        ]
                     }
                 }
             }

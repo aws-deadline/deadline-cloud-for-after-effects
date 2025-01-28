@@ -33,7 +33,7 @@ INSTALL_SCOPE_SYSTEM = "SYSTEM"
 FONT_LOCATION_SYSTEM = os.path.join(os.environ.get("SystemRoot"), "Fonts")
 FONT_LOCATION_USER = os.path.join(os.environ.get("LocalAppData"), "Microsoft", "Windows", "Fonts")
 
-# Font extensions supported in gdi32.AddFontResourceW 
+# Font extensions supported in gdi32.AddFontResourceW
 # OpenType fonts without an extension can also be installed (e.g. Adobe Fonts)
 FONT_EXTENSIONS = [".otf", ".ttf", ".fon", ""]
 
@@ -52,7 +52,6 @@ def find_fonts(session_dir):
         # Only look in assetroot folders
         if not subfolder.startswith("assetroot-"):
             continue
-        
         # Look for the tempFonts folder
         asset_dir = os.path.join(session_dir, subfolder)
         full_sub_dir = None
@@ -62,11 +61,11 @@ def find_fonts(session_dir):
                     full_sub_dir = os.path.join(path, d)
                     logger.debug(f"tempFonts directory: {full_sub_dir}")
                     break
-        
+
         if not full_sub_dir:
             logger.debug(f"Couldn't recursively find tempFonts in subfolder: {subfolder}")
             continue
-        
+
         for file_name in os.listdir(full_sub_dir):
             full_assetpath = os.path.join(full_sub_dir, file_name)
             _, ext = os.path.splitext(full_assetpath)
@@ -75,7 +74,6 @@ def find_fonts(session_dir):
                 fonts.add(full_assetpath)
             else:
                 logger.warning(f"A file that is not a supported font was found in the tempFonts folder: {full_assetpath}")
-    
     return fonts
 
 
@@ -88,7 +86,7 @@ def install_font(src_path, scope=INSTALL_SCOPE_USER):
     :returns: boolean that represents if the font was installed and a string with any traceback that was created
     """
     try:
-        # Determine font destination 
+        # Determine font destination
         if scope == INSTALL_SCOPE_SYSTEM:
             dst_dir = FONT_LOCATION_SYSTEM
             registry_scope = winreg.HKEY_LOCAL_MACHINE
@@ -100,7 +98,6 @@ def install_font(src_path, scope=INSTALL_SCOPE_USER):
 
             dst_dir = FONT_LOCATION_USER
             registry_scope = winreg.HKEY_CURRENT_USER
-        
         dst_path = os.path.join(dst_dir, os.path.basename(src_path))
 
         # Copy the font to the Windows Fonts folder
@@ -213,7 +210,6 @@ def _install_fonts(session_dir):
     if not fonts:
         logger.info("No custom fonts found, continuing task...")
         return
-    
     for font in fonts:
         logger.info("Installing font: " + font)
         installed, msg = install_font(font)
@@ -229,11 +225,11 @@ def _remove_fonts(session_dir):
     """
     logger.info("Looking for fonts to uninstall...")
     fonts = find_fonts(session_dir)
-    
+
     if not fonts:
         logger.info("No custom fonts found, finishing task...")
         return
-    
+
     for font in fonts:
         logger.info("Uninstalling font: " + font)
         removed, msg = uninstall_font(font)

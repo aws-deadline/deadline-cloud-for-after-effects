@@ -270,6 +270,7 @@ function __generateUtil() {
         return _assetsList;
     }
 
+
     function getDescription() {
         /**
          * Get description data from UI.
@@ -664,21 +665,13 @@ function __generateUtil() {
 
         return outputString;
     }
+
     /**
      * Replace %20 percentage back to space from the file name for Windows os.
      */
     function removePercentageFromFileName(fileName) {
         var fileName = fileName.replace(/%20/g, " ");
         return fileName;
-    }
-
-    function arrayIncludes(array, value) {
-        for (var i = 0; i < array.length; i++) {
-            if (array[i] === value) {
-                return true;
-            }
-        }
-        return false;
     }
 
     function getUserDirectory() {
@@ -692,7 +685,7 @@ function __generateUtil() {
 
     function getAEVersion() {
         /* Return After Effects version as float. */
-        var versionAsString = app.version.substring(0,4);
+        var versionAsString = app.version.substring(0, 4);
         var version = parseFloat(versionAsString);
         return version
     }
@@ -1081,7 +1074,7 @@ function getFontsFromFile() {
             var fontLocation = font.location || getLocationForFont(fontPostScriptName);
             if (!fontLocation) {
                 adcAlert(
-                    "The path to the font " + fontPostScriptName + " couldn't be identified.\n" + 
+                    "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
                     "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
                 );
                 continue;
@@ -1094,7 +1087,7 @@ function getFontsFromFile() {
     } else {
         fontLocations = getFontsFromFileLegacy();
     }
-    
+
     return fontLocations;
 }
 
@@ -1109,14 +1102,13 @@ function getFontPaths() {
     var scriptFile = new File(scriptPath);
     if (!scriptFile.exists) {
         adcAlert(
-            "Error: Missing font script at " + scriptFile.fsName + "\n"
-            + "\n"
-            + "Please ensure that Deadline Cloud Monitor is installed correctly.",
+            "Error: Missing font script at " + scriptFile.fsName + "\n" +
+            "\n" +
+            "Please ensure that Deadline Cloud Submitter is installed correctly.",
             true
         );
         return null;
     }
-    
     var pythonExecutable = "python";
     var os = $.os.toLowerCase();
     if (os.indexOf("mac") !== -1) {
@@ -1131,7 +1123,6 @@ function getFontPaths() {
         logger.error(e.message, jobTemplateHelperFile);
         logger.debug(output, jobTemplateHelperFile);
     }
-    
     if (output["error"]) {
         adcAlert(
             output["error"],
@@ -1139,24 +1130,21 @@ function getFontPaths() {
         );
         return null;
     }
-    
     return output;
 }
 
 /**
- * Gets the path to a user-installed font whose PostScript name is fontPostScriptName. 
+ * Gets the path to a user-installed font whose PostScript name is fontPostScriptName.
  * @return The path to that font file or null if the path was not found
  **/
 function getLocationForFont(fontPostScriptName) {
     var fontPath = null;
-    
     try {
         // Get user-installed fonts
         var fontPaths = getFontPaths();
         if (!fontPaths) {
             return null;
         }
-        
         for (path in fontPaths) {
             if (fontPaths[path]["postscript_name"] == fontPostScriptName) {
                 // Found path that matches the given font's name
@@ -1167,7 +1155,6 @@ function getLocationForFont(fontPostScriptName) {
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
     }
-    
     return fontPath;
 }
 
@@ -1197,18 +1184,18 @@ function createFontFilename(fontLocation, fontPostScriptName) {
         var fontExtensionsAsString = fontExtensions.toString();
         if (fontExtensionsAsString.indexOf(fileExtension) == -1) {
             adcAlert(
-                "font with an unsupported extension '" + fileExtension + 
+                "font with an unsupported extension '" + fileExtension +
                 "' was found: " + fontPostScriptName + ".\n" +
                 "This font won't be added to the job."
             );
             validExtension = false;
         }
     }
-    
+
     if (validExtension) {
         var fontName = fontPostScriptName + fileExtension;
     }
-    
+
     return fontName;
 }
 
@@ -1232,10 +1219,10 @@ function getFontsFromFileLegacy() {
                 continue;
             }
             var sourceText = layer.text.sourceText;
-            // Check if the sourceText property has keys. 
+            // Check if the sourceText property has keys.
             // If it has keys, the font can change over time and we need to check all keys for their font
             if (sourceText.numKeys) {
-                var oldLocation = ""
+                var oldLocation = "";
                 for (var k = 1; k <= sourceText.numKeys; k++) {
                     var textDocument = sourceText.keyValue(k);
                     var fontPostScriptName = "";
@@ -1250,7 +1237,7 @@ function getFontsFromFileLegacy() {
                     }
                     if (!fontLocation) {
                         adcAlert(
-                            "The path to the font " + fontPostScriptName + " couldn't be identified.\n" + 
+                            "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
                             "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
                         );
                         continue;
@@ -1260,7 +1247,7 @@ function getFontsFromFileLegacy() {
                         fontLocations.push([fontName, fontLocation]);
                     }
                     oldLocation = fontLocation;
-                } 
+                }
             } else {
                 var textDocument = sourceText.value;
                 var fontPostScriptName = "";
@@ -1272,7 +1259,7 @@ function getFontsFromFileLegacy() {
                 var fontLocation = textDocument.fontLocation || getLocationForFont(fontPostScriptName);
                 if (!fontLocation) {
                     adcAlert(
-                        "The path to the font " + fontPostScriptName + " couldn't be identified.\n" + 
+                        "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
                         "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
                     );
                     continue;
@@ -1288,7 +1275,7 @@ function getFontsFromFileLegacy() {
 }
 
 /**
- * Copies given fonts to a temp folder. 
+ * Copies given fonts to a temp folder.
  * @param fontPaths an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
  * @return an array of the temp font paths that were created
  **/
