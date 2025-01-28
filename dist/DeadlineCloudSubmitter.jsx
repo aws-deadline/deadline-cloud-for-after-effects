@@ -107,7 +107,7 @@ function systemCallWithErrorAlerts(cmd) {
             cmd +
             "\n" +
             output +
-            "\n\nEnsure the command can be run manually in a non-elevated command prompt or terminal and try again."
+            "\n\nEnsure the command can be run manually in a non-elevated command prompt or terminal and try again.", true
         );
     }
 }
@@ -115,8 +115,8 @@ function systemCallWithErrorAlerts(cmd) {
 /**
  * Creates alerts for Deadline Cloud Submitter
  **/
-function adcAlert(message) {
-    alert(message, "Deadline Cloud Submitter");
+function adcAlert(message, errorIcon) {
+    alert(message, "Deadline Cloud Submitter", errorIcon);
 }
 
 function __generateUtil() {
@@ -1027,7 +1027,8 @@ function findJobAttachments(rootComp) {
                                 src.name +
                                 " (" +
                                 src.missingFootagePath +
-                                ")"
+                                ")",
+                                false
                             );
                             shouldShowPopup = false;
                         }
@@ -1046,7 +1047,7 @@ function findJobAttachments(rootComp) {
         // A substituted font is a font that was already missing when the project is opened.
         // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
         if (app.fonts.missingOrSubstitutedFonts != "") {
-            adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString());
+            adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString(), false);
         }
         // Formatting collected fonts
         var fontReferences = generateFontReferences(fontsInProject);
@@ -1074,7 +1075,7 @@ function getFontsFromFile() {
             if (!fontLocation) {
                 adcAlert(
                     "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
                 );
                 continue;
             }
@@ -1285,7 +1286,7 @@ function createFontFilename(fontLocation, fontPostScriptName) {
             adcAlert(
                 "font with an unsupported extension '" + fileExtension +
                 "' was found: " + fontPostScriptName + ".\n" +
-                "This font won't be added to the job."
+                "This font won't be added to the job.", false
             );
             validExtension = false;
         }
@@ -1337,7 +1338,7 @@ function getFontsFromFileLegacy() {
                     if (!fontLocation) {
                         adcAlert(
                             "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                            "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                            "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
                         );
                         continue;
                     }
@@ -1359,7 +1360,7 @@ function getFontsFromFileLegacy() {
                 if (!fontLocation) {
                     adcAlert(
                         "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                        "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                        "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
                     );
                     continue;
                 }
@@ -1437,7 +1438,7 @@ function SubmitSelection(selection, framesPerTask) {
     const submitBundleFile = "SubmitButton.jsx";
     // first we must verify that our selection is valid
     if (selection == null) {
-        adcAlert("Error: No selection");
+        adcAlert("Error: No selection", true);
         return;
     }
 
@@ -1451,7 +1452,7 @@ function SubmitSelection(selection, framesPerTask) {
         renderQueueIndex > app.project.renderQueue.numItems
     ) {
         adcAlert(
-            "Error: Render Queue has changed since last refreshing. Refreshing panel now. Please try again."
+            "Error: Render Queue has changed since last refreshing. Refreshing panel now. Please try again.", true
         );
         updateList();
         return;
@@ -1459,14 +1460,14 @@ function SubmitSelection(selection, framesPerTask) {
     rqi = app.project.renderQueue.item(renderQueueIndex);
     if (rqi == null || rqi.comp.id != selection.compId) {
         adcAlert(
-            "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again."
+            "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again.", true
         );
         updateList();
         return;
     }
     if (rqi.numOutputModules > 1) {
         adcAlert(
-            "Warning: Multiple output modules detected. It is not supported in current submitter. Please raise an issue on Github repo for feature request."
+            "Warning: Multiple output modules detected. It is not supported in current submitter. Please raise an issue on Github repo for feature request.", false
         );
         return;
     }
@@ -1490,10 +1491,10 @@ function SubmitSelection(selection, framesPerTask) {
         var outputModule = rqi.outputModule(j).file;
         if (outputModule == null) {
             if (rqi.numOutputModules > 1) {
-                adcAlert("Error: Output module does not have its output file set");
+                adcAlert("Error: Output module does not have its output file set", true);
             } else {
                 adcAlert(
-                    "Error: One of your output modules does not have its output file set"
+                    "Error: One of your output modules does not have its output file set", true
                 );
             }
             return;
@@ -1574,7 +1575,7 @@ function SubmitSelection(selection, framesPerTask) {
                 logger.debug("The step name is " + templateObject.steps[0].name, submitBundleFile);
             }
         } catch (e) {
-            adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.");
+            adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
             logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
         }
         const aftereffectsVersion = app.version[0] + app.version[1];
@@ -1631,7 +1632,7 @@ function SubmitSelection(selection, framesPerTask) {
         );
         if (!jobTemplateSourceFolder.exists) {
             adcAlert(
-                "Error: Missing job template at " + jobTemplateSourceFolder.fsName
+                "Error: Missing job template at " + jobTemplateSourceFolder.fsName, true
             );
             return null;
         }
