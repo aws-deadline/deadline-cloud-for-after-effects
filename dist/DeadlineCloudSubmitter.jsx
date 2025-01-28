@@ -1205,7 +1205,7 @@ function getFontPaths() {
         }
     }
     if (errorMessage) {
-        adcAlert(errorMessage, false);
+        adcAlert(errorMessage, true);
         return null;
     }
 
@@ -1220,13 +1220,13 @@ function getFontPaths() {
             "Error when finding fonts:\n" +
             "\n" +
             e.message,
-            false
+            true
         );
     }
     if ("error" in output) {
         adcAlert(
             output["error"],
-            false
+            true
         );
         return null;
     }
@@ -1452,7 +1452,7 @@ function SubmitSelection(selection, framesPerTask) {
         renderQueueIndex > app.project.renderQueue.numItems
     ) {
         adcAlert(
-            "Error: Render Queue has changed since last refreshing. Refreshing panel now. Please try again.", false
+            "Error: Render Queue has changed since last refreshing. Refreshing panel now. Please try again.", true
         );
         updateList();
         return;
@@ -1460,7 +1460,7 @@ function SubmitSelection(selection, framesPerTask) {
     rqi = app.project.renderQueue.item(renderQueueIndex);
     if (rqi == null || rqi.comp.id != selection.compId) {
         adcAlert(
-            "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again.", false
+            "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again.", true
         );
         updateList();
         return;
@@ -1491,10 +1491,10 @@ function SubmitSelection(selection, framesPerTask) {
         var outputModule = rqi.outputModule(j).file;
         if (outputModule == null) {
             if (rqi.numOutputModules > 1) {
-                adcAlert("Error: Output module does not have its output file set", false);
+                adcAlert("Error: Output module does not have its output file set", true);
             } else {
                 adcAlert(
-                    "Error: One of your output modules does not have its output file set", false
+                    "Error: One of your output modules does not have its output file set", true
                 );
             }
             return;
@@ -1575,7 +1575,7 @@ function SubmitSelection(selection, framesPerTask) {
                 logger.debug("The step name is " + templateObject.steps[0].name, submitBundleFile);
             }
         } catch (e) {
-            adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", false);
+            adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
             logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
         }
         const aftereffectsVersion = app.version[0] + app.version[1];
@@ -1632,7 +1632,7 @@ function SubmitSelection(selection, framesPerTask) {
         );
         if (!jobTemplateSourceFolder.exists) {
             adcAlert(
-                "Error: Missing job template at " + jobTemplateSourceFolder.fsName, false
+                "Error: Missing job template at " + jobTemplateSourceFolder.fsName, true
             );
             return null;
         }

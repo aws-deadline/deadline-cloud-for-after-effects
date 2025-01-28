@@ -298,7 +298,7 @@ function getFontPaths() {
         }
     }
     if (errorMessage) {
-        adcAlert(errorMessage, false);
+        adcAlert(errorMessage, true);
         return null;
     }
 
@@ -313,13 +313,13 @@ function getFontPaths() {
             "Error when finding fonts:\n" +
             "\n" +
             e.message,
-            false
+            true
         );
     }
     if ("error" in output) {
         adcAlert(
             output["error"],
-            false
+            true
         );
         return null;
     }
