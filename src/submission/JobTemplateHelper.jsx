@@ -79,9 +79,9 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
 }
 
 /**
- * Breadth first sweep through the root composition to find all footage references
- * More efficient than just iterating through items in the project when 
- * there is a lot of unused footage in the project   
+ * Breadth first sweep through the root composition to find all footage and font references
+ * More efficient than just iterating through items in the project when
+ * there is a lot of unused footage in the project
  **/
 function findJobAttachments(rootComp) {
     if (rootComp == null) {
@@ -131,11 +131,373 @@ function findJobAttachments(rootComp) {
             }
         }
     }
+
+    var fontsInProject = getFontsFromFile();
+
+    if (fontsInProject.length > 0) {
+        // Notify the user if any fonts are missing or are substituted during the session.
+        // A substituted font is a font that was already missing when the project is opened.
+        // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
+        if (app.fonts.missingOrSubstitutedFonts != "") {
+            adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString());
+        }
+        // Formatting collected fonts
+        var fontReferences = generateFontReferences(fontsInProject);
+        for (var i = 0; i < fontReferences.length; i++) {
+            attachments.push(fontReferences[i]);
+        }
+    }
+
     return attachments;
 }
 
 /**
- * Write the JSON file to the file path
+ * Collects all fonts from the project.
+ * @return an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
+ **/
+function getFontsFromFile() {
+    var fontLocations = [];
+    // app.project.usedFonts was introduced in 24.5. Fall back to scanning text layers if version is older
+    if (dcUtil.getAEVersion() >= 24.5) {
+        var usedList = app.project.usedFonts;
+        for (var i = 0; i < usedList.length; i++) {
+            var font = usedList[i].font;
+            var fontPostScriptName = font.postScriptName;
+            var fontLocation = font.location || getLocationForFont(fontPostScriptName);
+            if (!fontLocation) {
+                adcAlert(
+                    "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
+                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                );
+                continue;
+            }
+            var fontName = createFontFilename(fontLocation, fontPostScriptName);
+            if (fontName) {
+                fontLocations.push([fontName, fontLocation]);
+            }
+        }
+    } else {
+        fontLocations = getFontsFromFileLegacy();
+    }
+
+    return fontLocations;
+}
+
+/**
+ * Checks that the system has Python installed and version >= 3
+ * @return String with executable name corresponding to Python 3, or an empty string if not found
+ **/
+function getPythonExecutable() {
+    // Command that finds Python on the path
+    var findCommand = "where python";
+    var findCommandPy3 = "where python3";
+
+    // String that indicates Python was found
+    var findSuccess = "/python";
+
+    // Flags for found versions
+    var pythonFound = false;
+    var python3Found = false;
+
+    var os = $.os.toLowerCase();
+    if (os.indexOf("win") !== -1) {
+        findSuccess = "\\python";
+    }
+
+    // Find python on the path
+    var pythonExecutable = "";
+    var outputWhere = null;
+    try {
+        outputWhere = system.callSystem(findCommand);
+        if (outputWhere && outputWhere.indexOf(findSuccess) !== -1) {
+            pythonFound = true;
+            pythonExecutable = "python";
+        } else {
+            logger.warning("Couldn't find Python with executable name 'python'");
+        }
+    } catch (e) {
+        logger.error(e.message, jobTemplateHelperFile);
+        logger.debug("Where command output: " + outputWhere, jobTemplateHelperFile);
+    }
+
+    if (!pythonFound) {
+        // Python wasn't found on the path, try find python3
+        try {
+            outputWhere = system.callSystem(findCommandPy3);
+            if (outputWhere && outputWhere.indexOf(findSuccess) !== -1) {
+                python3Found = true;
+                pythonExecutable = "python3";
+            } else {
+                logger.warning("Couldn't find Python 3 with executable name 'python3'");
+            }
+        } catch (e) {
+            logger.error(e.message, jobTemplateHelperFile);
+            logger.debug("Where command output: " + outputWhere, jobTemplateHelperFile);
+        }
+    }
+
+    var errorMessage = "";
+    if (!(pythonFound || python3Found)) {
+        logger.error("No Python found on the path", jobTemplateHelperFile);
+        errorMessage =
+            "Error: Couldn't find Python on the path.\n" +
+            "\n" +
+            "Please ensure that Python 3 or higher is installed correctly.";
+        adcAlert(errorMessage, true);
+        return "";
+    }
+
+    // Get the Python version and select its executable
+    var output = null;
+    try {
+        output = system.callSystem(pythonExecutable + " --version");
+        if (output && output.indexOf("Python ") !== -1) {
+            var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
+            if (pythonVersion >= 3) {
+                // Correct version of Python is installed, use current pythonExecutable
+            } else if ((pythonVersion < 3) && python3Found) {
+                pythonExecutable = "python3";
+            } else {
+                errorMessage =
+                    "Error: Python 3 is required but only Python 2 was found.\n" +
+                    "\n" +
+                    "Please ensure that Python 3 or higher is installed correctly.";
+                adcAlert(errorMessage, true);
+            }
+        }
+    } catch (e) {
+        logger.error(e.message, jobTemplateHelperFile);
+        logger.debug("Command output: " + output, jobTemplateHelperFile);
+    }
+
+    return pythonExecutable;
+}
+
+/**
+ * Scans user font paths for user-installed fonts and parses their name metadata.
+ * @return Font metadata object, or null if there was an error
+ **/
+function getFontPaths() {
+    var errorMessage = "";
+    // Ensure Python exists and is at least version 3
+    var pythonExecutable = getPythonExecutable();
+    if (!pythonExecutable) {
+        errorMessage =
+            "Error: There was a problem loading Python 3.\n" +
+            "\n" +
+            "Please ensure that Python 3 or higher is installed correctly.";
+    } else {
+        var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
+        var scriptFile = new File(scriptPath);
+        if (!scriptFile.exists) {
+            errorMessage =
+                "Error: Missing font script at " + scriptFile.fsName + "\n" +
+                "\n" +
+                "Please ensure that the Deadline Cloud Submitter is installed correctly.";
+        }
+    }
+    if (errorMessage) {
+        adcAlert(errorMessage, true);
+        return null;
+    }
+
+    var output = {};
+    try {
+        var outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\"");
+        output = JSON.parse(outputRaw);
+    } catch (e) {
+        logger.error(e.message, jobTemplateHelperFile);
+        logger.debug("Command output: " + output, jobTemplateHelperFile);
+        adcAlert(
+            "Error when finding fonts:\n" +
+            "\n" +
+            e.message,
+            true
+        );
+    }
+    if ("error" in output) {
+        adcAlert(
+            output["error"],
+            true
+        );
+        return null;
+    }
+    return output;
+}
+
+/**
+ * Gets the path to a user-installed font whose PostScript name is fontPostScriptName.
+ * @return The path to that font file or null if the path was not found
+ **/
+function getLocationForFont(fontPostScriptName) {
+    var fontPath = null;
+    try {
+        // Get user-installed fonts
+        var fontPaths = getFontPaths();
+        if (!fontPaths) {
+            return null;
+        }
+        for (var path in fontPaths) {
+            if (fontPaths[path]["postscript_name"] == fontPostScriptName) {
+                // Found path that matches the given font's name
+                fontPath = path;
+                break;
+            }
+        }
+    } catch (e) {
+        logger.error(e.message, jobTemplateHelperFile);
+    }
+    return fontPath;
+}
+
+/**
+ * Generates a font filename based on the font name and the extension of the font filename.
+ * @return a string with the font filename
+ **/
+function createFontFilename(fontLocation, fontPostScriptName) {
+    var fileExtension = "";
+    var lastDotIndex = fontLocation.lastIndexOf('.');
+    var extensionRegex = /\.[a-zA-Z]+$/;
+
+    var fontName = "";
+
+    var validExtension = true;
+    var fontExtensions = [".otf", ".ttf"];
+
+    // Windows also supports .fon files
+    var os = $.os.toLowerCase();
+    if (os.indexOf("windows") !== -1) {
+        fontExtensions.push(".fon");
+    }
+
+    // Some Adobe Fonts files have a dot followed by numbers as its name with no extension (e.g. ".52741")
+    if (extensionRegex.test(fontLocation)) {
+        fileExtension = fontLocation.substring(lastDotIndex).toLowerCase();
+        var fontExtensionsAsString = fontExtensions.toString();
+        if (fontExtensionsAsString.indexOf(fileExtension) == -1) {
+            adcAlert(
+                "font with an unsupported extension '" + fileExtension +
+                "' was found: " + fontPostScriptName + ".\n" +
+                "This font won't be added to the job."
+            );
+            validExtension = false;
+        }
+    }
+
+    if (validExtension) {
+        var fontName = fontPostScriptName + fileExtension;
+    }
+
+    return fontName;
+}
+
+/**
+ * Collects all fonts from the project. After Effects versions < 24.5 do not have app.usedFonts.
+ * @return an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
+ **/
+function getFontsFromFileLegacy() {
+    var fontLocations = [];
+    var items = app.project.items;
+    for (var i = items.length; i >= 1; i--) {
+        var item = app.project.item(i);
+        // Only look at CompItems
+        if (!(item instanceof CompItem)) {
+            continue;
+        }
+        for (var j = item.layers.length; j >= 1; j--) {
+            var layer = item.layers[j];
+            // Only look at TextLayers
+            if (!(layer instanceof TextLayer)) {
+                continue;
+            }
+            var sourceText = layer.text.sourceText;
+            // Check if the sourceText property has keys.
+            // If it has keys, the font can change over time and we need to check all keys for their font
+            if (sourceText.numKeys) {
+                var oldLocation = "";
+                for (var k = 1; k <= sourceText.numKeys; k++) {
+                    var textDocument = sourceText.keyValue(k);
+                    var fontPostScriptName = "";
+                    try {
+                        fontPostScriptName = textDocument.fontObject.postScriptName;
+                    } catch (e) {
+                        logger.error(e.message, jobTemplateHelperFile);
+                    }
+                    var fontLocation = textDocument.fontLocation || getLocationForFont(fontPostScriptName);
+                    if (oldLocation == fontLocation) {
+                        continue;
+                    }
+                    if (!fontLocation) {
+                        adcAlert(
+                            "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
+                            "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                        );
+                        continue;
+                    }
+                    var fontName = createFontFilename(fontLocation, fontPostScriptName);
+                    if (fontName) {
+                        fontLocations.push([fontName, fontLocation]);
+                    }
+                    oldLocation = fontLocation;
+                }
+            } else {
+                var textDocument = sourceText.value;
+                var fontPostScriptName = "";
+                try {
+                    fontPostScriptName = textDocument.fontObject.postScriptName;
+                } catch (e) {
+                    logger.error(e.message, jobTemplateHelperFile);
+                }
+                var fontLocation = textDocument.fontLocation || getLocationForFont(fontPostScriptName);
+                if (!fontLocation) {
+                    adcAlert(
+                        "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
+                        "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                    );
+                    continue;
+                }
+                var fontName = createFontFilename(fontLocation, fontPostScriptName);
+                if (fontName) {
+                    fontLocations.push([fontName, fontLocation]);
+                }
+            }
+        }
+    }
+    return fontLocations;
+}
+
+/**
+ * Copies given fonts to a temp folder.
+ * @param fontPaths an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
+ * @return an array of the temp font paths that were created
+ **/
+function generateFontReferences(fontPaths) {
+    // Create a temp folder where all used fonts get gathered
+    var _tempFontsFolder = dcUtil.normPath(Folder.temp.fsName + '/' + "tempFonts");
+    var formattedFontsPaths = [];
+    var tempFontPath = new Folder(_tempFontsFolder);
+    if (!tempFontPath.exists) {
+        tempFontPath.create();
+    }
+
+    // Copy the font files to the temp folder
+    for (var i = 0; i < fontPaths.length; i++) {
+        var fontName = fontPaths[i][0];
+        var fontLocation = fontPaths[i][1];
+
+        var fontFile = File(fontLocation);
+        var _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
+        var fontCopied = fontFile.copy(_tempFontPath);
+        // Check if font file was actually copied.
+        if (fontCopied) {
+            formattedFontsPaths.push(_tempFontPath);
+        }
+    }
+    return formattedFontsPaths;
+}
+
+/*
+ * Write a JSON file to the file path
  */
 function writeJSONFile(jsonData, filePath) {
 
