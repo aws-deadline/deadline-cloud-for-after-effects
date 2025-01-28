@@ -1438,7 +1438,7 @@ function SubmitSelection(selection, framesPerTask) {
     const submitBundleFile = "SubmitButton.jsx";
     // first we must verify that our selection is valid
     if (selection == null) {
-        adcAlert("Error: No selection");
+        adcAlert("Error: No selection", true);
         return;
     }
 
