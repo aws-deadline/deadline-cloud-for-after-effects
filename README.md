@@ -52,7 +52,7 @@ defines the workflow, and submits the job to the farm and queue of your choosing
 The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `DeadlineCloudSubmitter.jsx`.
 
 1. `DeadlineCloudSubmitter_Assets` folder include default job template json file (`image_template.json` or `video_template.json` depending on the output type) with two Python scripts that will be run as tasks of the job.
-2. `DeadlineCloudSubmitter.jsx` is the After Effects script written by
+1. `DeadlineCloudSubmitter.jsx` is the After Effects script written by
    ExtendScript.
 
 #### To install the submitter:
@@ -83,7 +83,22 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 1. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
 1. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
 
-**Note**: After Effects submitter is calling Deadline GUI Submitter under the scene. If you hit any issues on the GUI submitter, please refer to [deadline-cloud](https://github.com/aws-deadline/deadline-cloud) library for the help.
+**Note**: The After Effects submitter calls the Deadline GUI Submitter to complete job submission. If you hit any issues on the GUI submitter, please refer to [deadline-cloud](https://github.com/aws-deadline/deadline-cloud) library for help.
+
+#### Font attachment system:
+
+Fonts used in the submitted composition are detected by the submitter and are automatically added as job attachments on submission. These get installed on the worker before the render starts and get removed again when the job ends.
+Supported font types include: OpenType (`.otf`), TrueType (`.ttf`), and [Adobe Fonts](https://fonts.adobe.com/).
+Windows bitmap fonts (`.fon`) are only supported on Windows machines.
+
+If fonts are missing at render time, first check that they're installed (on the system or your user), and then check they're being included in the job attachments tab in the submitter.
+
+Fonts distributed through Adobe Creative Cloud can be made available for all non-Adobe apps on your workstation, or only made available in Adobe apps. Cloud fonts need to be installed for all non-Adobe apps for use with Deadline Cloud.
+To install fonts for non-Adobe apps in Creative Cloud:
+1. Open Adobe Creative Cloud Desktop.
+1. Click "Adobe Fonts" on the account sidebar under "Your plan" to show the Adobe Fonts panel.
+1. Click "Added fonts" on the "Adobe Fonts" sidebar to show your added fonts.
+1. Click "Install family" next to the fonts you would like to make available for non-Adobe apps.
 
 ## Setting up After Effects with your Deadline Cloud Farm
 
