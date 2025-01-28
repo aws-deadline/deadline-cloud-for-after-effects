@@ -300,13 +300,19 @@ function getFontPaths() {
         return null;
     }
 
-    var output = null;
+    var output = {};
     try {
         var outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\"");
         output = JSON.parse(outputRaw);
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
         logger.debug("Command output: " + output, jobTemplateHelperFile);
+        adcAlert(
+            "Error when finding fonts:\n" +
+            "\n" +
+            e.message,
+            true
+        );
     }
     if ("error" in output) {
         adcAlert(
