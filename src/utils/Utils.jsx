@@ -266,7 +266,6 @@ function __generateUtil() {
         return _assetsList;
     }
 
-
     function getDescription() {
         /**
          * Get description data from UI.
