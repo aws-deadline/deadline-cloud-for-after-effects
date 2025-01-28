@@ -1096,9 +1096,9 @@ function getFontsFromFile() {
  * @return Font metadata object, or null if there was an error
  **/
 function getFontPaths() {
-    var errorMessage = "";
-    var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
-    var scriptFile = new File(scriptPath);
+    let errorMessage = "";
+    let scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
+    let scriptFile = new File(scriptPath);
     if (!scriptFile.exists) {
         errorMessage =
             "Error: Missing font script at " + scriptFile.fsName + "\n" +
@@ -1110,12 +1110,12 @@ function getFontPaths() {
         return null;
     }
 
-    var output = {};
+    let output = {};
     try {
         // Since python 3.9 is the minimum requirement to use the Deadline GUI submitter,
         // we can safely assume the python3 CLI is available to use in the users $PATH
         // Additionally, running "python --version" to verify version doesn't work as intended on Windows
-        var outputRaw = system.callSystem("python3 \"" + scriptFile.fsName + "\"");
+        let outputRaw = system.callSystem("python3 \"" + scriptFile.fsName + "\"");
         output = JSON.parse(outputRaw);
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
