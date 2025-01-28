@@ -72,7 +72,7 @@ def get_font(font_path):
     raw_table = {}
     try:
         raw_table = {i:str(names_table[i]) for i in range(0, len(names_table))}
-    except:
+    except Exception:
         if verbose:
             print(traceback.format_exc())
         return result
@@ -85,7 +85,7 @@ def get_font(font_path):
             "postscript_name": str(names_table[TTF_POSTSCRIPT_NAME]),
             "raw": raw_table
         }
-    except:
+    except Exception:
         if verbose:
             print(traceback.format_exc())
         return result
@@ -104,7 +104,7 @@ def get_fonts(root_path, verbose=None):
     try:
         if not os.path.exists(root_path):
             return result
-    except:
+    except Exception:
         if verbose:
             print(traceback.format_exc())
         return result
@@ -129,11 +129,11 @@ def get_fonts(root_path, verbose=None):
                 try:
                     font_data = get_font(font_path)
                     result.update(font_data)
-                except:
+                except Exception:
                     if verbose:
                         print(traceback.format_exc())
                     continue
-    except:
+    except Exception:
         if verbose:
             print(traceback.format_exc())
     return result
@@ -153,7 +153,7 @@ def search_for_fonts(search_paths, verbose=None):
         try:
             if not os.path.exists(search_root):
                 continue
-        except:
+        except Exception:
             if verbose:
                 print(traceback.format_exc())
             continue
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     try:
         result = search_for_fonts(SEARCH_PATHS, verbose=verbose)
         print(json.dumps(result))
-    except:
+    except Exception:
         if verbose:
             print(traceback.format_exc())
 
