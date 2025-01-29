@@ -65,6 +65,8 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
    - Windows: `Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
    - macOS: `Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
 
+   Additionally on Windows, to disable warnings every time you submit a job with the submitter, deselect the following: `Select Edit > Preferences > Scripting & Expressions > deselect Warn User When Executing Files`
+
 1. Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to
    the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
 
