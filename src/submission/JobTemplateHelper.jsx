@@ -189,9 +189,13 @@ function getFontsFromFile() {
  * @return Font metadata object, or null if there was an error
  **/
 function getFontPaths() {
-    let errorMessage = "";
-    let scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
-    let scriptFile = new File(scriptPath);
+    var errorMessage = "";
+    // Python 3.9 is the minimum requirement for the Deadline GUI submitter,
+    // Eventually, we want better validation by check whether the customer has python3 or
+    // python in their $PATH.
+    var pythonExecutable = "python3";
+    var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
+    var scriptFile = new File(scriptPath);
     if (!scriptFile.exists) {
         errorMessage =
             "Error: Missing font script at " + scriptFile.fsName + "\n" +
@@ -203,12 +207,17 @@ function getFontPaths() {
         return null;
     }
 
-    let output = {};
+    var output = {};
     try {
-        // Since python 3.9 is the minimum requirement to use the Deadline GUI submitter,
-        // we can safely assume the python3 CLI is available to use in the users $PATH
-        // Additionally, running "python --version" to verify version doesn't work as intended on Windows
-        let outputRaw = system.callSystem("python3 \"" + scriptFile.fsName + "\"");
+        var os = $.os.toLowerCase();
+        var getUserFontsExecutionCommand;
+        if (os.indexOf("windows") !== -1) {
+            getUserFontsExecutionCommand = "start /min cmd.exe /c \"" + pythonExecutable + " \"" + scriptFile.fsName + "\"\"";
+        } else {
+            getUserFontsExecutionCommand = "/bin/sh -c '" + pythonExecutable + "\"" + scriptFile.fsName + "\"'";
+        }
+        adcAllert(getUserFontsExecutionCommand, false);
+        var outputRaw = system.callSystem(getUserFontsExecutionCommand);
         output = JSON.parse(outputRaw);
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
