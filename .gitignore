@@ -5,10 +5,8 @@ Adobe After Effects Auto-Save/
 test_projects/*/*Logs/*
 
 # build artifacts
-dist/
 build/
 var/
-src/deadline/ae_adaptor/clientipc/ipc.jsx
 
 ### Python
 # Hatch version temp file
