@@ -120,7 +120,8 @@ function findJobAttachments(rootComp) {
                                 src.name +
                                 " (" +
                                 src.missingFootagePath +
-                                ")"
+                                ")",
+                                false
                             );
                             shouldShowPopup = false;
                         }
@@ -139,7 +140,7 @@ function findJobAttachments(rootComp) {
         // A substituted font is a font that was already missing when the project is opened.
         // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
         if (app.fonts.missingOrSubstitutedFonts != "") {
-            adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString());
+            adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString(), false);
         }
         // Formatting collected fonts
         var fontReferences = generateFontReferences(fontsInProject);
@@ -167,7 +168,7 @@ function getFontsFromFile() {
             if (!fontLocation) {
                 adcAlert(
                     "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
                 );
                 continue;
             }
@@ -378,7 +379,7 @@ function createFontFilename(fontLocation, fontPostScriptName) {
             adcAlert(
                 "font with an unsupported extension '" + fileExtension +
                 "' was found: " + fontPostScriptName + ".\n" +
-                "This font won't be added to the job."
+                "This font won't be added to the job.", false
             );
             validExtension = false;
         }
@@ -430,7 +431,7 @@ function getFontsFromFileLegacy() {
                     if (!fontLocation) {
                         adcAlert(
                             "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                            "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                            "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
                         );
                         continue;
                     }
@@ -452,7 +453,7 @@ function getFontsFromFileLegacy() {
                 if (!fontLocation) {
                     adcAlert(
                         "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                        "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                        "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
                     );
                     continue;
                 }

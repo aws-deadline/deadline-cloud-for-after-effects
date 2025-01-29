@@ -103,7 +103,7 @@ function systemCallWithErrorAlerts(cmd) {
             cmd +
             "\n" +
             output +
-            "\n\nEnsure the command can be run manually in a non-elevated command prompt or terminal and try again."
+            "\n\nEnsure the command can be run manually in a non-elevated command prompt or terminal and try again.", true
         );
     }
 }
@@ -111,8 +111,8 @@ function systemCallWithErrorAlerts(cmd) {
 /**
  * Creates alerts for Deadline Cloud Submitter
  **/
-function adcAlert(message) {
-    alert(message, "Deadline Cloud Submitter");
+function adcAlert(message, errorIcon) {
+    alert(message, "Deadline Cloud Submitter", errorIcon);
 }
 
 function __generateUtil() {
