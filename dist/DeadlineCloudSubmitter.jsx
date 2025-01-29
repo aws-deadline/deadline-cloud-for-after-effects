@@ -2413,8 +2413,8 @@ if (isSecurityPrefSet()) {
 } else {
     //Print an error message and instructions for changing security preferences
     var submitterPanel =
-        thisObj instanceof Panel ?
-        thisObj :
+        this instanceof Panel ?
+        this :
         new Window(
             "palette",
             "Submit Queue to AWS Deadline Cloud",
@@ -2443,6 +2443,7 @@ if (isSecurityPrefSet()) {
         "Please allow script networking and file access:",
         '  1)  Go to "Edit > Preferences > Scripting & Expressions"',
         '  2)  Check "Allow Scripts to Write Files and Access Network"',
+        '  3)  (Optional) Deselect "Warn User When Executing Files"',
         "  3)  Close this window and try again.",
     ].join("\n");
     errorText2.alignment = ["fill", "fill"];
