@@ -59,18 +59,20 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 
 1. Install the Deadline CLI and Deadline Cloud monitor by running the Deadline Cloud Submitter and Deadline Cloud monitor installers from the downloads section of the Deadline Cloud service in your AWS Console.
 1. This submitter requires the ability to write files and send communication over the network in order to function properly.
-   By default, After Effects scripts are not allowed to perform these actions. [Reference link](https://helpx.adobe.com/after-effects/using/scripts.html).
-   To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
+   By default, After Effects scripts are not allowed to perform these actions. [Reference link](https://helpx.adobe.com/after-effects/using/scripts.html). To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
 
    - Windows: `Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
    - macOS: `Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
 
+   Additionally, to disable warnings every time you submit a job with the submitter, disable warnings when executing files:
+   - Windows `Select Edit > Preferences > Scripting & Expressions > deselect Warn User When Executing Files`
+   - macOS: `Select After Effects > Settings > Scripting & Expressions > deselect Warn User When Executing Files`
 1. Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to
    the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
 
    - Windows: `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
    - macOS: `Applications/Adobe After Effects <version>/Scripts/Script UI Panels`
-
+1. Finally, to install the necessary dependencies used by the submitter, run `pip install fonttools` in your local Terminal or Command Prompt.
 1. Restart After Effects if it was open.
 
 #### To use the submitter:
@@ -79,7 +81,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 1. Open the Deadline Cloud Submitter Panel by clicking **Windows > DeadlineCloudSubmitter.jsx**.
 1. Select your composition from the list and click **Submit**. You can hit the **Refresh** button to refresh the list.
 1. (Optional: for image sequences output types) you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the number and then Deadline Cloud will assign the tasks to available workers to delegate the load.
-1. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the following message. Go to Preferences > Scripting & Expressions, and turn off the "Warn User When Executing Files" preferences, and restart After Effects.
+1. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
 1. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
 1. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
 
