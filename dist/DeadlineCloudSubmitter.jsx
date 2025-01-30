@@ -1126,7 +1126,7 @@ function getFontPaths() {
 
     var output = {};
     try {
-        var outputRaw = runShellCmd(pythonExecutable + "\"" + scriptFile.fsName + "\"");
+        var outputRaw = runShellCmd(pythonExecutable + " \"" + scriptFile.fsName + "\"");
         output = JSON.parse(outputRaw);
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
