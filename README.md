@@ -73,7 +73,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
    - Windows: `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
    - macOS: `Applications/Adobe After Effects <version>/Scripts/Script UI Panels`
 
-1. Run `pip install fonttools` in your local Terminal or Command Prompt to install the fonttools library  used by the submitter to handle finding fonts.
+1. Run `pip install fonttools` in your local Terminal or Command Prompt to install the fonttools library used by the submitter to handle finding fonts.
 
 1. Restart After Effects if it was open.
 
