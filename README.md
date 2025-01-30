@@ -59,6 +59,8 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 
 1. Install the Deadline CLI and Deadline Cloud Monitor by running the Deadline Submitter and Deadline Monitor
    installers from the downloads section of the Deadline Cloud service in your AWS Console.
+1. Install required Python dependencies with `pip` in a shell:
+   - `pip install -r requirements.txt`
 1. This submitter requires the ability to write files and send communication over the network in order to function properly.
    By default, After Effects scripts are not allowed to perform these actions. [Reference link](https://helpx.adobe.com/after-effects/using/scripts.html).
    To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
