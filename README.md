@@ -64,7 +64,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
    - Windows: `Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
    - macOS: `Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
 
-   Additionally, to disable warnings every time you submit a job with the submitter, disable warnings when executing files:
+   Additionally, to disable warnings every time you submit a job with the submitter, edit the following settings within After Effects:
    - Windows `Select Edit > Preferences > Scripting & Expressions > deselect Warn User When Executing Files`
    - macOS: `Select After Effects > Settings > Scripting & Expressions > deselect Warn User When Executing Files`
 1. Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to
