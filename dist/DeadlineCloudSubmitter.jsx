@@ -4,6 +4,18 @@
 
 var scriptFolder = Folder.current.fsName;
 
+function runShellCmd(command) {
+    var os = $.os.toLowerCase();
+    var finalCommand;
+    if (os.indexOf("windows") !== -1) {
+        finalCommand = "start /min cmd.exe /c \"" + command + "\"";
+    } else {
+        finalCommand = "/bin/sh -c '" + command + "'";
+    }
+
+    return system.callSystem(finalCommand);
+}
+
 function timeToFrames(time, fps) {
     //temporarily change display format so we can convert seconds to frames
     //We could perform the math ourselves, but using After Effects's internal methods ensure that we don't lose precision due to floating point errors
@@ -1108,23 +1120,13 @@ function getFontPaths() {
             "Error: Missing font script at " + scriptFile.fsName + "\n" +
             "\n" +
             "Please ensure that the Deadline Cloud Submitter is installed correctly.";
-    }
-    if (errorMessage) {
         adcAlert(errorMessage, true);
         return null;
     }
 
     var output = {};
     try {
-        var os = $.os.toLowerCase();
-        var getUserFontsExecutionCommand;
-        if (os.indexOf("windows") !== -1) {
-            getUserFontsExecutionCommand = "start /min cmd.exe /c \"" + pythonExecutable + " \"" + scriptFile.fsName + "\"\"";
-        } else {
-            getUserFontsExecutionCommand = "/bin/sh -c '" + pythonExecutable + "\"" + scriptFile.fsName + "\"'";
-        }
-        adcAllert(getUserFontsExecutionCommand, false);
-        var outputRaw = system.callSystem(getUserFontsExecutionCommand);
+        var outputRaw = runShellCmd(pythonExecutable + "\"" + scriptFile.fsName + "\"");
         output = JSON.parse(outputRaw);
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);

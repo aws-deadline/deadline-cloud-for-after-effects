@@ -201,23 +201,13 @@ function getFontPaths() {
             "Error: Missing font script at " + scriptFile.fsName + "\n" +
             "\n" +
             "Please ensure that the Deadline Cloud Submitter is installed correctly.";
-    }
-    if (errorMessage) {
         adcAlert(errorMessage, true);
         return null;
     }
 
     var output = {};
     try {
-        var os = $.os.toLowerCase();
-        var getUserFontsExecutionCommand;
-        if (os.indexOf("windows") !== -1) {
-            getUserFontsExecutionCommand = "start /min cmd.exe /c \"" + pythonExecutable + " \"" + scriptFile.fsName + "\"\"";
-        } else {
-            getUserFontsExecutionCommand = "/bin/sh -c '" + pythonExecutable + "\"" + scriptFile.fsName + "\"'";
-        }
-        adcAllert(getUserFontsExecutionCommand, false);
-        var outputRaw = system.callSystem(getUserFontsExecutionCommand);
+        var outputRaw = runShellCmd(pythonExecutable + "\"" + scriptFile.fsName + "\"");
         output = JSON.parse(outputRaw);
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);

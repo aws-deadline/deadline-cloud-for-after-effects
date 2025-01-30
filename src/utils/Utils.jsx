@@ -1,5 +1,17 @@
 var scriptFolder = Folder.current.fsName;
 
+function runShellCmd(command) {
+    var os = $.os.toLowerCase();
+    var finalCommand;
+    if (os.indexOf("windows") !== -1) {
+        finalCommand = "start /min cmd.exe /c \"" + command + "\"";
+    } else {
+        finalCommand = "/bin/sh -c '" + command + "'";
+    }
+
+    return system.callSystem(finalCommand);
+}
+
 function timeToFrames(time, fps) {
     //temporarily change display format so we can convert seconds to frames
     //We could perform the math ourselves, but using After Effects's internal methods ensure that we don't lose precision due to floating point errors
