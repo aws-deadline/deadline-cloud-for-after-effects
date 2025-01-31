@@ -1,0 +1,6 @@
+[envs.codebuild.scripts]
+build = "hatch build"
+
+
+[envs.codebuild.env-vars]
+SKIP_BOOTSTRAP_TEST_RESOURCES="True"

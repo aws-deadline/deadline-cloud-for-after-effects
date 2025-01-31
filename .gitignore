@@ -7,6 +7,8 @@ test_projects/*/*Logs/*
 # build artifacts
 build/
 var/
+/dependency_bundle/
+/dist/deadline_cloud*
 
 ### Python
 # Hatch version temp file

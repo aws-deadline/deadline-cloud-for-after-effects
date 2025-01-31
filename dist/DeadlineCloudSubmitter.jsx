@@ -2444,7 +2444,7 @@ if (isSecurityPrefSet()) {
         '  1)  Go to "Edit > Preferences > Scripting & Expressions"',
         '  2)  Check "Allow Scripts to Write Files and Access Network"',
         '  3)  (Optional) Deselect "Warn User When Executing Files"',
-        "  3)  Close this window and try again.",
+        "  4)  Close this window and try again.",
     ].join("\n");
     errorText2.alignment = ["fill", "fill"];
     errorText2.minimumSize.height = 300;
