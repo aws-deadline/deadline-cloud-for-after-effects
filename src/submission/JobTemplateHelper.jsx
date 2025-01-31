@@ -497,16 +497,6 @@ function generateFontReferences(fontPaths) {
     return formattedFontsPaths;
 }
 
-/*
- * Write a JSON file to the file path
- */
-function writeJSONFile(jsonData, filePath) {
-
-    var file = File(filePath);
-    file.open('w');
-    file.write(JSON.stringify(jsonData, null, 4));
-    file.close();
-}
 
 function isVideoOutput(extension) {
     const VideoOutputExtensions = ["avi", "mp4", "mov"];
