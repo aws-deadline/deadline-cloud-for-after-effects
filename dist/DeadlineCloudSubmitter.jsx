@@ -137,8 +137,6 @@ function adcAlert(message, errorIcon) {
     alert(message, "Deadline Cloud Submitter", errorIcon);
 }
 
-
-
 function __generateUtil() {
 
     var scriptFileUtilName = "Util.jsx";
