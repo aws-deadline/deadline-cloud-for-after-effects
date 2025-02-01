@@ -1,0 +1,193 @@
+{
+    "specificationVersion": "jobtemplate-2023-09",
+    "name": "{{JOB_NAME}}",
+    "description": "A simple job bundle that allows a user to select a project and comp to render with aerender.",
+    "parameterDefinitions": [
+        {
+            "name": "ProjectFile",
+            "type": "PATH",
+            "objectType": "FILE",
+            "dataFlow": "IN",
+            "userInterface": {
+                "control": "CHOOSE_INPUT_FILE",
+                "label": "Project file",
+                "groupLabel": "Source",
+                "fileFilters": [
+                    {
+                        "label": "After Effects project files",
+                        "patterns": [
+                            "*.aep",
+                            "*.aepx"
+                        ]
+                    },
+                    {
+                        "label": "All Files",
+                        "patterns": [
+                            "*"
+                        ]
+                    }
+                ]
+            },
+            "description": "The After Effects project file to render."
+        },
+        {
+            "name": "RenderQueueIndex",
+            "type": "INT",
+            "userInterface": {
+                "control": "SPIN_BOX",
+                "label": "Render Queue Index",
+                "groupLabel": "Source"
+            },
+            "description": "The index of the item in the render queue to render.",
+            "default": 1
+        },
+        {
+            "name": "OutputDir",
+            "type": "PATH",
+            "objectType": "DIRECTORY",
+            "dataFlow": "OUT",
+            "userInterface": {
+                "control": "CHOOSE_DIRECTORY",
+                "label": "Output Directory",
+                "groupLabel": "Render Parameters"
+            },
+            "default": "./output",
+            "description": "Choose the render output directory."
+        },
+        {
+            "name": "OutputFileName",
+            "type": "STRING",
+            "userInterface": {
+                "control": "HIDDEN",
+                "label": "Output File Pattern",
+                "groupLabel": "Render Parameters"
+            },
+            "default": "output_####.png",
+            "description": "The file name used for aerender cmd. Not a changeable parameter."
+        },
+        {
+            "name": "Frames",
+            "type": "STRING",
+            "userInterface": {
+                "control": "LINE_EDIT",
+                "label": "Start Frame - End Frame",
+                "groupLabel": "Frame Range"
+            }
+        },
+        {
+            "name": "ChunkSize",
+            "type": "INT",
+            "userInterface": {
+                "control": "SPIN_BOX",
+                "label": "Frames Per Task",
+                "groupLabel": "Frame Range"
+            },
+            "description": "The chunk size of frames per task to render",
+            "minValue": 1
+        },
+        {
+            "name": "JobScriptDir",
+            "description": "Directory containing embedded scripts.",
+            "userInterface": {
+                "control": "HIDDEN"
+            },
+            "type": "PATH",
+            "objectType": "DIRECTORY",
+            "dataFlow": "IN",
+            "default": "scripts"
+        },
+        {
+            "name": "CondaPackages",
+            "type": "STRING",
+            "userInterface": {
+                "control": "HIDDEN"
+            },
+            "default": "aftereffects={{AE_VERSION}}",
+            "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
+        }
+    ],
+    "jobEnvironments": [
+        {
+            "name": "Create Output Directories",
+            "description": "Create Output Directories",
+            "script": {
+                "actions": {
+                    "onEnter": {
+                        "command": "python",
+                        "args": [
+                            "{{Param.JobScriptDir}}/create_output_directory.py",
+                            "{{Param.OutputDir}}"
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "name": "Install Fonts to Worker",
+            "description": "Install Fonts to Worker",
+            "script": {
+                "actions": {
+                    "onEnter": {
+                        "command": "python",
+                        "args": [
+                            "{{Param.JobScriptDir}}/font_manager.py",
+                            "install",
+                            "{{Session.WorkingDirectory}}"
+                        ]
+                    },
+                    "onExit": {
+                        "command": "python",
+                        "args": [
+                            "{{Param.JobScriptDir}}/font_manager.py",
+                            "remove",
+                            "{{Session.WorkingDirectory}}"
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "steps": [
+        {
+            "name": "{{COMP_NAME}}",
+            "hostRequirements": {
+                "attributes": [
+                    {
+                        "name": "attr.worker.os.family",
+                        "anyOf": [
+                            "windows",
+                            "macos"
+                        ]
+                    }
+                ]
+            },
+            "parameterSpace": {
+                "taskParameterDefinitions": [
+                    {
+                        "name": "Index",
+                        "type": "INT",
+                        "range": "{{Param.Frames}}:{{Param.ChunkSize}}"
+                    }
+                ]
+            },
+            "script": {
+                "actions": {
+                    "onRun": {
+                        "command": "python",
+                        "args": [
+                            "{{Param.JobScriptDir}}/call_aerender.py",
+                            "{{Param.ProjectFile}}",
+                            "{{Param.RenderQueueIndex}}",
+                            "{{Param.OutputDir}}/{{Param.OutputFileName}}",
+                            "{{Param.Frames}}",
+                            "--chunk-size",
+                            "{{Param.ChunkSize}}",
+                            "--index",
+                            "{{Task.Param.Index}}"
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
