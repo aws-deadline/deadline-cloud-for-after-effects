@@ -1,5 +1,23 @@
 var scriptFolder = Folder.current.fsName;
 
+function readFile(filePath) {
+    var f = new File(filePath);
+    f.encoding = "UTF-8";
+    f.open("r");
+    var fileContents = f.read();
+    f.close();
+    return fileContents;
+}
+
+function writeFile(filePath, fileContents) {
+    var f = new File(filePath);
+    f.encoding = "UTF-8";
+    f.open("w");
+    f.write(fileContents);
+    f.close();
+    return;
+}
+
 function timeToFrames(time, fps) {
     //temporarily change display format so we can convert seconds to frames
     //We could perform the math ourselves, but using After Effects's internal methods ensure that we don't lose precision due to floating point errors

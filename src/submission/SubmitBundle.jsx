@@ -99,7 +99,7 @@ function SubmitSelection(selection, framesPerTask) {
             sanitizedOutputFolder
         );
         var assetReferencesOutDir = bundlePath + "/asset_references.json";
-        writeJSONFile(jobAttachmentsContents, assetReferencesOutDir);
+        writeFile(assetReferencesOutDir, JSON.stringify(jobAttachmentsContents));
     }
 
     /**
@@ -117,7 +117,7 @@ function SubmitSelection(selection, framesPerTask) {
             framesPerTask
         );
         var parametersOutDir = bundlePath + "/parameter_values.json";
-        writeJSONFile(parametersContents, parametersOutDir);
+        writeFile(parametersOutDir, JSON.stringify(parametersContents));
     }
 
     /**
@@ -125,13 +125,11 @@ function SubmitSelection(selection, framesPerTask) {
      **/
     function generateTemplate(bundlePath, isImageSeq) {
         // Open the template depending on the output type
-        var template = new File(bundlePath + "/video_template.json");
+        var path = bundlePath + "/video_template.json";
         if (isImageSeq) {
-            template = new File(bundlePath + "/image_template.json");
+            path = bundlePath + "/image_template.json";
         }
-        template.open("r");
-        var templateContents = template.read();
-        template.close();
+        var templateContents = readFile(path);
         // Parse the template string to a JSON object
         var templateObject = JSON.parse(templateContents);
         templateObject.name = File.decode(app.project.file.name) + " [" + compName + "]";
@@ -155,11 +153,7 @@ function SubmitSelection(selection, framesPerTask) {
                 paramDefCopy[i].default = "aftereffects=" + aftereffectsVersion;
             }
         }
-
-        var newTemplate = new File(bundlePath + "/template.json");
-        newTemplate.open("w");
-        newTemplate.write(JSON.stringify(templateObject, null, 4));
-        newTemplate.close();
+        writeFile(bundlePath + "/template.json", JSON.stringify(templateObject, null, 4));
         logger.debug("Wrote the template.json file to the bundle folder " + bundlePath, submitBundleFile);
     }
 

@@ -4,6 +4,24 @@
 
 var scriptFolder = Folder.current.fsName;
 
+function readFile(filePath) {
+    var f = new File(filePath);
+    f.encoding = "UTF-8";
+    f.open("r");
+    var fileContents = f.read();
+    f.close();
+    return fileContents;
+}
+
+function writeFile(filePath, fileContents) {
+    var f = new File(filePath);
+    f.encoding = "UTF-8";
+    f.open("w");
+    f.write(fileContents);
+    f.close();
+    return;
+}
+
 function timeToFrames(time, fps) {
     //temporarily change display format so we can convert seconds to frames
     //We could perform the math ourselves, but using After Effects's internal methods ensure that we don't lose precision due to floating point errors
@@ -1404,16 +1422,6 @@ function generateFontReferences(fontPaths) {
     return formattedFontsPaths;
 }
 
-/*
- * Write a JSON file to the file path
- */
-function writeJSONFile(jsonData, filePath) {
-
-    var file = File(filePath);
-    file.open('w');
-    file.write(JSON.stringify(jsonData, null, 4));
-    file.close();
-}
 
 function isVideoOutput(extension) {
     const VideoOutputExtensions = ["avi", "mp4", "mov"];
@@ -1532,7 +1540,7 @@ function SubmitSelection(selection, framesPerTask) {
             sanitizedOutputFolder
         );
         var assetReferencesOutDir = bundlePath + "/asset_references.json";
-        writeJSONFile(jobAttachmentsContents, assetReferencesOutDir);
+        writeFile(assetReferencesOutDir, JSON.stringify(jobAttachmentsContents));
     }
 
     /**
@@ -1550,7 +1558,7 @@ function SubmitSelection(selection, framesPerTask) {
             framesPerTask
         );
         var parametersOutDir = bundlePath + "/parameter_values.json";
-        writeJSONFile(parametersContents, parametersOutDir);
+        writeFile(parametersOutDir, JSON.stringify(parametersContents));
     }
 
     /**
@@ -1558,13 +1566,11 @@ function SubmitSelection(selection, framesPerTask) {
      **/
     function generateTemplate(bundlePath, isImageSeq) {
         // Open the template depending on the output type
-        var template = new File(bundlePath + "/video_template.json");
+        var path = bundlePath + "/video_template.json";
         if (isImageSeq) {
-            template = new File(bundlePath + "/image_template.json");
+            path = bundlePath + "/image_template.json";
         }
-        template.open("r");
-        var templateContents = template.read();
-        template.close();
+        var templateContents = readFile(path);
         // Parse the template string to a JSON object
         var templateObject = JSON.parse(templateContents);
         templateObject.name = File.decode(app.project.file.name) + " [" + compName + "]";
@@ -1588,11 +1594,7 @@ function SubmitSelection(selection, framesPerTask) {
                 paramDefCopy[i].default = "aftereffects=" + aftereffectsVersion;
             }
         }
-
-        var newTemplate = new File(bundlePath + "/template.json");
-        newTemplate.open("w");
-        newTemplate.write(JSON.stringify(templateObject, null, 4));
-        newTemplate.close();
+        writeFile(bundlePath + "/template.json", JSON.stringify(templateObject, null, 4));
         logger.debug("Wrote the template.json file to the bundle folder " + bundlePath, submitBundleFile);
     }
 
