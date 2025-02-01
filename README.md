@@ -89,11 +89,11 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 
 #### Font attachment system:
 
-Fonts used in the submitted composition are detected by the submitter and are automatically added as job attachments on submission. These get installed on the worker before the render starts and get removed again when the job ends.
+Fonts used in the submitted composition are detected by the submitter and are automatically added as job attachments on submission. These get installed on the worker before the render starts and get removed when the job ends.
 Supported font types include: OpenType (`.otf`), TrueType (`.ttf`), and [Adobe Fonts](https://fonts.adobe.com/).
 Windows bitmap fonts (`.fon`) are only supported on Windows machines.
 
-If fonts are missing at render time, first check that they're installed (on the system or your user), and then check they're being included in the job attachments tab in the submitter.
+If fonts are missing or substituted at render time, then render tasks will fail. You must add any required fonts to your system or your user profile before opening a project that needs them. First check that the missing fonts are installed (on the system or your user), and then check they're being included in the job attachments tab in the submitter.
 
 Fonts distributed through Adobe Creative Cloud can be made available for all non-Adobe apps on your workstation, or only made available in Adobe apps. Cloud fonts need to be installed for all non-Adobe apps for use with Deadline Cloud.
 To install fonts for non-Adobe apps in Creative Cloud:
