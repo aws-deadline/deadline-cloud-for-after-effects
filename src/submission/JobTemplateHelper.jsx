@@ -120,7 +120,8 @@ function findJobAttachments(rootComp) {
                                 src.name +
                                 " (" +
                                 src.missingFootagePath +
-                                ")"
+                                ")",
+                                false
                             );
                             shouldShowPopup = false;
                         }
@@ -139,7 +140,7 @@ function findJobAttachments(rootComp) {
         // A substituted font is a font that was already missing when the project is opened.
         // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
         if (app.fonts.missingOrSubstitutedFonts != "") {
-            adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString());
+            adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString(), false);
         }
         // Remove missing or substituted fonts from fontsInProject to prevent incorrect render output.
         // Build a new array containing only attachable fonts.
@@ -181,7 +182,7 @@ function getFontsFromFile() {
             if (!fontLocation) {
                 adcAlert(
                     "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
                 );
                 continue;
             }
@@ -212,16 +213,16 @@ function getPythonExecutable() {
 
     // String that indicates Python was found
     var findSuccess = "/python";
-    
+
     // Flags for found versions
     var pythonFound = false;
     var python3Found = false;
-    
+
     var os = $.os.toLowerCase();
     if (os.indexOf("win") !== -1) {
         findSuccess = "\\python";
     }
-    
+
     // Find python on the path
     var pythonExecutable = "";
     var outputWhere = null;
@@ -254,6 +255,7 @@ function getPythonExecutable() {
         }
     }
 
+    var errorMessage = "";
     if (!(pythonFound || python3Found)) {
         logger.error("No Python found on the path", jobTemplateHelperFile);
         errorMessage =
@@ -395,7 +397,7 @@ function createFontFilename(fontLocation, fontPostScriptName) {
             adcAlert(
                 "font with an unsupported extension '" + fileExtension +
                 "' was found: " + fontPostScriptName + ".\n" +
-                "This font won't be added to the job."
+                "This font won't be added to the job.", false
             );
             validExtension = false;
         }
@@ -447,7 +449,7 @@ function getFontsFromFileLegacy() {
                     if (!fontLocation) {
                         adcAlert(
                             "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                            "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                            "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
                         );
                         continue;
                     }
@@ -473,7 +475,7 @@ function getFontsFromFileLegacy() {
                 if (!fontLocation) {
                     adcAlert(
                         "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                        "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project."
+                        "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
                     );
                     continue;
                 }
@@ -521,16 +523,6 @@ function generateFontReferences(fontPaths) {
     return formattedFontsPaths;
 }
 
-/*
- * Write a JSON file to the file path
- */
-function writeJSONFile(jsonData, filePath) {
-
-    var file = File(filePath);
-    file.open('w');
-    file.write(JSON.stringify(jsonData, null, 4));
-    file.close();
-}
 
 function isVideoOutput(extension) {
     const VideoOutputExtensions = ["avi", "mp4", "mov"];

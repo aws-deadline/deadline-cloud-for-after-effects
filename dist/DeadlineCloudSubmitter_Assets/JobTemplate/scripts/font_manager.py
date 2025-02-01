@@ -83,7 +83,7 @@ def get_font_name(dst_path):
     Get a font's Windows system name, which is the name stored in the registry.
 
     :param dst_path: path of font that needs to be named
-    
+
     :returns: string with the font's name
     """
     try:

@@ -5,7 +5,7 @@ function SubmitSelection(selection, framesPerTask) {
     const submitBundleFile = "SubmitButton.jsx";
     // first we must verify that our selection is valid
     if (selection == null) {
-        adcAlert("Error: No selection");
+        adcAlert("Error: No selection", true);
         return;
     }
 
@@ -19,7 +19,7 @@ function SubmitSelection(selection, framesPerTask) {
         renderQueueIndex > app.project.renderQueue.numItems
     ) {
         adcAlert(
-            "Error: Render Queue has changed since last refreshing. Refreshing panel now. Please try again."
+            "Error: Render Queue has changed since last refreshing. Refreshing panel now. Please try again.", true
         );
         updateList();
         return;
@@ -27,14 +27,14 @@ function SubmitSelection(selection, framesPerTask) {
     rqi = app.project.renderQueue.item(renderQueueIndex);
     if (rqi == null || rqi.comp.id != selection.compId) {
         adcAlert(
-            "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again."
+            "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again.", true
         );
         updateList();
         return;
     }
     if (rqi.numOutputModules > 1) {
         adcAlert(
-            "Warning: Multiple output modules detected. It is not supported in current submitter. Please raise an issue on Github repo for feature request."
+            "Warning: Multiple output modules detected. It is not supported in current submitter. Please raise an issue on Github repo for feature request.", false
         );
         return;
     }
@@ -58,10 +58,10 @@ function SubmitSelection(selection, framesPerTask) {
         var outputModule = rqi.outputModule(j).file;
         if (outputModule == null) {
             if (rqi.numOutputModules > 1) {
-                adcAlert("Error: Output module does not have its output file set");
+                adcAlert("Error: Output module does not have its output file set", true);
             } else {
                 adcAlert(
-                    "Error: One of your output modules does not have its output file set"
+                    "Error: One of your output modules does not have its output file set", true
                 );
             }
             return;
@@ -99,7 +99,7 @@ function SubmitSelection(selection, framesPerTask) {
             sanitizedOutputFolder
         );
         var assetReferencesOutDir = bundlePath + "/asset_references.json";
-        writeJSONFile(jobAttachmentsContents, assetReferencesOutDir);
+        writeFile(assetReferencesOutDir, JSON.stringify(jobAttachmentsContents));
     }
 
     /**
@@ -117,7 +117,7 @@ function SubmitSelection(selection, framesPerTask) {
             framesPerTask
         );
         var parametersOutDir = bundlePath + "/parameter_values.json";
-        writeJSONFile(parametersContents, parametersOutDir);
+        writeFile(parametersOutDir, JSON.stringify(parametersContents));
     }
 
     /**
@@ -125,13 +125,11 @@ function SubmitSelection(selection, framesPerTask) {
      **/
     function generateTemplate(bundlePath, isImageSeq) {
         // Open the template depending on the output type
-        var template = new File(bundlePath + "/video_template.json");
+        var path = bundlePath + "/video_template.json";
         if (isImageSeq) {
-            template = new File(bundlePath + "/image_template.json");
+            path = bundlePath + "/image_template.json";
         }
-        template.open("r");
-        var templateContents = template.read();
-        template.close();
+        var templateContents = readFile(path);
         // Parse the template string to a JSON object
         var templateObject = JSON.parse(templateContents);
         templateObject.name = File.decode(app.project.file.name) + " [" + compName + "]";
@@ -142,7 +140,7 @@ function SubmitSelection(selection, framesPerTask) {
                 logger.debug("The step name is " + templateObject.steps[0].name, submitBundleFile);
             }
         } catch (e) {
-            adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.");
+            adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
             logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
         }
         const aftereffectsVersion = app.version[0] + app.version[1];
@@ -155,11 +153,7 @@ function SubmitSelection(selection, framesPerTask) {
                 paramDefCopy[i].default = "aftereffects=" + aftereffectsVersion;
             }
         }
-
-        var newTemplate = new File(bundlePath + "/template.json");
-        newTemplate.open("w");
-        newTemplate.write(JSON.stringify(templateObject, null, 4));
-        newTemplate.close();
+        writeFile(bundlePath + "/template.json", JSON.stringify(templateObject, null, 4));
         logger.debug("Wrote the template.json file to the bundle folder " + bundlePath, submitBundleFile);
     }
 
@@ -199,7 +193,7 @@ function SubmitSelection(selection, framesPerTask) {
         );
         if (!jobTemplateSourceFolder.exists) {
             adcAlert(
-                "Error: Missing job template at " + jobTemplateSourceFolder.fsName
+                "Error: Missing job template at " + jobTemplateSourceFolder.fsName, true
             );
             return null;
         }
