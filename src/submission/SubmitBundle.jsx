@@ -99,25 +99,31 @@ function SubmitSelection(selection, framesPerTask) {
             sanitizedOutputFolder
         );
         var assetReferencesOutDir = bundlePath + "/asset_references.json";
-        writeFile(assetReferencesOutDir, JSON.stringify(jobAttachmentsContents));
+        writeFile(assetReferencesOutDir, JSON.stringify(jobAttachmentsContents, null, 4));
     }
 
     /**
      * Generates parameter_values json file
      **/
     function generateParameterValues(bundlePath, outputFolder, outputFileName, isImageSeq) {
-        var parametersContents = parameterValues(
-            renderQueueIndex,
-            app.project.file.fsName,
-            outputFolder,
-            outputFileName,
-            isImageSeq,
-            startFrame,
-            endFrame,
-            framesPerTask
-        );
         var parametersOutDir = bundlePath + "/parameter_values.json";
-        writeFile(parametersOutDir, JSON.stringify(parametersContents));
+        writeFile(
+            parametersOutDir,
+            JSON.stringify(
+                parameterValues(
+                    renderQueueIndex,
+                    app.project.file.fsName,
+                    outputFolder,
+                    outputFileName,
+                    isImageSeq,
+                    startFrame,
+                    endFrame,
+                    framesPerTask
+                ),
+                null,
+                4,
+            )
+        );
     }
 
     /**
