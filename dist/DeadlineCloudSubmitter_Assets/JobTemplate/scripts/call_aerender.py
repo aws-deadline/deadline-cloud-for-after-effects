@@ -90,6 +90,11 @@ def main():
             # Check for specific errors or warnings in stdout
             if "WARNING:After Effects warning" in line:
                 print(f"After Effects Warning: {line.strip()}", file=sys.stderr)
+                
+                # Some warnings should be treated as errors, i.e. a fatal warning
+                if "Project has missing fonts" in line:
+                    print(f"After Effects Fatal Warning: {line.strip()}", file=sys.stderr)
+                    sys.exit(1)
 
         # Also handle stderr (errors)
         for line in process.stderr:

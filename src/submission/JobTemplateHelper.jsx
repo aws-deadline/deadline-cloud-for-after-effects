@@ -141,10 +141,24 @@ function findJobAttachments(rootComp) {
         if (app.fonts.missingOrSubstitutedFonts != "") {
             adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString());
         }
+        // Remove missing or substituted fonts from fontsInProject to prevent incorrect render output.
+        // Build a new array containing only attachable fonts.
+        var fontsInProjectFiltered = [];
+        for (var i = 0; i < fontsInProject.length; i++) {
+            var attachFont = true;
+            // If the font's fontPostScriptName contains a missing or substituted font name, don't attach it
+            if (app.fonts.missingOrSubstitutedFonts.toString().indexOf(fontsInProject[i].fontPostScriptName) !== -1) {
+                logger.warning("Not attaching missing or substituted font: " + fontsInProject[i].fontPostScriptName, jobTemplateHelperFile);
+                attachFont = false;
+            }
+            if (attachFont) {
+                fontsInProjectFiltered.push(fontsInProject[i]);
+            }
+        }
         // Formatting collected fonts
-        var fontReferences = generateFontReferences(fontsInProject);
-        for (var i = 0; i < fontReferences.length; i++) {
-            attachments.push(fontReferences[i]);
+        var fontReferences = generateFontReferences(fontsInProjectFiltered);
+        for (var j = 0; j < fontReferences.length; j++) {
+            attachments.push(fontReferences[j]);
         }
     }
 
@@ -173,7 +187,11 @@ function getFontsFromFile() {
             }
             var fontName = createFontFilename(fontLocation, fontPostScriptName);
             if (fontName) {
-                fontLocations.push([fontName, fontLocation]);
+                fontLocations.push({
+                    fontName: fontName,
+                    fontLocation: fontLocation,
+                    fontPostScriptName: fontPostScriptName
+                });
             }
         }
     } else {
@@ -435,7 +453,11 @@ function getFontsFromFileLegacy() {
                     }
                     var fontName = createFontFilename(fontLocation, fontPostScriptName);
                     if (fontName) {
-                        fontLocations.push([fontName, fontLocation]);
+                        fontLocations.push({
+                            fontName: fontName,
+                            fontLocation: fontLocation,
+                            fontPostScriptName: fontPostScriptName
+                        });
                     }
                     oldLocation = fontLocation;
                 }
@@ -457,7 +479,11 @@ function getFontsFromFileLegacy() {
                 }
                 var fontName = createFontFilename(fontLocation, fontPostScriptName);
                 if (fontName) {
-                    fontLocations.push([fontName, fontLocation]);
+                    fontLocations.push({
+                        fontName: fontName,
+                        fontLocation: fontLocation,
+                        fontPostScriptName: fontPostScriptName
+                    });
                 }
             }
         }
@@ -481,8 +507,8 @@ function generateFontReferences(fontPaths) {
 
     // Copy the font files to the temp folder
     for (var i = 0; i < fontPaths.length; i++) {
-        var fontName = fontPaths[i][0];
-        var fontLocation = fontPaths[i][1];
+        var fontName = fontPaths[i].fontName;
+        var fontLocation = fontPaths[i].fontLocation;
 
         var fontFile = File(fontLocation);
         var _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
