@@ -153,7 +153,7 @@ function SubmitSelection(selection, framesPerTask) {
                 paramDefCopy[i].default = "aftereffects=" + aftereffectsVersion;
             }
         }
-        writeFile(bundlePath + "/template.json", JSON.stringify(templateObject, null, 4))
+        writeFile(bundlePath + "/template.json", JSON.stringify(templateObject, null, 4));
         logger.debug("Wrote the template.json file to the bundle folder " + bundlePath, submitBundleFile);
     }
 
