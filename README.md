@@ -1,26 +1,10 @@
 # AWS Deadline Cloud for After Effects
 
-### Disclaimer
-
----
-
-This GitHub repository is an example integration with AWS Deadline Cloud that is intended to only be used for testing and is subject to change. This code is an alpha release. It is not a commercial release and may contain bugs, errors, defects, or harmful components. Accordingly, the code in this repository is provided as-is. Use within a production environment is at your own risk!
-
-Our focus is to explore a variety of software applications to ensure we have good coverage across common workflows. We prioritized making this example available earlier to users rather than being feature complete.
-
-This example has been used by at least one internal or external development team to create a series of jobs that successfully rendered. However, your mileage may vary. If you have questions or issues with this example, please start a discussion or cut an issue.
-
----
-
-This submitter creates and submits [OpenJD](https://github.com/OpenJobDescription/openjd-specifications) job bundles for rendering After Effects jobs. The job bundles it creates utilizes the `aerender` executable that comes with Adobe After Effects.
-
-[deadline-cloud]: https://docs.aws.amazon.com/deadline-cloud/latest/userguide/what-is-deadline-cloud.html
-[deadline-cloud-client]: https://github.com/aws-deadline/deadline-cloud
-[openjd]: https://github.com/OpenJobDescription/openjd-specifications/wiki
+AWS Deadline Cloud for After Effects is a package that supports creating and running Adobe After Effects jobs within AWS Deadline Cloud. It provides the implementation of an After Effects plug-in for your workstation that helps you offload the computation for your rendering workloads to AWS Deadline Cloud to free up your workstation's compute for other tasks. The job bundles it creates utilizes the `aerender` executable that comes with Adobe After Effects.
 
 ## Compatibility
 
-1. After Effects 2024-2025,
+1. After Effects 2024 - 2025,
 1. Python 3.9 or higher; and
 1. Windows or macOS operating system.
 
@@ -65,13 +49,16 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
    - macOS: `Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
 
    Additionally, to disable warnings every time you submit a job with the submitter, edit the following settings within After Effects:
+
    - Windows `Select Edit > Preferences > Scripting & Expressions > deselect Warn User When Executing Files`
    - macOS: `Select After Effects > Settings > Scripting & Expressions > deselect Warn User When Executing Files`
+
 1. Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to
    the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
 
    - Windows: `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
    - macOS: `Applications/Adobe After Effects <version>/Scripts/Script UI Panels`
+
 1. Finally, to install the necessary dependencies used by the submitter, run `pip install fonttools` in your local Terminal or Command Prompt.
 1. Restart After Effects if it was open.
 
@@ -89,7 +76,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 
 #### Font attachment system:
 
-Fonts used in the submitted composition are detected by the submitter and are automatically added as job attachments on submission. These get installed on the worker before the render starts and get removed again when the job ends.
+The submitter detects fonts used in the submitted composition and automatically adds them as job attachments on submission. These get installed on the worker before the render starts and get removed again when the job ends.
 Supported font types include: OpenType (`.otf`), TrueType (`.ttf`), and [Adobe Fonts](https://fonts.adobe.com/).
 Windows bitmap fonts (`.fon`) are only supported on Windows machines.
 
@@ -113,17 +100,21 @@ You can use After Effects conda recipe in
 [deadline-cloud-sample package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.0)
 as a reference when building the package.
 
-Jobs created by this submitter require aerender executable be available on the PATH of the user that will be running your jobs. Or you can set the AERENDER_EXECUTABLE to point to the aerender executable.
+Jobs created by this submitter require `aerender` executable be available on the PATH of the user that will be running your jobs. Or you can set the `AERENDER_EXECUTABLE` to point to the aerender executable.
 
 ## Viewing the Job Bundle that will be submitted
 
-To submit a job, the submitter first generates a Job Bundle, and then uses functionality
-from the Deadline package to submit the Job Bundle to your render farm to run.
+To submit a job, the submitter first generates a [Job Bundle](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/build-job-bundle.html), and then uses functionality
+from the [Deadline](https://github.com/aws-deadline/deadline-cloud) package to submit the Job Bundle to your render farm to run.
 If you would like to see the job that will be submitted to your farm, then you can
 use the "Export Bundle" button in the submitter to export the Job Bundle
 in the job history directory (default: ~/.deadline/job_history).
 If you want to submit the job from the export, rather than through the submitter
-then you can use the Deadline Cloud application to submit that bundle to your farm.
+then you can use the [Deadline Cloud application](https://github.com/aws-deadline/deadline-cloud) to submit that bundle to your farm.
+
+## Security
+
+We take all security reports seriously. When we receive such reports, we will investigate and subsequently address any potential vulnerabilities as quickly as possible. If you discover a potential security issue in this project, please notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/) or directly via email to [AWS Security](https://github.com/aws-deadline/deadline-cloud-for-maya/blob/mainline/aws-security@amazon.com). Please do not create a public GitHub issue in this project.
 
 ## Telemetry
 
