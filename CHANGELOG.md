@@ -1,7 +1,7 @@
 ## 0.2.0 (2025-02-03)
 
 
-### Features
+### BREAKING CHANGES
 * new dockable AE submitter with custom font and image sequence chunking (#106) ([`a0dbcb2`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/a0dbcb2008a40e9ac9de6de5285996e3df0f8f50))
 
 ### Bug Fixes
