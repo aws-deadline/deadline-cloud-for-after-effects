@@ -19,18 +19,18 @@ var _DC_LOGGER_DEFAULT_BACKUP_COUNT = 5
 function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
     /**
      * Basic logger implementation with file rotation based on byte size.
-     * 
+     *
      * Rollover implementation is based on Python's RotatingFileHandler for behavioural compatibility
      * with the Python-based submitters.
      *
-     * The system will save old log files by appending the extensions ‘.1’, ‘.2’ etc., to the filename. 
-     * For example, with a backupCount of 5 and a base file name of app.log, you would get 
-     * app.log, app.log.1, app.log.2, up to app.log.5. The file being written to is always app.log. 
-     * When this file is filled, it is closed and renamed to app.log.1, 
+     * The system will save old log files by appending the extensions ‘.1’, ‘.2’ etc., to the filename.
+     * For example, with a backupCount of 5 and a base file name of app.log, you would get
+     * app.log, app.log.1, app.log.2, up to app.log.5. The file being written to is always app.log.
+     * When this file is filled, it is closed and renamed to app.log.1,
      * and if files app.log.1, app.log.2, etc. exist, then they are renamed to app.log.2, app.log.3 etc. respectively.
-     * 
+     *
      * If backupCount or maxBytes are zero or less, rollover behaviour is disabled.
-     * 
+     *
      * @param {string} logFileName - Log file name.
      * @param {string} logDirectoryPath - Log directory path.
      * @param {int} maxBytes - Number of bytes before a file rotation is performed.
@@ -59,7 +59,7 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
     function _fileRotate() {
         /* Performs a file rotation if the size of the active log file is higher
          * than maxBytes.
-         * 
+         *
          * If maxBytes is zero or less, no file rotation will ever occur.
          */
         if (maxBytes <= 0) { // If maxBytes is invalid, don't rotate.

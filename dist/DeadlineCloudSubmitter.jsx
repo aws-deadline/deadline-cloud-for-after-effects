@@ -98,37 +98,6 @@ function recursiveCopy(src, dst) {
     system.callSystem(command);
 }
 
-function systemCallWithErrorAlerts(cmd) {
-    var output = "";
-    if ($.os.toString().slice(0, 7) === "Windows") {
-        var tempBatFile = new File(
-            Folder.temp.fsName + "/DeadlineCloudAESubmission.bat"
-        );
-        tempBatFile.open("w");
-        tempBatFile.writeln("@echo off");
-        tempBatFile.writeln("echo:"); //this empty print statement is required to circumvent a weird bug
-        tempBatFile.writeln(cmd);
-        tempBatFile.writeln("IF %ERRORLEVEL% NEQ 0 (");
-        tempBatFile.writeln(" echo ERROR CODE: %ERRORLEVEL% ");
-        tempBatFile.writeln(")");
-        tempBatFile.close();
-
-        output = system.callSystem(tempBatFile.fsName);
-    } else {
-        // MacOS
-        output = system.callSystem(cmd + ' || echo "\nERROR CODE: $?"');
-    }
-
-    if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
-        adcAlert(
-            "ERROR: Command failed!\n\nFull Command:\n" +
-            cmd +
-            "\n" +
-            output +
-            "\n\nEnsure the command can be run manually in a non-elevated command prompt or terminal and try again.", true
-        );
-    }
-}
 
 /**
  * Creates alerts for Deadline Cloud Submitter
@@ -1652,21 +1621,44 @@ function SubmitSelection(selection, framesPerTask) {
     var bundle = generateBundle();
 
     // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
-    var submitScriptContents =
+    var cmd =
         'deadline bundle gui-submit "' + bundle.fsName + "\" --output json --install-gui";
+    var logFile = new File(Folder.temp.fsName + "/submitter_output.log");
+    logFile.open("w"); // Erase contents of active log file
+    logFile.close();
+    var submitScriptContents = "";
+    var output = "";
     if ($.os.toString().slice(0, 7) === "Windows") {
-        var submitScript = new File(Folder.temp.fsName + "/submit.bat");
-
-        submitScript.open("w");
-        submitScript.write(submitScriptContents);
-        submitScript.close();
-        submitScript.execute();
+        var tempBatFile = new File(
+            Folder.temp.fsName + "/DeadlineCloudAESubmission.bat"
+        );
+        submitScriptContents = cmd + " > " + Folder.temp.fsName + "\\submitter_output.log 2>&1";
+        tempBatFile.open("w");
+        tempBatFile.writeln("@echo off");
+        tempBatFile.writeln("echo:"); //this empty print statement is required to circumvent a weird bug
+        tempBatFile.writeln(submitScriptContents);
+        tempBatFile.writeln("IF %ERRORLEVEL% NEQ 0 (");
+        tempBatFile.writeln(" echo ERROR CODE: %ERRORLEVEL% >>" + logFile.fsName);
+        tempBatFile.writeln(")");
+        tempBatFile.close();
+        system.callSystem(tempBatFile.fsName);
+        if (logFile.exists) {
+            logFile.open("r");
+            output = logFile.read();
+            logFile.close();
+        }
     } else {
         // Execute the command using a bash in the interactive mode so it loads the bash profile to set
         // the PATH correctly.
         var shellPath = $.getenv("SHELL") || "/bin/bash";
-        var cmd = shellPath + " -i -c 'echo \"START_DEADLINE_OUTPUT\";" + submitScriptContents + "'";
-        systemCallWithErrorAlerts(cmd);
+        submitScriptContents = shellPath + " -i -c '" + cmd + "'";
+        output = system.callSystem(submitScriptContents + ' || echo "\nERROR CODE: $?"');
+    }
+    if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
+        adcAlert(
+            "ERROR:" + output, true
+        );
+        logger.error("Error when launching Deadline GUI submitter: " + output, "Utils.jsx");
     }
 }
 
