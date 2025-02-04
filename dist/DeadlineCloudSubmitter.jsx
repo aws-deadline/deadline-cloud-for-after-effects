@@ -1095,7 +1095,7 @@ function getPythonExecutable() {
         }
         try {
             var outputWhere = system.callSystem(findCommand);
-            if (!outputWhere || (outputWhere && outputWhere.indexOf(findSuccess) === -1)) {
+            if (!outputWhere || outputWhere.indexOf(findSuccess) === -1) {
                 logger.warning("Couldn't find Python with executable name '" + python + "'");
                 continue;
             }
