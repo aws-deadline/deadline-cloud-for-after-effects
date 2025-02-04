@@ -1078,25 +1078,29 @@ function getFontsFromFile() {
     return fontLocations;
 }
 
+/**
+ * Checks that the system has Python installed and version >= 3
+ * @return String with executable name corresponding to Python 3, or an empty string if not found
+ **/
 function getPythonExecutable() {
     var pythonExecutables = ["python3", "python"];
-    var pythonFound = false;
+    var oldPythonVersionFound = false;
     var errorMessage = "";
 
     for (var i = 0; i < pythonExecutables.length; i++) {
         // Search for python executable
-        var python = pythonExecutables[i];
-        var findCommand = "which " + python;
-        var findSuccess = "/" + python;
+        var pythonExecutable = pythonExecutables[i];
+        var findCommand = "which " + pythonExecutable;
+        var findSuccess = "/" + pythonExecutable;
         var os = $.os.toLowerCase();
-        if (os.indexOf("win") !== -1) {
-            findCommand = "where " + python;
-            findSuccess = "\\" + python;
+        if (os.indexOf("windows") !== -1) {
+            findCommand = "where " + pythonExecutable;
+            findSuccess = "\\" + pythonExecutable;
         }
         try {
             var outputWhere = system.callSystem(findCommand);
             if (!outputWhere || outputWhere.indexOf(findSuccess) === -1) {
-                logger.warning("Couldn't find Python with executable name '" + python + "'");
+                logger.warning("Couldn't find Python with executable name '" + pythonExecutable + "'");
                 continue;
             }
         } catch (e) {
@@ -1106,14 +1110,13 @@ function getPythonExecutable() {
 
         // Python executable was found, verify Python version
         try {
-            var output = system.callSystem(python + " --version");
+            var output = system.callSystem(pythonExecutable + " --version");
             if (output && output.indexOf("Python ") !== -1) {
                 var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
                 if (pythonVersion >= 3) {
-                    return python;
+                    return pythonExecutable;
                 } else {
-                    // At least mark that a python executable was found and successfully run
-                    pythonFound = true;
+                    oldPythonVersionFound = true;
                 }
             }
         } catch (e) {
@@ -1123,16 +1126,16 @@ function getPythonExecutable() {
     }
 
     // If reaching here, this means python version was too low or executable was not found
-    if (pythonFound) {
+    if (oldPythonVersionFound) {
         errorMessage =
             "Error: Python 3 is required but only Python 2 was found.\n" +
             "\n" +
-            "Please ensure that Python 3 or higher is installed correctly.";
+            "Please ensure that Python 3 or higher is installed correctly and added to your PATH.";
     } else {
         errorMessage =
             "Error: Couldn't find Python on the path.\n" +
             "\n" +
-            "Please ensure that Python 3 or higher is installed correctly.";
+            "Please ensure that Python 3 or higher is installed correctly and added to your PATH..";
     }
 
     logger.error(errorMessage, jobTemplateHelperFile);
