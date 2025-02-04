@@ -216,12 +216,13 @@ function SubmitSelection(selection, framesPerTask) {
     var logFile = new File(Folder.temp.fsName + "/submitter_output.log");
     logFile.open("w"); // Erase contents of active log file
     logFile.close();
+    var submitScriptContents = "";
     var output = "";
     if ($.os.toString().slice(0, 7) === "Windows") {
         var tempBatFile = new File(
             Folder.temp.fsName + "/DeadlineCloudAESubmission.bat"
         );
-        var submitScriptContents = cmd + " > " + Folder.temp.fsName + "\\submitter_output.log 2>&1";
+        submitScriptContents = cmd + " > " + Folder.temp.fsName + "\\submitter_output.log 2>&1";
         tempBatFile.open("w");
         tempBatFile.writeln("@echo off");
         tempBatFile.writeln("echo:"); //this empty print statement is required to circumvent a weird bug
@@ -240,7 +241,7 @@ function SubmitSelection(selection, framesPerTask) {
         // Execute the command using a bash in the interactive mode so it loads the bash profile to set
         // the PATH correctly.
         var shellPath = $.getenv("SHELL") || "/bin/bash";
-        var submitScriptContents = shellPath + " -i -c '" + cmd + "'";
+        submitScriptContents = shellPath + " -i -c '" + cmd + "'";
         output = system.callSystem(submitScriptContents + ' || echo "\nERROR CODE: $?"');
     }
     if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
