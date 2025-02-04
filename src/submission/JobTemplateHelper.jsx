@@ -196,7 +196,7 @@ function getPythonExecutable() {
         var findSuccess = "/" + python;
         var os = $.os.toLowerCase();
         if (os.indexOf("win") !== -1) {
-            findCommand = "where " + python
+            findCommand = "where " + python;
             findSuccess = "\\" + python;
         }
         try {
