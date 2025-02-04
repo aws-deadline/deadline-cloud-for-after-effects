@@ -184,94 +184,67 @@ function getFontsFromFile() {
     return fontLocations;
 }
 
-/**
- * Checks that the system has Python installed and version >= 3
- * @return String with executable name corresponding to Python 3, or an empty string if not found
- **/
 function getPythonExecutable() {
-    // Command that finds Python on the path
-    var findCommand = "where python";
-    var findCommandPy3 = "where python3";
-
-    // String that indicates Python was found
-    var findSuccess = "/python";
-
-    // Flags for found versions
+    var pythonExecutables = ["python3", "python"];
     var pythonFound = false;
-    var python3Found = false;
+    var errorMessage = "";
 
-    var os = $.os.toLowerCase();
-    if (os.indexOf("win") !== -1) {
-        findSuccess = "\\python";
-    }
-
-    // Find python on the path
-    var pythonExecutable = "";
-    var outputWhere = null;
-    try {
-        outputWhere = system.callSystem(findCommand);
-        if (outputWhere && outputWhere.indexOf(findSuccess) !== -1) {
-            pythonFound = true;
-            pythonExecutable = "python";
-        } else {
-            logger.warning("Couldn't find Python with executable name 'python'");
+    for (var i = 0; i < pythonExecutables.length; i++) {
+        // Search for python executable
+        var python = pythonExecutables[i];
+        var findCommand = "which " + python;
+        var findSuccess = "/" + python;
+        var os = $.os.toLowerCase();
+        if (os.indexOf("win") !== -1) {
+            findCommand = "where " + python
+            findSuccess = "\\" + python;
         }
-    } catch (e) {
-        logger.error(e.message, jobTemplateHelperFile);
-        logger.debug("Where command output: " + outputWhere, jobTemplateHelperFile);
-    }
-
-    if (!pythonFound) {
-        // Python wasn't found on the path, try find python3
         try {
-            outputWhere = system.callSystem(findCommandPy3);
-            if (outputWhere && outputWhere.indexOf(findSuccess) !== -1) {
-                python3Found = true;
-                pythonExecutable = "python3";
-            } else {
-                logger.warning("Couldn't find Python 3 with executable name 'python3'");
+            outputWhere = system.callSystem(findCommand);
+            if (!outputWhere || (outputWhere && outputWhere.indexOf(findSuccess) === -1)) {
+                logger.warning("Couldn't find Python with executable name '" + python + "'");
+                continue;
             }
         } catch (e) {
             logger.error(e.message, jobTemplateHelperFile);
             logger.debug("Where command output: " + outputWhere, jobTemplateHelperFile);
         }
+
+        // Python executable was found, verify Python version
+        try {
+            output = system.callSystem(python + " --version");
+            if (output && output.indexOf("Python ") !== -1) {
+                var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
+                if (pythonVersion >= 3) {
+                    return python;
+                } else {
+                    // At least mark that a python executable was found and successfully run
+                    pythonFound = true;
+                }
+            }
+        } catch (e) {
+            logger.error(e.message, jobTemplateHelperFile);
+            logger.debug("Command output: " + output, jobTemplateHelperFile);
+        }
     }
 
+    // If reaching here, this means python version was too low or executable was not found
     var errorMessage = "";
-    if (!(pythonFound || python3Found)) {
-        logger.error("No Python found on the path", jobTemplateHelperFile);
+    if (pythonFound) {
+        errorMessage =
+            "Error: Python 3 is required but only Python 2 was found.\n" +
+            "\n" +
+            "Please ensure that Python 3 or higher is installed correctly.";
+    } else {
         errorMessage =
             "Error: Couldn't find Python on the path.\n" +
             "\n" +
             "Please ensure that Python 3 or higher is installed correctly.";
-        adcAlert(errorMessage, true);
-        return "";
     }
 
-    // Get the Python version and select its executable
-    var output = null;
-    try {
-        output = system.callSystem(pythonExecutable + " --version");
-        if (output && output.indexOf("Python ") !== -1) {
-            var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
-            if (pythonVersion >= 3) {
-                // Correct version of Python is installed, use current pythonExecutable
-            } else if ((pythonVersion < 3) && python3Found) {
-                pythonExecutable = "python3";
-            } else {
-                errorMessage =
-                    "Error: Python 3 is required but only Python 2 was found.\n" +
-                    "\n" +
-                    "Please ensure that Python 3 or higher is installed correctly.";
-                adcAlert(errorMessage, true);
-            }
-        }
-    } catch (e) {
-        logger.error(e.message, jobTemplateHelperFile);
-        logger.debug("Command output: " + output, jobTemplateHelperFile);
-    }
-
-    return pythonExecutable;
+    logger.error(errorMessage, jobTemplateHelperFile);
+    adcAlert(errorMessage, true);
+    return "";
 }
 
 /**
@@ -283,21 +256,15 @@ function getFontPaths() {
     // Ensure Python exists and is at least version 3
     var pythonExecutable = getPythonExecutable();
     if (!pythonExecutable) {
-        errorMessage =
-            "Error: There was a problem loading Python 3.\n" +
-            "\n" +
-            "Please ensure that Python 3 or higher is installed correctly.";
-    } else {
-        var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
-        var scriptFile = new File(scriptPath);
-        if (!scriptFile.exists) {
-            errorMessage =
-                "Error: Missing font script at " + scriptFile.fsName + "\n" +
-                "\n" +
-                "Please ensure that the Deadline Cloud Submitter is installed correctly.";
-        }
+        return null;
     }
-    if (errorMessage) {
+    var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
+    var scriptFile = new File(scriptPath);
+    if (!scriptFile.exists) {
+        errorMessage =
+            "Error: Missing font script at " + scriptFile.fsName + "\n" +
+            "\n" +
+            "Please ensure that the Deadline Cloud Submitter is installed correctly.";
         adcAlert(errorMessage, true);
         return null;
     }
