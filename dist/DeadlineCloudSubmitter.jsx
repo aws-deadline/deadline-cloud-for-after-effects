@@ -1094,7 +1094,7 @@ function getPythonExecutable() {
             findSuccess = "\\" + python;
         }
         try {
-            outputWhere = system.callSystem(findCommand);
+            var outputWhere = system.callSystem(findCommand);
             if (!outputWhere || (outputWhere && outputWhere.indexOf(findSuccess) === -1)) {
                 logger.warning("Couldn't find Python with executable name '" + python + "'");
                 continue;
@@ -1106,7 +1106,7 @@ function getPythonExecutable() {
 
         // Python executable was found, verify Python version
         try {
-            output = system.callSystem(python + " --version");
+            var output = system.callSystem(python + " --version");
             if (output && output.indexOf("Python ") !== -1) {
                 var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
                 if (pythonVersion >= 3) {
@@ -1123,7 +1123,6 @@ function getPythonExecutable() {
     }
 
     // If reaching here, this means python version was too low or executable was not found
-    var errorMessage = "";
     if (pythonFound) {
         errorMessage =
             "Error: Python 3 is required but only Python 2 was found.\n" +
