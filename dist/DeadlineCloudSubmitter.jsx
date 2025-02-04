@@ -1084,8 +1084,6 @@ function getFontsFromFile() {
  **/
 function getPythonExecutable() {
     var pythonExecutables = ["python3", "python"];
-    var oldPythonVersionFound = false;
-    var errorMessage = "";
 
     for (var i = 0; i < pythonExecutables.length; i++) {
         // Search for python executable
@@ -1115,8 +1113,6 @@ function getPythonExecutable() {
                 var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
                 if (pythonVersion >= 3) {
                     return pythonExecutable;
-                } else {
-                    oldPythonVersionFound = true;
                 }
             }
         } catch (e) {
@@ -1126,18 +1122,10 @@ function getPythonExecutable() {
     }
 
     // If reaching here, this means python version was too low or executable was not found
-    if (oldPythonVersionFound) {
-        errorMessage =
-            "Error: Python 3 is required but only Python 2 was found.\n" +
-            "\n" +
-            "Please ensure that Python 3 or higher is installed correctly and added to your PATH.";
-    } else {
-        errorMessage =
-            "Error: Couldn't find Python on the path.\n" +
-            "\n" +
-            "Please ensure that Python 3 or higher is installed correctly and added to your PATH..";
-    }
-
+    var errorMessage =
+        "Error: Couldn't find Python on the path.\n" +
+        "\n" +
+        "Please ensure that Python 3 or higher is installed correctly and added to your PATH.";
     logger.error(errorMessage, jobTemplateHelperFile);
     adcAlert(errorMessage, true);
     return "";
