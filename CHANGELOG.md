@@ -1,3 +1,10 @@
+## 0.2.1 (2025-02-04)
+
+
+
+### Bug Fixes
+* better error handling for deadline cli call (#126) ([`5049e69`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/5049e69d3cf368ffc0486a7bf59894ecca4db8a4))
+
 ## 0.2.0 (2025-02-03)
 
 
