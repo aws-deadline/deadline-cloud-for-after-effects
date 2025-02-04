@@ -94,37 +94,6 @@ function recursiveCopy(src, dst) {
     system.callSystem(command);
 }
 
-function systemCallWithErrorAlerts(cmd) {
-    var output = "";
-    if ($.os.toString().slice(0, 7) === "Windows") {
-        var tempBatFile = new File(
-            Folder.temp.fsName + "/DeadlineCloudAESubmission.bat"
-        );
-        tempBatFile.open("w");
-        tempBatFile.writeln("@echo off");
-        tempBatFile.writeln("echo:"); //this empty print statement is required to circumvent a weird bug
-        tempBatFile.writeln(cmd);
-        tempBatFile.writeln("IF %ERRORLEVEL% NEQ 0 (");
-        tempBatFile.writeln(" echo ERROR CODE: %ERRORLEVEL% ");
-        tempBatFile.writeln(")");
-        tempBatFile.close();
-
-        output = system.callSystem(tempBatFile.fsName);
-    } else {
-        // MacOS
-        output = system.callSystem(cmd + ' || echo "\nERROR CODE: $?"');
-    }
-
-    if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
-        adcAlert(
-            "ERROR: Command failed!\n\nFull Command:\n" +
-            cmd +
-            "\n" +
-            output +
-            "\n\nEnsure the command can be run manually in a non-elevated command prompt or terminal and try again.", true
-        );
-    }
-}
 
 /**
  * Creates alerts for Deadline Cloud Submitter
