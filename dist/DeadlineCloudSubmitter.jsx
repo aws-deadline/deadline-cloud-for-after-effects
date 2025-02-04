@@ -1095,8 +1095,9 @@ function getPythonExecutable() {
             findCommand = "where " + pythonExecutable;
             findSuccess = "\\" + pythonExecutable;
         }
+        var outputWhere = null;
         try {
-            var outputWhere = system.callSystem(findCommand);
+            outputWhere = system.callSystem(findCommand);
             if (!outputWhere || outputWhere.indexOf(findSuccess) === -1) {
                 logger.warning("Couldn't find Python with executable name '" + pythonExecutable + "'");
                 continue;
@@ -1107,8 +1108,9 @@ function getPythonExecutable() {
         }
 
         // Python executable was found, verify Python version
+        var output = null;
         try {
-            var output = system.callSystem(pythonExecutable + " --version");
+            output = system.callSystem(pythonExecutable + " --version");
             if (output && output.indexOf("Python ") !== -1) {
                 var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
                 if (pythonVersion >= 3) {
