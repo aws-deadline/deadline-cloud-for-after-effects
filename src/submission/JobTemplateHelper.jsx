@@ -231,7 +231,7 @@ function getPythonExecutable() {
 
     // If reaching here, this means python version was too low or executable was not found
     var errorMessage =
-        "Error: Couldn't find Python on the path.\n" +
+        "Error: Couldn't find Python 3 or higher on your PATH.\n" +
         "\n" +
         "Please ensure that Python 3 or higher is installed correctly and added to your PATH.";
     logger.error(errorMessage, jobTemplateHelperFile);
