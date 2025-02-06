@@ -98,37 +98,6 @@ function recursiveCopy(src, dst) {
     system.callSystem(command);
 }
 
-function systemCallWithErrorAlerts(cmd) {
-    var output = "";
-    if ($.os.toString().slice(0, 7) === "Windows") {
-        var tempBatFile = new File(
-            Folder.temp.fsName + "/DeadlineCloudAESubmission.bat"
-        );
-        tempBatFile.open("w");
-        tempBatFile.writeln("@echo off");
-        tempBatFile.writeln("echo:"); //this empty print statement is required to circumvent a weird bug
-        tempBatFile.writeln(cmd);
-        tempBatFile.writeln("IF %ERRORLEVEL% NEQ 0 (");
-        tempBatFile.writeln(" echo ERROR CODE: %ERRORLEVEL% ");
-        tempBatFile.writeln(")");
-        tempBatFile.close();
-
-        output = system.callSystem(tempBatFile.fsName);
-    } else {
-        // MacOS
-        output = system.callSystem(cmd + ' || echo "\nERROR CODE: $?"');
-    }
-
-    if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
-        adcAlert(
-            "ERROR: Command failed!\n\nFull Command:\n" +
-            cmd +
-            "\n" +
-            output +
-            "\n\nEnsure the command can be run manually in a non-elevated command prompt or terminal and try again.", true
-        );
-    }
-}
 
 /**
  * Creates alerts for Deadline Cloud Submitter
@@ -1114,89 +1083,54 @@ function getFontsFromFile() {
  * @return String with executable name corresponding to Python 3, or an empty string if not found
  **/
 function getPythonExecutable() {
-    // Command that finds Python on the path
-    var findCommand = "where python";
-    var findCommandPy3 = "where python3";
+    var pythonExecutables = ["python3", "python"];
 
-    // String that indicates Python was found
-    var findSuccess = "/python";
-
-    // Flags for found versions
-    var pythonFound = false;
-    var python3Found = false;
-
-    var os = $.os.toLowerCase();
-    if (os.indexOf("win") !== -1) {
-        findSuccess = "\\python";
-    }
-
-    // Find python on the path
-    var pythonExecutable = "";
-    var outputWhere = null;
-    try {
-        outputWhere = system.callSystem(findCommand);
-        if (outputWhere && outputWhere.indexOf(findSuccess) !== -1) {
-            pythonFound = true;
-            pythonExecutable = "python";
-        } else {
-            logger.warning("Couldn't find Python with executable name 'python'");
+    for (var i = 0; i < pythonExecutables.length; i++) {
+        // Search for python executable
+        var pythonExecutable = pythonExecutables[i];
+        var findCommand = "which " + pythonExecutable;
+        var findSuccess = "/" + pythonExecutable;
+        var os = $.os.toLowerCase();
+        if (os.indexOf("windows") !== -1) {
+            findCommand = "where " + pythonExecutable;
+            findSuccess = "\\" + pythonExecutable;
         }
-    } catch (e) {
-        logger.error(e.message, jobTemplateHelperFile);
-        logger.debug("Where command output: " + outputWhere, jobTemplateHelperFile);
-    }
-
-    if (!pythonFound) {
-        // Python wasn't found on the path, try find python3
+        var outputWhere = null;
         try {
-            outputWhere = system.callSystem(findCommandPy3);
-            if (outputWhere && outputWhere.indexOf(findSuccess) !== -1) {
-                python3Found = true;
-                pythonExecutable = "python3";
-            } else {
-                logger.warning("Couldn't find Python 3 with executable name 'python3'");
+            outputWhere = system.callSystem(findCommand);
+            if (!outputWhere || outputWhere.indexOf(findSuccess) === -1) {
+                logger.warning("Couldn't find Python with executable name '" + pythonExecutable + "'");
+                continue;
             }
         } catch (e) {
             logger.error(e.message, jobTemplateHelperFile);
             logger.debug("Where command output: " + outputWhere, jobTemplateHelperFile);
         }
-    }
 
-    var errorMessage = "";
-    if (!(pythonFound || python3Found)) {
-        logger.error("No Python found on the path", jobTemplateHelperFile);
-        errorMessage =
-            "Error: Couldn't find Python on the path.\n" +
-            "\n" +
-            "Please ensure that Python 3 or higher is installed correctly.";
-        adcAlert(errorMessage, true);
-        return "";
-    }
-
-    // Get the Python version and select its executable
-    var output = null;
-    try {
-        output = system.callSystem(pythonExecutable + " --version");
-        if (output && output.indexOf("Python ") !== -1) {
-            var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
-            if (pythonVersion >= 3) {
-                // Correct version of Python is installed, use current pythonExecutable
-            } else if ((pythonVersion < 3) && python3Found) {
-                pythonExecutable = "python3";
-            } else {
-                errorMessage =
-                    "Error: Python 3 is required but only Python 2 was found.\n" +
-                    "\n" +
-                    "Please ensure that Python 3 or higher is installed correctly.";
-                adcAlert(errorMessage, true);
+        // Python executable was found, verify Python version
+        var output = null;
+        try {
+            output = system.callSystem(pythonExecutable + " --version");
+            if (output && output.indexOf("Python ") !== -1) {
+                var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
+                if (pythonVersion >= 3) {
+                    return pythonExecutable;
+                }
             }
+        } catch (e) {
+            logger.error(e.message, jobTemplateHelperFile);
+            logger.debug("Command output: " + output, jobTemplateHelperFile);
         }
-    } catch (e) {
-        logger.error(e.message, jobTemplateHelperFile);
-        logger.debug("Command output: " + output, jobTemplateHelperFile);
     }
 
-    return pythonExecutable;
+    // If reaching here, this means python version was too low or executable was not found
+    var errorMessage =
+        "Error: Couldn't find Python 3 or higher on your PATH.\n" +
+        "\n" +
+        "Please ensure that Python 3 or higher is installed correctly and added to your PATH.";
+    logger.error(errorMessage, jobTemplateHelperFile);
+    adcAlert(errorMessage, true);
+    return "";
 }
 
 /**
@@ -1208,21 +1142,15 @@ function getFontPaths() {
     // Ensure Python exists and is at least version 3
     var pythonExecutable = getPythonExecutable();
     if (!pythonExecutable) {
-        errorMessage =
-            "Error: There was a problem loading Python 3.\n" +
-            "\n" +
-            "Please ensure that Python 3 or higher is installed correctly.";
-    } else {
-        var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
-        var scriptFile = new File(scriptPath);
-        if (!scriptFile.exists) {
-            errorMessage =
-                "Error: Missing font script at " + scriptFile.fsName + "\n" +
-                "\n" +
-                "Please ensure that the Deadline Cloud Submitter is installed correctly.";
-        }
+        return null;
     }
-    if (errorMessage) {
+    var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
+    var scriptFile = new File(scriptPath);
+    if (!scriptFile.exists) {
+        errorMessage =
+            "Error: Missing font script at " + scriptFile.fsName + "\n" +
+            "\n" +
+            "Please ensure that the Deadline Cloud Submitter is installed correctly.";
         adcAlert(errorMessage, true);
         return null;
     }
@@ -1439,6 +1367,7 @@ function isImageOutput(extension) {
 }
 
 
+
 /**
  * Submit the selected render queue item
  **/
@@ -1652,21 +1581,44 @@ function SubmitSelection(selection, framesPerTask) {
     var bundle = generateBundle();
 
     // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
-    var submitScriptContents =
+    var cmd =
         'deadline bundle gui-submit "' + bundle.fsName + "\" --output json --install-gui";
+    var logFile = new File(Folder.temp.fsName + "/submitter_output.log");
+    logFile.open("w"); // Erase contents of active log file
+    logFile.close();
+    var submitScriptContents = "";
+    var output = "";
     if ($.os.toString().slice(0, 7) === "Windows") {
-        var submitScript = new File(Folder.temp.fsName + "/submit.bat");
-
-        submitScript.open("w");
-        submitScript.write(submitScriptContents);
-        submitScript.close();
-        submitScript.execute();
+        var tempBatFile = new File(
+            Folder.temp.fsName + "/DeadlineCloudAESubmission.bat"
+        );
+        submitScriptContents = cmd + " > " + Folder.temp.fsName + "\\submitter_output.log 2>&1";
+        tempBatFile.open("w");
+        tempBatFile.writeln("@echo off");
+        tempBatFile.writeln("echo:"); //this empty print statement is required to circumvent a weird bug
+        tempBatFile.writeln(submitScriptContents);
+        tempBatFile.writeln("IF %ERRORLEVEL% NEQ 0 (");
+        tempBatFile.writeln(" echo ERROR CODE: %ERRORLEVEL% >>" + logFile.fsName);
+        tempBatFile.writeln(")");
+        tempBatFile.close();
+        system.callSystem(tempBatFile.fsName);
+        if (logFile.exists) {
+            logFile.open("r");
+            output = logFile.read();
+            logFile.close();
+        }
     } else {
         // Execute the command using a bash in the interactive mode so it loads the bash profile to set
         // the PATH correctly.
         var shellPath = $.getenv("SHELL") || "/bin/bash";
-        var cmd = shellPath + " -i -c 'echo \"START_DEADLINE_OUTPUT\";" + submitScriptContents + "'";
-        systemCallWithErrorAlerts(cmd);
+        submitScriptContents = shellPath + " -i -c '" + cmd + "'";
+        output = system.callSystem(submitScriptContents + ' || echo "\nERROR CODE: $?"');
+    }
+    if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
+        adcAlert(
+            "ERROR:" + output, true
+        );
+        logger.error("Error when launching Deadline GUI submitter: " + output, "Utils.jsx");
     }
 }
 
