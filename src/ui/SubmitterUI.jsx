@@ -53,26 +53,47 @@ function buildUI(thisObj) {
     framesPerTaskGroup.orientation = "row";
     framesPerTaskGroup.alignment = ['fill', 'top'];
     framesPerTaskGroup.alignChildren = ['left', 'top'];
+
     var framesPerTaskLabel = framesPerTaskGroup.add("statictext", undefined, "Frames per task");
     framesPerTaskLabel.alignment = ['left', 'center'];
     framesPerTaskLabel.helpTip = "The number of frames per task. Only affects image sequence output."
-    var framesPerTaskValue = framesPerTaskGroup.add("edittext", undefined, persistentFramesPerTask);
 
-    framesPerTaskValue.alignment = ['fill', 'top'];
-    framesPerTaskValue.onChange = function() {
-        var newFramesPerTaskValue = String(Math.abs(parseInt(framesPerTaskValue.text)));
+    var framesPerTaskTextBox = framesPerTaskGroup.add("edittext", undefined, persistentFramesPerTask);
+    framesPerTaskTextBox.alignment = ['fill', 'top'];
+    framesPerTaskTextBox.onChange = function() {
+        var newFramesPerTaskValue = String(Math.abs(parseInt(framesPerTaskTextBox.text)));
         if (newFramesPerTaskValue == "NaN") {
-            framesPerTaskValue.text = "10";
+            framesPerTaskTextBox.text = "10";
         }
         if (Math.abs(parseInt(newFramesPerTaskValue) > 9999)) {
-            framesPerTaskValue.text = "9999";
+            framesPerTaskTextBox.text = "9999";
         }
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskValue.text);
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskTextBox.text);
+    }
+
+    function isFramesPerTaskEnabled(selection) {
+        if (selection == null) {
+            return false;
+        }
+        var renderQueueIndex = selection.renderQueueIndex;
+        var rqi = app.project.renderQueue.item(renderQueueIndex);
+        if (rqi.numOutputModules == 1) {
+            var outputModule = rqi.outputModule(1).file;
+            if (outputModule != null) {
+                var outputFile = outputModule.name;
+                var regex = new RegExp('\\b' + "%5B#####%5D" + '\\b', 'g');
+                var outputFileNameNoRegex = outputFile.replace(regex, "[#####]");
+                var lastIndex = outputFileNameNoRegex.lastIndexOf(".");
+                var extension = outputFileNameNoRegex.substring(lastIndex + 1);
+                return isImageOutput(extension);
+            }
+        }
+        return true;
     }
 
     var submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
-        SubmitSelection(list.selection, parseInt(framesPerTaskValue.text));
+        SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text));
         list.selection = null;
     }
     submitButton.alignment = 'right';
@@ -120,6 +141,7 @@ function buildUI(thisObj) {
             if (list.selection == null) {
                 updateList();
             }
+            framesPerTaskTextBox.enabled = isFramesPerTaskEnabled(list.selection);
             submitButton.enabled = list.selection != null;
             submitButton.active = false;
             submitButton.active = true;
@@ -127,15 +149,11 @@ function buildUI(thisObj) {
         list.selection = null;
     }
 
-    updateList()
+    updateList();
 
     refreshButton.onClick = function() {
         updateList();
     }
-
-    submitterPanel.addEventListener('click', function() {
-        updateList();
-    }, true);
 
     submitterPanel.layout.layout(true);
 
