@@ -77,6 +77,8 @@ function buildUI(thisObj) {
         }
         var renderQueueIndex = selection.renderQueueIndex;
         var rqi = app.project.renderQueue.item(renderQueueIndex);
+        // Currently we only support one output modele. We have sufficient error handling
+        // after submit button is clicked, so this is a sufficient for now
         if (rqi.numOutputModules == 1) {
             var outputModule = rqi.outputModule(1).file;
             if (outputModule != null) {
@@ -88,6 +90,8 @@ function buildUI(thisObj) {
                 return isImageOutput(extension);
             }
         }
+        // Default to true so that we don't block any customers in case we can't
+        // sufficient verify whether they're submitting an image sequence or not
         return true;
     }
 
