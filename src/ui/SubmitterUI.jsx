@@ -58,10 +58,10 @@ function buildUI(thisObj) {
     framesPerTaskLabel.alignment = ['left', 'center'];
     framesPerTaskLabel.helpTip = "The number of frames per task. Only affects image sequence output."
 
-    var framesPerTaskTextBox = framesPerTaskGroup.add("edittext", undefined, persistentFramesPerTask);
+    const framesPerTaskTextBox = framesPerTaskGroup.add("edittext", undefined, persistentFramesPerTask);
     framesPerTaskTextBox.alignment = ['fill', 'top'];
     framesPerTaskTextBox.onChange = function() {
-        var newFramesPerTaskValue = String(Math.abs(parseInt(framesPerTaskTextBox.text)));
+        const newFramesPerTaskValue = String(Math.abs(parseInt(framesPerTaskTextBox.text)));
         if (newFramesPerTaskValue == "NaN") {
             framesPerTaskTextBox.text = "10";
         }
@@ -75,18 +75,18 @@ function buildUI(thisObj) {
         if (selection == null) {
             return false;
         }
-        var renderQueueIndex = selection.renderQueueIndex;
-        var rqi = app.project.renderQueue.item(renderQueueIndex);
+        const renderQueueIndex = selection.renderQueueIndex;
+        const rqi = app.project.renderQueue.item(renderQueueIndex);
         // Currently we only support one output modele. We have sufficient error handling
         // after submit button is clicked, so this is a sufficient for now
         if (rqi.numOutputModules == 1) {
             var outputModule = rqi.outputModule(1).file;
             if (outputModule != null) {
-                var outputFile = outputModule.name;
-                var regex = new RegExp('\\b' + "%5B#####%5D" + '\\b', 'g');
-                var outputFileNameNoRegex = outputFile.replace(regex, "[#####]");
-                var lastIndex = outputFileNameNoRegex.lastIndexOf(".");
-                var extension = outputFileNameNoRegex.substring(lastIndex + 1);
+                const outputFile = outputModule.name;
+                const regex = new RegExp('\\b' + "%5B#####%5D" + '\\b', 'g');
+                const outputFileNameNoRegex = outputFile.replace(regex, "[#####]");
+                const lastIndex = outputFileNameNoRegex.lastIndexOf(".");
+                const extension = outputFileNameNoRegex.substring(lastIndex + 1);
                 return isImageOutput(extension);
             }
         }
