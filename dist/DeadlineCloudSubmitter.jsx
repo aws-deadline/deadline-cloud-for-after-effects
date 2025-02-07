@@ -1035,7 +1035,7 @@ function findJobAttachments(rootComp) {
         // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
         if (app.fonts.missingOrSubstitutedFonts != "") {
             // Warn the user that missing or substituted fonts will cause incorrect render output.
-            const error_msg = "Warning: These fonts are missing or substituted:\n\n" +
+            var error_msg = "Warning: These fonts are missing or substituted:\n\n" +
                 app.fonts.missingOrSubstitutedFonts.toString() + "\n\n" +
                 "The fonts have been substituted with different fonts by After Effects and will render as the substituted fonts instead.\n" +
                 "Please install the fonts and reopen this project to ensure correct render output.";
@@ -1069,52 +1069,44 @@ function findJobAttachments(rootComp) {
 }
 
 /**
- * Collects all fonts from the project.
+ * Collects all fonts from the project depending on the application version.
  * @return an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
  **/
 function getFontsFromFile() {
     var fontLocations = [];
     // app.project.usedFonts was introduced in 24.5. Fall back to scanning text layers if version is older
     if (dcUtil.getAEVersion() >= 24.5) {
-        var usedList = app.project.usedFonts;
-        for (var i = 0; i < usedList.length; i++) {
-            var font = usedList[i].font;
-            var fontPostScriptName = font.postScriptName;
-            var fontLocation = font.location || getLocationForFont(fontPostScriptName);
-            if (!fontLocation) {
-                adcAlert(
-                    "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
-                );
-                continue;
-            }
-            var fontNameOverride = "";
-            try {
-                if (font.isSubstitute) {
-                    var fontFileName = font.location.replace(/\\/g, "/").substr(font.location.replace(/\\/g, "/").lastIndexOf("/") + 1); 
-                    fontNameOverride = getPostScriptNameForFont(fontFileName);
-                    if (fontNameOverride) {
-                        logger.info("Changing substituted font file name from '" + fontPostScriptName + "' to '" + fontNameOverride + "'", jobTemplateHelperFile);
-                    } else {
-                        logger.warning("Couldn't get PostScript name for font: " + font.location + ", using: " + fontFileName, jobTemplateHelperFile);
-                        fontNameOverride = fontFileName;
-                    }
-                }
-            } catch (e) {
-                logger.error(e.message, jobTemplateHelperFile);
-            }
-            
-            var fontName = createFontFilename(fontLocation, fontPostScriptName, fontNameOverride);
-            if (fontName) {
-                fontLocations.push({
-                    fontName: fontName,
-                    fontLocation: fontLocation,
-                    fontPostScriptName: fontPostScriptName
-                });
-            }
-        }
+        fontLocations = getFontsFromFileUsedFonts();
     } else {
         fontLocations = getFontsFromFileLegacy();
+    }
+    return fontLocations;
+}
+
+/**
+ * Collects all fonts from the project using app.project.usedFonts.
+ * @return an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
+ **/
+function getFontsFromFileUsedFonts() {
+    var fontLocations = [];
+
+    var usedList = app.project.usedFonts;
+    for (var i = 0; i < usedList.length; i++) {
+        var font = usedList[i].font;
+        var fontPostScriptName = font.postScriptName;
+        var fontLocation = font.location || getLocationForFont(fontPostScriptName);
+        var fontNameOverrideData = getFontNameOverride(font, fontPostScriptName, fontLocation);
+        if ("error" in fontNameOverrideData) {
+            continue;
+        }
+        var fontName = createFontFilename(fontLocation, fontPostScriptName, fontNameOverrideData["fontNameOverride"]);
+        if (fontName) {
+            fontLocations.push({
+                fontName: fontName,
+                fontLocation: fontLocation,
+                fontPostScriptName: fontPostScriptName
+            });
+        }
     }
 
     return fontLocations;
@@ -1318,6 +1310,35 @@ function createFontFilename(fontLocation, fontPostScriptName, fontNameOverride) 
 }
 
 /**
+ * Collects metadata from a given font and determines if it needs an override name.
+ * @return Object containing the override name or an error
+ **/
+function getFontNameOverride(fontObject, fontPostScriptName, fontLocation, oldLocation) {
+    result = {};
+    
+    if (!fontLocation) {
+        adcAlert(
+            "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
+            "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
+        );
+        return {"error": "no font location"};
+    }
+    var fontNameOverride = "";
+    if (fontObject.isSubstitute) {
+        var fontFileName = fontObject.location.replace(/\\/g, "/").substr(fontObject.location.replace(/\\/g, "/").lastIndexOf("/") + 1); 
+        fontNameOverride = getPostScriptNameForFont(fontFileName);
+        if (fontNameOverride) {
+            logger.info("Changing substituted font file name from '" + fontPostScriptName + "' to '" + fontNameOverride + "'", jobTemplateHelperFile);
+        } else {
+            logger.warning("Couldn't get PostScript name for font: " + fontObject.location + ", using: " + fontFileName, jobTemplateHelperFile);
+            fontNameOverride = fontFileName;
+        }
+    }
+    
+    return {fontNameOverride: fontNameOverride};
+}
+
+/**
  * Collects all fonts from the project. After Effects versions < 24.5 do not have app.usedFonts.
  * @return an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
  **/
@@ -1343,35 +1364,16 @@ function getFontsFromFileLegacy() {
                 var oldLocation = "";
                 for (var k = 1; k <= sourceText.numKeys; k++) {
                     var textDocument = sourceText.keyValue(k);
-                    var fontPostScriptName = "";
-                    try {
-                        fontPostScriptName = textDocument.fontObject.postScriptName;
-                    } catch (e) {
-                        logger.error(e.message, jobTemplateHelperFile);
-                    }
-                    var fontLocation = textDocument.fontLocation || getLocationForFont(fontPostScriptName);
-                    if (oldLocation == fontLocation) {
+                    var fontPostScriptName = textDocument.fontObject.postScriptName;
+                    var fontLocation = textDocument.fontObject.location || getLocationForFont(fontPostScriptName);
+                    if (fontLocation == oldLocation) {
                         continue;
                     }
-                    if (!fontLocation) {
-                        adcAlert(
-                            "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                            "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
-                        );
+                    var fontNameOverrideData = getFontNameOverride(textDocument.fontObject, fontPostScriptName, fontLocation, oldLocation);
+                    if ("error" in fontNameOverrideData) {
                         continue;
                     }
-                    var fontNameOverride = "";
-                    if (textDocument.fontObject.isSubstitute) {
-                        fontFileName = textDocument.fontLocation.replace(/\\/g, "/").substr(textDocument.fontLocation.replace(/\\/g, "/").lastIndexOf("/") + 1); 
-                        fontNameOverride = getPostScriptNameForFont(fontFileName);
-                        if (fontNameOverride) {
-                            logger.info("Changing substituted font file name from '" + fontPostScriptName + "' to '" + fontNameOverride + "'", jobTemplateHelperFile);
-                        } else {
-                            logger.warning("Couldn't get PostScript name for font: " + textDocument.fontLocation + ", using: " + fontFileName, jobTemplateHelperFile);
-                            fontNameOverride = fontFileName;
-                        }
-                    }
-                    var fontName = createFontFilename(fontLocation, fontPostScriptName, fontNameOverride);
+                    var fontName = createFontFilename(fontLocation, fontPostScriptName, fontNameOverrideData["fontNameOverride"]);
                     if (fontName) {
                         fontLocations.push({
                             fontName: fontName,
@@ -1383,32 +1385,13 @@ function getFontsFromFileLegacy() {
                 }
             } else {
                 var textDocument = sourceText.value;
-                var fontPostScriptName = "";
-                try {
-                    fontPostScriptName = textDocument.fontObject.postScriptName;
-                } catch (e) {
-                    logger.error(e.message, jobTemplateHelperFile);
-                }
-                fontLocation = textDocument.fontLocation || getLocationForFont(fontPostScriptName);
-                if (!fontLocation) {
-                    adcAlert(
-                        "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                        "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
-                    );
+                var fontPostScriptName = textDocument.fontObject.postScriptName;
+                var fontLocation = textDocument.fontObject.location || getLocationForFont(fontPostScriptName);
+                var fontNameOverrideData = getFontNameOverride(textDocument.fontObject, fontPostScriptName, fontLocation);
+                if ("error" in fontNameOverrideData) {
                     continue;
                 }
-                fontNameOverride = "";
-                if (textDocument.fontObject.isSubstitute) {
-                    fontFileName = textDocument.fontLocation.replace(/\\/g, "/").substr(textDocument.fontLocation.replace(/\\/g, "/").lastIndexOf("/") + 1); 
-                    fontNameOverride = getPostScriptNameForFont(fontFileName);
-                    if (fontNameOverride) {
-                        logger.info("Changing substituted font file name from '" + fontPostScriptName + "' to '" + fontNameOverride + "'", jobTemplateHelperFile);
-                    } else {
-                        logger.warning("Couldn't get PostScript name for font: " + textDocument.fontLocation + ", using: " + fontFileName, jobTemplateHelperFile);
-                        fontNameOverride = fontFileName;
-                    }
-                }
-                var fontName = createFontFilename(fontLocation, fontPostScriptName, fontNameOverride);
+                var fontName = createFontFilename(fontLocation, fontPostScriptName, fontNameOverrideData["fontNameOverride"]);
                 if (fontName) {
                     fontLocations.push({
                         fontName: fontName,

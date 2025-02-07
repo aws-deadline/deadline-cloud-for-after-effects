@@ -110,30 +110,30 @@ def get_fonts(root_path):
 
     result = {}
     errors = []
+    errors_verbose = []
 
-    try:
-        for path, dirs, files in os.walk(root_path):
-            for file in files:
-                _, ext = os.path.splitext(file)
-                if ext.lower() not in FONT_EXTENSIONS:
-                    continue
+    for path, dirs, files in os.walk(root_path):
+        for file in files:
+            _, ext = os.path.splitext(file)
+            if ext.lower() not in FONT_EXTENSIONS:
+                continue
 
-                font_path = path + "/" + file
-                if sys.platform == "win32":
-                    font_path = font_path.replace("\\", "/")
+            font_path = path + "/" + file
+            if sys.platform == "win32":
+                font_path = font_path.replace("\\", "/")
 
-                font_data = {}
-                try:
-                    font_data = get_font(font_path)
-                    result.update(font_data)
-                except Exception as e:
-                    errors.append(f"{getattr(e, 'message', str(e))}: {font_path}")
-                    continue
-                if "error" in font_data:
-                    errors.append(font_data["error"])
-    except Exception as e:
-        errors.append(f"{getattr(e, 'message', str(e))}: {root_path}")
-    return result, errors
+            font_data = {}
+            try:
+                font_data = get_font(font_path)
+                result.update(font_data)
+            except Exception as e:
+                errors.append(f"{getattr(e, 'message', str(e))}: {font_path}")
+                continue
+            if "error" in font_data:
+                errors.append(font_data["error"])
+            if "error_verbose" in font_data:
+                errors_verbose.append(font_data["error_verbose"])
+    return result, errors, errors_verbose
 
 
 def search_for_fonts(search_paths):
@@ -145,6 +145,7 @@ def search_for_fonts(search_paths):
 
     fonts = {}
     errors = []
+    errors_verbose = []
     
     for search_path in search_paths:
         search_root = os.path.normpath(os.path.expandvars(os.path.expanduser(search_path)))
@@ -155,15 +156,19 @@ def search_for_fonts(search_paths):
             errors.extend(f"{getattr(e, 'message', str(e))}: {search_root}")
             continue
 
-        font_results, font_errors = get_fonts(search_root)
+        font_results, font_errors, font_errors_verbose = get_fonts(search_root)
         fonts.update(font_results)
         errors.extend(font_errors)
+        errors_verbose.extend(font_errors_verbose)
 
     if errors:
         s = "s" if len(errors) > 1 else ""
         fonts["error"] = f"Error{s} encountered during font scan:\n"
         for e in errors:
             fonts["error"] += e + "\n"
+    
+    if errors_verbose:
+        fonts["error_verbose"] = errors_verbose
 
     return fonts
 
