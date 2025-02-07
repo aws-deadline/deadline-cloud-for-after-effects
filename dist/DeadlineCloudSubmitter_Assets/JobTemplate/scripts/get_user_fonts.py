@@ -112,14 +112,6 @@ def get_fonts(root_path):
     errors = []
 
     try:
-        if not os.path.exists(root_path):
-            return result
-    except Exception as e:
-        result["error_verbose"] = traceback.format_exc()
-        errors.append(f"{getattr(e, 'message', str(e))}: {root_path}")
-        return result, errors
-
-    try:
         for path, dirs, files in os.walk(root_path):
             for file in files:
                 _, ext = os.path.splitext(file)
@@ -129,18 +121,16 @@ def get_fonts(root_path):
                 font_path = path + "/" + file
                 if sys.platform == "win32":
                     font_path = font_path.replace("\\", "/")
-                else:
-                    pass
 
                 font_data = {}
                 try:
                     font_data = get_font(font_path)
                     result.update(font_data)
-                    if "error" in font_data:
-                        errors.append(font_data["error"])
                 except Exception as e:
                     errors.append(f"{getattr(e, 'message', str(e))}: {font_path}")
                     continue
+                if "error" in font_data:
+                    errors.append(font_data["error"])
     except Exception as e:
         errors.append(f"{getattr(e, 'message', str(e))}: {root_path}")
     return result, errors

@@ -141,7 +141,7 @@ function findJobAttachments(rootComp) {
         // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
         if (app.fonts.missingOrSubstitutedFonts != "") {
             // Warn the user that missing or substituted fonts will cause incorrect render output.
-            var error_msg = "Warning: These fonts are missing or substituted:\n\n" +
+            const error_msg = "Warning: These fonts are missing or substituted:\n\n" +
                 app.fonts.missingOrSubstitutedFonts.toString() + "\n\n" +
                 "The fonts have been substituted with different fonts by After Effects and will render as the substituted fonts instead.\n" +
                 "Please install the fonts and reopen this project to ensure correct render output.";
@@ -197,7 +197,7 @@ function getFontsFromFile() {
             var fontNameOverride = "";
             try {
                 if (font.isSubstitute) {
-                    fontFileName = font.location.replace(/\\/g, "/").substr(font.location.replace(/\\/g, "/").lastIndexOf("/") + 1); 
+                    var fontFileName = font.location.replace(/\\/g, "/").substr(font.location.replace(/\\/g, "/").lastIndexOf("/") + 1); 
                     fontNameOverride = getPostScriptNameForFont(fontFileName);
                     if (fontNameOverride) {
                         logger.info("Changing substituted font file name from '" + fontPostScriptName + "' to '" + fontNameOverride + "'", jobTemplateHelperFile);
@@ -495,7 +495,7 @@ function getFontsFromFileLegacy() {
                 } catch (e) {
                     logger.error(e.message, jobTemplateHelperFile);
                 }
-                var fontLocation = textDocument.fontLocation || getLocationForFont(fontPostScriptName);
+                fontLocation = textDocument.fontLocation || getLocationForFont(fontPostScriptName);
                 if (!fontLocation) {
                     adcAlert(
                         "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
@@ -503,7 +503,7 @@ function getFontsFromFileLegacy() {
                     );
                     continue;
                 }
-                var fontNameOverride = "";
+                fontNameOverride = "";
                 if (textDocument.fontObject.isSubstitute) {
                     fontFileName = textDocument.fontLocation.replace(/\\/g, "/").substr(textDocument.fontLocation.replace(/\\/g, "/").lastIndexOf("/") + 1); 
                     fontNameOverride = getPostScriptNameForFont(fontFileName);
