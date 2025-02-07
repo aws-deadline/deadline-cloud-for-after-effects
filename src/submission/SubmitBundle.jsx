@@ -179,7 +179,7 @@ function SubmitSelection(selection, framesPerTask) {
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
 
         const outputFileNameNoRegex = getFileNameNoRegex(outputFile);
-        const extension = getFileExtension(outputFileNameNoRegex)
+        const extension = getFileExtension(outputFileNameNoRegex);
         logger.debug("extension set to: " + extension, submitBundleFile);
         const isImageSeq = isImageOutput(extension);
 
