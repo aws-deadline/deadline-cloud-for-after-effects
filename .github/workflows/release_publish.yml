@@ -1,0 +1,88 @@
+name: "Release: Publish"
+run-name: "Release: ${{ github.event.head_commit.message }}"
+
+on:
+  push:
+    branches:
+      - mainline
+    paths:
+      - CHANGELOG.md
+
+concurrency:
+  group: release
+
+jobs:
+  VerifyCommit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: VerifyAuthor
+        run: |
+          EXPECTED_AUTHOR=${{secrets.EMAIL}}
+          AUTHOR=$(git show -s --format='%ae' HEAD)
+          if [[ $AUTHOR != $EXPECTED_AUTHOR ]]; then
+            echo "ERROR: Expected author email to be '$EXPECTED_AUTHOR', but got '$AUTHOR'. Aborting release."
+            exit 1
+          else
+            echo "Verified author email ($AUTHOR) is as expected ($EXPECTED_AUTHOR)"
+          fi
+
+  Release:
+    needs: VerifyCommit
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: release
+          fetch-depth: 0
+          token: ${{ secrets.CI_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: ConfigureGit
+        run: |
+          git config --local user.email ${{ secrets.EMAIL }}
+          git config --local user.name ${{ secrets.USER }}
+      
+      - name: MergePushRelease
+        run: |
+          git merge --ff-only origin/mainline -v
+          git push origin release    
+
+      - name: PrepRelease
+        id: prep-release
+        run: |
+          COMMIT_TITLE=$(git show -s --format='%s' HEAD)
+          NEXT_SEMVER=$(python -c 'import sys, re; print(re.match(r"chore\(release\): ([0-9]+\.[0-9]+\.[0-9]+).*", sys.argv[1]).group(1))' "$COMMIT_TITLE")
+
+          # The format of the tag must match the pattern in semantic.toml -> tool.semantic_release.tag_format
+          TAG="$NEXT_SEMVER"
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "NEXT_SEMVER=$NEXT_SEMVER" >> $GITHUB_ENV
+          {
+            echo 'RELEASE_NOTES<<EOF'
+            python .github/scripts/get_latest_changelog.py
+            echo EOF
+          } >> $GITHUB_ENV
+
+      - name: PushRelease
+        env:
+          GH_TOKEN: ${{ secrets.CI_TOKEN }}
+        run: |
+          gh release create $TAG -t "$TAG" --notes "$RELEASE_NOTES"
