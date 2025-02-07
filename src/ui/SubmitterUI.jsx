@@ -82,11 +82,8 @@ function buildUI(thisObj) {
         if (rqi.numOutputModules == 1) {
             var outputModule = rqi.outputModule(1).file;
             if (outputModule != null) {
-                const outputFile = outputModule.name;
-                const regex = new RegExp('\\b' + "%5B#####%5D" + '\\b', 'g');
-                const outputFileNameNoRegex = outputFile.replace(regex, "[#####]");
-                const lastIndex = outputFileNameNoRegex.lastIndexOf(".");
-                const extension = outputFileNameNoRegex.substring(lastIndex + 1);
+                const outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
+                const extension = getFileExtension(outputFileNameNoRegex);
                 return isImageOutput(extension);
             }
         }
