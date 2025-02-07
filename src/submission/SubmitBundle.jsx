@@ -178,18 +178,13 @@ function SubmitSelection(selection, framesPerTask) {
 
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
 
-        // The image sequence output file has the pattern "[#####]" which will be printed out as
-        // "%5B#####%5D" so we need to replace them.
-        var regex = new RegExp('\\b' + "%5B#####%5D" + '\\b', 'g');
-        var outputFileNameNoRegex = outputFile.replace(regex, "[#####]");
-        // Split the file name to extract the file name and extension
-        // Create lastIndex and regex to remove unwanted parts in the name.
-        var lastIndex = outputFileNameNoRegex.lastIndexOf(".");
-        var extension = outputFileNameNoRegex.substring(lastIndex + 1);
+        const outputFileNameNoRegex = getFileNameNoRegex(outputFile);
+        const extension = getFileExtension(outputFileNameNoRegex);
         logger.debug("extension set to: " + extension, submitBundleFile);
+        const isImageSeq = isImageOutput(extension);
+
         var sanitizedOutputFileName = dcUtil.removePercentageFromFileName(outputFileNameNoRegex);
         logger.debug("sanitizedOutputFileName is " + sanitizedOutputFileName, submitBundleFile);
-        var isImageSeq = isImageOutput(extension);
 
         generateAssetReferences(bundlePath, sanitizedOutputFolder);
         generateParameterValues(bundlePath, sanitizedOutputFolder, sanitizedOutputFileName, isImageSeq);
