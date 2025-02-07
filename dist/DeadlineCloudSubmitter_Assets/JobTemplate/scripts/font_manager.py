@@ -133,12 +133,19 @@ def install_font(src_path, scope=INSTALL_SCOPE_USER):
             registry_scope = winreg.HKEY_CURRENT_USER
         dst_path = os.path.join(dst_dir, os.path.basename(src_path))
 
-        # Copy the font to the Windows Fonts folder
-        shutil.copy(src_path, dst_path)
+        # Check if the font is already present
+        if os.path.exists(dst_path) and (os.stat(src_path).st_size == os.stat(dst_path).st_size):
+            logger.info(f"Font already present: {dst_path}")
+        else:
+            # Copy the font to the destination Fonts folder
+            shutil.copy(src_path, dst_path)
 
         # Load the font in the current session, remove font when loading fails
         if not gdi32.AddFontResourceW(dst_path):
-            os.remove(dst_path)
+            try:
+                os.remove(dst_path)
+            except Exception as e:
+                logger.error(f"Couldn't remove: {dst_path}  {e.message}")
             raise WindowsError(f'AddFontResource failed to load "{src_path}"')
 
         # Notify running programs
@@ -177,13 +184,24 @@ def uninstall_font(src_path, scope=INSTALL_SCOPE_USER):
 
         # Remove the fontname/filename from the registry
         fontname = get_font_name(dst_path)
-
-        with winreg.OpenKey(registry_scope, FONTS_REG_PATH, 0, access= winreg.KEY_SET_VALUE) as key:
-            winreg.DeleteValue(key, fontname)
+        
+        try:
+            with winreg.OpenKey(registry_scope, FONTS_REG_PATH, 0, access= winreg.KEY_SET_VALUE) as key:
+                winreg.DeleteValue(key, fontname)
+        except FileNotFoundError as e:
+            # The entry was already deleted
+            logger.warning(f"Couldn't remove {dst_path}: {getattr(e, 'message', getattr(e, 'args', 'unknown FileNotFoundError'))}")
+        except:
+            raise
 
         # Unload the font in the current session
         if not gdi32.RemoveFontResourceW(dst_path):
-            os.remove(dst_path)
+            try:
+                os.remove(dst_path)
+            except PermissionError as e:
+                logger.warning(f"Couldn't remove {dst_path}: {getattr(e, 'message', getattr(e, 'args', 'unknown FileNotFoundError'))}")
+            except Exception:
+                raise
             raise WindowsError(f'RemoveFontResourceW failed to load "{src_path}"')
 
         if os.path.exists(dst_path):

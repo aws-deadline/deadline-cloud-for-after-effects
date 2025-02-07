@@ -734,18 +734,18 @@ var _DC_LOGGER_DEFAULT_BACKUP_COUNT = 5
 function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
     /**
      * Basic logger implementation with file rotation based on byte size.
-     * 
+     *
      * Rollover implementation is based on Python's RotatingFileHandler for behavioural compatibility
      * with the Python-based submitters.
      *
-     * The system will save old log files by appending the extensions ‘.1’, ‘.2’ etc., to the filename. 
-     * For example, with a backupCount of 5 and a base file name of app.log, you would get 
-     * app.log, app.log.1, app.log.2, up to app.log.5. The file being written to is always app.log. 
-     * When this file is filled, it is closed and renamed to app.log.1, 
+     * The system will save old log files by appending the extensions ‘.1’, ‘.2’ etc., to the filename.
+     * For example, with a backupCount of 5 and a base file name of app.log, you would get
+     * app.log, app.log.1, app.log.2, up to app.log.5. The file being written to is always app.log.
+     * When this file is filled, it is closed and renamed to app.log.1,
      * and if files app.log.1, app.log.2, etc. exist, then they are renamed to app.log.2, app.log.3 etc. respectively.
-     * 
+     *
      * If backupCount or maxBytes are zero or less, rollover behaviour is disabled.
-     * 
+     *
      * @param {string} logFileName - Log file name.
      * @param {string} logDirectoryPath - Log directory path.
      * @param {int} maxBytes - Number of bytes before a file rotation is performed.
@@ -774,7 +774,7 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
     function _fileRotate() {
         /* Performs a file rotation if the size of the active log file is higher
          * than maxBytes.
-         * 
+         *
          * If maxBytes is zero or less, no file rotation will ever occur.
          */
         if (maxBytes <= 0) { // If maxBytes is invalid, don't rotate.
@@ -1034,21 +1034,29 @@ function findJobAttachments(rootComp) {
         // A substituted font is a font that was already missing when the project is opened.
         // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
         if (app.fonts.missingOrSubstitutedFonts != "") {
-            adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString(), false);
+            // Warn the user that missing or substituted fonts will cause incorrect render output.
+            var error_msg = "Warning: These fonts are missing or substituted:\n\n" +
+                app.fonts.missingOrSubstitutedFonts.toString() + "\n\n" +
+                "The fonts have been substituted with different fonts by After Effects and will render as the substituted fonts instead.\n" +
+                "Please install the fonts and reopen this project to ensure correct render output.";
+            if (app.fonts.missingOrSubstitutedFonts.length == 1) {
+                error_msg = "Warning: This font is missing or substituted:\n\n" +
+                    app.fonts.missingOrSubstitutedFonts.toString() + "\n\n" +
+                    "The font has been substituted with a different font by After Effects and will render as the substituted font instead.\n" +
+                    "Please install the font and reopen this project to ensure correct render output.";
+            }
+                
+            adcAlert(error_msg, false);
         }
-        // Remove missing or substituted fonts from fontsInProject to prevent incorrect render output.
         // Build a new array containing only attachable fonts.
         var fontsInProjectFiltered = [];
-        for (var i = 0; i < fontsInProject.length; i++) {
-            var attachFont = true;
-            // If the font's fontPostScriptName contains a missing or substituted font name, don't attach it
+        for (i = 0; i < fontsInProject.length; i++) {
+            // If the font's fontPostScriptName contains a missing or substituted font name, log a warning
             if (app.fonts.missingOrSubstitutedFonts.toString().indexOf(fontsInProject[i].fontPostScriptName) !== -1) {
-                logger.warning("Not attaching missing or substituted font: " + fontsInProject[i].fontPostScriptName, jobTemplateHelperFile);
-                attachFont = false;
+                logger.warning("Missing or substituted font: " + fontsInProject[i].fontPostScriptName, jobTemplateHelperFile);
             }
-            if (attachFont) {
-                fontsInProjectFiltered.push(fontsInProject[i]);
-            }
+            // Always attach the font
+            fontsInProjectFiltered.push(fontsInProject[i]);
         }
         // Formatting collected fonts
         var fontReferences = generateFontReferences(fontsInProjectFiltered);
@@ -1080,7 +1088,23 @@ function getFontsFromFile() {
                 );
                 continue;
             }
-            var fontName = createFontFilename(fontLocation, fontPostScriptName);
+            var fontNameOverride = "";
+            try {
+                if (font.isSubstitute) {
+                    fontFileName = font.location.replace(/\\/g, "/").substr(font.location.replace(/\\/g, "/").lastIndexOf("/") + 1); 
+                    fontNameOverride = getPostScriptNameForFont(fontFileName);
+                    if (fontNameOverride) {
+                        logger.info("Changing substituted font file name from '" + fontPostScriptName + "' to '" + fontNameOverride + "'", jobTemplateHelperFile);
+                    } else {
+                        logger.warning("Couldn't get PostScript name for font: " + font.location + ", using: " + fontFileName, jobTemplateHelperFile);
+                        fontNameOverride = fontFileName;
+                    }
+                }
+            } catch (e) {
+                logger.error(e.message, jobTemplateHelperFile);
+            }
+            
+            var fontName = createFontFilename(fontLocation, fontPostScriptName, fontNameOverride);
             if (fontName) {
                 fontLocations.push({
                     fontName: fontName,
@@ -1117,7 +1141,7 @@ function getPythonExecutable() {
         try {
             outputWhere = system.callSystem(findCommand);
             if (!outputWhere || outputWhere.indexOf(findSuccess) === -1) {
-                logger.warning("Couldn't find Python with executable name '" + pythonExecutable + "'");
+                logger.warning("Couldn't find Python with executable name '" + pythonExecutable + "'", jobTemplateHelperFile);
                 continue;
             }
         } catch (e) {
@@ -1223,10 +1247,35 @@ function getLocationForFont(fontPostScriptName) {
 }
 
 /**
+ * Gets the PostScript name of an installed font whose file name is fontFileName.
+ * @return The PostScript name of the font or null if the font was not found
+ **/
+function getPostScriptNameForFont(fontFileName) {
+    var fontPostScriptName = null;
+    try {
+        // Get user-installed fonts
+        var fontPaths = getFontPaths();
+        if (!fontPaths) {
+            return null;
+        }
+        for (var path in fontPaths) {
+            if (path.indexOf(fontFileName) !== -1) {
+                // Found name that matches the given font's path
+                fontPostScriptName = fontPaths[path]["postscript_name"];
+                break;
+            }
+        }
+    } catch (e) {
+        logger.error(e.message, jobTemplateHelperFile);
+    }
+    return fontPostScriptName;
+}
+
+/**
  * Generates a font filename based on the font name and the extension of the font filename.
  * @return a string with the font filename
  **/
-function createFontFilename(fontLocation, fontPostScriptName) {
+function createFontFilename(fontLocation, fontPostScriptName, fontNameOverride) {
     var fileExtension = "";
     var lastDotIndex = fontLocation.lastIndexOf('.');
     var extensionRegex = /\.[a-zA-Z]+$/;
@@ -1258,6 +1307,11 @@ function createFontFilename(fontLocation, fontPostScriptName) {
 
     if (validExtension) {
         var fontName = fontPostScriptName + fileExtension;
+    }
+
+    if (fontNameOverride) {
+        logger.warning("Overriding font file name from '" + fontPostScriptName + "' to '" + fontNameOverride + "'", jobTemplateHelperFile);
+        fontName = fontNameOverride;
     }
 
     return fontName;
@@ -1306,7 +1360,18 @@ function getFontsFromFileLegacy() {
                         );
                         continue;
                     }
-                    var fontName = createFontFilename(fontLocation, fontPostScriptName);
+                    var fontNameOverride = "";
+                    if (textDocument.fontObject.isSubstitute) {
+                        fontFileName = textDocument.fontLocation.replace(/\\/g, "/").substr(textDocument.fontLocation.replace(/\\/g, "/").lastIndexOf("/") + 1); 
+                        fontNameOverride = getPostScriptNameForFont(fontFileName);
+                        if (fontNameOverride) {
+                            logger.info("Changing substituted font file name from '" + fontPostScriptName + "' to '" + fontNameOverride + "'", jobTemplateHelperFile);
+                        } else {
+                            logger.warning("Couldn't get PostScript name for font: " + textDocument.fontLocation + ", using: " + fontFileName, jobTemplateHelperFile);
+                            fontNameOverride = fontFileName;
+                        }
+                    }
+                    var fontName = createFontFilename(fontLocation, fontPostScriptName, fontNameOverride);
                     if (fontName) {
                         fontLocations.push({
                             fontName: fontName,
@@ -1332,7 +1397,18 @@ function getFontsFromFileLegacy() {
                     );
                     continue;
                 }
-                var fontName = createFontFilename(fontLocation, fontPostScriptName);
+                var fontNameOverride = "";
+                if (textDocument.fontObject.isSubstitute) {
+                    fontFileName = textDocument.fontLocation.replace(/\\/g, "/").substr(textDocument.fontLocation.replace(/\\/g, "/").lastIndexOf("/") + 1); 
+                    fontNameOverride = getPostScriptNameForFont(fontFileName);
+                    if (fontNameOverride) {
+                        logger.info("Changing substituted font file name from '" + fontPostScriptName + "' to '" + fontNameOverride + "'", jobTemplateHelperFile);
+                    } else {
+                        logger.warning("Couldn't get PostScript name for font: " + textDocument.fontLocation + ", using: " + fontFileName, jobTemplateHelperFile);
+                        fontNameOverride = fontFileName;
+                    }
+                }
+                var fontName = createFontFilename(fontLocation, fontPostScriptName, fontNameOverride);
                 if (fontName) {
                     fontLocations.push({
                         fontName: fontName,

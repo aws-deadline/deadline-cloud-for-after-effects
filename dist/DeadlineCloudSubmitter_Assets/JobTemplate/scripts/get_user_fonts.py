@@ -14,16 +14,9 @@ try:
 except ModuleNotFoundError:
     error_msg = "Error: The fonttools module was not found.\n"
     error_msg += "Please install fonttools by running:\n\npip install fonttools"
-    print(json.dumps({
-        "error": error_msg
-    }))
-    sys.exit(1)
+    error_exit(error_msg)
 except Exception as e:
-    print(json.dumps({
-        "error": traceback.format_exc()
-    }))
-    sys.exit(1)
-
+    error_exit(traceback.format_exc())
 
 # Font locations to search on Windows
 SEARCH_PATHS = [
@@ -52,6 +45,13 @@ TTF_FULL_NAME = 4
 TTF_POSTSCRIPT_NAME = 6
 
 
+def error_exit(message, errorlevel=1):
+    print(json.dumps({
+        "error": message
+    }))
+    sys.exit(errorlevel)
+
+
 def get_font(font_path):
     """
     Collect font metadata from the given font file.
@@ -62,9 +62,19 @@ def get_font(font_path):
 
     try:
         t = ttLib.TTFont(font_path)
+    except ttLib.TTLibError as e:
+        # Not a TrueType or OpenType font (bad sfntVersion)
+        result["error_verbose"] = traceback.format_exc()
+        if "bad sfntVersion" in str(e):
+            # These errors are very common.
+            # Don't show a UI warning but report the error in "error_verbose"
+            result["error_verbose"] = traceback.format_exc()
+        else:
+            result["error"] = f"{e}: {font_path}"
+        return result
     except Exception as e:
-        if verbose:
-            print(traceback.format_exc())
+        result["error_verbose"] = traceback.format_exc()
+        result["error"] = f"{getattr(e, 'message', str(e))}: {font_path}"
         return result
 
     # Collect name metadata from the name table
@@ -73,8 +83,8 @@ def get_font(font_path):
     try:
         raw_table = {i:str(names_table[i]) for i in range(0, len(names_table))}
     except Exception as e:
-        if verbose:
-            print(traceback.format_exc())
+        result["error_verbose"] = traceback.format_exc()
+        result["error"] = f"{getattr(e, 'message', str(e))}: {font_path}"
         return result
 
     try:
@@ -86,28 +96,28 @@ def get_font(font_path):
             "raw": raw_table
         }
     except Exception as e:
-        if verbose:
-            print(traceback.format_exc())
+        result["error"] = f"{getattr(e, 'message', str(e))}: {font_path}"
         return result
 
     return result
 
 
-def get_fonts(root_path, verbose=None):
+def get_fonts(root_path):
     """
     Collect font metadata from all font files under the specified root_path.
-    Returns a dictionary with file paths as the keys.
+    Returns a dictionary with file paths as the keys and a list of errors encountered.
     """
 
     result = {}
+    errors = []
 
     try:
         if not os.path.exists(root_path):
             return result
     except Exception as e:
-        if verbose:
-            print(traceback.format_exc())
-        return result
+        result["error_verbose"] = traceback.format_exc()
+        errors.append(f"{getattr(e, 'message', str(e))}: {root_path}")
+        return result, errors
 
     try:
         for path, dirs, files in os.walk(root_path):
@@ -122,24 +132,21 @@ def get_fonts(root_path, verbose=None):
                 else:
                     pass
 
-                if verbose:
-                    print(f"font_path: {font_path}")
-
                 font_data = {}
                 try:
                     font_data = get_font(font_path)
                     result.update(font_data)
+                    if "error" in font_data:
+                        errors.append(font_data["error"])
                 except Exception as e:
-                    if verbose:
-                        print(traceback.format_exc())
+                    errors.append(f"{getattr(e, 'message', str(e))}: {font_path}")
                     continue
     except Exception as e:
-        if verbose:
-            print(traceback.format_exc())
-    return result
+        errors.append(f"{getattr(e, 'message', str(e))}: {root_path}")
+    return result, errors
 
 
-def search_for_fonts(search_paths, verbose=None):
+def search_for_fonts(search_paths):
     """
     Searches the given paths recursively for font files and collects
     their metadata.
@@ -147,33 +154,39 @@ def search_for_fonts(search_paths, verbose=None):
     """
 
     fonts = {}
-
+    errors = []
+    
     for search_path in search_paths:
         search_root = os.path.normpath(os.path.expandvars(os.path.expanduser(search_path)))
         try:
             if not os.path.exists(search_root):
                 continue
         except Exception as e:
-            if verbose:
-                print(traceback.format_exc())
+            errors.extend(f"{getattr(e, 'message', str(e))}: {search_root}")
             continue
 
-        if verbose:
-            print(f"search_root: {search_root}")
-
-        font_results = get_fonts(search_root, verbose=verbose)
+        font_results, font_errors = get_fonts(search_root)
         fonts.update(font_results)
+        errors.extend(font_errors)
+
+    if errors:
+        s = "s" if len(errors) > 1 else ""
+        fonts["error"] = f"Error{s} encountered during font scan:\n"
+        for e in errors:
+            fonts["error"] += e + "\n"
 
     return fonts
 
 
 if __name__ == "__main__":
-    verbose = False
     result = []
     try:
-        result = search_for_fonts(SEARCH_PATHS, verbose=verbose)
+        result = search_for_fonts(SEARCH_PATHS)
         print(json.dumps(result))
     except Exception as e:
-        if verbose:
-            print(traceback.format_exc())
+        result = {
+            "error": f"{getattr(e, 'message', str(e))}",
+            "error_verbose": traceback.format_exc()
+        }
+        print(json.dumps(result))
 

@@ -10,6 +10,10 @@ import sys
 import os
 
 
+FATAL_WARNINGS = [
+    # "Project has missing fonts"
+]
+
 def main():
     parser = argparse.ArgumentParser(description="After Effects Render Script")
     parser.add_argument("project", type=str, help="Project file path")
@@ -92,7 +96,7 @@ def main():
                 print(f"After Effects Warning: {line.strip()}", file=sys.stderr)
 
                 # Some warnings should be treated as errors, i.e. a fatal warning
-                if "Project has missing fonts" in line:
+                if any([w in line for w in FATAL_WARNINGS]):
                     print(f"After Effects Fatal Warning: {line.strip()}", file=sys.stderr)
                     sys.exit(1)
 
