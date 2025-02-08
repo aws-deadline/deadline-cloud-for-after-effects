@@ -1547,6 +1547,17 @@ function SubmitSelection(selection, framesPerTask) {
     var dependencies = findJobAttachments(rqi.comp); // list of filenames
     var compName = dcUtil.removeIllegalCharacters(rqi.comp.name);
 
+    if (app.fonts.missingOrSubstitutedFonts != "") {
+        var submitConfirmation = confirm(
+            "The selected composition contains missing or substituted fonts:\n\n" +
+            compName + "\n\n" +
+            "Are you sure you want to submit this composition?"
+        );
+    }
+    if (!submitConfirmation) {
+        return;
+    }
+
     function generateAssetReferences(bundlePath, sanitizedOutputFolder) {
         // Write the asset_references.json file
         var jobAttachmentsContents = jobAttachmentsJson(
