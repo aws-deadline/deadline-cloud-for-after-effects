@@ -53,26 +53,49 @@ function buildUI(thisObj) {
     framesPerTaskGroup.orientation = "row";
     framesPerTaskGroup.alignment = ['fill', 'top'];
     framesPerTaskGroup.alignChildren = ['left', 'top'];
+
     var framesPerTaskLabel = framesPerTaskGroup.add("statictext", undefined, "Frames per task");
     framesPerTaskLabel.alignment = ['left', 'center'];
     framesPerTaskLabel.helpTip = "The number of frames per task. Only affects image sequence output."
-    var framesPerTaskValue = framesPerTaskGroup.add("edittext", undefined, persistentFramesPerTask);
 
-    framesPerTaskValue.alignment = ['fill', 'top'];
-    framesPerTaskValue.onChange = function() {
-        var newFramesPerTaskValue = String(Math.abs(parseInt(framesPerTaskValue.text)));
+    const framesPerTaskTextBox = framesPerTaskGroup.add("edittext", undefined, "");
+    framesPerTaskTextBox.alignment = ['fill', 'top'];
+    framesPerTaskTextBox.helpTip = framesPerTaskLabel.helpTip;
+    framesPerTaskTextBox.onChange = function() {
+        const newFramesPerTaskValue = String(Math.abs(parseInt(framesPerTaskTextBox.text)));
         if (newFramesPerTaskValue == "NaN") {
-            framesPerTaskValue.text = "10";
+            framesPerTaskTextBox.text = persistentFramesPerTask;
         }
         if (Math.abs(parseInt(newFramesPerTaskValue) > 9999)) {
-            framesPerTaskValue.text = "9999";
+            framesPerTaskTextBox.text = "9999";
         }
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskValue.text);
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskTextBox.text);
+    }
+
+    function isFramesPerTaskEnabled(selection) {
+        if (selection == null) {
+            return false;
+        }
+        const renderQueueIndex = selection.renderQueueIndex;
+        const rqi = app.project.renderQueue.item(renderQueueIndex);
+        // Currently we only support one output modele. We have sufficient error handling
+        // after submit button is clicked, so this is a sufficient for now
+        if (rqi.numOutputModules == 1) {
+            var outputModule = rqi.outputModule(1).file;
+            if (outputModule != null) {
+                const outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
+                const extension = getFileExtension(outputFileNameNoRegex);
+                return isImageOutput(extension);
+            }
+        }
+        // Default to true so that we don't block any customers in case we can't
+        // sufficient verify whether they're submitting an image sequence or not
+        return true;
     }
 
     var submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
-        SubmitSelection(list.selection, parseInt(framesPerTaskValue.text));
+        SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text));
         list.selection = null;
     }
     submitButton.alignment = 'right';
@@ -117,9 +140,20 @@ function buildUI(thisObj) {
         }
         list = newList;
         list.onChange = function() {
+            framesPerTaskTextBox.enabled = isFramesPerTaskEnabled(list.selection);
+            // If no selection, update list and set text box blank. But if there's a selection
+            // and frames per task is disabled, fill textbox with default start-end frame to show that
+            // no image chunking will occur. But if there is a selection and frames per task is enabled,
+            // set it to their default value.
             if (list.selection == null) {
                 updateList();
+                framesPerTaskTextBox.text = "";
+            } else if (!framesPerTaskTextBox.enabled) {
+                framesPerTaskTextBox.text = list.selection.subItems[1].text;
+            } else {
+                framesPerTaskTextBox.text = persistentFramesPerTask;
             }
+
             submitButton.enabled = list.selection != null;
             submitButton.active = false;
             submitButton.active = true;
@@ -127,15 +161,12 @@ function buildUI(thisObj) {
         list.selection = null;
     }
 
-    updateList()
+    updateList();
+    framesPerTaskTextBox.enabled = isFramesPerTaskEnabled(list.selection);
 
     refreshButton.onClick = function() {
         updateList();
     }
-
-    submitterPanel.addEventListener('click', function() {
-        updateList();
-    }, true);
 
     submitterPanel.layout.layout(true);
 
