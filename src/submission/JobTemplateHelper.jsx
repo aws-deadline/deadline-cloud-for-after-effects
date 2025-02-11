@@ -156,13 +156,13 @@ function findJobAttachments(rootComp) {
         }
         // Build a new array containing only attachable fonts.
         var fontsInProjectFiltered = [];
-        for (i = 0; i < fontsInProject.length; i++) {
+        for (var f = 0; f < fontsInProject.length; f++) {
             // If the font's fontPostScriptName contains a missing or substituted font name, log a warning
-            if (app.fonts.missingOrSubstitutedFonts.toString().indexOf(fontsInProject[i].fontPostScriptName) !== -1) {
-                logger.warning("Missing or substituted font: " + fontsInProject[i].fontPostScriptName, jobTemplateHelperFile);
+            if (app.fonts.missingOrSubstitutedFonts.toString().indexOf(fontsInProject[f].fontPostScriptName) !== -1) {
+                logger.warning("Missing or substituted font: " + fontsInProject[f].fontPostScriptName, jobTemplateHelperFile);
             }
             // Always attach the font
-            fontsInProjectFiltered.push(fontsInProject[i]);
+            fontsInProjectFiltered.push(fontsInProject[f]);
         }
         // Formatting collected fonts
         var fontReferences = generateFontReferences(fontsInProjectFiltered);
@@ -195,13 +195,13 @@ function getFontsFromFile() {
  **/
 function getFontsFromFileUsedFonts() {
     var fontLocations = [];
-
+    var fontPaths = getFontPaths();
     var usedList = app.project.usedFonts;
     for (var i = 0; i < usedList.length; i++) {
         var font = usedList[i].font;
         var fontPostScriptName = font.postScriptName;
-        var fontLocation = font.location || getLocationForFont(fontPostScriptName);
-        var fontNameOverrideData = getFontNameOverride(font, fontPostScriptName, fontLocation);
+        var fontLocation = font.location || getLocationForFont(fontPaths, fontPostScriptName);
+        var fontNameOverrideData = getFontNameOverride(fontPaths, font, fontPostScriptName, fontLocation);
         if ("error" in fontNameOverrideData) {
             continue;
         }
@@ -323,14 +323,13 @@ function getFontPaths() {
  * Gets the path to a user-installed font whose PostScript name is fontPostScriptName.
  * @return The path to that font file or null if the path was not found
  **/
-function getLocationForFont(fontPostScriptName) {
+function getLocationForFont(fontPaths, fontPostScriptName) {
+    if (!fontPaths) {
+        logger.error("fontPaths are required");
+        return null;
+    }
     var fontPath = null;
     try {
-        // Get user-installed fonts
-        var fontPaths = getFontPaths();
-        if (!fontPaths) {
-            return null;
-        }
         for (var path in fontPaths) {
             if (fontPaths[path]["postscript_name"] == fontPostScriptName) {
                 // Found path that matches the given font's name
@@ -348,14 +347,13 @@ function getLocationForFont(fontPostScriptName) {
  * Gets the PostScript name of an installed font whose file name is fontFileName.
  * @return The PostScript name of the font or null if the font was not found
  **/
-function getPostScriptNameForFont(fontFileName) {
+function getPostScriptNameForFont(fontPaths, fontFileName) {
+    if (!fontPaths) {
+        logger.error("fontPaths are required");
+        return null;
+    }
     var fontPostScriptName = null;
     try {
-        // Get user-installed fonts
-        var fontPaths = getFontPaths();
-        if (!fontPaths) {
-            return null;
-        }
         for (var path in fontPaths) {
             if (path.indexOf(fontFileName) !== -1) {
                 // Found name that matches the given font's path
@@ -419,7 +417,7 @@ function createFontFilename(fontLocation, fontPostScriptName, fontNameOverride) 
  * Collects metadata from a given font and determines if it needs an override name.
  * @return Object containing the override name or an error
  **/
-function getFontNameOverride(fontObject, fontPostScriptName, fontLocation, oldLocation) {
+function getFontNameOverride(fontPaths, fontObject, fontPostScriptName, fontLocation) {
     result = {};
     
     if (!fontLocation) {
@@ -432,7 +430,7 @@ function getFontNameOverride(fontObject, fontPostScriptName, fontLocation, oldLo
     var fontNameOverride = "";
     if (fontObject.isSubstitute) {
         var fontFileName = fontObject.location.replace(/\\/g, "/").substr(fontObject.location.replace(/\\/g, "/").lastIndexOf("/") + 1); 
-        fontNameOverride = getPostScriptNameForFont(fontFileName);
+        fontNameOverride = getPostScriptNameForFont(fontPaths, fontFileName);
         if (fontNameOverride) {
             logger.info("Changing substituted font file name from '" + fontPostScriptName + "' to '" + fontNameOverride + "'", jobTemplateHelperFile);
         } else {
@@ -450,6 +448,7 @@ function getFontNameOverride(fontObject, fontPostScriptName, fontLocation, oldLo
  **/
 function getFontsFromFileLegacy() {
     var fontLocations = [];
+    var fontPaths = getFontPaths();
     var items = app.project.items;
     for (var i = items.length; i >= 1; i--) {
         var item = app.project.item(i);
@@ -471,11 +470,11 @@ function getFontsFromFileLegacy() {
                 for (var k = 1; k <= sourceText.numKeys; k++) {
                     var textDocument = sourceText.keyValue(k);
                     var fontPostScriptName = textDocument.fontObject.postScriptName;
-                    var fontLocation = textDocument.fontObject.location || getLocationForFont(fontPostScriptName);
+                    var fontLocation = textDocument.fontObject.location || getLocationForFont(fontPaths, fontPostScriptName);
                     if (fontLocation == oldLocation) {
                         continue;
                     }
-                    var fontNameOverrideData = getFontNameOverride(textDocument.fontObject, fontPostScriptName, fontLocation, oldLocation);
+                    var fontNameOverrideData = getFontNameOverride(fontPaths, textDocument.fontObject, fontPostScriptName, fontLocation);
                     if ("error" in fontNameOverrideData) {
                         continue;
                     }
@@ -492,8 +491,8 @@ function getFontsFromFileLegacy() {
             } else {
                 var textDocument = sourceText.value;
                 var fontPostScriptName = textDocument.fontObject.postScriptName;
-                var fontLocation = textDocument.fontObject.location || getLocationForFont(fontPostScriptName);
-                var fontNameOverrideData = getFontNameOverride(textDocument.fontObject, fontPostScriptName, fontLocation);
+                var fontLocation = textDocument.fontObject.location || getLocationForFont(fontPaths, fontPostScriptName);
+                var fontNameOverrideData = getFontNameOverride(fontPaths, textDocument.fontObject, fontPostScriptName, fontLocation);
                 if ("error" in fontNameOverrideData) {
                     continue;
                 }

@@ -158,7 +158,7 @@ def install_font(src_path, scope=INSTALL_SCOPE_USER):
         fontname = get_font_name(dst_path)
 
         # Creates registry if it doesn't exist, opens when it does exist
-        with winreg.CreateKeyEx(registry_scope, FONTS_REG_PATH, 0, access= winreg.KEY_SET_VALUE) as key:
+        with winreg.CreateKeyEx(registry_scope, FONTS_REG_PATH, 0, access=winreg.KEY_SET_VALUE) as key:
             winreg.SetValueEx(key, fontname, 0, winreg.REG_SZ, filename)
     except Exception:
         return False, traceback.format_exc()
@@ -186,7 +186,7 @@ def uninstall_font(src_path, scope=INSTALL_SCOPE_USER):
         fontname = get_font_name(dst_path)
         
         try:
-            with winreg.OpenKey(registry_scope, FONTS_REG_PATH, 0, access= winreg.KEY_SET_VALUE) as key:
+            with winreg.OpenKey(registry_scope, FONTS_REG_PATH, 0, access=winreg.KEY_SET_VALUE) as key:
                 winreg.DeleteValue(key, fontname)
         except FileNotFoundError as e:
             # The entry was already deleted
