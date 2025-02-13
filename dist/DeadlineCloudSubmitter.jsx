@@ -1101,7 +1101,7 @@ function getFontsFromFile() {
  * @return String with executable name corresponding to Python 3, or an empty string if not found
  **/
 function getPythonExecutable() {
-    var pythonExecutables = ["python3", "python"];
+    var pythonExecutables = ["python3", "python", "py"];
 
     for (var i = 0; i < pythonExecutables.length; i++) {
         // Search for python executable
