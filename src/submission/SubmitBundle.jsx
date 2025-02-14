@@ -207,7 +207,7 @@ function SubmitSelection(selection, framesPerTask) {
 
     // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
     var cmd =
-        'deadline bundle gui-submit "' + bundle.fsName + "\" --output json --install-gui --submitter-name \"After Effects\"";
+        'deadline bundle gui-submit \\\"' + bundle.fsName + '\\\" --output json --install-gui --submitter-name \"After Effects\"";
     var logFile = new File(Folder.temp.fsName + "/submitter_output.log");
     logFile.open("w"); // Erase contents of active log file
     logFile.close();
@@ -237,13 +237,6 @@ function SubmitSelection(selection, framesPerTask) {
         // the PATH correctly.
         var shellPath = $.getenv("SHELL") || "/bin/bash";
         submitScriptContents = shellPath + " -i -c '" + cmd + "'";
-        // var tempBashFile = new File(
-        //     Folder.temp.fsName + "/DeadlineCloudAESubmission.sh"
-        // );
-        // tempBatFile.open("w");
-        // tempBatFile.writeln("#!/bin/bash");
-        // tempBatFile.writeln(submitScriptContents);
-        // tempBatFile.close();
         output = system.callSystem("osascript -e 'tell application \"Terminal\" to do script \" " + submitScriptContents + "\"'" + '-e "end tell" > /dev/null');
     }
     if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
