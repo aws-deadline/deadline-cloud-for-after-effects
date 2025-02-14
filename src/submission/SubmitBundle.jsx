@@ -207,7 +207,7 @@ function SubmitSelection(selection, framesPerTask) {
 
     // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
     var cmd =
-        'deadline bundle gui-submit "' + bundle.fsName + "\" --output json --install-gui";
+        'deadline bundle gui-submit "' + bundle.fsName + "\" --output json --install-gui --submitter-name \"After Effects\"";
     var logFile = new File(Folder.temp.fsName + "/submitter_output.log");
     logFile.open("w"); // Erase contents of active log file
     logFile.close();
