@@ -237,7 +237,14 @@ function SubmitSelection(selection, framesPerTask) {
         // the PATH correctly.
         var shellPath = $.getenv("SHELL") || "/bin/bash";
         submitScriptContents = shellPath + " -i -c '" + cmd + "'";
-        output = system.callSystem(submitScriptContents + ' || echo "\nERROR CODE: $?"');
+        // var tempBashFile = new File(
+        //     Folder.temp.fsName + "/DeadlineCloudAESubmission.sh"
+        // );
+        // tempBatFile.open("w");
+        // tempBatFile.writeln("#!/bin/bash");
+        // tempBatFile.writeln(submitScriptContents);
+        // tempBatFile.close();
+        output = system.callSystem("osascript -e 'tell application \"Terminal\" to do script \" " + submitScriptContents + "\"'" + '-e "end tell" > /dev/null');
     }
     if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
         adcAlert(
