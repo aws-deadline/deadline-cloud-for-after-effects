@@ -81,8 +81,8 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 1. Open your Terminal and run the following scripts in your command line: `where python` and `where python3`. If you're not getting any results, this means you need to install Python for your workstation.
 1. If you do not have `python3` CLI installed but you have `python`, run `python --version` to check if you have Python 3.9 or higher. If not, please install Python 3.9 or higher first and add it to your path.
 1. Once you are getting results from the version check and where check, then check which python executable is actively being used. Run `which python`, `which python3`. If you're not getting any results, you'll need to add your python CLI to your zsh $PATH.
-1. Before adding Python to your path, you want to ensure you add the `bin` folder that is located where your python and your deadline CLI is installed to just in case you have multiple Pythons installed. Run `which deadline` and match its path to the Python path.
-1. Finally, add the `bin` folder containing Python CLI to your path by editing `~/.zshrc` (and `~/.bashrc` if applicable) and updating the PATH. For example, if your Python and Deadline CLI are under `/Library/Frameworks/Python.framework/Versions/3.13/bin`, add the following code to your `~/.zshrc` file at the end of the file so it gets final priority when the PATH is evaluated.
+1. We must also ensure you're adding the Python that was used to install Deadline CLI. Run `python -m pip list` and/or `python3 -m pip list` to verify this and add to $PATH$ whichever python applies.
+1. Finally, add the `bin` folder containing Python CLI to your path by editing `~/.zshrc` (and `~/.bashrc` if applicable) and updating the $PATH. For example, if your Python and Deadline CLI are under `/Library/Frameworks/Python.framework/Versions/3.13/bin`, add the following code to your `~/.zshrc` file at the end of the file so it gets final priority when the $PATH is evaluated.
 ```code
 export PATH=$PATH:/Library/Frameworks/Python.framework/Versions/3.13/bin`
 ```
@@ -98,15 +98,15 @@ user@7cf34df03377 ~ % where deadline
 1. Now if you run `python --version` and `deadline --version`, you should have access to both of the executables and After Effects should do. Retry job submission.
 
 **For Windows**
-1. Open Command Prompt
+1. Open Command Prompt.
 1. Run `where python`, `where python3`, `where py`, and `where deadline`. The Deadline check will tell you which Python executable you should be adding to your $PATH.
-1. Get Admin permissions and then open "Edit the system environment variables". Click "Environment Variables...". Depending on whether Deadline CLI was a user installation or system installation, open the corresponding $PATH variable.
-1. Ensure that the binary folders containing deadline and your python CLI have been added to your PATH. Deadline will either be located in the DeadlineCloudSubmitter folder when installed from the submitter installer or under a python folder if managed by pip.
+1. Press Windows + S and search for "Edit the system environment variables". Note this will require admin access. Click "Environment Variables...". Depending on whether Deadline CLI was a user installation or system installation, open the corresponding $PATH variable.
+1. Ensure that the binary folders containing deadline and your python CLI have been added to your PATH. Deadline will either be located in the DeadlineCloudSubmitter folder when installed from the submitter installer or under a python folder if managed by pip. If you're managing Deadline CLI with pip, run `python -m pip list` and/or `python3 -m pip list` to ensure you add the Python containing Deadine CLI to your path.
 
 ### Error: Deadline Not Found
 1. First, open your Terminal or Command Prompt and run `deadline --version` to verify installation.
 1. Then follow the troubleshooting steps above for Python for your respective OS and verify that deadline is on your $PATH.
-1. If you have multiple Python installations and manage Deadline via Pip, verify that the Python on your $PATH is the Python that managed your Deadline installation. This can be used by comparing your `which python` and `which deadline` paths, and also pip uninstalling and reinstalling to see which `bin` directory your deadline CLI shows up in.
+1. If you have multiple Python installations and manage Deadline via Pip, verify that the Python on your $PATH is the Python that managed your Deadline installation. This can be done by running `python -m pip list` and `python3 -m pip list` to verify this.
 
 ### Font with an unsupported extension <extension> was found**
 See **Font attachment system** below.
