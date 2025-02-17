@@ -211,11 +211,12 @@ function SubmitSelection(selection, framesPerTask) {
     logFile.close();
     var submitScriptContents = "";
     var output = "";
+    var cmd = "";
     if ($.os.toString().slice(0, 7) === "Windows") {
         var tempBatFile = new File(
             Folder.temp.fsName + "/DeadlineCloudAESubmission.bat"
         );
-        var cmd =
+        cmd =
             'deadline bundle gui-submit \"' + bundle.fsName + '\" --output json --install-gui --submitter-name \"After Effects\"';
         submitScriptContents = cmd + " > " + Folder.temp.fsName + "\\submitter_output.log 2>&1";
         tempBatFile.open("w");
@@ -236,7 +237,7 @@ function SubmitSelection(selection, framesPerTask) {
         // Execute the command using a bash in the interactive mode so it loads the bash profile to set
         // the PATH correctly.
         var shellPath = $.getenv("SHELL") || "/bin/bash";
-        var cmd =
+        cmd =
             'deadline bundle gui-submit \\\"' + bundle.fsName + '\\\" --output json --install-gui --submitter-name \\\"After Effects\\\"';
         submitScriptContents = shellPath + " -i -c \\\"" + cmd + "\\\" && exit";
         output = system.callSystem('osascript -e \'tell application "Terminal"\' -e \'do script "' + submitScriptContents + '\"\'' + ' -e \'end tell\' > /dev/null');
