@@ -39,7 +39,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 1. `DeadlineCloudSubmitter.jsx` is the After Effects script written by
    ExtendScript.
 
-#### To install the submitter:
+### To install the submitter:
 
 1. Install the Deadline CLI and Deadline Cloud monitor by running the Deadline Cloud Submitter and Deadline Cloud monitor installers from the downloads section of the Deadline Cloud service in your AWS Console.
 1. This submitter requires the ability to write files and send communication over the network in order to function properly.
@@ -53,16 +53,15 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
    - Windows `Select Edit > Preferences > Scripting & Expressions > deselect Warn User When Executing Files`
    - macOS: `Select After Effects > Settings > Scripting & Expressions > deselect Warn User When Executing Files`
 
-1. Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to
-   the **ScriptUI Panels** folder within your After Effects installation. This folder is typically located at the following path:
+1. Next step is to install the After Effects submitter. If you're installing on Windows and using the Deadline Cloud submitter installer, you can install the After Effects submitter using the installer. But if you are on macOS or you prefer installing the submitter manually, download this repository zip, unzip it and copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder in the `dist` folder to the **ScriptUI Panels** folder within your After Effects installation. This ScriptUI folder is typically located at the following path:
 
    - Windows: `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
    - macOS: `Applications/Adobe After Effects <version>/Scripts/Script UI Panels`
 
 1. Finally, to install the necessary dependencies used by the submitter, run `pip install fonttools` in your local Terminal or Command Prompt.
-1. Restart After Effects if it was open.
+1. Restart After Effects if it was open. If you're running the submitter and hitting error messages, scroll down to the Troubleshooting section to troubleshoot.
 
-#### To use the submitter:
+### To use the submitter:
 
 1. Add a composition to your render queue and set up your render settings, output module, and output path.
 1. Open the Deadline Cloud Submitter Panel by clicking **Windows > DeadlineCloudSubmitter.jsx**.
@@ -74,10 +73,48 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 
 **Note**: The After Effects submitter calls the Deadline GUI Submitter to complete job submission. If you hit any issues on the GUI submitter, please refer to [deadline-cloud](https://github.com/aws-deadline/deadline-cloud) library for help.
 
-#### Font attachment system:
+## Troubleshooting
+
+### Error: Couldn't find Python 3 or higher on your PATH. Please ensure that Python 3 or higher is installed correctly and added to your PATH.**
+
+**For macOS**
+1. Open your Terminal and run the following scripts in your command line: `where python` and `where python3`. If you're not getting any results, this means you need to install Python for your workstation.
+1. If you do not have `python3` CLI installed but you have `python`, run `python --version` to check if you have Python 3.9 or higher. If not, please install Python 3.9 or higher first and add it to your path.
+1. Once you are getting results from the version check and where check, then check which python executable is actively being used. Run `which python`, `which python3`. If you're not getting any results, you'll need to add your python CLI to your zsh $PATH.
+1. We must also ensure you're adding the Python that was used to install Deadline CLI. Run `python -m pip list` and/or `python3 -m pip list` to verify this and add to $PATH$ whichever python applies.
+1. Finally, add the `bin` folder containing Python CLI to your path by editing `~/.zshrc` (and `~/.bashrc` if applicable) and updating the $PATH. For example, if your Python and Deadline CLI are under `/Library/Frameworks/Python.framework/Versions/3.13/bin`, add the following code to your `~/.zshrc` file at the end of the file so it gets final priority when the $PATH is evaluated.
+```code
+export PATH=$PATH:/Library/Frameworks/Python.framework/Versions/3.13/bin`
+```
+1. Save and exit, then run `source ~/.zshrc`
+
+In the end, your output should follow a pattern similar to the following example:
+```code
+user@7cf34df03377 ~ % which python3
+/Library/Frameworks/Python.framework/Versions/3.13/bin/python3
+user@7cf34df03377 ~ % where deadline
+/Library/Frameworks/Python.framework/Versions/3.13/bin/deadline
+```
+1. Now if you run `python --version` and `deadline --version`, you should have access to both of the executables and After Effects should do. Retry job submission.
+
+**For Windows**
+1. Open Command Prompt.
+1. Run `where python`, `where python3`, `where py`, and `where deadline`. The Deadline check will tell you which Python executable you should be adding to your $PATH.
+1. Press Windows + S and search for "Edit the system environment variables". Note this will require admin access. Click "Environment Variables...". Depending on whether Deadline CLI was a user installation or system installation, open the corresponding $PATH variable.
+1. Ensure that the binary folders containing deadline and your python CLI have been added to your PATH. Deadline will either be located in the DeadlineCloudSubmitter folder when installed from the submitter installer or under a python folder if managed by pip. If you're managing Deadline CLI with pip, run `python -m pip list` and/or `python3 -m pip list` to ensure you add the Python containing Deadine CLI to your path.
+
+### Error: Deadline Not Found
+1. First, open your Terminal or Command Prompt and run `deadline --version` to verify installation.
+1. Then follow the troubleshooting steps above for Python for your respective OS and verify that deadline is on your $PATH.
+1. If you have multiple Python installations and manage Deadline via Pip, verify that the Python on your $PATH is the Python that managed your Deadline installation. This can be done by running `python -m pip list` and `python3 -m pip list` to verify this.
+
+### Font with an unsupported extension <extension> was found**
+See **Font attachment system** below.
+
+## Font attachment system:
 
 The submitter detects fonts used in the submitted composition and automatically adds them as job attachments on submission. These get installed on the worker before the render starts and get removed again when the job ends.
-Supported font types include: OpenType (`.otf`), TrueType (`.ttf`), and [Adobe Fonts](https://fonts.adobe.com/).
+Currently supported font types include: OpenType (`.otf`), TrueType (`.ttf`), and [Adobe Fonts](https://fonts.adobe.com/).
 Windows bitmap fonts (`.fon`) are only supported on Windows machines.
 
 If fonts are missing at render time, first check that they're installed (on the system or your user), and then check they're being included in the job attachments tab in the submitter.
@@ -109,6 +146,7 @@ use the "Export Bundle" button in the submitter to export the Job Bundle
 in the job history directory (default: ~/.deadline/job_history).
 If you want to submit the job from the export, rather than through the submitter
 then you can use the [Deadline Cloud application](https://github.com/aws-deadline/deadline-cloud) to submit that bundle to your farm.
+
 
 ## Security
 
