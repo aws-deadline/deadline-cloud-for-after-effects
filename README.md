@@ -64,7 +64,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 ### To use the submitter:
 
 1. Add a composition to your render queue and set up your render settings, output module, and output path.
-1. Open the Deadline Cloud Submitter Panel by clicking **Windows > DeadlineCloudSubmitter.jsx**.
+1. Open the Deadline Cloud Submitter Panel by clicking **Window > DeadlineCloudSubmitter.jsx**.
 1. Select your composition from the list and click **Submit**. You can hit the **Refresh** button to refresh the list.
 1. (Optional: for image sequences output types) you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the number and then Deadline Cloud will assign the tasks to available workers to delegate the load.
 1. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
