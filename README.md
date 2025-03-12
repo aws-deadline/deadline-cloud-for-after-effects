@@ -108,6 +108,10 @@ user@7cf34df03377 ~ % where deadline
 1. Then follow the troubleshooting steps above for Python for your respective OS and verify that deadline is on your $PATH.
 1. If you have multiple Python installations and manage Deadline via Pip, verify that the Python on your $PATH is the Python that managed your Deadline installation. This can be done by running `python -m pip list` and `python3 -m pip list` to verify this.
 
+
+### After submission on Windows, a command prompt screen flashes open and close and submitter GUI doesn't pop open
+1. Go to the Windows Start menu and searching for "Manage app execution aliases". Then disable the `python3.exe` and `python.exe` aliases manually and retry submission.
+
 ### Font with an unsupported extension <extension> was found**
 See **Font attachment system** below.
 
