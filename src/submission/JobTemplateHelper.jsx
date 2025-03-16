@@ -54,13 +54,13 @@ function parameterValues(
             name: "MultiFrameRendering",
             value: multiFrameRendering,
         },
-        // Even though MaxCpuUsagePercentage is used when MultiFrameRendering is ON, it can
-        // be still be passed in because it is ignored if MultiFrameRendering is set to OFF
-        {
+    ];
+    if (maxCpuUsagePercentage) {
+        parameterValuesList.push({
             name: "MaxCpuUsagePercentage",
             value: maxCpuUsagePercentage,
-        }
-    ];
+        })
+    }
     if (isImageSeq) {
         parameterValuesList.push({
             name: "ChunkSize",

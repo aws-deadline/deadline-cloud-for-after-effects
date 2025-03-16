@@ -175,7 +175,11 @@ function buildUI(thisObj) {
     var submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
         const multiFrameRendering = mfrCheckBox.value ? "ON" : "OFF";
-        SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, parseInt(maxCpuUsagePercentageTextBox.text));
+        const maxCpuUsagePercentage = undefined;
+        if (mfrCheckBox.value) {
+            maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
+        }
+        SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage);
         list.selection = null;
     }
     submitButton.alignment = 'right';

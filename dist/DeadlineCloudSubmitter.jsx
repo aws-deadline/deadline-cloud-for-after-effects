@@ -966,13 +966,13 @@ function parameterValues(
             name: "MultiFrameRendering",
             value: multiFrameRendering,
         },
-        // Even though MaxCpuUsagePercentage is used when MultiFrameRendering is ON, it can
-        // be still be passed in because it is ignored if MultiFrameRendering is set to OFF
-        {
+    ];
+    if (maxCpuUsagePercentage) {
+        parameterValuesList.push({
             name: "MaxCpuUsagePercentage",
             value: maxCpuUsagePercentage,
-        }
-    ];
+        })
+    }
     if (isImageSeq) {
         parameterValuesList.push({
             name: "ChunkSize",
@@ -2413,7 +2413,11 @@ function buildUI(thisObj) {
     var submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
         const multiFrameRendering = mfrCheckBox.value ? "ON" : "OFF";
-        SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, parseInt(maxCpuUsagePercentageTextBox.text));
+        const maxCpuUsagePercentage = undefined;
+        if (mfrCheckBox.value) {
+            maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
+        }
+        SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage);
         list.selection = null;
     }
     submitButton.alignment = 'right';
