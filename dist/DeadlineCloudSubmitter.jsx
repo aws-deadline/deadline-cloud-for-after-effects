@@ -2349,7 +2349,7 @@ function buildUI(thisObj) {
     const mfrCheckBox = mfrGroup.add("checkbox", undefined, "Enable Multi-Frame Rendering");
     mfrCheckBox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING) === "true";
 
-    maxCpuUsagePercentageGroup = mfrGroup.add("group", undefined, "");
+    const maxCpuUsagePercentageGroup = mfrGroup.add("group", undefined, "");
     maxCpuUsagePercentageGroup.orientation = "row";
     maxCpuUsagePercentageGroup.alignment = ['fill', 'top'];
     mfrGroup.orientation = "column";
@@ -2413,7 +2413,7 @@ function buildUI(thisObj) {
     var submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
         const multiFrameRendering = mfrCheckBox.value ? "ON" : "OFF";
-        const maxCpuUsagePercentage = undefined;
+        var maxCpuUsagePercentage = undefined;
         if (mfrCheckBox.value) {
             maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
         }
