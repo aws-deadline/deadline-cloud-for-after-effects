@@ -23,6 +23,8 @@ def main():
     )
     parser.add_argument("--chunk-size", type=int, help="The number of frames per task")
     parser.add_argument("--index", type=int, help="The starting frame of the chunk")
+    parser.add_argument("--multi-frame-rendering", type=str, default="OFF", help="Multi-frame render (MFR)")
+    parser.add_argument("--max-cpu-usage-percentage", type=int, default=90, help="Specifies the desired maximum CPU percentage power to use during rendering. Value is ignored if MFR is OFF")
 
     args = parser.parse_args()
     print(f"Args: {args}", flush=True)
@@ -70,6 +72,9 @@ def main():
         "DO_NOT_SAVE_CHANGES",
         "-sound",
         "OFF",
+        "-mfr",
+        args.multi_frame_rendering,
+        str(args.max_cpu_usage_percentage),
     ]
 
     if "," not in args.outputpath:

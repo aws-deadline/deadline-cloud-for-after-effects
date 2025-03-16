@@ -76,6 +76,31 @@
             "default": "1-10"
         },
         {
+            "name": "MultiFrameRendering",
+            "type": "STRING",
+            "default": "OFF",
+            "allowedValues": ["ON", "OFF"],
+            "userInterface": {
+                "control": "DROPDOWN_LIST",
+                "label": "Enable or disable multi-frame rendering",
+                "groupLabel": "Multi-Frame Rendering"
+            },
+            "description": "Multi frame rendering settings"
+        },
+        {
+            "name": "MaxCpuUsagePercentage",
+            "type": "INT",
+            "userInterface": {
+                "control": "SPIN_BOX",
+                "label": "Max CPU Percentage",
+                "groupLabel": "Multi-Frame Rendering"
+            },
+            "description": "Max Cpu Percentage to use with Multi-Frame Rendering, ignored if MFR is OFF",
+            "minValue": 1,
+            "maxValue": 100,
+            "default": 90
+        },
+        {
             "name": "JobScriptDir",
             "description": "Directory containing embedded scripts.",
             "userInterface": {
@@ -160,7 +185,11 @@
                             "{{Param.ProjectFile}}",
                             "{{Param.RenderQueueIndex}}",
                             "{{Param.OutputDir}}/{{Param.OutputFileName}}",
-                            "{{Param.Frames}}"
+                            "{{Param.Frames}}",
+                            "--multi-frame-rendering",
+                            "{{Param.MultiFrameRendering}}",
+                            "--max-cpu-usage-percentage",
+                            "{{Param.MaxCpuUsagePercentage}}"
                         ]
                     }
                 }

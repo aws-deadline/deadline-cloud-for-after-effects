@@ -1,7 +1,7 @@
 /**
  * Submit the selected render queue item
  **/
-function SubmitSelection(selection, framesPerTask) {
+function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
     const submitBundleFile = "SubmitButton.jsx";
     // first we must verify that our selection is valid
     if (selection == null) {
@@ -118,7 +118,9 @@ function SubmitSelection(selection, framesPerTask) {
                     isImageSeq,
                     startFrame,
                     endFrame,
-                    framesPerTask
+                    framesPerTask,
+                    multiFrameRendering,
+                    maxCpuUsagePercentage,
                 ),
                 null,
                 4,
