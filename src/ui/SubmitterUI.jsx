@@ -111,7 +111,7 @@ function buildUI(thisObj) {
     const mfrCheckBox = mfrGroup.add("checkbox", undefined, "Enable Multi-Frame Rendering");
     mfrCheckBox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING) === "true";
 
-    maxCpuUsagePercentageGroup = mfrGroup.add("group", undefined, "");
+    const maxCpuUsagePercentageGroup = mfrGroup.add("group", undefined, "");
     maxCpuUsagePercentageGroup.orientation = "row";
     maxCpuUsagePercentageGroup.alignment = ['fill', 'top'];
     mfrGroup.orientation = "column";
