@@ -175,7 +175,7 @@ function buildUI(thisObj) {
     var submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
         const multiFrameRendering = mfrCheckBox.value ? "ON" : "OFF";
-        const maxCpuUsagePercentage = undefined;
+        var maxCpuUsagePercentage = undefined;
         if (mfrCheckBox.value) {
             maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
         }
