@@ -116,7 +116,7 @@ function buildUI(thisObj) {
     maxCpuUsagePercentageGroup.alignment = ['fill', 'top'];
     mfrGroup.orientation = "column";
 
-    const maxCpuUsagePercentageLabel = maxCpuUsagePercentageGroup.add("statictext", undefined, "Max Allowed Percentage of CPU");
+    const maxCpuUsagePercentageLabel = maxCpuUsagePercentageGroup.add("statictext", undefined, "Max Allowed CPU Usage Percentage");
     maxCpuUsagePercentageLabel.alignment = ['left', 'center'];
     maxCpuUsagePercentageLabel.helpTip = "If multi-frame rendering is enabled, set the maximum CPU percentage power to use during multi-frame rendering";
 
