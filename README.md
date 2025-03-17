@@ -42,7 +42,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 ### To install the submitter:
 
 **Prerequisites:**
-- Set up your Deadline Cloud monitor, farm, fleet, and queue details, following the documentation from [here for setup](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/monitor-onboarding.html) and it's subsections.
+- Set up your Deadline Cloud monitor, farm, fleet, and queue details, following the documentation from [here for setup](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/monitor-onboarding.html) and its subsections.
 - **If you're on Mac**, you will need to install Deadline CLI now manually by doing `pip install deadline` and `pip install "deadline[gui]"`.
 - Download the Deadline Cloud Monitor desktop application from the Downloads page on your AWS Deadline Cloud console and log into it, see documentation from here: https://docs.aws.amazon.com/deadline-cloud/latest/userguide/open-deadline-cloud-monitor.html
 - Install Adobe After Effects 24 or 25.
