@@ -43,7 +43,11 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 
 **Prerequisites:**
 - Set up your Deadline Cloud monitor, farm, fleet, and queue details, following the documentation from [here for setup](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/monitor-onboarding.html) and its subsections.
-- **If you're on Mac**, you will need to install Deadline CLI now manually by doing `pip install deadline` and `pip install "deadline[gui]"`.
+- **If you're on Mac**, you will need to install Deadline CLI manually by running the following commands in Terminal:
+   ```
+   pip install deadline
+   pip install "deadline[gui]"
+   ```
 - Download the Deadline Cloud Monitor desktop application from the Downloads page on your AWS Deadline Cloud console and log into it, see documentation from here: https://docs.aws.amazon.com/deadline-cloud/latest/userguide/open-deadline-cloud-monitor.html
 - Install Adobe After Effects 24 or 25.
 
@@ -69,8 +73,11 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
       - Unzip the .zip file and navigate to the `dist` folder in the downloaded repository.
       - Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder from the `dist` folder to ScriptUI Panels folder under `Applications/Adobe After Effects <version>/Scripts/Script UI Panels` within your After Effects installation.
 
-1. Finally, to install the necessary dependencies used by the AE submitter, run `pip install fonttools` in your local Terminal or Command Prompt.
-1. Restart After Effects if it was open.
+1. Finally, to install the necessary dependencies used by the AE submitter, run the following in your local Terminal or Command Prompt.
+   ```
+   pip install fonttools
+   ```
+1. Finally, restart After Effects if it was open.
 
 ### To use the submitter:
 
