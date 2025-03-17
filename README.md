@@ -73,7 +73,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
       - Unzip the .zip file and navigate to the `dist` folder in the downloaded repository.
       - Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder from the `dist` folder to ScriptUI Panels folder under `Applications/Adobe After Effects <version>/Scripts/Script UI Panels` within your After Effects installation.
 
-1. Finally, to install the necessary dependencies used by the AE submitter, run the following in your local Terminal or Command Prompt.
+1. Next, to install the necessary dependencies used by the AE submitter, run the following in your local Terminal or Command Prompt.
    ```
    pip install fonttools
    ```
