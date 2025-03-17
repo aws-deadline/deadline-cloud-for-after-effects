@@ -102,7 +102,7 @@
             "type": "INT",
             "userInterface": {
                 "control": "SPIN_BOX",
-                "label": "Max CPU Percentage",
+                "label": "Max CPU Usage Percentage",
                 "groupLabel": "Multi-Frame Rendering"
             },
             "description": "Max Cpu Percentage to use with Multi-Frame Rendering, ignored if MFR is OFF",
