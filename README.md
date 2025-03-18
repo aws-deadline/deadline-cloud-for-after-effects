@@ -42,6 +42,8 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 ### To install the submitter:
 
 **Prerequisites:**
+- Install Python 3.9+ and verify either `python --version` or `python3 --version` or `py --version` works in your Command Prompt or Powershell window.
+- Install Adobe After Effects 24 or 25.
 - Set up your Deadline Cloud monitor, farm, fleet, and queue details, following the documentation from [here for setup](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/monitor-onboarding.html) and its subsections.
 - **If you're on Mac**, you will need to install Deadline CLI manually by running the following commands in Terminal:
    ```
@@ -49,7 +51,6 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
    pip install "deadline[gui]"
    ```
 - Download the Deadline Cloud Monitor desktop application from the Downloads page on your AWS Deadline Cloud console and log into it, see documentation from here: https://docs.aws.amazon.com/deadline-cloud/latest/userguide/open-deadline-cloud-monitor.html
-- Install Adobe After Effects 24 or 25.
 
 **Submitter Installation Instructions**
 1. This submitter requires the ability to write files and send communication over the network in order to function properly.
@@ -63,15 +64,22 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
    - Windows `Select Edit > Preferences > Scripting & Expressions > deselect Warn User When Executing Files`
    - macOS: `Select After Effects > Settings > Scripting & Expressions > deselect Warn User When Executing Files`
 
-1. Next step is to install the After Effects submitter:
+1. Next step is to install the After Effects submitter. We recommend choosing the submitter installer approach to receive both Deadline CLI and your selected integrated submitters. However, if you want to update your submitter with the latest code pushed to this repository, choose the manual installation approach, but ensure you have Deadline CLI already installed via pip or submitter installer beforehand (see instructions above under Prerequisites for info on this).
    - Windows:
-     - First, download the Deadline Cloud Submitter installer by following [Step 1: Install the Deadline Cloud Submitter](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#submitter-installation).
-     - Next, right-click the installer and choose `Run as Admin` to make sure the submitter can be installed.
-     - Follow the prompts and select which DCC submitters you would like to install. Note: the default path for the AE submitter is `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`. After completing installation, you will have the AE submitter and Deadline Cloud CLI installed.
+      - **Submitter Installer Approach**:
+         - First, download the Deadline Cloud Submitter installer by following [Step 1: Install the Deadline Cloud Submitter](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#submitter-installation).
+         - Next, right-click the installer and choose `Run as Admin` to make sure the submitter can be installed.
+         - Follow the prompts and select which submitters you would like to install. Note: the default path for the AE submitter is `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`. After completing installation, you will have the AE submitter and Deadline Cloud CLI installed.
+      - **Manual Installation Approach**:
+         - Scroll to the top of this repository's Github page, and click on the green Code button. In the drop-down, select `Download ZIP`.
+         - Unzip the .zip file and navigate to the `dist` folder in the downloaded repository.
+         - Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder from the `dist` folder to ScriptUI Panels folder under `Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels` within your After Effects installation.
    - MacOS:
-      - Scroll to the top of this repository's Github page, and click on the green Code button. In the drop-down, select `Download ZIP`.
-      - Unzip the .zip file and navigate to the `dist` folder in the downloaded repository.
-      - Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder from the `dist` folder to ScriptUI Panels folder under `Applications/Adobe After Effects <version>/Scripts/Script UI Panels` within your After Effects installation.
+      - **Manual Installation Approach**:
+         - Scroll to the top of this repository's Github page, and click on the green Code button. In the drop-down, select `Download ZIP`.
+         - Unzip the .zip file and navigate to the `dist` folder in the downloaded repository.
+         - Copy `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder from the `dist` folder to ScriptUI Panels folder under `Applications/Adobe After Effects <version>/Scripts/Script UI Panels` within your After Effects installation.
+      - **Submitter Installer Approach**: No support yet, will update with instructions once we add support for it!
 
 1. Next, to install the necessary dependencies used by the AE submitter, run the following in your local Terminal or Command Prompt.
    ```
