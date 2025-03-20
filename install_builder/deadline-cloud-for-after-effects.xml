@@ -31,7 +31,7 @@ Files\Scripts\ScriptUI Panels".</explanation>
                     <platforms>all</platforms>
                     <distributionFileList>
                         <distributionDirectory allowWildcards="1">
-                            <origin>components/deadline-cloud-for-after-effects/dist/*</origin>
+                            <origin>../dist/*</origin>
                         </distributionDirectory>
                     </distributionFileList>
                 </folder>
@@ -62,7 +62,7 @@ Files\Scripts\ScriptUI Panels".</explanation>
                     <platforms>all</platforms>
                     <distributionFileList>
                         <distributionDirectory allowWildcards="1">
-                            <origin>components/deadline-cloud-for-after-effects/dist/*</origin>
+                            <origin>../dist/*</origin>
                         </distributionDirectory>
                     </distributionFileList>
                 </folder>
@@ -125,7 +125,7 @@ Files\Scripts\ScriptUI Panels".</explanation>
                     <deselect></deselect>
                     <select>AfterEffects2025</select>
                 </componentSelection>
-                <setInstallerVariable name="after_effects_script_ui_directory_2025" value = "C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels"/>
+                <setInstallerVariable name="after_effects_script_ui_directory_2025" value="C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels"/>
             </actionList>
         </if>
         <if>
