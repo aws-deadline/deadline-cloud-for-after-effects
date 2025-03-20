@@ -220,31 +220,6 @@
             <text>${project.version}</text>
         </writeFile>
         <changePermissions permissions="0644" files="${installdir}/installer_version.txt"/>
-        <!-- For 2025 uninstallation, check if it's applicable and add it to the uninstall list if so -->
-        <if>
-            <conditionRuleEvaluationLogic>and</conditionRuleEvaluationLogic>
-            <conditionRuleList>
-                <isTrue value="${after_effects_script_ui_directory_2025}"/>
-                <compareText text="${after_effects_script_ui_directory_2025}" logic="does_not_equal" value=""/>
-            </conditionRuleList>
-            <actionList>
-                <addDirectoriesToUninstaller addContents="1" files="${after_effects_script_ui_directory_2025}\DeadlineCloudSubmitter_Assets"/>
-                <addFilesToUninstaller files="${after_effects_script_ui_directory_2025}\DeadlineCloudSubmitter.jsx" />
-            </actionList>
-        </if>
-
-        <!-- For 2024 uninstallation, check if it's applicable and add it to the uninstall list if so -->
-        <if>
-            <conditionRuleEvaluationLogic>and</conditionRuleEvaluationLogic>
-            <conditionRuleList>
-                <isTrue value="${after_effects_script_ui_directory_2024}"/>
-                <compareText text="${after_effects_script_ui_directory_2024}" logic="does_not_equal" value=""/>
-            </conditionRuleList>
-            <actionList>
-                <addDirectoriesToUninstaller addContents="1" files="${after_effects_script_ui_directory_2024}\DeadlineCloudSubmitter_Assets"/>
-                <addFilesToUninstaller files="${after_effects_script_ui_directory_2024}\DeadlineCloudSubmitter.jsx" />
-            </actionList>
-        </if>
     </postInstallationActionList>
 
     <preUninstallationActionList>
