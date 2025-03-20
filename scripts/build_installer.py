@@ -96,13 +96,6 @@ def build_installer(
     else:
         raise ValueError(f"Unknown platform '{installer_platform}'")
 
-    try:
-        deps_bundle_output = run(["bash", "depsBundle.sh"])
-        print(deps_bundle_output)
-    except Exception as e:
-        print(f"Error when bundling dependencies: {e}")
-        raise
-
     install_builder_cli = install_builder_location / "bin" / "builder"
     out_dir = workdir / "out"
     installer_version = os.getenv("INSTALLER_VERSION") if not dev else "00000000"

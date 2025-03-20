@@ -88,15 +88,12 @@ def _require_if_all_false_or_unspecified(
     """
 
     def _callback(ctx: click.Context, param: click.Option, value: Any) -> Any:
-        if value is not None:
-            return value
         for other in others:
             if ctx.params.get(other):
                 return value
         all_params = [f"--{_snake_to_kebab(other)}" for other in others]
-        name = _snake_to_kebab(param.name if param.name else "")
         raise click.BadParameter(
-            f"Must specify --{name} when none of {', '.join(all_params)} are specified"
+            f"Must specify --{param.name} when none of {', '.join(all_params)} are specified"
         )
 
     return _callback
