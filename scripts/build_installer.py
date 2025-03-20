@@ -137,7 +137,6 @@ def main(
     install_builder_s3_bucket: Optional[str],
     install_builder_s3_key: Optional[str],
     output_dir: Optional[Path],
-    cleanup: bool,
     installer_platform: str,
     installer_source_path: Path,
 ) -> None:
@@ -146,25 +145,20 @@ def main(
         print(f"cwd: {os.getcwd()}")
         print(f"working directory: {str(workdir)}")
 
-        installer_folder = Path(__file__).absolute().parent.parent / "installer"
-
-        try:
-            installbuilder_path = setup_install_builder(
-                workdir=workdir,
-                install_builder_location=install_builder_location,
-                license_file_path=install_builder_license_path,
-                install_builder_s3_bucket=install_builder_s3_bucket,
-                install_builder_s3_key=install_builder_s3_key,
-            )
-            installer_dir = build_installer(
-                workdir=workdir,
-                component_file_path=installer_source_path,
-                install_builder_location=installbuilder_path,
-                dev=dev,
-                installer_platform=installer_platform,
-            )
-        except Exception:
-            raise
+        installbuilder_path = setup_install_builder(
+            workdir=workdir,
+            install_builder_location=install_builder_location,
+            license_file_path=install_builder_license_path,
+            install_builder_s3_bucket=install_builder_s3_bucket,
+            install_builder_s3_key=install_builder_s3_key,
+        )
+        installer_dir = build_installer(
+            workdir=workdir,
+            component_file_path=installer_source_path,
+            install_builder_location=installbuilder_path,
+            dev=dev,
+            installer_platform=installer_platform,
+        )
 
         installer_filename = INSTALLER_FILENAMES[installer_platform]
         installer_path = installer_dir / installer_filename

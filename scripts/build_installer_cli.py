@@ -183,11 +183,6 @@ def _not_allowed_if_env_var_set(
     help="The directory to output the installer to",
 )
 @click.option(
-    "--no-cleanup",
-    is_flag=True,
-    help="If specified, do not clean up the temporary directory after building the installer",
-)
-@click.option(
     "--installer-source-path",
     type=Path,
     help="The path to the installer source xml file",
@@ -201,7 +196,6 @@ def cli(
     local_dev: bool,
     platform: str,
     output_dir: Optional[Path],
-    no_cleanup: bool,
     installer_source_path: Path,
 ) -> None:
     cli_body(
@@ -213,7 +207,6 @@ def cli(
         local_dev,
         platform,
         output_dir,
-        no_cleanup,
         installer_source_path,
     )
 
@@ -227,7 +220,6 @@ def cli_body(
     local_dev: bool,
     platform: str,
     output_dir: Optional[Path],
-    no_cleanup: bool,
     installer_source_path: Path,
 ) -> None:
     """
@@ -241,7 +233,6 @@ def cli_body(
         install_builder_s3_bucket,
         install_builder_s3_key,
         output_dir,
-        not no_cleanup,
         platform,
         installer_source_path,
     )
