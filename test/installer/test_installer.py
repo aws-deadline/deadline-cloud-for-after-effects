@@ -85,15 +85,8 @@ def _validate_files(installation_path: Path) -> None:
 
     # THEN
     top_level_dir = [f.name for f in installation_path.iterdir()]
-    assert "python" in top_level_dir
     assert "installer_version.txt" in top_level_dir
     assert uninstaller in top_level_dir
-
-    # Just check that we have dependencies in this folder
-    module_dir = [f.name for f in (python_dir / "modules").iterdir()]
-    assert "deadline" in module_dir
-    assert "qtpy" in module_dir
-    assert "xxhash" in module_dir
 
 
 @pytest.fixture(scope="session")
@@ -185,7 +178,6 @@ def test_default_location(installer_path: Path):
 @pytest.mark.skipif(
     sys.platform == "win32", reason="CLI usage for Windows does not make the eval text available"
 )
-@pytest.mark.xfail(reason="Test was directly copied from Blender, needs to be refactored to support testing After Effects")
 def test_did_not_build_with_evaluation_mode(installer_path: Path, tmp_path: Path):
     """Tests to see if there's an evaluation version header from installbuilder.
 
@@ -239,7 +231,7 @@ def test_did_not_build_with_evaluation_mode(installer_path: Path, tmp_path: Path
 
 
 @pytest.mark.skipif(platform.system() == "Windows", reason="Only run on Linux and MacOS")
-@pytest.mark.xfail(reason="Tests were directly copied from Blender, needs to be refactored to support testing After Effects")
+@pytest.mark.xfail(reason="AE currently only support Windows submitter installer")
 class TestLinuxAndMacOS:
     def test_user_permissions(self, user_installation: Path):
         # GIVEN / WHEN / THEN
@@ -291,7 +283,6 @@ class TestLinuxAndMacOS:
 
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Only run on Windows")
-@pytest.mark.xfail(reason="Test was directly copied from Blender, needs to be refactored to support testing After Effects")
 class TestWindows:
     def test_user_permissions(self, user_installation):
         # GIVEN / WHEN / THEN
@@ -375,7 +366,7 @@ class TestWindows:
         assert len(bad_perms) == 0, "\n".join(error_message)
 
 
-@pytest.mark.xfail(reason="Test was directly copied from Blender, needs to be refactored to support testing After Effects")
+@pytest.mark.skipif(platform.system() != "Windows", reason="AE currently only support Windows submitter installer")
 class TestUserInstall:
     def test_install(self, user_installation: Path):
         # GIVEN / WHEN / THEN
@@ -400,8 +391,8 @@ class TestUserInstall:
         assert not per_test_user_installation.exists()
 
 
-@pytest.mark.xfail(reason="Test was directly copied from Blender, needs to be refactored to support testing After Effects")
 @pytest.mark.skipif(not _is_admin(), reason="Tests requires admin privileges")
+@pytest.mark.skipif(platform.system() != "Windows", reason="AE currently only support Windows submitter installer")
 class TestSystemInstall:
     def test_install(self, system_installation: Path):
         # GIVEN / WHEN / THEN
@@ -432,7 +423,6 @@ class TestSystemInstall:
     os.getenv("CODEBUILD_SRC_DIR") is None,
     reason="Only installers built internally will be signed",
 )
-@pytest.mark.xfail(reason="Test was directly copied from Blender, needs to be refactored to support testing After Effects")
 class TestVerifySigning:
     @pytest.mark.skipif(platform.system() != "Windows", reason="Only run on Windows")
     def test_windows_signing(self, installer_path):
