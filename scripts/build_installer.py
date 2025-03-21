@@ -96,13 +96,14 @@ def build_installer(
     else:
         raise ValueError(f"Unknown platform '{installer_platform}'")
 
-    # Not needed for After Effects since it's a JavaScript-based submitter
-    # try:
-    #     deps_bundle_output = run(["bash", "depsBundle.sh"])
-    #     print(deps_bundle_output)
-    # except Exception as e:
-    #     print(f"Error when bundling dependencies: {e}")
-    #     raise
+    # For dev setups, comment this code out if running installer build on Windows
+    # Or run it in Git Bash
+    try:
+        deps_bundle_output = run(["bash", "depsBundle.sh"])
+        print(deps_bundle_output)
+    except Exception as e:
+        print(f"Error when bundling dependencies: {e}")
+        raise
 
     install_builder_cli = install_builder_location / "bin" / "builder"
     out_dir = workdir / "out"
