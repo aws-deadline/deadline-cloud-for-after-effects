@@ -34,3 +34,6 @@ node_modules
 
 # macOS
 .DS_Store
+
+# Dev installer
+DeadlineCloudForAfterEffectsSubmitter-*-installer.app

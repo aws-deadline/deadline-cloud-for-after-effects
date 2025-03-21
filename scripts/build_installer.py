@@ -97,7 +97,7 @@ def build_installer(
         raise ValueError(f"Unknown platform '{installer_platform}'")
 
     # For dev setups, comment this code out if running installer build on Windows
-    # Or run it in Git Bash
+    # Or run it in Git Bash since After Effects does not need it.
     try:
         deps_bundle_output = run(["bash", "depsBundle.sh"])
         print(deps_bundle_output)
