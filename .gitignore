@@ -36,4 +36,4 @@ node_modules
 .DS_Store
 
 # Dev installer
-DeadlineCloudForAfterEffectsSubmitter-*-installer.app
+DeadlineCloudForAfterEffectsSubmitter-*
