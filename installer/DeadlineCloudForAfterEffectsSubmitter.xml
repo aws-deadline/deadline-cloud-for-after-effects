@@ -220,6 +220,9 @@
             <text>${project.version}</text>
         </writeFile>
         <changePermissions permissions="0644" files="${installdir}/installer_version.txt"/>
+        <addFilesToUninstaller>
+          <files>${installdir}/</files>
+        </addFilesToUninstaller>
     </postInstallationActionList>
 
     <preUninstallationActionList>
