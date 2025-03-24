@@ -3,6 +3,7 @@
 
 import os
 import platform
+import subprocess
 import sys
 import shutil
 import tempfile
@@ -96,13 +97,19 @@ def build_installer(
     else:
         raise ValueError(f"Unknown platform '{installer_platform}'")
 
-    # For dev setups, comment this code out if running installer build on Windows
-    # Or run it in Git Bash since After Effects does not need it.
     try:
-        deps_bundle_output = run(["bash", "depsBundle.sh"])
-        print(deps_bundle_output)
-    except Exception as e:
-        print(f"Error when bundling dependencies: {e}")
+        if platform.system() == "Windows":
+            # `shell=True` is necessary here to run on Windows.
+            # Please see the security considerations of this flag if editing the script or its invocation:
+            # https://docs.python.org/3/library/subprocess.html#security-considerations
+            deps_bundle_output = subprocess.run(
+                "depsBundle.sh", check=True, shell=True, capture_output=True
+            )
+        else:
+            deps_bundle_output = subprocess.run("./depsBundle.sh", check=True, capture_output=True)
+        print(deps_bundle_output.stdout.decode("utf-8"))
+    except subprocess.CalledProcessError as e:
+        print(f"Error when bundling dependencies: {e.stdout.decode('utf-8')}")
         raise
 
     install_builder_cli = install_builder_location / "bin" / "builder"
