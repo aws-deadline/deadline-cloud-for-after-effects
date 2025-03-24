@@ -9,7 +9,7 @@ Table of Contents:
     * [Running the Script](#running-the-script)
     * [Making Code Changes](#making-code-changes)
 
-## Development Environment Setup
+## AE Script Development Environment Setup
 1. An install of a supported version of After Effects.
 2. A valid AWS Account.
 3. An AWS Deadline Cloud Farm to run jobs on.
@@ -88,4 +88,48 @@ python jsxbundler.py --source src/OpenAESubmitter.jsx --destination dist/Deadlin
 
 under `deadline-cloud-for-after-effects` path to generate a new `DeadlineCloudSubmitter.jsx` file. Then replace the file in Script UI Panels of After Effects application with the new file. Same for files in the `DeadlineCloudSubmitter_Assets` folder.
 
+Make sure to right click the new files in the dist folder in VSCode and do "Format Document" and save the changes.
+
 Then reopen the submitter panel from the application to test your change.
+
+## AE Installer Environment Setup
+
+### Prerequisites
+- Install the InstallBuilder application here: https://installbuilder.com/download-step-2, be sure to download the Multi-Platform version
+
+Default MacOS InstallBuilder path: `"/Applications/InstallBuilder Enterprise <major>.<minor>.<patch>"`
+Default Windows InstallBuilder path: `"C:\\Program Files\\InstallBuilder Enterprise <major>.<minor>.<patch>\\" `
+
+### Build the package
+
+```bash
+hatch run build
+```
+
+### Build the installer
+
+```bash
+hatch run build-installer --local-dev-build --platform <PLATFORM> [--install-builder-location <LOCATION> --output-dir <DIR>]
+```
+Use the default locations listed above under Preqrequisites as guidance. For Platform, your options are Windows or MacOS. For local dev, remove `--output-dir` and specify `--local-dev` flag instead.
+
+Run `hatch run build-installer -h` to see the full list of arguments.
+
+...
+
+### Test a local installer
+
+First, install the necessary dependencies by running:
+```bash
+hatch run sync
+```
+
+Then, you need admin permission to run the tests correctly. On Mac, run:
+```bash
+sudo hatch run test-installer
+```
+
+On Windows, open your Powershell terminal with "Run As Admin" and run:
+```bash
+hatch run test-installer
+```

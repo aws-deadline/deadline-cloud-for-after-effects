@@ -12,6 +12,13 @@ Fixes: _<insert link to GitHub issue here>_
 
 ### How was this change tested?
 
+#### If you modified source files, did you run the Python script to update the files under the dist folder?
+Yes/No
+
+#### If you modified the `/installer`, `/install_builder`, or `/scripts` logic, please run the integration tests and paste the results below
+
+#### If `installer/` was modified or a file was added/removed from `dist/`, then update the installer tests and post the test results below
+
 ### Was this change documented?
 
 _delete text starting here_
