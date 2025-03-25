@@ -17,8 +17,8 @@
     <windowsExecutableIcon>icon.ico</windowsExecutableIcon>
     <windowsUninstallerExecutableIcon>icon.ico</windowsUninstallerExecutableIcon>
 
-    <!-- Allow Windows installer to run as regular user, since running as Admin is forced by default -->
-    <requireInstallationByRootUser>0</requireInstallationByRootUser>
+    <!-- Run as Admin for AfterEffects specifically -->
+    <requireInstallationByRootUser>1</requireInstallationByRootUser>
     <requestedExecutionLevel>asInvoker</requestedExecutionLevel>
 
     <functionDefinitionList>
@@ -214,6 +214,9 @@
     </preInstallationActionList>
     <postInstallationActionList>
         <setInstallerVariable name="installscope" value="${installscope}" persist="1"/>
+        <createDirectory>
+           <path>${installdir}</path>
+       </createDirectory>
         <writeFile>
             <progressText>Writing version file</progressText>
             <path>${installdir}/installer_version.txt</path>

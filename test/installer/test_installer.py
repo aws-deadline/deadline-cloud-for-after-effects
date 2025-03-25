@@ -58,6 +58,8 @@ def installer_path():
 def _run_installer(installer_path, install_scope, installation_path) -> Path:
     # use a path that does not exist
     installation_path = installation_path / "dne"
+    installation_path.mkdir(parents=True, exist_ok=True)
+
     args = [
         installer_path,
         "--mode",
@@ -69,7 +71,10 @@ def _run_installer(installer_path, install_scope, installation_path) -> Path:
         "--enable-components",
         "deadline_cloud_for_after_effects",
     ]
-    subprocess.run(args, check=True)
+    if platform.system() == "Darwin":
+        args = ["sudo", "-n", *args]
+
+    result = subprocess.run(args, check=True, capture_output=True, text=True)
 
     return Path(installation_path)
 
@@ -125,7 +130,7 @@ def uninstaller_path():
 
     yield uninstaller_path
 
-
+@pytest.mark.skipif(not _is_admin(), reason="After Effects submitter installation requires admin permissions")
 def test_default_location(installer_path: Path):
     """Ensures that the default output location reported by the installer is accurate.
        The help text will only show it for the default scope (user). Example help output:
@@ -231,13 +236,12 @@ def test_did_not_build_with_evaluation_mode(installer_path: Path, tmp_path: Path
 
 
 @pytest.mark.skipif(platform.system() == "Windows", reason="Only run on Linux and MacOS")
-@pytest.mark.xfail(reason="AE currently only support Windows submitter installer")
+@pytest.mark.skipif(not _is_admin(), reason="After Effects submitter installation requires admin permissions")
 class TestLinuxAndMacOS:
     def test_user_permissions(self, user_installation: Path):
         # GIVEN / WHEN / THEN
         self._validate_posix_permissions(user_installation)
 
-    @pytest.mark.skipif(not _is_admin(), reason="Tests requires admin privileges")
     def test_system_permissions(self, system_installation):
         # GIVEN / WHEN / THEN
         self._validate_posix_permissions(system_installation)
@@ -283,12 +287,12 @@ class TestLinuxAndMacOS:
 
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Only run on Windows")
+@pytest.mark.skipif(not _is_admin(), reason="After Effects submitter installation requires admin permissions")
 class TestWindows:
     def test_user_permissions(self, user_installation):
         # GIVEN / WHEN / THEN
         self._verify_windows_least_privilege(user_installation)
 
-    @pytest.mark.skipif(not _is_admin(), reason="Tests requires admin privileges")
     def test_system_permissions(self, system_installation):
         # GIVEN / WHEN / THEN
         self._verify_windows_least_privilege(system_installation)
@@ -366,7 +370,7 @@ class TestWindows:
         assert len(bad_perms) == 0, "\n".join(error_message)
 
 
-@pytest.mark.skipif(platform.system() != "Windows", reason="AE currently only support Windows submitter installer")
+@pytest.mark.skipif(not _is_admin(), reason="After Effects submitter installation requires admin permissions")
 class TestUserInstall:
     def test_install(self, user_installation: Path):
         # GIVEN / WHEN / THEN
@@ -391,8 +395,7 @@ class TestUserInstall:
         assert not per_test_user_installation.exists()
 
 
-@pytest.mark.skipif(not _is_admin(), reason="Tests requires admin privileges")
-@pytest.mark.skipif(platform.system() != "Windows", reason="AE currently only support Windows submitter installer")
+@pytest.mark.skipif(not _is_admin(), reason="After Effects submitter installation requires admin privileges")
 class TestSystemInstall:
     def test_install(self, system_installation: Path):
         # GIVEN / WHEN / THEN
