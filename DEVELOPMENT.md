@@ -124,6 +124,13 @@ First, install the necessary dependencies by running:
 hatch run sync
 ```
 
+To run linting, run either of these commands
+```bash
+hatch run lint-check # Runs formatting without modifying code
+hatch run lint # Runs formatting and modifies code
+```
+
+
 To run unit tests, run the following
 ```bash
 hatch run test
