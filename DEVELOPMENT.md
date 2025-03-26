@@ -129,7 +129,10 @@ To run unit tests, run the following
 hatch run test
 ```
 
-If you added new files and see the copyright headers err
+If you added new files and see the copyright headers test failing, run this
+```bash
+./scripts/add_copyright_headers.sh
+```
 
 To test installer, you need admin permission to run the tests correctly.
 
