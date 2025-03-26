@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
 """
 Script that uses aerender cmd to render composition. When it is an image output,
 the script will have extra arguments: chunk-size and index passed in.

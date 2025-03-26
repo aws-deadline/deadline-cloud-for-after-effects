@@ -19,6 +19,7 @@ __pycache__/
 *.py[cod]
 .coverage
 .tox
+.pytest_cache
 
 # virtualenv
 .venv
@@ -36,4 +37,4 @@ node_modules
 .DS_Store
 
 # Dev installer
-DeadlineCloudForAfterEffectsSubmitter-*
+DeadlineCloudForAfterEffectsSubmitter-*/
