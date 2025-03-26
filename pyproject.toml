@@ -105,3 +105,39 @@ lstrip_blocks = true
 
 [tool.semantic_release.branches.release]
 match = "(mainline|release)"
+
+# --- PYTEST ---
+
+[tool.pytest.ini_options]
+xfail_strict = true
+addopts = [
+  "--durations=5",
+  "--color=yes",
+  "--cov-report=html:build/coverage",
+  "--cov-report=xml:build/coverage/coverage.xml",
+  "--cov-report=term-missing",
+  "--numprocesses=auto",
+  "--basetemp=tmp",
+]
+testpaths = ["test"]
+looponfailroots = ["src", "test"]
+# looponfailroots is deprecated, this removes the deprecation from the test output
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore:.*\\(rm_rf\\) unknown function.*:Warning"
+]
+markers = [
+    "submitter: mark a test as using the submitter.",
+    "adaptor: mark test as using the adaptor.",
+    "scene_files: used to mark which scene files a test uses.",
+]
+
+# --- COVERAGE ---
+
+[tool.coverage.run]
+branch = true
+parallel = true
+omit = [
+  "**/__main__.py",
+  "**/_version.py",
+]

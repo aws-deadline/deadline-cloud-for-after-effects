@@ -117,14 +117,23 @@ Run `hatch run build-installer -h` to see the full list of arguments.
 
 ...
 
-### Test a local installer
+### Testing
 
 First, install the necessary dependencies by running:
 ```bash
 hatch run sync
 ```
 
-Then, you need admin permission to run the tests correctly. On Mac, run:
+To run unit tests, run the following
+```bash
+hatch run test
+```
+
+If you added new files and see the copyright headers err
+
+To test installer, you need admin permission to run the tests correctly.
+
+On Mac, run:
 ```bash
 sudo hatch run test-installer
 ```

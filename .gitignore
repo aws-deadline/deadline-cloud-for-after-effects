@@ -21,6 +21,9 @@ __pycache__/
 .tox
 .pytest_cache
 
+# For unit test file creation spot
+tmp
+
 # virtualenv
 .venv
 venv/
