@@ -74,7 +74,7 @@ def _run_installer(installer_path, install_scope, installation_path) -> Path:
     if platform.system() == "Darwin":
         args = ["sudo", "-n", *args]
 
-    result = subprocess.run(args, check=True, capture_output=True, text=True)
+    subprocess.run(args, check=True, capture_output=True, text=True)
 
     return Path(installation_path)
 
@@ -86,7 +86,6 @@ def _validate_files(installation_path: Path) -> None:
         uninstaller = "uninstall.exe"
     else:
         uninstaller = "uninstall"
-    python_dir = installation_path / "python"
 
     # THEN
     top_level_dir = [f.name for f in installation_path.iterdir()]
@@ -124,13 +123,19 @@ def per_test_system_installation(installer_path, tmp_path):
 def uninstaller_path():
     uninstaller_path = Path("uninstall")
     if platform.system() == "Darwin":
-        uninstaller_path = Path("uninstall.app", "Contents", "MacOS", "installbuilder.sh")
+        uninstaller_path = Path(
+            "uninstall.app", "Contents", "MacOS", "installbuilder.sh"
+        )
     elif platform.system() == "Windows":
         uninstaller_path = uninstaller_path.with_suffix(".exe")
 
     yield uninstaller_path
 
-@pytest.mark.skipif(not _is_admin(), reason="After Effects submitter installation requires admin permissions")
+
+@pytest.mark.skipif(
+    not _is_admin(),
+    reason="After Effects submitter installation requires admin permissions",
+)
 def test_default_location(installer_path: Path):
     """Ensures that the default output location reported by the installer is accurate.
        The help text will only show it for the default scope (user). Example help output:
@@ -139,7 +144,9 @@ def test_default_location(installer_path: Path):
                                                 Default: /home/<user>/DeadlineCloudForAfterEffectsSubmitter
     """
     # GIVEN
-    default_install_location = Path("~/DeadlineCloudForAfterEffectsSubmitter").expanduser()
+    default_install_location = Path(
+        "~/DeadlineCloudForAfterEffectsSubmitter"
+    ).expanduser()
     default_pattern = r"Default: (.*)"
     location = None
 
@@ -148,7 +155,10 @@ def test_default_location(installer_path: Path):
     # Since windows doesn't have text mode, it'll pop-up a gui. We use the timeout to ensure it stops
     try:
         help_result = subprocess.run(
-            [installer_path, *text_mode, "--help"], capture_output=True, text=True, timeout=5
+            [installer_path, *text_mode, "--help"],
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         assert (
             help_result.returncode == 0
@@ -164,7 +174,9 @@ def test_default_location(installer_path: Path):
     # THEN
     while (line := next(help_output, None)) is not None:
         if line.strip().startswith("--prefix"):
-            location = re.match(default_pattern, next(help_output, "").strip(), flags=re.IGNORECASE)
+            location = re.match(
+                default_pattern, next(help_output, "").strip(), flags=re.IGNORECASE
+            )
             break
 
     assert (
@@ -181,7 +193,8 @@ def test_default_location(installer_path: Path):
     reason="Only installers built with a license will not be evaluation mode",
 )
 @pytest.mark.skipif(
-    sys.platform == "win32", reason="CLI usage for Windows does not make the eval text available"
+    sys.platform == "win32",
+    reason="CLI usage for Windows does not make the eval text available",
 )
 def test_did_not_build_with_evaluation_mode(installer_path: Path, tmp_path: Path):
     """Tests to see if there's an evaluation version header from installbuilder.
@@ -235,8 +248,13 @@ def test_did_not_build_with_evaluation_mode(installer_path: Path, tmp_path: Path
         ), "Installer was detected to have been built with Evaluation mode"
 
 
-@pytest.mark.skipif(platform.system() == "Windows", reason="Only run on Linux and MacOS")
-@pytest.mark.skipif(not _is_admin(), reason="After Effects submitter installation requires admin permissions")
+@pytest.mark.skipif(
+    platform.system() == "Windows", reason="Only run on Linux and MacOS"
+)
+@pytest.mark.skipif(
+    not _is_admin(),
+    reason="After Effects submitter installation requires admin permissions",
+)
 class TestLinuxAndMacOS:
     def test_user_permissions(self, user_installation: Path):
         # GIVEN / WHEN / THEN
@@ -270,7 +288,9 @@ class TestLinuxAndMacOS:
             if not self._has_user_read_write(mode):
                 bad_perms[entry].append("should have user read/write permissions")
             if entry.is_dir() and not self._has_user_group_other_execute(mode):
-                bad_perms[entry].append("is a directory and should have execute permissions")
+                bad_perms[entry].append(
+                    "is a directory and should have execute permissions"
+                )
             if entry.owner() != current_user:  # type: ignore
                 bad_perms[entry].append(f"is not owned by the '{current_user}'")
 
@@ -287,7 +307,10 @@ class TestLinuxAndMacOS:
 
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Only run on Windows")
-@pytest.mark.skipif(not _is_admin(), reason="After Effects submitter installation requires admin permissions")
+@pytest.mark.skipif(
+    not _is_admin(),
+    reason="After Effects submitter installation requires admin permissions",
+)
 class TestWindows:
     def test_user_permissions(self, user_installation):
         # GIVEN / WHEN / THEN
@@ -307,7 +330,9 @@ class TestWindows:
 
         # GIVEN
         windows_user = getpass.getuser()
-        builtin_admin_group_sid, _, _ = win32security.LookupAccountName(None, "Administrators")
+        builtin_admin_group_sid, _, _ = win32security.LookupAccountName(
+            None, "Administrators"
+        )
         user_sid, _, _ = win32security.LookupAccountName(None, windows_user)
 
         # WHEN
@@ -315,7 +340,8 @@ class TestWindows:
         for path in [installation_path, *installation_path.rglob("*")]:
             sd = win32security.GetFileSecurity(
                 str(path),
-                win32con.DACL_SECURITY_INFORMATION | win32con.OWNER_SECURITY_INFORMATION,
+                win32con.DACL_SECURITY_INFORMATION
+                | win32con.OWNER_SECURITY_INFORMATION,
             )
 
             # Verify ownership
@@ -348,7 +374,8 @@ class TestWindows:
                 if (
                     path.is_dir()
                     and ace_flags
-                    != ntsecuritycon.OBJECT_INHERIT_ACE | ntsecuritycon.CONTAINER_INHERIT_ACE
+                    != ntsecuritycon.OBJECT_INHERIT_ACE
+                    | ntsecuritycon.CONTAINER_INHERIT_ACE
                 ):
                     bad_perms[path].append(
                         f"Expected inheritance in ACE to be {ntsecuritycon.OBJECT_INHERIT_ACE | ntsecuritycon.CONTAINER_INHERIT_ACE} but got {ace_flags}"
@@ -370,7 +397,10 @@ class TestWindows:
         assert len(bad_perms) == 0, "\n".join(error_message)
 
 
-@pytest.mark.skipif(not _is_admin(), reason="After Effects submitter installation requires admin permissions")
+@pytest.mark.skipif(
+    not _is_admin(),
+    reason="After Effects submitter installation requires admin permissions",
+)
 class TestUserInstall:
     def test_install(self, user_installation: Path):
         # GIVEN / WHEN / THEN
@@ -395,13 +425,18 @@ class TestUserInstall:
         assert not per_test_user_installation.exists()
 
 
-@pytest.mark.skipif(not _is_admin(), reason="After Effects submitter installation requires admin privileges")
+@pytest.mark.skipif(
+    not _is_admin(),
+    reason="After Effects submitter installation requires admin privileges",
+)
 class TestSystemInstall:
     def test_install(self, system_installation: Path):
         # GIVEN / WHEN / THEN
         _validate_files(system_installation)
 
-    def test_uninstall(self, per_test_system_installation: Path, uninstaller_path: Path):
+    def test_uninstall(
+        self, per_test_system_installation: Path, uninstaller_path: Path
+    ):
         # GIVEN / WHEN
         result = subprocess.run(
             [per_test_system_installation / uninstaller_path, "--mode", "unattended"],
@@ -448,7 +483,9 @@ class TestVerifySigning:
             Number of errors: 1
         """
         # GIVEN
-        signtool = next(glob.iglob("C:/Program Files*/Windows Kits/*/bin/*/x64/signtool.exe"), None)
+        signtool = next(
+            glob.iglob("C:/Program Files*/Windows Kits/*/bin/*/x64/signtool.exe"), None
+        )
         assert signtool, "signtool not found in expected location"
 
         # WHEN
@@ -484,7 +521,8 @@ class TestVerifySigning:
         # This matches what customers are told to do via the public docs:
         #   https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#verify-installer
         assert (
-            'Good signature from "AWS Deadline Cloud <aws-deadline@amazon.com>"' in result.stderr
+            'Good signature from "AWS Deadline Cloud <aws-deadline@amazon.com>"'
+            in result.stderr
         ), "Signing succeeded, but did not match docs instructions"
 
     @pytest.mark.skipif(platform.system() != "Darwin", reason="Only run on MacOS")

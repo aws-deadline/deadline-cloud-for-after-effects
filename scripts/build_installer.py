@@ -106,7 +106,9 @@ def build_installer(
                 "depsBundle.sh", check=True, shell=True, capture_output=True
             )
         else:
-            deps_bundle_output = subprocess.run("./depsBundle.sh", check=True, capture_output=True)
+            deps_bundle_output = subprocess.run(
+                "./depsBundle.sh", check=True, capture_output=True
+            )
         print(deps_bundle_output.stdout.decode("utf-8"))
     except subprocess.CalledProcessError as e:
         print(f"Error when bundling dependencies: {e.stdout.decode('utf-8')}")
@@ -135,7 +137,9 @@ def build_installer(
     )
 
     if EVALUATION_VERSION_STRING in output and not dev:
-        raise EvaluationBuildError("InstallBuilder was detected using an evaluation version.")
+        raise EvaluationBuildError(
+            "InstallBuilder was detected using an evaluation version."
+        )
     elif dev and EVALUATION_VERSION_STRING not in output:
         raise EvaluationBuildError(
             "InstallBuilder was not detected using an evaluation version when running a dev build. "

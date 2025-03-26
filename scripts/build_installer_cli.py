@@ -29,7 +29,9 @@ def _combine_callbacks(
     return _combined_callback
 
 
-def _mutually_exclude(others: Iterable[str]) -> Callable[[click.Context, click.Option, Any], Any]:
+def _mutually_exclude(
+    others: Iterable[str],
+) -> Callable[[click.Context, click.Option, Any], Any]:
     """
     Creates a callback wich raises an error if this argument is specified and any of other specified arguments are also specified
     """
@@ -124,7 +126,9 @@ def _not_allowed_if_env_var_set(
 
     def _callback(_ctx: click.Context, param: click.Option, value: Any) -> Any:
         if value and os.environ.get(env_var_name) is not None:
-            raise click.BadParameter(f"--{param.name} cannot be used when {env_var_name} is set.")
+            raise click.BadParameter(
+                f"--{param.name} cannot be used when {env_var_name} is set."
+            )
         return value
 
     return _callback
@@ -141,7 +145,8 @@ def _not_allowed_if_env_var_set(
     "--install-builder-s3-bucket",
     type=str,
     callback=_combine_callbacks(
-        _require_if_false_or_unspecified("local_dev"), _mutually_exclude(["install_builder_path"])
+        _require_if_false_or_unspecified("local_dev"),
+        _mutually_exclude(["install_builder_path"]),
     ),
     help="The name of S3 Bucket that contains an archive of an install of InstallBuilder",
 )

@@ -15,7 +15,15 @@ version = "semantic-release -v --strict version --print {args}"
 
 [envs.default.scripts]
 sync = "pip install -r requirements-testing.txt"
-lint = "{root}/scripts/add_copyright_headers.sh"
+lint = [
+  "black {args:.}",
+  "ruff check {args:.}",
+  "{root}/scripts/add_copyright_headers.sh"
+]
+lint-check = [
+    "black --check --diff {args:.}",
+    "ruff check {args:.}",
+]
 build-installer = "python {root}/scripts/build_installer_cli.py --installer-source-path {root}/installer/DeadlineCloudForAfterEffectsSubmitter.xml {args:}"
 test-installer = "pytest --no-cov {args:test/installer} -vvv"
 test = "pytest --cov-config pyproject.toml {args:test/unit}"

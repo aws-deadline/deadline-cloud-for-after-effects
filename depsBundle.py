@@ -51,7 +51,9 @@ def _get_package_version_regex(package: str) -> re.Pattern:
 def _get_package_version(package: str, install_path: Path) -> str:
     version_regex = _get_package_version_regex(package)
     pip_args = ["pip", "list", "--path", str(install_path)]
-    output = subprocess.run(pip_args, check=True, capture_output=True).stdout.decode("utf-8")
+    output = subprocess.run(pip_args, check=True, capture_output=True).stdout.decode(
+        "utf-8"
+    )
     for line in output.split("\n"):
         match = version_regex.match(line)
         if match:
@@ -74,7 +76,9 @@ def _build_base_environment(working_directory: Path, dependencies: list[str]) ->
     return base_env_path
 
 
-def _download_native_dependencies(working_directory: Path, base_env: Path) -> list[Path]:
+def _download_native_dependencies(
+    working_directory: Path, base_env: Path
+) -> list[Path]:
     versioned_native_dependencies = [
         f"{package_name}=={_get_package_version(package_name, base_env)}"
         for package_name in NATIVE_DEPENDENCIES
@@ -103,7 +107,9 @@ def _download_native_dependencies(working_directory: Path, base_env: Path) -> li
     return native_dependency_paths
 
 
-def _copy_native_to_base_env(base_env: Path, native_dependency_paths: list[Path]) -> None:
+def _copy_native_to_base_env(
+    base_env: Path, native_dependency_paths: list[Path]
+) -> None:
     for native_dependency_path in native_dependency_paths:
         for file in native_dependency_path.rglob("*"):
             if file.is_file():
@@ -144,7 +150,9 @@ def build_deps_bundle() -> None:
         project_dict = _get_project_dict()
         dependencies = _get_dependencies(project_dict)
         base_env = _build_base_environment(working_directory, dependencies)
-        native_dependency_paths = _download_native_dependencies(working_directory, base_env)
+        native_dependency_paths = _download_native_dependencies(
+            working_directory, base_env
+        )
         _copy_native_to_base_env(base_env, native_dependency_paths)
         zip_path = _get_zip_path(working_directory, project_dict)
         _zip_bundle(base_env, zip_path)

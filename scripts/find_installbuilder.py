@@ -56,9 +56,7 @@ class InstallBuilderSelection:
     def from_s3(bucket_name: str, dest_path: Path, key: Optional[str] = None):
         if key is None:
             if platform.system() in _INSTALL_BUILDER_ARCHIVE_FILENAME:
-                resolved_key = (
-                    f"install_builder/{_INSTALL_BUILDER_ARCHIVE_FILENAME[platform.system()]}"
-                )
+                resolved_key = f"install_builder/{_INSTALL_BUILDER_ARCHIVE_FILENAME[platform.system()]}"
             else:
                 raise UnsupportedOSError(f"Unsupported OS: {platform.system()}")
         else:
@@ -86,7 +84,9 @@ class _InstallBuilderSearchConfig:
 
 
 _INSTALL_BUILDER_SEARCH_CONFIGS = {
-    "Linux": _InstallBuilderSearchConfig(Path("/opt"), r"^installbuilder-(\d+)\.(\d+)\.(\d+)$"),
+    "Linux": _InstallBuilderSearchConfig(
+        Path("/opt"), r"^installbuilder-(\d+)\.(\d+)\.(\d+)$"
+    ),
     "Darwin": _InstallBuilderSearchConfig(
         Path("/Applications"),
         r"^InstallBuilder (Professional|Enterprise|For (?:Windows|OS X)) (\d+)\.(\d+)\.(\d+)$",
@@ -155,7 +155,9 @@ def _get_default_installbuilder_location() -> Path:
     Returns the default location where InstallBuilder Professional will be installed depending on the platform.
     """
     if platform.system() not in _INSTALL_BUILDER_SEARCH_CONFIGS:
-        raise UnsupportedOSError(f"Unsupported OS for building installer: {platform.system()}")
+        raise UnsupportedOSError(
+            f"Unsupported OS for building installer: {platform.system()}"
+        )
     config = _INSTALL_BUILDER_SEARCH_CONFIGS[platform.system()]
     candidates = []
     for install_dir in config.parent_path.iterdir():
