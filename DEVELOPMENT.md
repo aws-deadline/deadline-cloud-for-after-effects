@@ -129,9 +129,9 @@ To run unit tests, run the following
 hatch run test
 ```
 
-If you added new files and see the copyright headers test failing, run this
+If you added new files and see the copyright headers test failing, run linting
 ```bash
-./scripts/add_copyright_headers.sh
+hatch run lint
 ```
 
 To test installer, you need admin permission to run the tests correctly.
