@@ -1641,8 +1641,8 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         var shellPath = $.getenv("SHELL") || "/bin/bash";
         cmd =
             'deadline bundle gui-submit \\\"' + bundle.fsName + '\\\" --output json --install-gui --submitter-name \\\"After Effects\\\"';
-        submitScriptContents = shellPath + " -i -c \\\"" + cmd + "\\\" && exit";
-        output = system.callSystem('osascript -e \'tell application "Terminal"\' -e \'do script "' + submitScriptContents + '\"\'' + ' -e \'end tell\' > /dev/null');
+        submitScriptContents = shellPath + " -i -c \\\"" + cmd + "\\\"";
+        output = system.callSystem('osascript -e \'do shell script "' + submitScriptContents + '"\'');
     }
     if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
         adcAlert(
