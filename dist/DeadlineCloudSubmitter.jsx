@@ -2412,13 +2412,15 @@ function buildUI(thisObj) {
 
     var submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
-        const multiFrameRendering = mfrCheckBox.value ? "ON" : "OFF";
-        var maxCpuUsagePercentage = undefined;
-        if (mfrCheckBox.value) {
-            maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
+        if (getPythonExecutable()) {
+            const multiFrameRendering = mfrCheckBox.value ? "ON" : "OFF";
+            var maxCpuUsagePercentage = undefined;
+            if (mfrCheckBox.value) {
+                maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
+            }
+            SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage);
+            list.selection = null;
         }
-        SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage);
-        list.selection = null;
     }
     submitButton.alignment = 'right';
     submitButton.enabled = false;
