@@ -1,3 +1,6 @@
+# Source: https://github.com/aws-deadline/.github/blob/mainline/.github/workflows/reusable_publish_v2.yml
+# However, After Effects has no adaptor or PyPI release, so the last section is removed and remaining
+# workflow is pasted here
 name: "Publish"
 
 on:
