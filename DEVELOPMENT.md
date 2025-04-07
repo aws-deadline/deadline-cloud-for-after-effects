@@ -100,11 +100,6 @@ Then reopen the submitter panel from the application to test your change.
 Default MacOS InstallBuilder path: `"/Applications/InstallBuilder Enterprise <major>.<minor>.<patch>"`
 Default Windows InstallBuilder path: `"C:\\Program Files\\InstallBuilder Enterprise <major>.<minor>.<patch>\\" `
 
-### Build the package
-
-```bash
-hatch run build
-```
 
 ### Build the installer
 

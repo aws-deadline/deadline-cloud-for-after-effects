@@ -1,15 +1,24 @@
-name: "Release: Publish"
-run-name: "Release: ${{ github.event.head_commit.message }}"
+name: "Publish"
 
 on:
-  push:
-    branches:
-      - mainline
-    paths:
-      - CHANGELOG.md
+  workflow_call:
+    inputs:
+      oses:
+        required: false
+        type: string
+        default: "['ubuntu-latest', 'windows-latest', 'macos-latest']"
+      python-versions:
+        required: false
+        type: string
+        default: "['3.9', '3.10', '3.11', '3.12']"
+      installer_oses:
+        required: false
+        type: string
+    outputs:
+      tag:
+        description: "The newly created tag"
+        value: ${{ jobs.PreRelease.outputs.tag }}
 
-concurrency:
-  group: release
 
 jobs:
   VerifyCommit:
@@ -34,10 +43,25 @@ jobs:
             echo "Verified author email ($AUTHOR) is as expected ($EXPECTED_AUTHOR)"
           fi
 
-  Release:
+  UnitTests:
     needs: VerifyCommit
+    name: UnitTests
+    strategy:
+      matrix:
+        os: ${{ fromJson(inputs.oses) }}
+        python-version: ${{ fromJson(inputs.python-versions) }}
+    uses: ./.github/workflows/reusable_python_build.yml
+    with:
+      os: ${{ matrix.os }}
+      python-version: ${{ matrix.python-version }}
+      commit: ${{ github.ref }}
+
+  PreRelease:
+    needs: UnitTests
     runs-on: ubuntu-latest
     environment: release
+    outputs:
+      tag: ${{steps.prep-release.outputs.TAG}}
     permissions:
       id-token: write
       contents: write
@@ -45,7 +69,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: release
+          ref: ${{ github.ref }}
           fetch-depth: 0
           token: ${{ secrets.CI_TOKEN }}
 
@@ -58,11 +82,10 @@ jobs:
         run: |
           git config --local user.email ${{ secrets.EMAIL }}
           git config --local user.name ${{ secrets.USER }}
-      
+
       - name: MergePushRelease
         run: |
           git merge --ff-only origin/mainline -v
-          git push origin release    
 
       - name: PrepRelease
         id: prep-release
@@ -70,19 +93,181 @@ jobs:
           COMMIT_TITLE=$(git show -s --format='%s' HEAD)
           NEXT_SEMVER=$(python -c 'import sys, re; print(re.match(r"chore\(release\): ([0-9]+\.[0-9]+\.[0-9]+).*", sys.argv[1]).group(1))' "$COMMIT_TITLE")
 
-          # The format of the tag must match the pattern in semantic.toml -> tool.semantic_release.tag_format
+          # The format of the tag must match the pattern in pyproject.toml -> tool.semantic_release.tag_format
           TAG="$NEXT_SEMVER"
 
+          git tag -a $TAG -m "Release $TAG"
+
           echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
           echo "NEXT_SEMVER=$NEXT_SEMVER" >> $GITHUB_ENV
           {
             echo 'RELEASE_NOTES<<EOF'
             python .github/scripts/get_latest_changelog.py
             echo EOF
           } >> $GITHUB_ENV
+            # Tag must be made before building so the generated _version.py files have the correct version
+
+          git push origin $TAG
+
+      - name: Build
+        run: |
+          pip install --upgrade hatch
+          hatch -v build
+
+      # A precommit hook into the GitHub Action workflow.
+      # If the workflow file .github/actions/prepush_release_hook exists in the repository
+      # that is using this workflow, then this will run the workflow defined in that file.
+      # That workflow must be defined to accept all of the inputs in the 'with' clause below.
+      # Uses:
+      #  If a package publish needs to publish additional files to the GitHub release, then
+      #  it should use this hook to:
+      #    1. create a dist_extras/ directory
+      #    2. add all additional files to publish into that directory that aren't publishable to PyPI
+      - name: PrePushReleaseHook
+        uses: ./.github/actions/prepush_release_hook
+        if: ${{ hashFiles('./.github/actions/prepush_release_hook/action.yml') != '' }}
+        with:
+          semver: ${{ env.NEXT_SEMVER }}
+          tag: ${{ env.TAG }}
+
+      - name: UploadArtifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: |
+            dist
+            dist_extras
+
+  BuildInstallers:
+    name: BuildInstallers
+    needs: PreRelease
+    uses: aws-deadline/.github/.github/workflows/reusable_build_installers.yml@mainline
+    secrets: inherit
+    if: ${{ inputs.installer_oses }}
+    with:
+      project_name: ${{ github.event.repository.name }}
+      ref:  ${{needs.PreRelease.outputs.tag}}
+      ref_type: tags
+      oses: ${{ inputs.installer_oses }}
+      environment: release
+
+  IsCondaReady:
+    needs: BuildInstallers
+    if: needs.BuildInstallers.result == 'success' || needs.BuildInstallers.result == 'skipped'
+    runs-on: ubuntu-latest
+    environment: release
+    name: “Is the Conda Package available in all ProdWaves and have you ran any required manual tests?”
+    steps:
+      - run: |
+         :
+
+  Release:
+    needs: [IsCondaReady, PreRelease]
+    if: (needs.IsCondaReady.result == 'success' && needs.PreRelease.result == 'success')
+    runs-on: ubuntu-latest
+    name: Release
+    permissions:
+      id-token: write
+      contents: write
+    environment: release
+    env:
+      TAG: ${{needs.PreRelease.outputs.tag}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{env.TAG}}
+          fetch-depth: 0
+          token: ${{ secrets.CI_TOKEN }}
+
+      - name: Download
+        uses: actions/download-artifact@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_PGP_KEY_SECRET_ROLE }}
+          aws-region: us-west-2
+          mask-aws-account-id: true
+
+      - name: Import PGP Key
+        run: |
+          export SECRET_STRING="$(aws secretsmanager get-secret-value --secret-id ${{ secrets.AWS_PGP_KEY_SECRET }} --query 'SecretString')"
+          printenv SECRET_STRING | jq -r '. | fromjson | .PrivateKey' | gpg --batch --pinentry-mode loopback --import --armor
+
+          PGP_KEY_PASSPHRASE=$(printenv SECRET_STRING | jq -r '. | fromjson | .Passphrase')
+          echo "::add-mask::$PGP_KEY_PASSPHRASE"
+          echo "PGP_KEY_PASSPHRASE=$PGP_KEY_PASSPHRASE" >> $GITHUB_ENV
+
+      - name: Sign
+        run: |
+          shopt -s nullglob
+          for file in build-artifact/dist/* build-artifact/dist_extras/*; do
+             printenv PGP_KEY_PASSPHRASE | gpg --batch --pinentry-mode loopback --local-user "AWS Deadline Cloud" --passphrase-fd 0 --output $file.sig --detach-sign $file
+             echo "Created signature file for $file"
+          done
+          shopt -u nullglob
 
       - name: PushRelease
         env:
           GH_TOKEN: ${{ secrets.CI_TOKEN }}
         run: |
-          gh release create $TAG -t "$TAG" --notes "$RELEASE_NOTES"
+          shopt -s nullglob
+          gh release create $TAG build-artifact/dist/* build-artifact/dist_extras/* --notes "$RELEASE_NOTES"
+          shopt -u nullglob
+
+  ReleaseBuiltInstallers:
+    needs: [Release, PreRelease]
+    runs-on: ubuntu-latest
+    environment: release
+    if: (needs.Release.result == 'success' && needs.PreRelease.result == 'success') && ${{ inputs.installer_oses }}
+    permissions:
+      id-token: write
+    strategy:
+      matrix:
+        os: ${{ fromJson(inputs.installer_oses) }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_CODEBUILD_MAINLINE_INSTALLER_ROLE }}
+          aws-region: us-west-2
+          mask-aws-account-id: true
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        with:
+          project-name: ReleaseInstallerProject
+          hide-cloudwatch-logs: true
+          env-vars-for-codebuild: |
+              REPONAME,
+              OPERATING_SYSTEM,
+              VERSION
+        env:
+          REPONAME: ${{ github.event.repository.name }}
+          OPERATING_SYSTEM: ${{ matrix.os }}
+          VERSION: ${{needs.PreRelease.outputs.tag}}
+
+  PublishToInternal:
+    needs: [ReleaseBuiltInstallers, PreRelease]
+    if: (needs.ReleaseBuiltInstallers.result == 'success' && needs.PreRelease.result == 'success')
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    env:
+      TAG: ${{needs.PreRelease.outputs.tag}}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_CODEBUILD_RELEASE_PUBLISH_ROLE }}
+          aws-region: us-west-2
+          mask-aws-account-id: true
+
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        with:
+          project-name: ${{ github.event.repository.name }}-release-Publish
+          hide-cloudwatch-logs: true
+          source-version-override: refs/tags/${{env.TAG}}

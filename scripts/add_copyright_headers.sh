@@ -104,13 +104,13 @@ EOF
 
 # If no arguments provided, process tracked files recursively
 if [ $# -eq 0 ]; then
-    # Get all tracked files that match our patterns, respecting .gitignore
-    # and excluding .github directory
-    git ls-files "*.java" "*.xml" "*.py" "*.yml" "*.yaml" "*.cfg" "*.ini" "*.ps1" "*.sh" |
-    grep -v "^\.github/" |
+    find . -type f \( -name "*.java" -o -name "*.xml" -o -name "*.py" -o -name "*.yml" \
+        -o -name "*.yaml" -o -name "*.cfg" -o -name "*.ini" -o -name "*.ps1" -o -name "*.sh" \) \
+        -not -path "./.git/*" -not -path "./.github/*" | \
     while IFS= read -r file; do
         process_file "$file"
     done
+
 else
     # Process specific files provided as arguments
     for file in "$@"; do
