@@ -125,16 +125,11 @@ hatch run lint-check # Runs formatting without modifying code
 hatch run lint # Runs formatting and modifies code
 ```
 
-
 To run unit tests, run the following
 ```bash
 hatch run test
 ```
-
-If you added new files and see the copyright headers test failing, run linting
-```bash
-hatch run lint
-```
+Note: if you added new files and see the copyright headers test failing, run linting
 
 To test installer, you need admin permission to run the tests correctly.
 
