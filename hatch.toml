@@ -24,6 +24,8 @@ lint-check = [
     "black --check --diff {args:.}",
     "ruff check {args:.}",
 ]
-build-installer = "python {root}/scripts/build_installer_cli.py --installer-source-path {root}/installer/DeadlineCloudForAfterEffectsSubmitter.xml {args:}"
 test-installer = "pytest --no-cov {args:test/installer} -vvv"
 test = "pytest --cov-config pyproject.toml {args:test/unit}"
+
+[envs.installer.scripts]
+build-installer = "python {root}/scripts/build_installer_cli.py --installer-source-path {root}/installer/DeadlineCloudForAfterEffectsSubmitter.xml {args:}"
