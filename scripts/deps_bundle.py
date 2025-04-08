@@ -5,43 +5,16 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
-import sys
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
-SUPPORTED_PYTHON_VERSIONS = ["3.9", "3.10", "3.11", "3.12"]
-SUPPORTED_PLATFORMS = ["win_amd64", "manylinux2014_x86_64", "macosx_10_9_x86_64"]
+from _project import get_project_dict, get_dependencies, Dependency
+
+SUPPORTED_PYTHON_VERSIONS = ["3.9", "3.10", "3.11"]
+SUPPORTED_PLATFORMS = ["Windows", "Linux", "Darwin"]
 NATIVE_DEPENDENCIES = ["xxhash"]
-
-
-def _get_project_dict() -> dict[str, Any]:
-    if sys.version_info < (3, 11):
-        with TemporaryDirectory() as toml_env:
-            toml_install_pip_args = ["pip", "install", "--target", toml_env, "toml"]
-            subprocess.run(toml_install_pip_args, check=True)
-            sys.path.insert(0, toml_env)
-            import toml
-        mode = "r"
-    else:
-        import tomllib as toml
-
-        mode = "rb"
-
-    with open("pyproject.toml", mode) as pyproject_toml:
-        return toml.load(pyproject_toml)
-
-
-def _get_dependencies(pyproject_dict: dict[str, Any]) -> list[str]:
-    if "project" not in pyproject_dict:
-        raise Exception("pyproject.toml is missing project section")
-    if "dependencies" not in pyproject_dict["project"]:
-        raise Exception("pyproject.toml is missing dependencies section")
-
-    dependencies = pyproject_dict["project"]["dependencies"]
-    deps_noopenjd = filter(lambda dep: not dep.startswith("openjd"), dependencies)
-    return list(map(lambda dep: dep.replace(" ", ""), deps_noopenjd))
 
 
 def _get_package_version_regex(package: str) -> re.Pattern:
@@ -51,9 +24,7 @@ def _get_package_version_regex(package: str) -> re.Pattern:
 def _get_package_version(package: str, install_path: Path) -> str:
     version_regex = _get_package_version_regex(package)
     pip_args = ["pip", "list", "--path", str(install_path)]
-    output = subprocess.run(pip_args, check=True, capture_output=True).stdout.decode(
-        "utf-8"
-    )
+    output = subprocess.run(pip_args, check=True, capture_output=True).stdout.decode("utf-8")
     for line in output.split("\n"):
         match = version_regex.match(line)
         if match:
@@ -61,33 +32,30 @@ def _get_package_version(package: str, install_path: Path) -> str:
     raise Exception(f"Could not find version for package {package}")
 
 
-def _build_base_environment(working_directory: Path, dependencies: list[str]) -> Path:
+def _build_base_environment(working_directory: Path, dependencies: list[Dependency]) -> Path:
     (working_directory / "base_env").mkdir()
     base_env_path = working_directory / "base_env"
+    dependencies_for_pip = [d.for_pip() for d in dependencies]
     base_env_pip_args = [
         "pip",
         "install",
         "--target",
         str(base_env_path),
         "--only-binary=:all:",
-        *dependencies,
+        *dependencies_for_pip,
     ]
     subprocess.run(base_env_pip_args, check=True)
     return base_env_path
 
 
-def _download_native_dependencies(
-    working_directory: Path, base_env: Path
-) -> list[Path]:
+def _download_native_dependencies(working_directory: Path, base_env: Path) -> list[Path]:
     versioned_native_dependencies = [
         f"{package_name}=={_get_package_version(package_name, base_env)}"
         for package_name in NATIVE_DEPENDENCIES
     ]
     native_dependency_paths = []
     for version in SUPPORTED_PYTHON_VERSIONS:
-        native_dependency_path = (
-            working_directory / "native" / f"{version.replace('.', '_')}"
-        )
+        native_dependency_path = working_directory / "native" / f"{version.replace('.', '_')}"
         native_dependency_paths.append(native_dependency_path)
         native_dependency_path.mkdir(parents=True)
         native_dependency_pip_args = [
@@ -104,9 +72,7 @@ def _download_native_dependencies(
     return native_dependency_paths
 
 
-def _copy_native_to_base_env(
-    base_env: Path, native_dependency_paths: list[Path]
-) -> None:
+def _copy_native_to_base_env(base_env: Path, native_dependency_paths: list[Path]) -> None:
     for native_dependency_path in native_dependency_paths:
         for file in native_dependency_path.rglob("*"):
             if file.is_file():
@@ -146,12 +112,13 @@ def _copy_zip_to_destination(zip_path: Path) -> Path:
 def build_deps_bundle() -> None:
     with TemporaryDirectory() as working_directory:
         working_directory = Path(working_directory)
-        project_dict = _get_project_dict()
-        dependencies = _get_dependencies(project_dict)
-        base_env = _build_base_environment(working_directory, dependencies)
-        native_dependency_paths = _download_native_dependencies(
-            working_directory, base_env
+        project_dict = get_project_dict()
+        dependencies: list[Dependency] = get_dependencies(project_dict)
+        deps_noopenjd: list[Dependency] = filter(
+            lambda dep: not dep.name.startswith("openjd"), dependencies
         )
+        base_env = _build_base_environment(working_directory, deps_noopenjd)
+        native_dependency_paths = _download_native_dependencies(working_directory, base_env)
         _copy_native_to_base_env(base_env, native_dependency_paths)
         zip_path = _get_zip_path(working_directory, project_dict)
         _zip_bundle(base_env, zip_path)
