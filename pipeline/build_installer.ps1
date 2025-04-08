@@ -1,4 +1,4 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 $ErrorActionPreference = "Stop"
 
-hatch run build-installer @args
+hatch run installer:build-installer @args
