@@ -86,10 +86,6 @@ jobs:
           git config --local user.email ${{ secrets.EMAIL }}
           git config --local user.name ${{ secrets.USER }}
 
-      - name: MergePushRelease
-        run: |
-          git merge --ff-only origin/mainline -v
-
       - name: PrepRelease
         id: prep-release
         run: |
