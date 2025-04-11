@@ -57,8 +57,12 @@ def installer_path():
 
 def _run_installer(installer_path, install_scope, installation_path) -> Path:
     # use a path that does not exist
+    ae2024: Path = installation_path / "ae2024"
+    ae2024.mkdir(parents=True)
+    ae2025: Path = installation_path / "ae2025"
+    ae2025.mkdir(parents=True)
     installation_path = installation_path / "dne"
-    installation_path.mkdir(parents=True, exist_ok=True)
+    installation_path.mkdir(parents=True)
 
     args = [
         installer_path,
@@ -69,7 +73,11 @@ def _run_installer(installer_path, install_scope, installation_path) -> Path:
         "--prefix",
         installation_path,
         "--enable-components",
-        "deadline_cloud_for_after_effects",
+        "deadline_cloud_for_after_effects,ae_2024,ae_2025",
+        "--after_effects_script_ui_directory_2024",
+        ae2024,
+        "--after_effects_script_ui_directory_2025",
+        ae2025
     ]
     if platform.system() == "Darwin":
         args = ["sudo", "-n", *args]
