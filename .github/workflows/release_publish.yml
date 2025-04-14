@@ -94,7 +94,7 @@ jobs:
     secrets: inherit
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        os: ['windows-latest', 'macos-latest']
     with:
       project_name: ${{ github.event.repository.name }}
       ref:  ${{needs.PreRelease.outputs.tag}}
