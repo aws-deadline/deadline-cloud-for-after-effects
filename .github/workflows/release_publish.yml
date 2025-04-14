@@ -94,7 +94,7 @@ jobs:
     secrets: inherit
     strategy:
       matrix:
-        os: "['ubuntu-latest', 'windows-latest', 'macos-latest']"
+        os: "['windows-latest', 'macos-latest']"
     with:
       project_name: ${{ github.event.repository.name }}
       ref:  ${{needs.PreRelease.outputs.tag}}
@@ -146,7 +146,7 @@ jobs:
       id-token: write
     strategy:
       matrix:
-        os: "['ubuntu-latest', 'windows-latest', 'macos-latest']"
+        os: "['windows-latest', 'macos-latest']"
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
