@@ -11,6 +11,9 @@ on:
     paths:
       - CHANGELOG.md
 
+concurrency:
+  group: release
+
 jobs:
   VerifyCommit:
     runs-on: ubuntu-latest
