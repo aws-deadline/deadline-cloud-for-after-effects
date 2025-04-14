@@ -5,10 +5,9 @@ on:
     inputs:
       os:
         required: true
-        default: Linux
+        default: Windows
         type: choice
         options:
-        - Linux
         - Windows
         - MacOS
       ref_type:
