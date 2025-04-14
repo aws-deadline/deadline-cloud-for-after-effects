@@ -105,7 +105,6 @@ jobs:
   IsCondaReady:
     needs: BuildInstallers
     if: needs.BuildInstallers.result == 'success' || needs.BuildInstallers.result == 'skipped'
-    runs-on: ubuntu-latest
     environment: release
     name: “Is the Conda Package available in all ProdWaves and have you ran any required manual tests?”
     steps:
