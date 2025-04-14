@@ -2,26 +2,17 @@
 # However, After Effects has no adaptor or PyPI release, so the last section is removed and remaining
 # workflow is pasted here
 name: "Publish"
+run-name: "Release: ${{ github.event.head_commit.message }}"
 
 on:
-  workflow_call:
-    inputs:
-      oses:
-        required: false
-        type: string
-        default: "['ubuntu-latest', 'windows-latest', 'macos-latest']"
-      python-versions:
-        required: false
-        type: string
-        default: "['3.9', '3.10', '3.11', '3.12']"
-      installer_oses:
-        required: false
-        type: string
-    outputs:
-      tag:
-        description: "The newly created tag"
-        value: ${{ jobs.PreRelease.outputs.tag }}
+  push:
+    branches:
+      - mainline
+    paths:
+      - CHANGELOG.md
 
+concurrency:
+  group: release
 
 jobs:
   VerifyCommit:
@@ -51,8 +42,8 @@ jobs:
     name: UnitTests
     strategy:
       matrix:
-        os: ${{ fromJson(inputs.oses) }}
-        python-version: ${{ fromJson(inputs.python-versions) }}
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
     uses: ./.github/workflows/reusable_python_build.yml
     with:
       os: ${{ matrix.os }}
@@ -109,35 +100,6 @@ jobs:
 
           git push origin $TAG
 
-      - name: Build
-        run: |
-          pip install --upgrade hatch
-          hatch -v build
-
-      # A precommit hook into the GitHub Action workflow.
-      # If the workflow file .github/actions/prepush_release_hook exists in the repository
-      # that is using this workflow, then this will run the workflow defined in that file.
-      # That workflow must be defined to accept all of the inputs in the 'with' clause below.
-      # Uses:
-      #  If a package publish needs to publish additional files to the GitHub release, then
-      #  it should use this hook to:
-      #    1. create a dist_extras/ directory
-      #    2. add all additional files to publish into that directory that aren't publishable to PyPI
-      - name: PrePushReleaseHook
-        uses: ./.github/actions/prepush_release_hook
-        if: ${{ hashFiles('./.github/actions/prepush_release_hook/action.yml') != '' }}
-        with:
-          semver: ${{ env.NEXT_SEMVER }}
-          tag: ${{ env.TAG }}
-
-      - name: UploadArtifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifact
-          path: |
-            dist
-            dist_extras
-
   BuildInstallers:
     name: BuildInstallers
     needs: PreRelease
@@ -180,41 +142,11 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.CI_TOKEN }}
 
-      - name: Download
-        uses: actions/download-artifact@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_PGP_KEY_SECRET_ROLE }}
-          aws-region: us-west-2
-          mask-aws-account-id: true
-
-      - name: Import PGP Key
-        run: |
-          export SECRET_STRING="$(aws secretsmanager get-secret-value --secret-id ${{ secrets.AWS_PGP_KEY_SECRET }} --query 'SecretString')"
-          printenv SECRET_STRING | jq -r '. | fromjson | .PrivateKey' | gpg --batch --pinentry-mode loopback --import --armor
-
-          PGP_KEY_PASSPHRASE=$(printenv SECRET_STRING | jq -r '. | fromjson | .Passphrase')
-          echo "::add-mask::$PGP_KEY_PASSPHRASE"
-          echo "PGP_KEY_PASSPHRASE=$PGP_KEY_PASSPHRASE" >> $GITHUB_ENV
-
-      - name: Sign
-        run: |
-          shopt -s nullglob
-          for file in build-artifact/dist/* build-artifact/dist_extras/*; do
-             printenv PGP_KEY_PASSPHRASE | gpg --batch --pinentry-mode loopback --local-user "AWS Deadline Cloud" --passphrase-fd 0 --output $file.sig --detach-sign $file
-             echo "Created signature file for $file"
-          done
-          shopt -u nullglob
-
       - name: PushRelease
         env:
           GH_TOKEN: ${{ secrets.CI_TOKEN }}
         run: |
-          shopt -s nullglob
-          gh release create $TAG build-artifact/dist/* build-artifact/dist_extras/* --notes "$RELEASE_NOTES"
-          shopt -u nullglob
+          gh release create $TAG -t "$TAG" --notes "$RELEASE_NOTES"
 
   ReleaseBuiltInstallers:
     needs: [Release, PreRelease]

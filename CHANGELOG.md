@@ -1,3 +1,21 @@
+## 0.2.2 (2025-04-14)
+
+
+### Features
+* added macOS installer support for After Effects with updated unit tests (#154) ([`b131151`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/b131151b2fc8e2547a9a634caa57a9235de3273a))
+* adding support to use multi-frame rendering and improving submitter settings input behavior (#148) ([`2ef8f77`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/2ef8f77cce3ad9c4e99160a279927a518a4981bd))
+* disable "Frames Per Task" textbox if selected composition is not an image sequence (#131) ([`a64fa2f`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/a64fa2fb68afad31bfded1546d4ec390da0e95fb))
+
+### Bug Fixes
+* added Python validation check on job submission (#162) ([`76e3e4f`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/76e3e4fb73b96138bf677328d0c9d39387447420))
+* revert switching Deadline CLI from Terminal window call to shell script call to avoid Terminal window popup on Mac (#161) ([`e70ea64`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/e70ea64f837ad6986b0030a27acba69ff91e48d1))
+* switch Deadline CLI from Terminal window call to shell script call to avoid Terminal window popup on Mac (#159) ([`7e47520`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/7e475201beee0150e1bfb90bb801b96cddfebd4f))
+* fixed pipeline installer script to call correct hatch command (#155) ([`658cc9c`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/658cc9c01ea19c8c41ce3ea5ae5d540fb149f21b))
+* defined default height and width of submitter panel (#146) ([`5bd8c8d`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/5bd8c8d6ee23a8e2af570ed70e1b78a4fcb490b8))
+* in macOS make GUI submitter independent on AE submitter to allow end users to keep using AE during assets upload (#139) ([`d2d425e`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/d2d425e8d37b76b6d7382869ef347e7f40113f56))
+* add submitter-name After Effects to auto-close GUI submitter after submission (#138) ([`cb3e9dc`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/cb3e9dc3ddfa21510e8e20d9b77bb4f810ffa555))
+* fixed getPythonExecutable() function for submitter on MacOS  (#128) ([`7220c72`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/7220c7237bf2e4edbbb29a30f0541b568b055010))
+
 ## 0.2.1 (2025-02-04)
 
 
