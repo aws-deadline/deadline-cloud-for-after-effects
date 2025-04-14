@@ -2,8 +2,14 @@
 # However, After Effects has no adaptor or PyPI release, so the last section is removed and remaining
 # workflow is pasted here
 name: "Publish"
+run-name: "Release: ${{ github.event.head_commit.message }}"
 
 on:
+  push:
+    branches:
+      - mainline
+    paths:
+      - CHANGELOG.md
   workflow_call:
     inputs:
       oses:
