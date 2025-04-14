@@ -103,6 +103,7 @@ jobs:
       environment: release
 
   IsCondaReady:
+    runs-on: ubuntu-latest
     needs: BuildInstallers
     if: needs.BuildInstallers.result == 'success' || needs.BuildInstallers.result == 'skipped'
     environment: release
