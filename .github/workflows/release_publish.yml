@@ -92,18 +92,19 @@ jobs:
     needs: PreRelease
     uses: aws-deadline/.github/.github/workflows/reusable_build_installers.yml@mainline
     secrets: inherit
-    if: ${{ inputs.installer_oses }}
+    strategy:
+      matrix:
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
     with:
       project_name: ${{ github.event.repository.name }}
       ref:  ${{needs.PreRelease.outputs.tag}}
       ref_type: tags
-      oses: ${{ inputs.installer_oses }}
+      oses: ${{ matrix.os }}
       environment: release
 
   IsCondaReady:
     needs: BuildInstallers
     if: needs.BuildInstallers.result == 'success' || needs.BuildInstallers.result == 'skipped'
-    runs-on: ubuntu-latest
     environment: release
     name: “Is the Conda Package available in all ProdWaves and have you ran any required manual tests?”
     steps:
@@ -139,12 +140,12 @@ jobs:
     needs: [Release, PreRelease]
     runs-on: ubuntu-latest
     environment: release
-    if: (needs.Release.result == 'success' && needs.PreRelease.result == 'success') && ${{ inputs.installer_oses }}
+    if: needs.Release.result == 'success' && needs.PreRelease.result == 'success'
     permissions:
       id-token: write
     strategy:
       matrix:
-        os: ${{ fromJson(inputs.installer_oses) }}
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
