@@ -17,6 +17,7 @@
 * add submitter-name After Effects to auto-close GUI submitter after submission (#138) ([`cb3e9dc`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/cb3e9dc3ddfa21510e8e20d9b77bb4f810ffa555))
 * fixed getPythonExecutable() function for submitter on MacOS  (#128) ([`7220c72`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/7220c7237bf2e4edbbb29a30f0541b568b055010))
 
+
 ## 0.2.1 (2025-02-04)
 
 
