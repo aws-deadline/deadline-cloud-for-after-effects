@@ -10,24 +10,6 @@ on:
       - mainline
     paths:
       - CHANGELOG.md
-  workflow_call:
-    inputs:
-      oses:
-        required: false
-        type: string
-        default: "['ubuntu-latest', 'windows-latest', 'macos-latest']"
-      python-versions:
-        required: false
-        type: string
-        default: "['3.9', '3.10', '3.11', '3.12']"
-      installer_oses:
-        required: false
-        type: string
-    outputs:
-      tag:
-        description: "The newly created tag"
-        value: ${{ jobs.PreRelease.outputs.tag }}
-
 
 jobs:
   VerifyCommit:
