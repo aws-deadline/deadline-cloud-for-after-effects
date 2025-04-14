@@ -38,7 +38,7 @@ jobs:
           fi
 
   PreRelease:
-    needs: UnitTests
+    needs: VerifyCommit
     runs-on: ubuntu-latest
     environment: release
     outputs:
