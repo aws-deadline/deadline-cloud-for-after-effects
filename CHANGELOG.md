@@ -1,6 +1,7 @@
 ## 0.2.2 (2025-04-14)
 
 
+
 ### Features
 * added macOS installer support for After Effects with updated unit tests (#154) ([`b131151`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/b131151b2fc8e2547a9a634caa57a9235de3273a))
 * adding support to use multi-frame rendering and improving submitter settings input behavior (#148) ([`2ef8f77`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/2ef8f77cce3ad9c4e99160a279927a518a4981bd))
