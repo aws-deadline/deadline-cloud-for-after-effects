@@ -96,7 +96,7 @@ jobs:
       project_name: ${{ github.event.repository.name }}
       ref:  ${{needs.PreRelease.outputs.tag}}
       ref_type: tags
-      oses: "['Linux', 'Windows', 'MacOS']"
+      oses: "['Windows', 'MacOS']"
       environment: release
 
   IsCondaReady:
@@ -143,7 +143,7 @@ jobs:
       id-token: write
     strategy:
       matrix:
-        os: ["Linux", "Windows", "MacOS"]
+        os: ["Windows", "MacOS"]
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
