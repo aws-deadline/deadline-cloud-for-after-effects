@@ -20,7 +20,7 @@
     <windowsUninstallerExecutableIcon>icon.ico</windowsUninstallerExecutableIcon>
 
     <!-- Run as Admin for AfterEffects specifically -->
-    <requireInstallationByRootUser>1</requireInstallationByRootUser>
+    <requireInstallationByRootUser>0</requireInstallationByRootUser>
     <requestedExecutionLevel>asInvoker</requestedExecutionLevel>
 
     <functionDefinitionList>

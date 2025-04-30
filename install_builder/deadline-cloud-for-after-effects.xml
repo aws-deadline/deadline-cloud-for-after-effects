@@ -68,31 +68,50 @@
         </component>
     </componentList>
     <initializationActionList>
-        <!-- Define default ScriptUI file paths variables based on OS type -->
-        <setInstallerVariable>
-            <name>default_ae_script_ui_path_25</name>
-            <value>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</value>
-        </setInstallerVariable>
-        <setInstallerVariable>
-            <name>default_ae_script_ui_path_24</name>
-            <value>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</value>
-        </setInstallerVariable>
+        <!-- Define default ScriptUI file paths variables based on OS type and install type -->
         <if>
-            <ruleList>
-                <platformTest>
-                    <type>osx</type>
-                </platformTest>
-            </ruleList>
+            <conditionRuleList>
+                <compareText logic="equals" text="${installscope}" value="user"/>
+            </conditionRuleList>
             <actionList>
+                <!-- For user installation, set paths to regular installdir location -->
                 <setInstallerVariable>
                     <name>default_ae_script_ui_path_25</name>
-                    <value>/Applications/Adobe After Effects 2025/Scripts/ScriptUI Panels</value>
+                    <value>${installdir}/AE2025</value>
                 </setInstallerVariable>
                 <setInstallerVariable>
                     <name>default_ae_script_ui_path_24</name>
-                    <value>/Applications/Adobe After Effects 2024/Scripts/ScriptUI Panels</value>
+                    <value>${installdir}/AE2024</value>
                 </setInstallerVariable>
             </actionList>
+            <elseActionList>
+                <!-- For system installation, use the elevated privileges location under default Applications path -->
+                <setInstallerVariable>
+                    <name>default_ae_script_ui_path_25</name>
+                    <value>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</value>
+                </setInstallerVariable>
+                <setInstallerVariable>
+                    <name>default_ae_script_ui_path_24</name>
+                    <value>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</value>
+                </setInstallerVariable>
+                <if>
+                    <ruleList>
+                        <platformTest>
+                            <type>osx</type>
+                        </platformTest>
+                    </ruleList>
+                    <actionList>
+                        <setInstallerVariable>
+                            <name>default_ae_script_ui_path_25</name>
+                            <value>/Applications/Adobe After Effects 2025/Scripts/ScriptUI Panels</value>
+                        </setInstallerVariable>
+                        <setInstallerVariable>
+                            <name>default_ae_script_ui_path_24</name>
+                            <value>/Applications/Adobe After Effects 2024/Scripts/ScriptUI Panels</value>
+                        </setInstallerVariable>
+                    </actionList>
+                </if>
+            </elseActionList>
         </if>
         <!-- Non-Linux OS validation -->
         <if>
@@ -111,35 +130,39 @@
                 <setInstallerVariable name="component(deadline_cloud_for_after_effects).show" value="0" />
             </elseActionList>
         </if>
-        <!-- After Effects 2024 script directory selection -->
+        <!-- After Effects 2024 and 2025 script directory selection -->
         <if>
             <conditionRuleList>
-                <fileExists>
-                    <path>${default_ae_script_ui_path_24}</path>
-                </fileExists>
+                <compareText logic="equals" text="${installscope}" value="system"/>
             </conditionRuleList>
             <actionList>
-                <componentSelection>
-                    <deselect></deselect>
-                    <select>AfterEffects2024</select>
-                </componentSelection>
+                <!-- For system installation, first check if folder exists, then move files there. Otherwise leave folder selection blank -->
+                <if>
+                    <conditionRuleList>
+                        <fileExists>
+                            <path>${default_ae_script_ui_path_24}</path>
+                        </fileExists>
+                    </conditionRuleList>
+                    <actionList>
+                        <setInstallerVariable name="after_effects_script_ui_directory_2024" value="${default_ae_script_ui_path_24}"/>
+                    </actionList>
+                </if>
+                <if>
+                    <conditionRuleList>
+                        <fileExists>
+                            <path>${default_ae_script_ui_path_25}</path>
+                        </fileExists>
+                    </conditionRuleList>
+                    <actionList>
+                        <setInstallerVariable name="after_effects_script_ui_directory_2025" value="${default_ae_script_ui_path_25}"/>
+                    </actionList>
+                </if>
+            </actionList>
+            <elseActionList>
+                <!-- For user installation, set directory to default location because it will be created -->
                 <setInstallerVariable name="after_effects_script_ui_directory_2024" value="${default_ae_script_ui_path_24}"/>
-            </actionList>
-        </if>
-        <!-- After Effects 2025 script directory selection -->
-        <if>
-            <conditionRuleList>
-                <fileExists>
-                    <path>${default_ae_script_ui_path_25}</path>
-                </fileExists>
-            </conditionRuleList>
-            <actionList>
-                <componentSelection>
-                    <deselect></deselect>
-                    <select>AfterEffects2025</select>
-                </componentSelection>
                 <setInstallerVariable name="after_effects_script_ui_directory_2025" value="${default_ae_script_ui_path_25}"/>
-            </actionList>
+            </elseActionList>
         </if>
     </initializationActionList>
     <parameterList>
