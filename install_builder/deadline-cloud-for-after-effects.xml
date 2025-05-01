@@ -2,7 +2,7 @@
 
 <componentGroup>
     <name>deadline_cloud_for_after_effects</name>
-    <description>Deadline Cloud for After Effects 2024-2025</description>
+    <description>Deadline Cloud for After Effects</description>
     <detailedDescription>After Effects plugin for submitting jobs to AWS Deadline Cloud.</detailedDescription>
     <canBeEdited>1</canBeEdited>
     <selected>0</selected>
@@ -17,13 +17,62 @@
                 <directoryParameter value="">
                     <name>after_effects_script_ui_directory_2024</name>
                     <description>After Effects 2024 Script UI Directory</description>
-                    <explanation>Path to the script UI directory in After Effects 2024 resources. Default directory: ${default_ae_script_ui_path_24}</explanation>
+                    <explanation>Path to the script UI directory in After Effects 2024 resources.</explanation>
                     <allowEmptyValue>1</allowEmptyValue>
                     <ask>yes</ask>
+                    <!-- Set default paths right before this parameter page is shown in order to set default path values based on user input -->
+                    <preShowPageActionList>
+                        <if>
+                            <conditionRuleList>
+                                <compareText logic="equals" text="${installscope}" value="user"/>
+                            </conditionRuleList>
+                            <actionList>
+                                <!-- For user installation, always set the default path -->
+                                <setInstallerVariable>
+                                    <name>after_effects_script_ui_directory_2024</name>
+                                    <value>${installdir}/AE2024</value>
+                                </setInstallerVariable>
+                            </actionList>
+                            <elseActionList>
+                                <!-- For system installation, set the default path based on OS -->
+                                <if>
+                                    <conditionRuleList>
+                                        <platformTest type="osx"/>
+                                    </conditionRuleList>
+                                    <actionList>
+                                        <setInstallerVariable>
+                                            <name>default_ae_script_ui_path_24</name>
+                                            <value>/Applications/Adobe After Effects 2024/Scripts/ScriptUI Panels</value>
+                                        </setInstallerVariable>
+                                    </actionList>
+                                    <elseActionList>
+                                        <setInstallerVariable>
+                                            <name>default_ae_script_ui_path_24</name>
+                                            <value>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</value>
+                                        </setInstallerVariable>
+                                    </elseActionList>
+                                </if>
+                                <!-- Check if the directory exists for system installs before setting install path as default -->
+                                <if>
+                                    <conditionRuleList>
+                                        <fileExists>
+                                            <path>${default_ae_script_ui_path_24}</path>
+                                        </fileExists>
+                                    </conditionRuleList>
+                                    <actionList>
+                                        <setInstallerVariable>
+                                            <name>after_effects_script_ui_directory_2024</name>
+                                            <value>${default_ae_script_ui_path_24}</value>
+                                        </setInstallerVariable>
+                                    </actionList>
+                                </if>
+                            </elseActionList>
+                        </if>
+                    </preShowPageActionList>
                 </directoryParameter>
             </parameterList>
             <folderList>
-                <!-- After Effects 2024 folder -->
+                <!-- After Effects 2024 Submitter folder location -->
                 <folder>
                     <description>After Effects 2024 Script UI Folder</description>
                     <destination>${after_effects_script_ui_directory_2024}</destination>
@@ -46,13 +95,62 @@
                 <directoryParameter value="">
                     <name>after_effects_script_ui_directory_2025</name>
                     <description>After Effects 2025 Script UI Directory</description>
-                    <explanation>Path to the script UI directory in After Effects 2025 resources. Default directory: ${default_ae_script_ui_path_25}</explanation>
+                    <explanation>Path to the script UI directory in After Effects 2025 resources.</explanation>
                     <allowEmptyValue>1</allowEmptyValue>
                     <ask>yes</ask>
+                    <!-- Set default paths right before this page is shown -->
+                    <preShowPageActionList>
+                        <if>
+                            <conditionRuleList>
+                                <compareText logic="equals" text="${installscope}" value="user"/>
+                            </conditionRuleList>
+                            <actionList>
+                                <!-- For user installation, always set the default path -->
+                                <setInstallerVariable>
+                                    <name>after_effects_script_ui_directory_2025</name>
+                                    <value>${installdir}/AE2025</value>
+                                </setInstallerVariable>
+                            </actionList>
+                            <elseActionList>
+                                <!-- For system installation, set the default path based on OS -->
+                                <if>
+                                    <conditionRuleList>
+                                        <platformTest type="osx"/>
+                                    </conditionRuleList>
+                                    <actionList>
+                                        <setInstallerVariable>
+                                            <name>default_ae_script_ui_path_25</name>
+                                            <value>/Applications/Adobe After Effects 2025/Scripts/ScriptUI Panels</value>
+                                        </setInstallerVariable>
+                                    </actionList>
+                                    <elseActionList>
+                                        <setInstallerVariable>
+                                            <name>default_ae_script_ui_path_25</name>
+                                            <value>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</value>
+                                        </setInstallerVariable>
+                                    </elseActionList>
+                                </if>
+                                <!-- Check if the directory exists for system installs before setting install path as default -->
+                                <if>
+                                    <conditionRuleList>
+                                        <fileExists>
+                                            <path>${default_ae_script_ui_path_25}</path>
+                                        </fileExists>
+                                    </conditionRuleList>
+                                    <actionList>
+                                        <setInstallerVariable>
+                                            <name>after_effects_script_ui_directory_2025</name>
+                                            <value>${default_ae_script_ui_path_25}</value>
+                                        </setInstallerVariable>
+                                    </actionList>
+                                </if>
+                            </elseActionList>
+                        </if>
+                    </preShowPageActionList>
                 </directoryParameter>
             </parameterList>
             <folderList>
-                <!-- After Effects 2025 folder -->
+                <!-- After Effects 2025 Submitter folder location -->
                 <folder>
                     <description>After Effects 2025 Script UI Folder</description>
                     <destination>${after_effects_script_ui_directory_2025}</destination>
@@ -68,51 +166,6 @@
         </component>
     </componentList>
     <initializationActionList>
-        <!-- Define default ScriptUI file paths variables based on OS type and install type -->
-        <if>
-            <conditionRuleList>
-                <compareText logic="equals" text="${installscope}" value="user"/>
-            </conditionRuleList>
-            <actionList>
-                <!-- For user installation, set paths to regular installdir location -->
-                <setInstallerVariable>
-                    <name>default_ae_script_ui_path_25</name>
-                    <value>${installdir}/AE2025</value>
-                </setInstallerVariable>
-                <setInstallerVariable>
-                    <name>default_ae_script_ui_path_24</name>
-                    <value>${installdir}/AE2024</value>
-                </setInstallerVariable>
-            </actionList>
-            <elseActionList>
-                <!-- For system installation, use the elevated privileges location under default Applications path -->
-                <setInstallerVariable>
-                    <name>default_ae_script_ui_path_25</name>
-                    <value>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</value>
-                </setInstallerVariable>
-                <setInstallerVariable>
-                    <name>default_ae_script_ui_path_24</name>
-                    <value>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</value>
-                </setInstallerVariable>
-                <if>
-                    <ruleList>
-                        <platformTest>
-                            <type>osx</type>
-                        </platformTest>
-                    </ruleList>
-                    <actionList>
-                        <setInstallerVariable>
-                            <name>default_ae_script_ui_path_25</name>
-                            <value>/Applications/Adobe After Effects 2025/Scripts/ScriptUI Panels</value>
-                        </setInstallerVariable>
-                        <setInstallerVariable>
-                            <name>default_ae_script_ui_path_24</name>
-                            <value>/Applications/Adobe After Effects 2024/Scripts/ScriptUI Panels</value>
-                        </setInstallerVariable>
-                    </actionList>
-                </if>
-            </elseActionList>
-        </if>
         <!-- Non-Linux OS validation -->
         <if>
             <conditionRuleList>
@@ -128,40 +181,6 @@
             </actionList>
             <elseActionList>
                 <setInstallerVariable name="component(deadline_cloud_for_after_effects).show" value="0" />
-            </elseActionList>
-        </if>
-        <!-- After Effects 2024 and 2025 script directory selection -->
-        <if>
-            <conditionRuleList>
-                <compareText logic="equals" text="${installscope}" value="system"/>
-            </conditionRuleList>
-            <actionList>
-                <!-- For system installation, first check if folder exists, then move files there. Otherwise leave folder selection blank -->
-                <if>
-                    <conditionRuleList>
-                        <fileExists>
-                            <path>${default_ae_script_ui_path_24}</path>
-                        </fileExists>
-                    </conditionRuleList>
-                    <actionList>
-                        <setInstallerVariable name="after_effects_script_ui_directory_2024" value="${default_ae_script_ui_path_24}"/>
-                    </actionList>
-                </if>
-                <if>
-                    <conditionRuleList>
-                        <fileExists>
-                            <path>${default_ae_script_ui_path_25}</path>
-                        </fileExists>
-                    </conditionRuleList>
-                    <actionList>
-                        <setInstallerVariable name="after_effects_script_ui_directory_2025" value="${default_ae_script_ui_path_25}"/>
-                    </actionList>
-                </if>
-            </actionList>
-            <elseActionList>
-                <!-- For user installation, set directory to default location because it will be created -->
-                <setInstallerVariable name="after_effects_script_ui_directory_2024" value="${default_ae_script_ui_path_24}"/>
-                <setInstallerVariable name="after_effects_script_ui_directory_2025" value="${default_ae_script_ui_path_25}"/>
             </elseActionList>
         </if>
     </initializationActionList>
