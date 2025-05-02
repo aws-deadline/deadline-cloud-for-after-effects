@@ -140,10 +140,6 @@ def uninstaller_path():
     yield uninstaller_path
 
 
-@pytest.mark.skipif(
-    not _is_admin(),
-    reason="After Effects submitter installation requires admin permissions",
-)
 def test_default_location(installer_path: Path):
     """Ensures that the default output location reported by the installer is accurate.
        The help text will only show it for the default scope (user). Example help output:
@@ -260,15 +256,12 @@ def test_did_not_build_with_evaluation_mode(installer_path: Path, tmp_path: Path
 @pytest.mark.skipif(
     platform.system() == "Windows", reason="Only run on Linux and MacOS"
 )
-@pytest.mark.skipif(
-    not _is_admin(),
-    reason="After Effects submitter installation requires admin permissions",
-)
 class TestLinuxAndMacOS:
     def test_user_permissions(self, user_installation: Path):
         # GIVEN / WHEN / THEN
         self._validate_posix_permissions(user_installation)
 
+    @pytest.mark.skipif(not _is_admin(), reason="Tests requires admin privileges")
     def test_system_permissions(self, system_installation):
         # GIVEN / WHEN / THEN
         self._validate_posix_permissions(system_installation)
@@ -319,10 +312,6 @@ class TestLinuxAndMacOS:
 
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Only run on Windows")
-@pytest.mark.skipif(
-    not _is_admin(),
-    reason="After Effects submitter installation requires admin permissions",
-)
 class TestWindows:
     def test_user_permissions(self, user_installation):
         # GIVEN / WHEN / THEN
@@ -345,6 +334,7 @@ class TestWindows:
             # Service doesn't exist, not on a container
             return False
 
+    @pytest.mark.skipif(not _is_admin(), reason="Tests requires admin privileges")
     def test_system_permissions(self, system_installation):
         # GIVEN / WHEN / THEN
         self._verify_windows_least_privilege(system_installation)
@@ -434,10 +424,6 @@ class TestWindows:
         assert len(bad_perms) == 0, "\n".join(error_message)
 
 
-@pytest.mark.skipif(
-    not _is_admin(),
-    reason="After Effects submitter installation requires admin permissions",
-)
 class TestUserInstall:
     def test_install(self, user_installation: Path):
         # GIVEN / WHEN / THEN
@@ -462,10 +448,7 @@ class TestUserInstall:
         assert not per_test_user_installation.exists()
 
 
-@pytest.mark.skipif(
-    not _is_admin(),
-    reason="After Effects submitter installation requires admin privileges",
-)
+@pytest.mark.skipif(not _is_admin(), reason="System install tests requires admin privileges")
 class TestSystemInstall:
     def test_install(self, system_installation: Path):
         # GIVEN / WHEN / THEN
@@ -491,6 +474,7 @@ class TestSystemInstall:
                 if not per_test_system_installation.exists():
                     break
                 time.sleep(10)
+        # Failure here
         assert not per_test_system_installation.exists()
 
 

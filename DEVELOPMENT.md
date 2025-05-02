@@ -131,14 +131,15 @@ hatch run test
 ```
 Note: if you added new files and see the copyright headers test failing, run linting
 
-To test installer, you need admin permission to run the tests correctly.
+To test the installer, there are user-level and system-level installer tests.
 
-On Mac, run:
+On Mac, run one of these commands to run a set of installer tests:
 ```bash
-sudo hatch run test-installer
+hatch run test-installer # Just user-level installer tests
+sudo hatch run test-installer # Run user-level and system-level installer tests
 ```
 
-On Windows, open your Powershell terminal with "Run As Admin" and run:
+On Windows, either run the following command in a regular Powershell window for user-level installer tests or in a "Run As Admin" Powershell window for system-level installer tests
 ```bash
 hatch run test-installer
 ```
