@@ -79,9 +79,6 @@ def _run_installer(installer_path, install_scope, installation_path) -> Path:
         "--after_effects_script_ui_directory_2025",
         ae2025
     ]
-    if platform.system() == "Darwin":
-        args = ["sudo", "-n", *args]
-
     subprocess.run(args, check=True, capture_output=True, text=True)
 
     return Path(installation_path)
@@ -474,7 +471,6 @@ class TestSystemInstall:
                 if not per_test_system_installation.exists():
                     break
                 time.sleep(10)
-        # Failure here
         assert not per_test_system_installation.exists()
 
 
