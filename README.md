@@ -66,25 +66,25 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 
 1. Next step is to install the After Effects submitter. We recommend choosing the submitter installer approach to receive both Deadline CLI and your selected integrated submitters. However, if you want to update your submitter with the latest code pushed to this repository, choose the manual installation approach, but ensure you have Deadline CLI already installed via pip or submitter installer beforehand (see instructions above under Prerequisites for info on this).
 
-*NOTE: if the After Effects submitter is not installed as a system install, the submitter will not be a dockable but will be a standalone submitter window.*
+*NOTE: If you install the After Effects submitter as a user install, the submitter will be a standalone submitter window rather than a dockable panel.*
 
    - **Submitter Installer Approach**
       - First, download the Deadline Cloud Submitter installer by following [Step 1: Install the Deadline Cloud Submitter](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#submitter-installation).
-      - Next, if you are running a System Install, right-click the installer and choose `Run as Admin`. Otherwise, run the installer regularly for a User Install.
-      - Follow the prompts and select which submitters you would like to install. Here are the following OS-specific submitters paths depending on your install approach:
-         - Windows default path for AE System Install: `C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`.
-         - Mac default path for AE System Install: `/Applications/Adobe After Effects <version>/Scripts/ScriptUI Panels`
-         - Windows default path for AE User Install: `C:\Users\<user>\DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
-         - Mac default path for AE User Install: `/Users/<user>/DeadlineCloudSubmitter/Submitters/AfterEffects/AE<version>`
-      - If chosing a User Install, save the path where you stored the JSX submitter script.
+      - Next, if you are running a System Install on Windows, right-click the installer and choose `Run as Admin`. Otherwise, run the installer regularly for a User Install.
+      - Follow the prompts and select which submitters you would like to install. Here are the following OS-specific default submitters paths depending on your install approach:
+         - **Windows with System Installation**: `C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
+         - **Windows with User Installation**: `C:\Users\<user>\DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
+         - **macOS with System Installation**: `/Applications/Adobe After Effects <version>/Scripts/ScriptUI Panels`
+         - **macOS with User Installation**: `/Users/<user>/DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
+      - If choosing a User Install and you provide a custom install path, be sure to save that path for later reference.
 
    - **Manual Installation Approach**
       - Scroll to the top of this repository's Github page, and click on the green Code button. In the drop-down, select `Download ZIP`.
       - Unzip the .zip file and navigate to the `dist` folder in the downloaded repository. The submitter files are `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder.
       - For System Install that requires Admin permission, you need to move the submitter files to the ScriptUI Panels folder of After Effects. This will require Admin permission.
-         - Windows: Move them to `C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
-         - Mac: Move to `/Applications/Adobe After Effects <version>/Scripts/ScriptUI Panels`
-      - For a User install that doesn't need Admin permission, you can leave the submitter files there or to a folder of your choice. If you've used the submitter installer before, you can put it under the DeadlineCloudSubmitter folder in the paths defined in the Submitter Installer Approach section. Save the path where you stored the JSX submitter script.
+         - **Windows**: Move them to `C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
+         - **macOS**: Move them to `/Applications/Adobe After Effects <version>/Scripts/ScriptUI Panels`
+      - For a User install that doesn't need Admin permission, copy the submitter files to a folder of your choice. If you've used the submitter installer before, you can put it under the DeadlineCloudSubmitter folder in the paths defined in the Submitter Installer Approach section for user installation. Save the path where you stored the JSX submitter script for easy access later.
 
 1. After installing the Deadline CLI manually or via submitter installer, ensure you log into your user profile by running `deadline auth login` in the Terminal/Powershell or logging in via the Deadline Cloud Monitor.
 
