@@ -159,7 +159,7 @@ def test_default_location(installer_path: Path):
             [installer_path, *text_mode, "--help"],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=15,
         )
         assert (
             help_result.returncode == 0

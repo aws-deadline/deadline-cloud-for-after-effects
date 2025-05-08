@@ -24,47 +24,45 @@
                     <preShowPageActionList>
                         <if>
                             <conditionRuleList>
-                                <compareText logic="equals" text="${installscope}" value="user"/>
+                                <platformTest type="osx"/>
                             </conditionRuleList>
                             <actionList>
-                                <!-- For user installation, always set the default path -->
+                                <!-- For macOS, default to user install approach regardless of installscope until we support system installs -->
                                 <setInstallerVariable>
                                     <name>after_effects_script_ui_directory_2024</name>
                                     <value>${installdir}/AE2024</value>
                                 </setInstallerVariable>
                             </actionList>
                             <elseActionList>
-                                <!-- For system installation, set the default path based on OS -->
+                                <!-- For Windows, handle install path based on install scope -->
                                 <if>
                                     <conditionRuleList>
-                                        <platformTest type="osx"/>
+                                        <compareText logic="equals" text="${installscope}" value="user"/>
                                     </conditionRuleList>
                                     <actionList>
+                                        <!-- For Windows user installation -->
                                         <setInstallerVariable>
-                                            <name>default_ae_script_ui_path_24</name>
-                                            <value>/Applications/Adobe After Effects 2024/Scripts/ScriptUI Panels</value>
+                                            <name>after_effects_script_ui_directory_2024</name>
+                                            <value>${installdir}/AE2024</value>
                                         </setInstallerVariable>
                                     </actionList>
                                     <elseActionList>
-                                        <setInstallerVariable>
-                                            <name>default_ae_script_ui_path_24</name>
-                                            <value>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</value>
-                                        </setInstallerVariable>
+                                        <!-- For Windows system installation -->
+                                        <!-- Check if the directory exists for system installs before setting install path as default -->
+                                        <if>
+                                            <conditionRuleList>
+                                                <fileExists>
+                                                    <path>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</path>
+                                                </fileExists>
+                                            </conditionRuleList>
+                                            <actionList>
+                                                <setInstallerVariable>
+                                                    <name>after_effects_script_ui_directory_2024</name>
+                                                    <value>C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\ScriptUI Panels</value>
+                                                </setInstallerVariable>
+                                            </actionList>
+                                        </if>
                                     </elseActionList>
-                                </if>
-                                <!-- Check if the directory exists for system installs before setting install path as default -->
-                                <if>
-                                    <conditionRuleList>
-                                        <fileExists>
-                                            <path>${default_ae_script_ui_path_24}</path>
-                                        </fileExists>
-                                    </conditionRuleList>
-                                    <actionList>
-                                        <setInstallerVariable>
-                                            <name>after_effects_script_ui_directory_2024</name>
-                                            <value>${default_ae_script_ui_path_24}</value>
-                                        </setInstallerVariable>
-                                    </actionList>
                                 </if>
                             </elseActionList>
                         </if>
@@ -102,47 +100,45 @@
                     <preShowPageActionList>
                         <if>
                             <conditionRuleList>
-                                <compareText logic="equals" text="${installscope}" value="user"/>
+                                <platformTest type="osx"/>
                             </conditionRuleList>
                             <actionList>
-                                <!-- For user installation, always set the default path -->
+                                <!-- For macOS, always use user install approach regardless of installscope until we support system installs -->
                                 <setInstallerVariable>
                                     <name>after_effects_script_ui_directory_2025</name>
                                     <value>${installdir}/AE2025</value>
                                 </setInstallerVariable>
                             </actionList>
                             <elseActionList>
-                                <!-- For system installation, set the default path based on OS -->
+                                <!-- For Windows, handle based on installscope -->
                                 <if>
                                     <conditionRuleList>
-                                        <platformTest type="osx"/>
+                                        <compareText logic="equals" text="${installscope}" value="user"/>
                                     </conditionRuleList>
                                     <actionList>
+                                        <!-- For Windows user installation -->
                                         <setInstallerVariable>
-                                            <name>default_ae_script_ui_path_25</name>
-                                            <value>/Applications/Adobe After Effects 2025/Scripts/ScriptUI Panels</value>
+                                            <name>after_effects_script_ui_directory_2025</name>
+                                            <value>${installdir}/AE2025</value>
                                         </setInstallerVariable>
                                     </actionList>
                                     <elseActionList>
-                                        <setInstallerVariable>
-                                            <name>default_ae_script_ui_path_25</name>
-                                            <value>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</value>
-                                        </setInstallerVariable>
+                                        <!-- For Windows system installation -->
+                                        <!-- Check if the directory exists for system installs before setting install path as default -->
+                                        <if>
+                                            <conditionRuleList>
+                                                <fileExists>
+                                                    <path>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</path>
+                                                </fileExists>
+                                            </conditionRuleList>
+                                            <actionList>
+                                                <setInstallerVariable>
+                                                    <name>after_effects_script_ui_directory_2025</name>
+                                                    <value>C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\ScriptUI Panels</value>
+                                                </setInstallerVariable>
+                                            </actionList>
+                                        </if>
                                     </elseActionList>
-                                </if>
-                                <!-- Check if the directory exists for system installs before setting install path as default -->
-                                <if>
-                                    <conditionRuleList>
-                                        <fileExists>
-                                            <path>${default_ae_script_ui_path_25}</path>
-                                        </fileExists>
-                                    </conditionRuleList>
-                                    <actionList>
-                                        <setInstallerVariable>
-                                            <name>after_effects_script_ui_directory_2025</name>
-                                            <value>${default_ae_script_ui_path_25}</value>
-                                        </setInstallerVariable>
-                                    </actionList>
                                 </if>
                             </elseActionList>
                         </if>

@@ -74,8 +74,8 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
       - Follow the prompts and select which submitters you would like to install. Here are the following OS-specific default submitters paths depending on your install approach:
          - **Windows with System Installation**: `C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
          - **Windows with User Installation**: `C:\Users\<user>\DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
-         - **macOS with System Installation**: `/Applications/Adobe After Effects <version>/Scripts/ScriptUI Panels`
          - **macOS with User Installation**: `/Users/<user>/DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
+         - - **macOS with System Installation**: (not yet supported on submitter installer, but the theoretical path would be `/Applications/Adobe After Effects <version>/Scripts/ScriptUI Panels`)
       - If choosing a User Install and you provide a custom install path, be sure to save that path for later reference.
 
    - **Manual Installation Approach**
