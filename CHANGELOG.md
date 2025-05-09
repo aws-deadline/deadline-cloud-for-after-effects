@@ -1,3 +1,10 @@
+## 0.2.3 (2025-05-09)
+
+
+### Features
+* add support for After Effects submitter user install on Mac & Windows (#187) ([`2b25671`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/2b2567144e17b2574fe3fbf8cedcce185e453a6c))
+
+
 ## 0.2.2 (2025-04-14)
 
 
