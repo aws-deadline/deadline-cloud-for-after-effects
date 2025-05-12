@@ -96,6 +96,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 
 ### To use the submitter:
 
+1. Launch After Effects. If you did a system install of Deadline Cloud Submitter, run After Effects as Admin.
 1. Add a composition to your render queue and set up your render settings, output module, and output path.
 1. To open the Deadline Cloud Submitter Panel, there is a different approach depending on whether it's a User Install or a System Install.
    - **System Install**: Open submitter by clicking **Window > DeadlineCloudSubmitter.jsx**.
