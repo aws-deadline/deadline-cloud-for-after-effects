@@ -324,9 +324,81 @@ function __generateUtil() {
         /**
          * Return File instance from temporary directory with the given name.
          */
-        var _tempFilePath = normalizePath(Folder.temp.fsName + "/" + fileName);
+        var _tempFilePath = normalizePath(getTempFolder() + "/" + fileName);
         var _tempFile = File(_tempFilePath);
         return _tempFile;
+    }
+
+    var _cachedTempFolder = "";
+
+    function getTempFolder() {
+        /**
+         * Fetches a temporary directory that has read/write access. Defaults to Folder.temp.
+         * Once a working temporary directory is found, the result is cached.
+         */
+        if (_cachedTempFolder != "") {
+            return _cachedTempFolder;
+        }
+
+        //Build list of alternate paths to try
+        var altPaths = [Folder.temp.fsName];
+        var testFileSuffix;
+        if (system.osName == "MacOS") {
+            altPaths.push("~/.deadline/DeadlineCloudAETemp");
+            altPaths.push(Folder.myDocuments.fsName + "/DeadlineCloudAETemp");
+            testFileSuffix = "/testFile.txt";
+        } else {
+            altPaths.push(Folder.userData.fsName + "\\DeadlineCloudAETemp");
+            altPaths.push(Folder.myDocuments.fsName + "\\DeadlineCloudAETemp");
+            testFileSuffix = "\\testFile.txt";
+        }
+
+        //Test every path in our list by creating a test file
+        for (var altPath in altPaths) {
+            var folder = new Folder(altPath);
+
+            //Create the path if it does not already exist
+            folder.create();
+            if (folder.exists) {
+                continue;
+            }
+
+            //List all files and check for errors
+            //Not having list permissions is a common source of errors
+            var existingFiles = folder.getFiles();
+            if (!folder.error) {
+                continue;
+            }
+
+            //Delete any existing files in the path
+            for (var existingFile in existingFiles) {
+                existingFile.remove();
+            }
+
+            //Create and write to a test file to make sure we have write permissions
+            var file = new File(folder.fsName + testFileSuffix);
+            file.open("w");
+            file.writeln("test");
+            file.close();
+            if (!file.exists || file.error) {
+                continue;
+            }
+            file.remove();
+
+            //Cache the folder that passed all the checks so we don't have to repeat the checks
+            _cachedTempFolder = folder.fsName;
+            break;
+        }
+
+        //If no alternate path was found, alert the user and return the default temp path
+        if (_cachedTempFolder == "") {
+            adcAlert("Error: No valid temporary directory found. Check permissions to one of these paths: " + altPaths.join(", "));
+
+            //we don't want to cache the result on a failure, just return the default value
+            return Folder.temp.fsName;
+        }
+
+        return _cachedTempFolder;
     }
 
     function wrappedCallSystem(cmd) {
@@ -542,43 +614,43 @@ function __generateUtil() {
 
         var hostRequirements = {
             "attributes": [{
-                    "name": "attr.worker.os.family",
-                    "anyOf": [
-                        osGroup.OSDropdownList.selection.text.toLowerCase()
-                    ]
-                },
-                {
-                    "name": "attr.worker.cpu.arch",
-                    "anyOf": [
-                        cpuArchGroup.cpuDropdownList.selection.text
-                    ]
-                }
+                "name": "attr.worker.os.family",
+                "anyOf": [
+                    osGroup.OSDropdownList.selection.text.toLowerCase()
+                ]
+            },
+            {
+                "name": "attr.worker.cpu.arch",
+                "anyOf": [
+                    cpuArchGroup.cpuDropdownList.selection.text
+                ]
+            }
             ],
             "amounts": [{
-                    "name": "amount.worker.vcpu",
-                    "min": parseInt(cpuGroup.cpuMinText.text),
-                    "max": parseInt(cpuGroup.cpuMaxText.text)
-                },
-                {
-                    "name": "amount.worker.memory",
-                    "min": parseInt(memoryGroup.memoryMinText.text) * 1024,
-                    "max": parseInt(memoryGroup.memoryMaxText.text) * 1024
-                },
-                {
-                    "name": "amount.worker.gpu",
-                    "min": parseInt(gpuGroup.gpuMinText.text),
-                    "max": parseInt(gpuGroup.gpuMaxText.text)
-                },
-                {
-                    "name": "amount.worker.gpu.memory",
-                    "min": parseInt(gpuMemoryGroup.gpuMemoryMinText.text) * 1024,
-                    "max": parseInt(gpuMemoryGroup.gpuMemoryMaxText.text) * 1024
-                },
-                {
-                    "name": "amount.worker.disk.scratch",
-                    "min": parseInt(scratchSpaceGroup.scratchSpaceMinText.text),
-                    "max": parseInt(scratchSpaceGroup.scratchSpaceMaxText.text)
-                }
+                "name": "amount.worker.vcpu",
+                "min": parseInt(cpuGroup.cpuMinText.text),
+                "max": parseInt(cpuGroup.cpuMaxText.text)
+            },
+            {
+                "name": "amount.worker.memory",
+                "min": parseInt(memoryGroup.memoryMinText.text) * 1024,
+                "max": parseInt(memoryGroup.memoryMaxText.text) * 1024
+            },
+            {
+                "name": "amount.worker.gpu",
+                "min": parseInt(gpuGroup.gpuMinText.text),
+                "max": parseInt(gpuGroup.gpuMaxText.text)
+            },
+            {
+                "name": "amount.worker.gpu.memory",
+                "min": parseInt(gpuMemoryGroup.gpuMemoryMinText.text) * 1024,
+                "max": parseInt(gpuMemoryGroup.gpuMemoryMaxText.text) * 1024
+            },
+            {
+                "name": "amount.worker.disk.scratch",
+                "min": parseInt(scratchSpaceGroup.scratchSpaceMinText.text),
+                "max": parseInt(scratchSpaceGroup.scratchSpaceMaxText.text)
+            }
             ]
         }
 
@@ -722,7 +794,8 @@ function __generateUtil() {
         "removePercentageFromFileName": removePercentageFromFileName,
         "getTempFile": getTempFile,
         "getUserDirectory": getUserDirectory,
-        "getAEVersion": getAEVersion
+        "getAEVersion": getAEVersion,
+        "getTempFolder": getTempFolder
     }
 }
 

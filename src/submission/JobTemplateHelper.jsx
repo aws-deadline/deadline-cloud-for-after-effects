@@ -445,7 +445,7 @@ function getFontsFromFileLegacy() {
  **/
 function generateFontReferences(fontPaths) {
     // Create a temp folder where all used fonts get gathered
-    var _tempFontsFolder = dcUtil.normPath(Folder.temp.fsName + '/' + "tempFonts");
+    var _tempFontsFolder = dcUtil.normPath(dcUtil.getTempFolder() + '/' + "tempFonts");
     var formattedFontsPaths = [];
     var tempFontPath = new Folder(_tempFontsFolder);
     if (!tempFontPath.exists) {
