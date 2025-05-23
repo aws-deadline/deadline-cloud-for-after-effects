@@ -240,7 +240,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         // the PATH correctly.
         var shellPath = $.getenv("SHELL") || "/bin/bash";
         cmd =
-            'deadline bundle gui-submit \\\"' + bundle.fsName + '\\\" --output json --install-gui --submitter-name \\\"After Effects\\\"';
+            'deadline bundle gui-submit \\\"' + bundle.fsName + '\\\" --output json --install-gui --submitter-name=\\\\\\\"After Effects\\\\\\\"';
         submitScriptContents = shellPath + " -i -c \\\"" + cmd + "\\\" && exit";
         output = system.callSystem('osascript -e \'tell application "Terminal"\' -e \'do script "' + submitScriptContents + '\"\'' + ' -e \'end tell\' > /dev/null');
     }
