@@ -1,3 +1,10 @@
+## 1.0.0 (2025-05-27)
+
+
+### Features
+* New Utils function to check temp folder perms before writing temp files (#192) ([`15fcf81`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/15fcf8156595c047f633380dc23be3f0939f2503))
+
+
 ## 0.2.3 (2025-05-09)
 
 
