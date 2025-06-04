@@ -353,29 +353,24 @@ function __generateUtil() {
             testFileSuffix = "\\testFile.txt";
         }
 
-        //Test every path in our list by creating a test file
-        for (var altPath in altPaths) {
-            var folder = new Folder(altPath);
+        // Test every path in our list by creating a test file
+        for (var i = 0; i < altPaths.length; i++) {
+            var folder = new Folder(altPaths[i]);
 
-            //Create the path if it does not already exist
+            // Create the path if it does not already exist
             folder.create();
-            if (folder.exists) {
+            if (!folder.exists) {
                 continue;
             }
 
-            //List all files and check for errors
-            //Not having list permissions is a common source of errors
+            // List all files and check for errors
+            // Not having list permissions is a common source of errors
             var existingFiles = folder.getFiles();
-            if (!folder.error) {
+            if (folder.error) {
                 continue;
             }
 
-            //Delete any existing files in the path
-            for (var existingFile in existingFiles) {
-                existingFile.remove();
-            }
-
-            //Create and write to a test file to make sure we have write permissions
+            // Create and write to a test file to make sure we have write permissions
             var file = new File(folder.fsName + testFileSuffix);
             file.open("w");
             file.writeln("test");
@@ -390,11 +385,11 @@ function __generateUtil() {
             break;
         }
 
-        //If no alternate path was found, alert the user and return the default temp path
+        // If no alternate path was found, alert the user and return the default temp path
         if (_cachedTempFolder == "") {
             adcAlert("Error: No valid temporary directory found. Check permissions to one of these paths: " + altPaths.join(", "));
 
-            //we don't want to cache the result on a failure, just return the default value
+            // We don't want to cache the result on a failure, just return the default value
             return Folder.temp.fsName;
         }
 
