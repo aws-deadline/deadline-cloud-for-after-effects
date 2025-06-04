@@ -354,8 +354,8 @@ function __generateUtil() {
         }
 
         // Test every path in our list by creating a test file
-        for (var altPath of altPaths) {
-            const folder = new Folder(altPaths[i]);
+        for (var i = 0; i < altPaths.length; i++) {
+            var folder = new Folder(altPaths[i]);
 
             // Create the path if it does not already exist
             folder.create();
