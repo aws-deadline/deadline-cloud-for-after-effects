@@ -1,3 +1,10 @@
+## 0.2.5 (2025-06-04)
+
+
+
+### Bug Fixes
+* repaired getTempFolder() function logic (#197) ([`20aab04`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/20aab047a3aab19bf59c159b826388ab189f9677))
+
 ## 0.2.4 (2025-05-27)
 
 
