@@ -345,7 +345,7 @@ function __generateUtil() {
         }
 
         //Build list of alternate paths to try
-        var altPaths = [Folder.temp.fsName];
+        const altPaths = [Folder.temp.fsName];
         var testFileSuffix;
         if (system.osName == "MacOS") {
             altPaths.push("~/.deadline/DeadlineCloudAETemp");
@@ -358,8 +358,8 @@ function __generateUtil() {
         }
 
         // Test every path in our list by creating a test file
-        for (var i = 0; i < altPaths.length; i++) {
-            var folder = new Folder(altPaths[i]);
+        for (var altPath of altPaths) {
+            const folder = new Folder(altPaths[i]);
 
             // Create the path if it does not already exist
             folder.create();
@@ -369,13 +369,13 @@ function __generateUtil() {
 
             // List all files and check for errors
             // Not having list permissions is a common source of errors
-            var existingFiles = folder.getFiles();
+            folder.getFiles();
             if (folder.error) {
                 continue;
             }
 
             // Create and write to a test file to make sure we have write permissions
-            var file = new File(folder.fsName + testFileSuffix);
+            const file = new File(folder.fsName + testFileSuffix);
             file.open("w");
             file.writeln("test");
             file.close();
