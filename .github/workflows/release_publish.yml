@@ -1,8 +1,5 @@
-# Source: https://github.com/aws-deadline/.github/blob/mainline/.github/workflows/reusable_publish_v2.yml
-# However, After Effects has no adaptor or PyPI release, so the last section is removed and remaining
-# workflow is pasted here
-name: "Publish"
-run-name: "Release: ${{ github.event.head_commit.message }}"
+name: "Release: Publish"
+run-name: "Release: ${{ github.event.head_commit.message || inputs.tag }}"
 
 on:
   push:
@@ -10,108 +7,49 @@ on:
       - mainline
     paths:
       - CHANGELOG.md
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        type: string
+        description: Specify a tag to re-run a release.
 
 concurrency:
   group: release
 
+permissions:
+  contents: read
+
 jobs:
-  VerifyCommit:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
-
-      - name: VerifyAuthor
-        run: |
-          EXPECTED_AUTHOR=${{secrets.EMAIL}}
-          AUTHOR=$(git show -s --format='%ae' HEAD)
-          if [[ $AUTHOR != $EXPECTED_AUTHOR ]]; then
-            echo "ERROR: Expected author email to be '$EXPECTED_AUTHOR', but got '$AUTHOR'. Aborting release."
-            exit 1
-          else
-            echo "Verified author email ($AUTHOR) is as expected ($EXPECTED_AUTHOR)"
-          fi
-
-  PreRelease:
-    needs: VerifyCommit
-    runs-on: ubuntu-latest
-    environment: release
-    outputs:
-      tag: ${{steps.prep-release.outputs.TAG}}
-    permissions:
-      id-token: write
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
-          token: ${{ secrets.CI_TOKEN }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-
-      - name: ConfigureGit
-        run: |
-          git config --local user.email ${{ secrets.EMAIL }}
-          git config --local user.name ${{ secrets.USER }}
-
-      - name: PrepRelease
-        id: prep-release
-        run: |
-          COMMIT_TITLE=$(git show -s --format='%s' HEAD)
-          NEXT_SEMVER=$(python -c 'import sys, re; print(re.match(r"chore\(release\): ([0-9]+\.[0-9]+\.[0-9]+).*", sys.argv[1]).group(1))' "$COMMIT_TITLE")
-
-          # The format of the tag must match the pattern in pyproject.toml -> tool.semantic_release.tag_format
-          TAG="$NEXT_SEMVER"
-
-          git tag -a $TAG -m "Release $TAG"
-
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
-          echo "NEXT_SEMVER=$NEXT_SEMVER" >> $GITHUB_ENV
-          {
-            echo 'RELEASE_NOTES<<EOF'
-            python .github/scripts/get_latest_changelog.py
-            echo EOF
-          } >> $GITHUB_ENV
-            # Tag must be made before building so the generated _version.py files have the correct version
-
-          git push origin $TAG
-
-  BuildInstallers:
-    name: BuildInstallers
-    needs: PreRelease
-    uses: aws-deadline/.github/.github/workflows/reusable_build_installers.yml@mainline
+  TagRelease:
+    uses: aws-deadline/.github/.github/workflows/reusable_tag_release.yml@mainline
     secrets: inherit
     with:
+      tag: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
+
+  BuildAndStageInstallers:
+    needs: TagRelease
+    uses: aws-deadline/.github/.github/workflows/reusable_build_and_stage_installers.yml@mainline
+    secrets: inherit
+    permissions:
+      id-token: write
+      contents: read
+    with:
       project_name: ${{ github.event.repository.name }}
-      ref:  ${{needs.PreRelease.outputs.tag}}
-      ref_type: tags
+      tag: ${{ needs.TagRelease.outputs.tag }}
       oses: "['Windows', 'MacOS']"
-      environment: release
 
   IsCondaReady:
+    needs: BuildAndStageInstallers
     runs-on: ubuntu-latest
-    needs: BuildInstallers
-    if: needs.BuildInstallers.result == 'success' || needs.BuildInstallers.result == 'skipped'
     environment: release
     name: “Is the Conda Package available in all ProdWaves and have you ran any required manual tests?”
     steps:
       - run: |
          :
-
+          
   Release:
-    needs: [IsCondaReady, PreRelease]
-    if: (needs.IsCondaReady.result == 'success' && needs.PreRelease.result == 'success')
+    needs: [TagRelease, IsCondaReady]
     runs-on: ubuntu-latest
     name: Release
     permissions:
@@ -119,7 +57,7 @@ jobs:
       contents: write
     environment: release
     env:
-      TAG: ${{needs.PreRelease.outputs.tag}}
+      TAG: ${{ needs.TagRelease.outputs.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -133,34 +71,3 @@ jobs:
           GH_TOKEN: ${{ secrets.CI_TOKEN }}
         run: |
           gh release create $TAG -t "$TAG" --notes "$RELEASE_NOTES"
-
-  ReleaseBuiltInstallers:
-    needs: [Release, PreRelease]
-    runs-on: ubuntu-latest
-    environment: release
-    if: needs.Release.result == 'success' && needs.PreRelease.result == 'success'
-    permissions:
-      id-token: write
-    strategy:
-      matrix:
-        os: ["Windows", "MacOS"]
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_CODEBUILD_MAINLINE_INSTALLER_ROLE }}
-          aws-region: us-west-2
-          mask-aws-account-id: true
-      - name: Run CodeBuild
-        uses: aws-actions/aws-codebuild-run-build@v1
-        with:
-          project-name: ReleaseInstallerProject
-          hide-cloudwatch-logs: true
-          env-vars-for-codebuild: |
-              REPONAME,
-              OPERATING_SYSTEM,
-              VERSION
-        env:
-          REPONAME: ${{ github.event.repository.name }}
-          OPERATING_SYSTEM: ${{ matrix.os }}
-          VERSION: ${{needs.PreRelease.outputs.tag}}
