@@ -760,7 +760,7 @@ function __generateUtil() {
 
     function getCompatibleAEVersion() {
         /* Return compatible After Effects version for job submission.
-         * Warns if current version is not officially supported.
+         * Warns if current version is not officially supported on service-managed fleets.
          * Returns the version as float.
          */
         const currentVersion = getAEVersion();
@@ -772,7 +772,7 @@ function __generateUtil() {
         // Show warning if version is not supported
         adcAlert(
             "Warning: Your After Effects version " + currentVersion +
-            " is not officially supported. Supported versions are: 24.6, 25.1, and 25.2. " +
+            " is not officially supported on service-managed fleets. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
             "This may result in compatibility issues or failed jobs.",
             false
         );
