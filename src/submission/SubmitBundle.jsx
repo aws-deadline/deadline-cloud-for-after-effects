@@ -151,8 +151,8 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
             logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
         }
-        const aftereffectsVersion = app.version[0] + app.version[1];
-        logger.debug("The major version of After Effects is " + aftereffectsVersion, submitBundleFile);
+        const aftereffectsVersion = dcUtil.getCompatibleAEVersion();
+        logger.debug("The compatible version of After Effects is " + aftereffectsVersion, submitBundleFile);
 
         var paramDefCopy = templateObject.parameterDefinitions;
 

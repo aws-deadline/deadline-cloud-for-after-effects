@@ -3,6 +3,7 @@
 // Please change the source files and regenerate this file instead.
 
 var scriptFolder = Folder.current.fsName;
+const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
 
 function readFile(filePath) {
     var f = new File(filePath);
@@ -756,9 +757,31 @@ function __generateUtil() {
 
     function getAEVersion() {
         /* Return After Effects version as float. */
-        var versionAsString = app.version.substring(0, 4);
-        var version = parseFloat(versionAsString);
+        const versionAsString = app.version.substring(0, 4);
+        const version = parseFloat(versionAsString);
         return version
+    }
+
+    function getCompatibleAEVersion() {
+        /* Return compatible After Effects version for job submission.
+         * Warns if current version is not officially supported.
+         * Returns the version as float.
+         */
+        const currentVersion = getAEVersion();
+
+        if (SUPPORTED_VERSIONS.indexOf(currentVersion) !== -1) {
+            return currentVersion;
+        }
+
+        // Show warning if version is not supported
+        adcAlert(
+            "Warning: Your After Effects version " + currentVersion +
+            " is not officially supported. Supported versions are: 24.6, 25.1, and 25.2. " +
+            "This may result in compatibility issues or failed jobs.",
+            false
+        );
+
+        return Math.floor(currentVersion);
     }
 
     return {
@@ -794,6 +817,7 @@ function __generateUtil() {
         "getTempFile": getTempFile,
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
+        "getCompatibleAEVersion": getCompatibleAEVersion,
         "getTempFolder": getTempFolder
     }
 }
@@ -1620,8 +1644,8 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
             logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
         }
-        const aftereffectsVersion = app.version[0] + app.version[1];
-        logger.debug("The major version of After Effects is " + aftereffectsVersion, submitBundleFile);
+        const aftereffectsVersion = dcUtil.getCompatibleAEVersion();
+        logger.debug("The compatible version of After Effects is " + aftereffectsVersion, submitBundleFile);
 
         var paramDefCopy = templateObject.parameterDefinitions;
 

@@ -92,6 +92,9 @@ Make sure to right click the new files in the dist folder in VSCode and do "Form
 
 Then reopen the submitter panel from the application to test your change.
 
+#### Version Support
+If you are adding support for a new Conda package for AE, add it to the list of allowlisted AE versions supported in Deadline Cloud SMF located in the SUPPORTED_VERSIONS variable in Utils.jsx.
+
 ## AE Installer Environment Setup
 
 ### Prerequisites
