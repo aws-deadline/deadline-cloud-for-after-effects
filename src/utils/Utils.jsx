@@ -1,4 +1,5 @@
 var scriptFolder = Folder.current.fsName;
+const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
 
 function readFile(filePath) {
     var f = new File(filePath);
@@ -752,9 +753,31 @@ function __generateUtil() {
 
     function getAEVersion() {
         /* Return After Effects version as float. */
-        var versionAsString = app.version.substring(0, 4);
-        var version = parseFloat(versionAsString);
+        const versionAsString = app.version.substring(0, 4);
+        const version = parseFloat(versionAsString);
         return version
+    }
+
+    function getCompatibleAEVersion() {
+        /* Return compatible After Effects version for job submission.
+         * Warns if current version is not officially supported on service-managed fleets.
+         * Returns the version as float.
+         */
+        const currentVersion = getAEVersion();
+
+        if (SUPPORTED_VERSIONS.indexOf(currentVersion) !== -1) {
+            return currentVersion;
+        }
+
+        // Show warning if version is not supported
+        adcAlert(
+            "Warning: Your After Effects version " + currentVersion +
+            " is not officially supported on service-managed fleets. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
+            "This may result in compatibility issues or failed jobs.",
+            false
+        );
+
+        return Math.floor(currentVersion);
     }
 
     return {
@@ -790,6 +813,7 @@ function __generateUtil() {
         "getTempFile": getTempFile,
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
+        "getCompatibleAEVersion": getCompatibleAEVersion,
         "getTempFolder": getTempFolder
     }
 }
