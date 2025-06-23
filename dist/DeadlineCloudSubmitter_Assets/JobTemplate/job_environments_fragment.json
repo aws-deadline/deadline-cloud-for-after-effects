@@ -1,0 +1,43 @@
+{
+  "jobEnvironments": [
+    {
+      "name": "Create Output Directories",
+      "description": "Create Output Directories",
+      "script": {
+        "actions": {
+          "onEnter": {
+            "command": "python",
+            "args": [
+              "{{Param.JobScriptDir}}/create_output_directory.py",
+              "{{Param.OutputDir}}"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Install Fonts to Worker",
+      "description": "Install Fonts to Worker",
+      "script": {
+        "actions": {
+          "onEnter": {
+            "command": "python",
+            "args": [
+              "{{Param.JobScriptDir}}/font_manager.py",
+              "install",
+              "{{Session.WorkingDirectory}}"
+            ]
+          },
+          "onExit": {
+            "command": "python",
+            "args": [
+              "{{Param.JobScriptDir}}/font_manager.py",
+              "remove",
+              "{{Session.WorkingDirectory}}"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
