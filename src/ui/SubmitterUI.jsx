@@ -55,7 +55,7 @@ function buildUI(thisObj) {
     const framesPerTaskTextBox = framesPerTaskGroup.add("edittext", undefined, "");
     framesPerTaskTextBox.alignment = ['fill', 'top'];
     framesPerTaskTextBox.helpTip = framesPerTaskLabel.helpTip;
-    framesPerTaskTextBox.onChange = function() {
+    function onFramesPerTaskChanged() {
         const newFramesPerTaskValue = Math.abs(parseInt(framesPerTaskTextBox.text));
         if (isNaN(newFramesPerTaskValue)) {
             framesPerTaskTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
@@ -68,6 +68,7 @@ function buildUI(thisObj) {
         }
         app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskTextBox.text);
     }
+    framesPerTaskTextBox.onChange = onFramesPerTaskChanged;
 
     // Multi-frame rendering (MFR) GUI
     const mfrGroup = settingsGroup.add("group", undefined, "");
@@ -93,7 +94,7 @@ function buildUI(thisObj) {
     maxCpuUsagePercentageTextBox.helpTip = maxCpuUsagePercentageLabel.helpTip;
     maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value;
     maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageTextBox.enabled ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE) : "N/A";
-    maxCpuUsagePercentageTextBox.onChange = function() {
+    function onMaxCpuUsagePercentageChanged() {
         const maxCpuUsagePercentageValue = Math.abs(parseInt(maxCpuUsagePercentageTextBox.text));
         if (isNaN(maxCpuUsagePercentageValue) || maxCpuUsagePercentageValue > 100) {
             maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
@@ -104,9 +105,10 @@ function buildUI(thisObj) {
         }
         app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, maxCpuUsagePercentageTextBox.text);
     }
+    maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
 
     // Disable max CPU percentage textbox when multi frame rendering is disabled
-    mfrCheckBox.onClick = function() {
+    function onMfrCheckBoxClicked() {
         const isMfrChecked = mfrCheckBox.value;
         if (!isMfrChecked) {
             maxCpuUsagePercentageTextBox.text = "N/A";
@@ -116,6 +118,8 @@ function buildUI(thisObj) {
             app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "true");
         }
         maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
+    mfrCheckBox.onClick = onMfrCheckBoxClicked;
+            var outputModule = renderQueueItem.outputModule(1).file;
     }
 
     // Add Timeouts settings group
