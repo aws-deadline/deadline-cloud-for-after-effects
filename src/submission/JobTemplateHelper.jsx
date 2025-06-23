@@ -12,58 +12,39 @@ function parameterValues(
     endFrame,
     chunkSize,
     multiFrameRendering,
-    maxCpuUsagePercentage
+    maxCpuUsagePercentage,
+    prefix
 ) {
     var parameterValuesList = [{
-            name: "deadline:targetTaskRunStatus",
-            value: "READY",
-        },
-        {
-            name: "deadline:maxFailedTasksCount",
-            value: 20,
-        },
-        {
-            name: "deadline:maxRetriesPerTask",
-            value: 5,
-        },
-        {
-            name: "deadline:priority",
-            value: 50,
-        },
-        {
-            name: "ProjectFile",
-            value: projectFile,
-        },
-        {
-            name: "RenderQueueIndex",
+            name: prefix + "_RenderQueueIndex",
             value: renderQueueIndex,
         },
         {
-            name: "OutputDir",
+            name: prefix + "_OutputDir",
             value: outputDir,
         },
         {
-            name: "OutputFileName",
+            name: prefix + "_OutputFileName",
             value: outputFileName,
         },
         {
-            name: "Frames",
+            name: prefix + "_Frames",
             value: startFrame.toString() + "-" + endFrame.toString(),
         },
         {
-            name: "MultiFrameRendering",
+            name: prefix + "_MultiFrameRendering",
             value: multiFrameRendering,
         },
     ];
     if (maxCpuUsagePercentage) {
         parameterValuesList.push({
-            name: "MaxCpuUsagePercentage",
+            name: prefix + "_MaxCpuUsagePercentage",
             value: maxCpuUsagePercentage,
         })
     }
     if (isImageSeq) {
         parameterValuesList.push({
-            name: "ChunkSize",
+            name: prefix + "_ChunkSize",
             value: chunkSize,
         });
     }
