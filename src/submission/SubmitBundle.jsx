@@ -1,3 +1,15 @@
+var JobParams = [
+    "JobScriptDir",
+    "CondaPackages",
+    "ProjectFile"
+]
+
+var paramPattern = "Param\."
+for (var p=0;p<JobParams.length;p++) {
+    paramPattern = paramPattern + "(?!" + JobParams[p] + ")"
+}
+var paramPatternRegex = new RegExp(paramPattern, 'g')
+
 /**
  * Submit the selected render queue item
  **/
