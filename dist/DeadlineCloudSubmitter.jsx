@@ -1050,6 +1050,49 @@ var logger = Logger(logFileName, logNormDirectoryPath);
 
 
 
+function UiSettingsState() {
+    this.settings = {}
+}
+function UiSettingsStore(name) {
+    this.name = name;
+    this._framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);;
+    this._multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING);
+    this._maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
+
+    this.framesPerTask = function () {
+        return this._framesPerTask
+    }
+    this.setFramesPerTask = function (value) {
+        logger.warning("(" + this.name + ") Setting framesPerTask to " + value)
+        this._framesPerTask = value
+    }
+
+    this.multiFrameRendering = function () {
+        return this._multiFrameRendering
+    }
+    this.setMultiFrameRendering = function (value) {
+        logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value)
+        this._multiFrameRendering = value
+    }
+
+    this.maxCpuUsagePercentage = function () {
+        return this._maxCpuUsagePercentage
+    }
+    this.setMaxCpuUsagePercentage = function (value) {
+        logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value)
+        this._maxCpuUsagePercentage = value
+    }
+}
+
+UiSettingsState.prototype.get = function(compId) {
+    if (!this.settings[compId]) {
+        this.settings[compId] = new UiSettingsStore(compId)
+    }
+    return this.settings[compId]
+}
+
+
+
 var jobTemplateHelperFile = "JobTemplateHelper.json";
 /**
  * Generates the basic parameterValue file for the job template
@@ -1064,58 +1107,39 @@ function parameterValues(
     endFrame,
     chunkSize,
     multiFrameRendering,
-    maxCpuUsagePercentage
+    maxCpuUsagePercentage,
+    prefix
 ) {
     var parameterValuesList = [{
-            name: "deadline:targetTaskRunStatus",
-            value: "READY",
-        },
-        {
-            name: "deadline:maxFailedTasksCount",
-            value: 20,
-        },
-        {
-            name: "deadline:maxRetriesPerTask",
-            value: 5,
-        },
-        {
-            name: "deadline:priority",
-            value: 50,
-        },
-        {
-            name: "ProjectFile",
-            value: projectFile,
-        },
-        {
-            name: "RenderQueueIndex",
+            name: prefix + "_RenderQueueIndex",
             value: renderQueueIndex,
         },
         {
-            name: "OutputDir",
+            name: prefix + "_OutputDir",
             value: outputDir,
         },
         {
-            name: "OutputFileName",
+            name: prefix + "_OutputFileName",
             value: outputFileName,
         },
         {
-            name: "Frames",
+            name: prefix + "_Frames",
             value: startFrame.toString() + "-" + endFrame.toString(),
         },
         {
-            name: "MultiFrameRendering",
+            name: prefix + "_MultiFrameRendering",
             value: multiFrameRendering,
         },
     ];
     if (maxCpuUsagePercentage) {
         parameterValuesList.push({
-            name: "MaxCpuUsagePercentage",
+            name: prefix + "_MaxCpuUsagePercentage",
             value: maxCpuUsagePercentage,
         })
     }
     if (isImageSeq) {
         parameterValuesList.push({
-            name: "ChunkSize",
+            name: prefix + "_ChunkSize",
             value: chunkSize,
         });
     }
@@ -1558,11 +1582,9 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         return;
     }
 
-    var renderQueueIndex = selection.renderQueueIndex;
-    var rqi;
 
-    // because our panel is updated independently of the render queue, the two may become out of sync
-    // we need to verify that the selection made actually matches what is in the render queue
+// Validate that the RenderQueueIndex for each selectionItem is still valid
+function UpdateRenderQueueIndices(renderQueueIndex, selectionItem) {
     if (
         renderQueueIndex < 1 ||
         renderQueueIndex > app.project.renderQueue.numItems
@@ -1571,34 +1593,33 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             "Error: Render Queue has changed since last refreshing. Refreshing panel now. Please try again.", true
         );
         updateList();
-        return;
+        return false;
     }
-    rqi = app.project.renderQueue.item(renderQueueIndex);
-    if (rqi == null || rqi.comp.id != selection.compId) {
+
+    var renderQueueItem = app.project.renderQueue.item(renderQueueIndex);
+    if (renderQueueItem == null || renderQueueItem.comp.id != selectionItem.compId) {
         adcAlert(
             "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again.", true
         );
         updateList();
-        return;
+        return false;
     }
-    if (rqi.numOutputModules > 1) {
+    if (renderQueueItem.numOutputModules > 1) {
         adcAlert(
             "Warning: Multiple output modules detected. It is not supported in current submitter. Please raise an issue on Github repo for feature request.", false
         );
-        return;
+        return false;
     }
+    return true;
+}
 
-    //We have a valid selection
-    var confirmation = confirm("Project must be saved before submitting. Continue?");
-    if (!confirmation) {
-        return;
-    } else {
-        app.project.save();
-    }
-    if (app.project.file == null) {
-        // If the user hit yes to the prompt, but the file had never been saved, a second prompt would appear asking where they would want to save the project.
-        // If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
-        return;
+// Validate that our outputModule is set
+function validateRenderQueueItemOutputModule(renderQueueItem) {
+    // We have already validated that we don't have more than 1 `numOutputModels`
+    var outputModule = renderQueueItem.outputModule(1).file;
+    if (outputModule == null) {
+        adcAlert("Error: Render Queue Item " + renderQueueItem.comp.name + " does not have its output file set", true);
+        return false;
     }
 
     // Check if warning should be shown
@@ -1656,18 +1677,30 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     const startFrame = frameRange.startFrame;
     const endFrame = frameRange.endFrame;
 
-    var dependencies = findJobAttachments(rqi.comp); // list of filenames
-    var compName = dcUtil.removeIllegalCharacters(rqi.comp.name);
+    return templateObject
+}
 
-    function generateAssetReferences(bundlePath, sanitizedOutputFolder) {
-        // Write the asset_references.json file
-        var jobAttachmentsContents = jobAttachmentsJson(
-            dependencies,
-            sanitizedOutputFolder
+// Generates the job bundle and copies files from our template source folder into it
+function generateBundle() {
+    // create the job bundle folder
+    var bundleRoot = new Folder(
+        dcUtil.getTempFolder() + "/DeadlineCloudAESubmission"
+    ); //forward slash works on all operating systems
+    recursiveDelete(bundleRoot);
+    bundleRoot.create();
+
+    var jobTemplateSourceFolder = new Folder(
+        scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
+    );
+    if (!jobTemplateSourceFolder.exists) {
+        adcAlert(
+            "Error: Missing job template at " + jobTemplateSourceFolder.fsName, true
         );
-        var assetReferencesOutDir = bundlePath + "/asset_references.json";
-        writeFile(assetReferencesOutDir, JSON.stringify(jobAttachmentsContents, null, 4));
+        return null;
     }
+    recursiveCopy(jobTemplateSourceFolder, bundleRoot);
+    return bundleRoot;
+}
 
     /**
      * Generates parameter_values json file
@@ -1694,29 +1727,15 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             )
         );
     }
+    var stepParametersContents = readFile(path);
+    // Parse the template string to a JSON object
+    var stepParametersObject = JSON.parse(stepParametersContents);
 
-    /**
-     * Generates job template json file
-     **/
-    function generateTemplate(bundlePath, isImageSeq) {
-        // Open the template depending on the output type
-        var path = bundlePath + "/video_template.json";
-        if (isImageSeq) {
-            path = bundlePath + "/image_template.json";
-        }
-        var templateContents = readFile(path);
-        // Parse the template string to a JSON object
-        var templateObject = JSON.parse(templateContents);
-        templateObject.name = File.decode(app.project.file.name) + " [" + compName + "]";
-        logger.debug("The template name is " + templateObject.name, submitBundleFile);
-        try {
-            if (templateObject.steps[0].name) {
-                templateObject.steps[0].name = compName;
-                logger.debug("The step name is " + templateObject.steps[0].name, submitBundleFile);
-            }
-        } catch (e) {
-            adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
-            logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
+    var updatedParameterDefinitions = []
+    for (var i=0;i<stepParametersObject.parameterDefinitions.length;i++) {
+        if (JobParams.indexOf(stepParametersObject.parameterDefinitions[i].name) !== -1) {
+            // Don't modify these values
+            continue
         }
         try {
             if (templateObject.steps[0].script && templateObject.steps[0].script.actions) {
@@ -1737,58 +1756,261 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         }
         logger.debug("The compatible version of After Effects is " + aftereffectsCondaVersion, submitBundleFile);
 
-        var paramDefCopy = templateObject.parameterDefinitions;
+        updatedParameterDefinitions.push(replacedDefinition)
+    }
+    stepParametersObject.parameterDefinitions = updatedParameterDefinitions
+    return stepParametersObject
+}
 
         for (var i = paramDefCopy.length - 1; i >= 0; i--) {
             if (paramDefCopy[i].name == "CondaPackages") {
                 paramDefCopy[i].default = "aftereffects=" + aftereffectsCondaVersion;
             }
         }
-        writeFile(bundlePath + "/template.json", JSON.stringify(templateObject, null, 4));
-        logger.debug("Wrote the template.json file to the bundle folder " + bundlePath, submitBundleFile);
+    }
+    return jobEnvironmentsObject
+}
+
+/**
+ * Submit the selected render queue item
+ **/
+function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
+    const submitBundleFile = "SubmitButton.jsx";
+    var renderQueueItems = []
+
+    // Check to make sure that all of our selection indices are correct
+    for (var i=0;i<selection.length;i++) {
+        var selectionItem = selection[i];
+        var renderQueueIndex = selectionItem.renderQueueIndex;
+        var renderQueueItem;
+
+        // because our panel is updated independently of the render queue, the two may become out of sync
+        // we need to verify that the selection made actually matches what is in the render queue
+        if (!UpdateRenderQueueIndices(renderQueueIndex, selectionItem)) {
+            return;
+        }
+        renderQueueItem = app.project.renderQueue.item(renderQueueIndex);
+        renderQueueItems.push([renderQueueItem, renderQueueIndex])
     }
 
-    /**
-     * Generates the job bundle, including template.json, parameter_values.json
-     * and asset_references.json
-     **/
-    function generateBundle() {
-        // create the job bundle folder
-        var bundleRoot = new Folder(
-            dcUtil.getTempFolder() + "/DeadlineCloudAESubmission"
-        ); //forward slash works on all operating systems
-        recursiveDelete(bundleRoot);
-        bundleRoot.create();
-        var bundlePath = bundleRoot.fsName;
+    // We have valid selections check for saving
+    if (app.project.dirty) {
+        var confirmation = confirm("Project must be saved before submitting. Continue?");
+        if (!confirmation) {
+            return;
+        } else {
+            app.project.save();
+        }
+        if (app.project.file == null) {
+            // If the user hit yes to the prompt, but the file had never been saved, a second prompt would appear asking where they would want to save the project.
+            // If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
+            return;
+        }
+    }
+
+
+    const aftereffectsVersion = app.version[0] + app.version[1];
+    logger.debug("The major version of After Effects is " + aftereffectsVersion, submitBundleFile);
+
+    var bundle = generateBundle();
+    var jobAssetReferences = {
+        assetReferences: {
+            inputs: {
+                directories: [],
+                filenames: [],
+            },
+            outputs: {
+                directories: [],
+            },
+            referencedPaths: [],
+        },
+    };
+    var jobParameterDefinitions = {
+      "parameterDefinitions": [
+        {
+          "name": "ProjectFile",
+          "type": "PATH",
+          "objectType": "FILE",
+          "dataFlow": "IN",
+          "userInterface": {
+            "control": "CHOOSE_INPUT_FILE",
+            "label": "Project file",
+            "groupLabel": "Source",
+            "fileFilters": [
+              {
+                "label": "After Effects project files",
+                "patterns": [
+                  "*.aep",
+                  "*.aepx"
+                ]
+              },
+              {
+                "label": "All Files",
+                "patterns": [
+                  "*"
+                ]
+              }
+            ]
+          },
+          "description": "The After Effects project file to render."
+        },
+        {
+          "name": "JobScriptDir",
+          "description": "Directory containing embedded scripts.",
+          "userInterface": {
+            "control": "HIDDEN"
+          },
+          "type": "PATH",
+          "objectType": "DIRECTORY",
+          "dataFlow": "IN",
+          "default": "scripts"
+        },
+        {
+          "name": "CondaPackages",
+          "type": "STRING",
+          "userInterface": {
+            "control": "HIDDEN"
+          },
+          "default": "aftereffects=" + aftereffectsVersion,
+          "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
+        }
+      ]
+    }
+    var jobParameterValues = {
+        parameterValues: [
+            {
+                name: "deadline:targetTaskRunStatus",
+                value: "READY",
+            },
+            {
+                name: "deadline:maxFailedTasksCount",
+                value: 20,
+            },
+            {
+                name: "deadline:maxRetriesPerTask",
+                value: 5,
+            },
+            {
+                name: "deadline:priority",
+                value: 50,
+            },
+            {
+                name: "ProjectFile",
+                value: app.project.file.fsName,
+            },
+        ]
+    }
+
+    var template = loadDefaultJobTemplate(bundle.fsName, submitBundleFile);
+    template.steps = []
+    template.parameterDefinitions = jobParameterDefinitions.parameterDefinitions
+
+    // generateTemplate(bundle.fsName, isImageSeq, compName, submitBundleFile);
+    var stepOutputFolderParameters = [];
+
+    for (var i=0;i<renderQueueItems.length;i++) {
+        var renderQueueItem = renderQueueItems[i][0];
+        var renderQueueIndex = renderQueueItems[i][1];
+
+        if (!validateRenderQueueItemOutputModule(renderQueueItem)) {
+            return;
+        }
+
+        var stepFramesPerTask = parseInt(selectionSettings.get(selectionItem.compId).framesPerTask() || framesPerTask)
+        var stepMaxCpuUsagePercentage = parseInt(selectionSettings.get(selectionItem.compId).maxCpuUsagePercentage() || maxCpuUsagePercentage)
+        var stepMultiFrameRendering = selectionSettings.get(selectionItem.compId).multiFrameRendering() || multiFrameRendering
+
+        var outputModule = renderQueueItem.outputModule(1).file;
+        var outputPath = outputModule.fsName;
+        var outputFile = outputModule.name;
+        var outputFolder = outputModule.parent.fsName;
+
+        logger.debug("OutputPath is: " + outputPath, submitBundleFile);
+        logger.debug("OutputFile is: " + outputFile, submitBundleFile);
+        logger.debug("OutputFolder is: " + outputFolder, submitBundleFile);
+
+        var renderSettings = renderQueueItem.getSettings(GetSettingsFormat.STRING_SETTABLE);
+        var startFrame = Number(
+            timeToFrames(
+                Number(renderSettings["Time Span Start"]),
+                Number(renderSettings["Use this frame rate"])
+            )
+        );
+        var endFrame =
+            Number(
+                timeToFrames(
+                    Number(renderSettings["Time Span End"]),
+                    Number(renderSettings["Use this frame rate"])
+                )
+            ) - 1; // end frame is inclusive so we subtract 1
+
+        var dependencies = findJobAttachments(renderQueueItem.comp); // list of filenames
+        var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
 
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
 
-        const outputFileNameNoRegex = getFileNameNoRegex(outputFile);
-        const extension = getFileExtension(outputFileNameNoRegex);
+        var outputFileNameNoRegex = getFileNameNoRegex(outputFile);
+        var extension = getFileExtension(outputFileNameNoRegex);
         logger.debug("extension set to: " + extension, submitBundleFile);
-        const isImageSeq = isImageOutput(extension);
+        var isImageSeq = isImageOutput(extension);
 
         var sanitizedOutputFileName = dcUtil.removePercentageFromFileName(outputFileNameNoRegex);
         logger.debug("sanitizedOutputFileName is " + sanitizedOutputFileName, submitBundleFile);
 
-        generateAssetReferences(bundlePath, sanitizedOutputFolder);
-        generateParameterValues(bundlePath, sanitizedOutputFolder, sanitizedOutputFileName, isImageSeq);
-
-        var jobTemplateSourceFolder = new Folder(
-            scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
-        );
-        if (!jobTemplateSourceFolder.exists) {
-            adcAlert(
-                "Error: Missing job template at " + jobTemplateSourceFolder.fsName, true
-            );
-            return null;
+        // Push step asset references
+        for (var d=0;d<dependencies.length;d++) {
+            jobAssetReferences.assetReferences.inputs.filenames.push(dependencies[d])
         }
-        recursiveCopy(jobTemplateSourceFolder, bundleRoot);
+        jobAssetReferences.assetReferences.outputs.directories.push(sanitizedOutputFolder)
 
-        generateTemplate(bundlePath, isImageSeq);
-        return bundleRoot;
+        var parameterValues = generateParameterValuesForStep(
+            compName,
+            renderQueueIndex,
+            sanitizedOutputFolder,
+            sanitizedOutputFileName,
+            isImageSeq,
+            startFrame,
+            endFrame,
+            stepFramesPerTask,
+            stepMultiFrameRendering,
+            stepMaxCpuUsagePercentage
+        )
+
+        for (var p=0;p<parameterValues.parameterValues.length;p++) {
+            if (jobParameterValues.parameterValues.indexOf(parameterValues.parameterValues[p]) === -1) {
+                jobParameterValues.parameterValues.push(parameterValues.parameterValues[p])
+            }
+        }
+
+        stepOutputFolderParameters.push("{{Param." + compName + "_OutputDir}}")
+
+        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, compName)
+        for (var s=0;s<stepTemplate.steps.length;s++) {
+            template.steps.push(stepTemplate.steps[s])
+        }
+        var stepParameters = generateStepParameterFragment(bundle.fsName, isImageSeq, compName)
+        for (var p=0;p<stepParameters.parameterDefinitions.length;p++) {
+            var parameterExists = false;
+            for (var tpd=0;tpd<template.parameterDefinitions.length;tpd++) {
+                var templateParameterDefinition = template.parameterDefinitions[tpd];
+                var stepParameterDefinition = stepParameters.parameterDefinitions[p];
+                if (templateParameterDefinition.name == stepParameterDefinition.name) {
+                    parameterExists = true
+                    break
+                }
+            }
+            if (parameterExists === false) {
+                template.parameterDefinitions.push(stepParameters.parameterDefinitions[p])
+            }
+        }
     }
-    var bundle = generateBundle();
+    var generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","))
+    template.jobEnvironments = generatedJobEnvironment.jobEnvironments
+
+    writeFile(bundle.fsName + "/parameter_values.json",JSON.stringify(jobParameterValues, null, 4));
+
+    writeFile(bundle.fsName + "/template.json", JSON.stringify(template, null, 4));
+    logger.debug("Wrote the template.json file to the bundle folder " + bundle.fsName, submitBundleFile);
 
     // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
     var logFile = new File(dcUtil.getTempFolder() + "/submitter_output.log");
@@ -1834,7 +2056,6 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         logger.error("Error when launching Deadline GUI submitter: " + output, "Utils.jsx");
     }
 }
-
 
 
 /**
@@ -2424,6 +2645,8 @@ function buildUI(thisObj) {
         resizable: true
     });
 
+    var uiSettingsState = new UiSettingsState();
+
     var root = submitterPanel.add("group");
     root.orientation = "column";
     root.alignment = ['fill', 'fill'];
@@ -2473,7 +2696,7 @@ function buildUI(thisObj) {
     const framesPerTaskTextBox = framesPerTaskGroup.add("edittext", undefined, "");
     framesPerTaskTextBox.alignment = ['fill', 'top'];
     framesPerTaskTextBox.helpTip = framesPerTaskLabel.helpTip;
-    framesPerTaskTextBox.onChange = function() {
+    function onFramesPerTaskChanged() {
         const newFramesPerTaskValue = Math.abs(parseInt(framesPerTaskTextBox.text));
         if (isNaN(newFramesPerTaskValue)) {
             framesPerTaskTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
@@ -2485,7 +2708,12 @@ function buildUI(thisObj) {
             framesPerTaskTextBox.text = newFramesPerTaskValue;
         }
         app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskTextBox.text);
+        for (var s=0;s<list.selection.length;s++) {
+            var selectionItem = list.selection[s];
+            uiSettingsState.get(selectionItem.compId).setFramesPerTask(framesPerTaskTextBox.text)
+        }
     }
+    framesPerTaskTextBox.onChange = onFramesPerTaskChanged;
 
     // Multi-frame rendering (MFR) GUI
     const mfrGroup = settingsGroup.add("group", undefined, "");
@@ -2511,7 +2739,7 @@ function buildUI(thisObj) {
     maxCpuUsagePercentageTextBox.helpTip = maxCpuUsagePercentageLabel.helpTip;
     maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value;
     maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageTextBox.enabled ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE) : "N/A";
-    maxCpuUsagePercentageTextBox.onChange = function() {
+    function onMaxCpuUsagePercentageChanged() {
         const maxCpuUsagePercentageValue = Math.abs(parseInt(maxCpuUsagePercentageTextBox.text));
         if (isNaN(maxCpuUsagePercentageValue) || maxCpuUsagePercentageValue > 100) {
             maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
@@ -2521,20 +2749,34 @@ function buildUI(thisObj) {
             maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageValue;
         }
         app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, maxCpuUsagePercentageTextBox.text);
+        for (var s=0;s<list.selection.length;s++) {
+            var selectionItem = list.selection[s];
+            uiSettingsState.get(selectionItem.compId).setMaxCpuUsagePercentage(maxCpuUsagePercentageTextBox.text)
+        }
     }
+    maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
 
     // Disable max CPU percentage textbox when multi frame rendering is disabled
-    mfrCheckBox.onClick = function() {
+    function onMfrCheckBoxClicked() {
         const isMfrChecked = mfrCheckBox.value;
+        var settingsStateValue = false
         if (!isMfrChecked) {
             maxCpuUsagePercentageTextBox.text = "N/A";
             app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
+            settingsStateValue = false
         } else {
             maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
             app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "true");
+            settingsStateValue = true
         }
+
         maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
+        for (var s=0;s<list.selection.length;s++) {
+            var selectionItem = list.selection[s];
+            uiSettingsState.get(selectionItem.compId).setMultiFrameRendering(settingsStateValue)
+        }
     }
+    mfrCheckBox.onClick = onMfrCheckBoxClicked;
 
     // Add Timeouts settings group
     const timeoutsPanel = settingsGroup.add("panel", undefined, "Timeouts");
@@ -2627,14 +2869,35 @@ function buildUI(thisObj) {
         if (rqi.numOutputModules == 1) {
             var outputModule = rqi.outputModule(1).file;
             if (outputModule != null) {
-                const outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
-                const extension = getFileExtension(outputFileNameNoRegex);
+                var outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
+                var extension = getFileExtension(outputFileNameNoRegex);
                 return isImageOutput(extension);
             }
         }
-        // Default to true so that we don't block any customers in case we can't
-        // sufficiently verify whether they're submitting an image sequence or not
-        return true;
+        return false
+    }
+
+    // Check for duplicate names
+    function checkForInvalidCompositionNames(selection) {
+        var names = [];
+        var duplicateNames = [];
+        for (var i=0;i<selection.length;i++) {
+            var selectionItem = selection[i];
+            var renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex);
+            var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
+            if (names.indexOf(compName) !== -1) {
+                duplicateNames.push(renderQueueItem.comp.name);
+            }
+        }
+        if (duplicateNames.length !== 0) {
+            var message = "Selected submission items must have unique names. Found (" + duplicateNames.length * 2 + ") compositions with the same name: "
+            for (var i=0;i<duplicateNames.length;i++) {
+                message = message + "\n\t" + duplicateNames[i];
+            }
+            adcAlert(message, true)
+            return true
+        }
+        return false
     }
 
     var submitButton = controlsGroup.add("button", undefined, "Submit");
@@ -2660,6 +2923,7 @@ function buildUI(thisObj) {
     function updateList() {
         var bounds = list == null ? undefined : list.bounds;
         var newList = listGroup.add("listbox", bounds, "", {
+            multiselect: true,
             numberOfColumns: 4,
             showHeaders: true,
             columnTitles: ['#', 'Name', 'Frames', 'Output Path'],
@@ -2678,6 +2942,8 @@ function buildUI(thisObj) {
             var item = newList.add('item', i.toString());
             item.renderQueueIndex = i;
             item.compId = rqi.comp.id;
+            // Create a default entry for each comp as needed.
+            uiSettingsState.get(item.compId)
             item.subItems[0].text = rqi.comp.name;
             // Calculate frame range using the utility function
             var frameRange = dcUtil.calculateFrameRange(rqi);
@@ -2698,34 +2964,59 @@ function buildUI(thisObj) {
             listGroup.remove(list);
         }
         list = newList;
-        list.onChange = function() {
-            framesPerTaskTextBox.enabled = isFramesPerTaskEnabled(list.selection);
-            // If no selection, update list and set text box blank. But if there's a selection
-            // and frames per task is disabled, fill textbox with default start-end frame to show that
-            // no image chunking will occur. But if there is a selection and frames per task is enabled,
-            // set it to their default value.
-            if (list.selection == null) {
+
+        function onSelectionChange() {
+            var selection = list.selection;
+            if (selection == null) {
                 updateList();
                 framesPerTaskTextBox.text = "";
-            } else if (!framesPerTaskTextBox.enabled) {
-                framesPerTaskTextBox.text = list.selection.subItems[1].text;
-            } else {
-                framesPerTaskTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
+                return;
             }
-
-            submitButton.enabled = list.selection != null;
+            submitButton.enabled = true;
             submitButton.active = false;
             submitButton.active = true;
-        };
+
+            // Disable everything
+            framesPerTaskTextBox.enabled = false
+            mfrCheckBox.enabled = false
+            maxCpuUsagePercentageTextBox.enabled = false
+
+            if (selection.length !== 1) {
+                return
+            }
+            var selectionItem = selection[0]
+            logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
+            var imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex))
+            framesPerTaskTextBox.enabled = imageOutput
+            mfrCheckBox.enabled = true
+            maxCpuUsagePercentageTextBox.enabled = true
+
+            framesPerTaskTextBox.text = selectionItem.subItems[1].text
+
+            var settings = uiSettingsState.get(selectionItem.compId)
+            if (settings === undefined) {
+                logger.warning("Could not find settings for : " + selectionItem.compId);
+                return
+            }
+
+            framesPerTaskTextBox.text = settings.framesPerTask() || selectionItem.subItems[1].text
+            mfrCheckBox.value = settings.multiFrameRendering()
+            maxCpuUsagePercentageTextBox.value = settings.maxCpuUsagePercentage()
+
+            maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value
+        }
+
+        list.onChange = onSelectionChange;
         list.selection = null;
     }
 
     updateList();
-    framesPerTaskTextBox.enabled = isFramesPerTaskEnabled(list.selection);
-
-    refreshButton.onClick = function() {
-        updateList();
+    if (list.selection != null && list.selection.length === 1) {
+        var selectionItem = list.selection[0]
+        var renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex)
+        framesPerTaskTextBox.enabled = isRenderQueueItemImageOutput(renderQueueItem)
     }
+    refreshButton.onClick = updateList;
 
     submitterPanel.layout.layout(true);
 
