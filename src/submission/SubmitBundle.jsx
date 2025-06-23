@@ -10,6 +10,187 @@ for (var p=0;p<JobParams.length;p++) {
 }
 var paramPatternRegex = new RegExp(paramPattern, 'g')
 
+
+// Validate that the RenderQueueIndex for each selectionItem is still valid
+function UpdateRenderQueueIndices(renderQueueIndex, selectionItem) {
+    if (
+        renderQueueIndex < 1 ||
+        renderQueueIndex > app.project.renderQueue.numItems
+    ) {
+        adcAlert(
+            "Error: Render Queue has changed since last refreshing. Refreshing panel now. Please try again.", true
+        );
+        updateList();
+        return false;
+    }
+
+    var renderQueueItem = app.project.renderQueue.item(renderQueueIndex);
+    if (renderQueueItem == null || renderQueueItem.comp.id != selectionItem.compId) {
+        adcAlert(
+            "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again.", true
+        );
+        updateList();
+        return false;
+    }
+    if (renderQueueItem.numOutputModules > 1) {
+        adcAlert(
+            "Warning: Multiple output modules detected. It is not supported in current submitter. Please raise an issue on Github repo for feature request.", false
+        );
+        return false;
+    }
+    return true;
+}
+
+// Validate that our outputModule is set
+function validateRenderQueueItemOutputModule(renderQueueItem) {
+    // We have already validated that we don't have more than 1 `numOutputModels`
+    var outputModule = renderQueueItem.outputModule(1).file;
+    if (outputModule == null) {
+        adcAlert("Error: Render Queue Item " + renderQueueItem.comp.name + " does not have its output file set", true);
+        return false;
+    }
+    return true;
+}
+
+// Generate our prefixed Parameter Values for the provided comp
+function generateParameterValuesForStep(
+    prefix,
+    renderQueueIndex,
+    outputFolder,
+    outputFileName,
+    isImageSeq,
+    startFrame,
+    endFrame,
+    chunkSize,
+    multiFrameRendering,
+    maxCpuUsagePercentage,
+) {
+    return parameterValues(
+        renderQueueIndex,
+        app.project.file.fsName,
+        outputFolder,
+        outputFileName,
+        isImageSeq,
+        startFrame,
+        endFrame,
+        chunkSize,
+        multiFrameRendering,
+        maxCpuUsagePercentage,
+        prefix,
+    )
+}
+
+// Loading our default template from disk
+function loadDefaultJobTemplate(bundlePath, submitBundleFile) {
+    var path = bundlePath + "/template.json";
+    var templateContents = readFile(path);
+    // Parse the template string to a JSON object
+    var templateObject = JSON.parse(templateContents);
+    templateObject.name = File.decode(app.project.file.name);
+    logger.debug("The template name is " + templateObject.name, submitBundleFile);
+
+    return templateObject
+}
+
+// Generates the job bundle and copies files from our template source folder into it
+function generateBundle() {
+    // create the job bundle folder
+    var bundleRoot = new Folder(
+        dcUtil.getTempFolder() + "/DeadlineCloudAESubmission"
+    ); //forward slash works on all operating systems
+    recursiveDelete(bundleRoot);
+    bundleRoot.create();
+
+    var jobTemplateSourceFolder = new Folder(
+        scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
+    );
+    if (!jobTemplateSourceFolder.exists) {
+        adcAlert(
+            "Error: Missing job template at " + jobTemplateSourceFolder.fsName, true
+        );
+        return null;
+    }
+    recursiveCopy(jobTemplateSourceFolder, bundleRoot);
+    return bundleRoot;
+}
+
+// Generates the parameter definitions for each step by loading the `parameter_definitions_<>_fragment.json`
+//      Adding our `( <CompName> )` to the label and changing the name to prefixed by `<CompName>_`
+function generateStepParameterFragment(bundlePath, isImageSeq, compName) {
+    var path = bundlePath + "/parameter_definitions_video_fragment.json";
+    if (isImageSeq) {
+        path = bundlePath + "/parameter_definitions_image_fragment.json";
+    }
+    var stepParametersContents = readFile(path);
+    // Parse the template string to a JSON object
+    var stepParametersObject = JSON.parse(stepParametersContents);
+
+    var updatedParameterDefinitions = []
+    for (var i=0;i<stepParametersObject.parameterDefinitions.length;i++) {
+        if (JobParams.indexOf(stepParametersObject.parameterDefinitions[i].name) !== -1) {
+            // Don't modify these values
+            continue
+        }
+        var replacedDefinition = stepParametersObject.parameterDefinitions[i]
+        replacedDefinition.name = compName + "_" + stepParametersObject.parameterDefinitions[i].name
+        replacedDefinition.userInterface.label = "(" + compName + ") " + replacedDefinition.userInterface.label
+
+        updatedParameterDefinitions.push(replacedDefinition)
+    }
+    stepParametersObject.parameterDefinitions = updatedParameterDefinitions
+    return stepParametersObject
+}
+
+// Generates the step chunk of the template for each step by loading the `step_<>_fragment.json`
+//      Replacing the parmaeters to be pointing to our per-CompName parameters and updating any parameters in the onRun
+function generateStepTemplateFragment(bundlePath, isImageSeq, compName) {
+    var path = bundlePath + "/step_video_fragment.json";
+    if (isImageSeq) {
+        path = bundlePath + "/step_image_fragment.json";
+    }
+    var stepTemplateContents = readFile(path);
+    // Parse the template string to a JSON object
+    var stepTemplateObject = JSON.parse(stepTemplateContents);
+
+    if (isImageSeq) {
+        // Replace parameter names in the creation of `Index`
+        var taskParameters = stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0]
+        taskParameters.range = taskParameters.range.replace(paramPatternRegex, "Param." + compName + "_")
+        taskParameters.name = compName + "_" + taskParameters.name
+        stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0] = taskParameters
+    }
+
+    stepTemplateObject.steps[0].name = compName;
+    // Replace any parameter names in onRun script
+    var scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args
+    var replacedArgs = []
+    for (var i=0;i<scriptArgs.length;i++) {
+        // JobParams
+        replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + compName + "_"))
+    }
+    stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs
+
+    return stepTemplateObject
+}
+
+// Modifies the `Create Output Directories` job environment by adding all of our output folder parameters
+function generateJobEnvironmentFragment(bundlePath, outputFoldersStr) {
+    var path = bundlePath + "/job_environments_fragment.json";
+    var jobEnvironmentsContents = readFile(path);
+    // Parse the template string to a JSON object
+    var jobEnvironmentsObject = JSON.parse(jobEnvironmentsContents);
+
+    for (var j=0;j<jobEnvironmentsObject.jobEnvironments.length;j++) {
+        if (jobEnvironmentsObject.jobEnvironments[j].name === "Create Output Directories") {
+            jobEnvironmentsObject.jobEnvironments[j].script.actions.onEnter.args = [
+                "{{Param.JobScriptDir}}/create_output_directory.py",
+                outputFoldersStr
+            ]
+        }
+    }
+    return jobEnvironmentsObject
+}
+
 /**
  * Submit the selected render queue item
  **/
