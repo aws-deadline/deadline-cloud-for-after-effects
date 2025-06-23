@@ -275,6 +275,7 @@ function buildUI(thisObj) {
     function updateList() {
         var bounds = list == null ? undefined : list.bounds;
         var newList = listGroup.add("listbox", bounds, "", {
+            multiselect: true,
             numberOfColumns: 4,
             showHeaders: true,
             columnTitles: ['#', 'Name', 'Frames', 'Output Path'],
