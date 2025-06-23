@@ -205,40 +205,21 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     taskTimeoutSeconds = (taskTimeoutDays * 24 * 60 * 60) + (taskTimeoutHours * 60 * 60) + (taskTimeoutMinutes * 60);
 
     const submitBundleFile = "SubmitButton.jsx";
-    // first we must verify that our selection is valid
-    if (selection == null) {
-        adcAlert("Error: No selection", true);
-        return;
-    }
+    var renderQueueItems = []
 
-    var renderQueueIndex = selection.renderQueueIndex;
-    var rqi;
+    // Check to make sure that all of our selection indices are correct
+    for (var i=0;i<selection.length;i++) {
+        var selectionItem = selection[i];
+        var renderQueueIndex = selectionItem.renderQueueIndex;
+        var renderQueueItem;
 
-    // because our panel is updated independently of the render queue, the two may become out of sync
-    // we need to verify that the selection made actually matches what is in the render queue
-    if (
-        renderQueueIndex < 1 ||
-        renderQueueIndex > app.project.renderQueue.numItems
-    ) {
-        adcAlert(
-            "Error: Render Queue has changed since last refreshing. Refreshing panel now. Please try again.", true
-        );
-        updateList();
-        return;
-    }
-    rqi = app.project.renderQueue.item(renderQueueIndex);
-    if (rqi == null || rqi.comp.id != selection.compId) {
-        adcAlert(
-            "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again.", true
-        );
-        updateList();
-        return;
-    }
-    if (rqi.numOutputModules > 1) {
-        adcAlert(
-            "Warning: Multiple output modules detected. It is not supported in current submitter. Please raise an issue on Github repo for feature request.", false
-        );
-        return;
+        // because our panel is updated independently of the render queue, the two may become out of sync
+        // we need to verify that the selection made actually matches what is in the render queue
+        if (!UpdateRenderQueueIndices(renderQueueIndex, selectionItem)) {
+            return;
+        }
+        renderQueueItem = app.project.renderQueue.item(renderQueueIndex);
+        renderQueueItems.push([renderQueueItem, renderQueueIndex])
     }
 
     //We have a valid selection
@@ -296,31 +277,22 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             }
             return;
         } else {
-            outputPath = outputModule.fsName;
-            outputFile = outputModule.name;
-            outputFolder = outputModule.parent.fsName;
-            logger.debug("OutputPath is: " + outputPath, submitBundleFile);
-            logger.debug("OutputFile is: " + outputFile, submitBundleFile);
-            logger.debug("outputFolder is: " + outputFolder, submitBundleFile);
+            app.project.save();
+        }
+        if (app.project.file == null) {
+            // If the user hit yes to the prompt, but the file had never been saved, a second prompt would appear asking where they would want to save the project.
+            // If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
+            return;
         }
     }
+
     // Calculate frame range using the utility function
     const frameRange = dcUtil.calculateFrameRange(rqi);
     const startFrame = frameRange.startFrame;
     const endFrame = frameRange.endFrame;
 
-    var dependencies = findJobAttachments(rqi.comp); // list of filenames
-    var compName = dcUtil.removeIllegalCharacters(rqi.comp.name);
-
-    function generateAssetReferences(bundlePath, sanitizedOutputFolder) {
-        // Write the asset_references.json file
-        var jobAttachmentsContents = jobAttachmentsJson(
-            dependencies,
-            sanitizedOutputFolder
-        );
-        var assetReferencesOutDir = bundlePath + "/asset_references.json";
-        writeFile(assetReferencesOutDir, JSON.stringify(jobAttachmentsContents, null, 4));
-    }
+    const aftereffectsVersion = app.version[0] + app.version[1];
+    logger.debug("The major version of After Effects is " + aftereffectsVersion, submitBundleFile);
 
     /**
      * Generates parameter_values json file
@@ -390,58 +362,110 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         }
         logger.debug("The compatible version of After Effects is " + aftereffectsCondaVersion, submitBundleFile);
 
-        var paramDefCopy = templateObject.parameterDefinitions;
+    // generateTemplate(bundle.fsName, isImageSeq, compName, submitBundleFile);
+    var stepOutputFolderParameters = [];
 
         for (var i = paramDefCopy.length - 1; i >= 0; i--) {
             if (paramDefCopy[i].name == "CondaPackages") {
                 paramDefCopy[i].default = "aftereffects=" + aftereffectsCondaVersion;
             }
         }
-        writeFile(bundlePath + "/template.json", JSON.stringify(templateObject, null, 4));
-        logger.debug("Wrote the template.json file to the bundle folder " + bundlePath, submitBundleFile);
-    }
 
-    /**
-     * Generates the job bundle, including template.json, parameter_values.json
-     * and asset_references.json
-     **/
-    function generateBundle() {
-        // create the job bundle folder
-        var bundleRoot = new Folder(
-            dcUtil.getTempFolder() + "/DeadlineCloudAESubmission"
-        ); //forward slash works on all operating systems
-        recursiveDelete(bundleRoot);
-        bundleRoot.create();
-        var bundlePath = bundleRoot.fsName;
+        var stepFramesPerTask = parseInt(selectionSettings.get(selectionItem.compId).framesPerTask() || framesPerTask)
+        var stepMaxCpuUsagePercentage = parseInt(selectionSettings.get(selectionItem.compId).maxCpuUsagePercentage() || maxCpuUsagePercentage)
+        var stepMultiFrameRendering = selectionSettings.get(selectionItem.compId).multiFrameRendering() || multiFrameRendering
+
+        var outputModule = renderQueueItem.outputModule(1).file;
+        var outputPath = outputModule.fsName;
+        var outputFile = outputModule.name;
+        var outputFolder = outputModule.parent.fsName;
+
+        logger.debug("OutputPath is: " + outputPath, submitBundleFile);
+        logger.debug("OutputFile is: " + outputFile, submitBundleFile);
+        logger.debug("OutputFolder is: " + outputFolder, submitBundleFile);
+
+        var renderSettings = renderQueueItem.getSettings(GetSettingsFormat.STRING_SETTABLE);
+        var startFrame = Number(
+            timeToFrames(
+                Number(renderSettings["Time Span Start"]),
+                Number(renderSettings["Use this frame rate"])
+            )
+        );
+        var endFrame =
+            Number(
+                timeToFrames(
+                    Number(renderSettings["Time Span End"]),
+                    Number(renderSettings["Use this frame rate"])
+                )
+            ) - 1; // end frame is inclusive so we subtract 1
+
+        var dependencies = findJobAttachments(renderQueueItem.comp); // list of filenames
+        var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
 
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
 
-        const outputFileNameNoRegex = getFileNameNoRegex(outputFile);
-        const extension = getFileExtension(outputFileNameNoRegex);
+        var outputFileNameNoRegex = getFileNameNoRegex(outputFile);
+        var extension = getFileExtension(outputFileNameNoRegex);
         logger.debug("extension set to: " + extension, submitBundleFile);
-        const isImageSeq = isImageOutput(extension);
+        var isImageSeq = isImageOutput(extension);
 
         var sanitizedOutputFileName = dcUtil.removePercentageFromFileName(outputFileNameNoRegex);
         logger.debug("sanitizedOutputFileName is " + sanitizedOutputFileName, submitBundleFile);
 
-        generateAssetReferences(bundlePath, sanitizedOutputFolder);
-        generateParameterValues(bundlePath, sanitizedOutputFolder, sanitizedOutputFileName, isImageSeq);
-
-        var jobTemplateSourceFolder = new Folder(
-            scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
-        );
-        if (!jobTemplateSourceFolder.exists) {
-            adcAlert(
-                "Error: Missing job template at " + jobTemplateSourceFolder.fsName, true
-            );
-            return null;
+        // Push step asset references
+        for (var d=0;d<dependencies.length;d++) {
+            jobAssetReferences.assetReferences.inputs.filenames.push(dependencies[d])
         }
-        recursiveCopy(jobTemplateSourceFolder, bundleRoot);
+        jobAssetReferences.assetReferences.outputs.directories.push(sanitizedOutputFolder)
 
-        generateTemplate(bundlePath, isImageSeq);
-        return bundleRoot;
+        var parameterValues = generateParameterValuesForStep(
+            compName,
+            renderQueueIndex,
+            sanitizedOutputFolder,
+            sanitizedOutputFileName,
+            isImageSeq,
+            startFrame,
+            endFrame,
+            stepFramesPerTask,
+            stepMultiFrameRendering,
+            stepMaxCpuUsagePercentage
+        )
+
+        for (var p=0;p<parameterValues.parameterValues.length;p++) {
+            if (jobParameterValues.parameterValues.indexOf(parameterValues.parameterValues[p]) === -1) {
+                jobParameterValues.parameterValues.push(parameterValues.parameterValues[p])
+            }
+        }
+
+        stepOutputFolderParameters.push("{{Param." + compName + "_OutputDir}}")
+
+        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, compName)
+        for (var s=0;s<stepTemplate.steps.length;s++) {
+            template.steps.push(stepTemplate.steps[s])
+        }
+        var stepParameters = generateStepParameterFragment(bundle.fsName, isImageSeq, compName)
+        for (var p=0;p<stepParameters.parameterDefinitions.length;p++) {
+            var parameterExists = false;
+            for (var tpd=0;tpd<template.parameterDefinitions.length;tpd++) {
+                var templateParameterDefinition = template.parameterDefinitions[tpd];
+                var stepParameterDefinition = stepParameters.parameterDefinitions[p];
+                if (templateParameterDefinition.name == stepParameterDefinition.name) {
+                    parameterExists = true
+                    break
+                }
+            }
+            if (parameterExists === false) {
+                template.parameterDefinitions.push(stepParameters.parameterDefinitions[p])
+            }
+        }
     }
-    var bundle = generateBundle();
+    var generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","))
+    template.jobEnvironments = generatedJobEnvironment.jobEnvironments
+
+    writeFile(bundle.fsName + "/parameter_values.json",JSON.stringify(jobParameterValues, null, 4));
+
+    writeFile(bundle.fsName + "/template.json", JSON.stringify(template, null, 4));
+    logger.debug("Wrote the template.json file to the bundle folder " + bundle.fsName, submitBundleFile);
 
     // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
     var logFile = new File(dcUtil.getTempFolder() + "/submitter_output.log");
