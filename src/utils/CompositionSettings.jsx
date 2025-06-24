@@ -3,8 +3,11 @@ function UiSettingsState() {
 }
 function UiSettingsStore(name) {
     this.name = name;
+    // _framesPerTask: string
     this._framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);;
+    // _multiFrameRendering: bool
     this._multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING);
+    // _maxCpuUsagePercentage: string
     this._maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
 
     this.framesPerTask = function () {
@@ -12,7 +15,7 @@ function UiSettingsStore(name) {
     }
     this.setFramesPerTask = function (value) {
         logger.warning("(" + this.name + ") Setting framesPerTask to " + value)
-        this._framesPerTask = value
+        this._framesPerTask = typeof value === "string" ? value : value.toString()
     }
 
     this.multiFrameRendering = function () {
@@ -20,7 +23,7 @@ function UiSettingsStore(name) {
     }
     this.setMultiFrameRendering = function (value) {
         logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value)
-        this._multiFrameRendering = value
+        this._multiFrameRendering = typeof value === "boolean" ? value : (value === "true")
     }
 
     this.maxCpuUsagePercentage = function () {
@@ -28,7 +31,7 @@ function UiSettingsStore(name) {
     }
     this.setMaxCpuUsagePercentage = function (value) {
         logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value)
-        this._maxCpuUsagePercentage = value
+        this._maxCpuUsagePercentage = typeof value === "string" ? value : value.toString()
     }
 }
 
