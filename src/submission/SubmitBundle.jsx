@@ -24,7 +24,7 @@ function UpdateRenderQueueIndices(renderQueueIndex, selectionItem) {
         return false;
     }
 
-    var renderQueueItem = app.project.renderQueue.item(renderQueueIndex);
+    const renderQueueItem = app.project.renderQueue.item(renderQueueIndex);
     if (renderQueueItem == null || renderQueueItem.comp.id != selectionItem.compId) {
         adcAlert(
             "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again.", true
@@ -44,7 +44,7 @@ function UpdateRenderQueueIndices(renderQueueIndex, selectionItem) {
 // Validate that our outputModule is set
 function validateRenderQueueItemOutputModule(renderQueueItem) {
     // We have already validated that we don't have more than 1 `numOutputModels`
-    var outputModule = renderQueueItem.outputModule(1).file;
+    const outputModule = renderQueueItem.outputModule(1).file;
     if (outputModule == null) {
         adcAlert("Error: Render Queue Item " + renderQueueItem.comp.name + " does not have its output file set", true);
         return false;
@@ -82,10 +82,10 @@ function generateParameterValuesForStep(
 
 // Loading our default template from disk
 function loadDefaultJobTemplate(bundlePath, submitBundleFile) {
-    var path = bundlePath + "/template.json";
-    var templateContents = readFile(path);
+    const path = bundlePath + "/template.json";
+    const templateContents = readFile(path);
     // Parse the template string to a JSON object
-    var templateObject = JSON.parse(templateContents);
+    const templateObject = JSON.parse(templateContents);
     templateObject.name = File.decode(app.project.file.name);
     logger.debug("The template name is " + templateObject.name, submitBundleFile);
 
@@ -95,13 +95,13 @@ function loadDefaultJobTemplate(bundlePath, submitBundleFile) {
 // Generates the job bundle and copies files from our template source folder into it
 function generateBundle() {
     // create the job bundle folder
-    var bundleRoot = new Folder(
+    const bundleRoot = new Folder(
         dcUtil.getTempFolder() + "/DeadlineCloudAESubmission"
     ); //forward slash works on all operating systems
     recursiveDelete(bundleRoot);
     bundleRoot.create();
 
-    var jobTemplateSourceFolder = new Folder(
+    const jobTemplateSourceFolder = new Folder(
         scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
     );
     if (!jobTemplateSourceFolder.exists) {
@@ -121,11 +121,11 @@ function generateStepParameterFragment(bundlePath, isImageSeq, compName) {
     if (isImageSeq) {
         path = bundlePath + "/parameter_definitions_image_fragment.json";
     }
-    var stepParametersContents = readFile(path);
+    const stepParametersContents = readFile(path);
     // Parse the template string to a JSON object
-    var stepParametersObject = JSON.parse(stepParametersContents);
+    const stepParametersObject = JSON.parse(stepParametersContents);
 
-    var updatedParameterDefinitions = []
+    const updatedParameterDefinitions = []
     for (var i=0;i<stepParametersObject.parameterDefinitions.length;i++) {
         if (JobParams.indexOf(stepParametersObject.parameterDefinitions[i].name) !== -1) {
             // Don't modify these values
@@ -148,13 +148,13 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, compName) {
     if (isImageSeq) {
         path = bundlePath + "/step_image_fragment.json";
     }
-    var stepTemplateContents = readFile(path);
+    const stepTemplateContents = readFile(path);
     // Parse the template string to a JSON object
-    var stepTemplateObject = JSON.parse(stepTemplateContents);
+    const stepTemplateObject = JSON.parse(stepTemplateContents);
 
     if (isImageSeq) {
         // Replace parameter names in the creation of `Index`
-        var taskParameters = stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0]
+        const taskParameters = stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0]
         taskParameters.range = taskParameters.range.replace(paramPatternRegex, "Param." + compName + "_")
         taskParameters.name = compName + "_" + taskParameters.name
         stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0] = taskParameters
@@ -162,8 +162,8 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, compName) {
 
     stepTemplateObject.steps[0].name = compName;
     // Replace any parameter names in onRun script
-    var scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args
-    var replacedArgs = []
+    const scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args
+    const replacedArgs = []
     for (var i=0;i<scriptArgs.length;i++) {
         // JobParams
         replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + compName + "_"))
@@ -175,10 +175,10 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, compName) {
 
 // Modifies the `Create Output Directories` job environment by adding all of our output folder parameters
 function generateJobEnvironmentFragment(bundlePath, outputFoldersStr) {
-    var path = bundlePath + "/job_environments_fragment.json";
-    var jobEnvironmentsContents = readFile(path);
+    const path = bundlePath + "/job_environments_fragment.json";
+    const jobEnvironmentsContents = readFile(path);
     // Parse the template string to a JSON object
-    var jobEnvironmentsObject = JSON.parse(jobEnvironmentsContents);
+    const jobEnvironmentsObject = JSON.parse(jobEnvironmentsContents);
 
     for (var j=0;j<jobEnvironmentsObject.jobEnvironments.length;j++) {
         if (jobEnvironmentsObject.jobEnvironments[j].name === "Create Output Directories") {
@@ -205,21 +205,20 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     taskTimeoutSeconds = (taskTimeoutDays * 24 * 60 * 60) + (taskTimeoutHours * 60 * 60) + (taskTimeoutMinutes * 60);
 
     const submitBundleFile = "SubmitButton.jsx";
-    var renderQueueItems = []
+    const renderQueueItems = []
 
     // Check to make sure that all of our selection indices are correct
     for (var i=0;i<selection.length;i++) {
         var selectionItem = selection[i];
-        var renderQueueIndex = selectionItem.renderQueueIndex;
-        var renderQueueItem;
+        var initialRenderQueueIndex = selectionItem.renderQueueIndex;
 
         // because our panel is updated independently of the render queue, the two may become out of sync
         // we need to verify that the selection made actually matches what is in the render queue
-        if (!UpdateRenderQueueIndices(renderQueueIndex, selectionItem)) {
+        if (!UpdateRenderQueueIndices(initialRenderQueueIndex, selectionItem)) {
             return;
         }
-        renderQueueItem = app.project.renderQueue.item(renderQueueIndex);
-        renderQueueItems.push([renderQueueItem, renderQueueIndex])
+        var initialRenderQueueItem = app.project.renderQueue.item(initialRenderQueueIndex);
+        renderQueueItems.push([initialRenderQueueItem, initialRenderQueueIndex])
     }
 
     //We have a valid selection
@@ -363,7 +362,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         logger.debug("The compatible version of After Effects is " + aftereffectsCondaVersion, submitBundleFile);
 
     // generateTemplate(bundle.fsName, isImageSeq, compName, submitBundleFile);
-    var stepOutputFolderParameters = [];
+    const stepOutputFolderParameters = [];
 
         for (var i = paramDefCopy.length - 1; i >= 0; i--) {
             if (paramDefCopy[i].name == "CondaPackages") {
@@ -371,9 +370,9 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             }
         }
 
-        var stepFramesPerTask = parseInt(selectionSettings.get(selectionItem.compId).framesPerTask() || framesPerTask)
-        var stepMaxCpuUsagePercentage = parseInt(selectionSettings.get(selectionItem.compId).maxCpuUsagePercentage() || maxCpuUsagePercentage)
-        var stepMultiFrameRendering = selectionSettings.get(selectionItem.compId).multiFrameRendering() || multiFrameRendering
+        var stepFramesPerTask = parseInt(selectionSettings.get(renderQueueItem.comp.id).framesPerTask() || framesPerTask)
+        var stepMaxCpuUsagePercentage = parseInt(selectionSettings.get(renderQueueItem.comp.id).maxCpuUsagePercentage() || maxCpuUsagePercentage)
+        var stepMultiFrameRendering = selectionSettings.get(renderQueueItem.comp.id).multiFrameRendering() || multiFrameRendering
 
         var outputModule = renderQueueItem.outputModule(1).file;
         var outputPath = outputModule.fsName;
@@ -459,7 +458,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             }
         }
     }
-    var generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","))
+    const generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","))
     template.jobEnvironments = generatedJobEnvironment.jobEnvironments
 
     writeFile(bundle.fsName + "/parameter_values.json",JSON.stringify(jobParameterValues, null, 4));
@@ -468,14 +467,14 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     logger.debug("Wrote the template.json file to the bundle folder " + bundle.fsName, submitBundleFile);
 
     // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
-    var logFile = new File(dcUtil.getTempFolder() + "/submitter_output.log");
+    const logFile = new File(dcUtil.getTempFolder() + "/submitter_output.log");
     logFile.open("w"); // Erase contents of active log file
     logFile.close();
     var submitScriptContents = "";
     var output = "";
     var cmd = "";
     if ($.os.toString().slice(0, 7) === "Windows") {
-        var tempBatFile = new File(
+        const tempBatFile = new File(
             dcUtil.getTempFolder() + "/DeadlineCloudAESubmission.bat"
         );
         cmd =
@@ -498,7 +497,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     } else {
         // Execute the command using a bash in the interactive mode so it loads the bash profile to set
         // the PATH correctly.
-        var shellPath = $.getenv("SHELL") || "/bin/bash";
+        const shellPath = $.getenv("SHELL") || "/bin/bash";
         cmd =
             'deadline bundle gui-submit \\\"' + bundle.fsName + '\\\" --output json --install-gui --submitter-name=\\\\\\\"After Effects\\\\\\\"';
         submitScriptContents = shellPath + " -i -c \\\"" + cmd + "\\\" && exit";

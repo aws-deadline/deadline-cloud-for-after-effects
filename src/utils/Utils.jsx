@@ -1,16 +1,16 @@
 var scriptFolder = Folder.current.fsName;
 
 function readFile(filePath) {
-    var f = new File(filePath);
+    const f = new File(filePath);
     f.encoding = "UTF-8";
     f.open("r");
-    var fileContents = f.read();
+    const fileContents = f.read();
     f.close();
     return fileContents;
 }
 
 function writeFile(filePath, fileContents) {
-    var f = new File(filePath);
+    const f = new File(filePath);
     f.encoding = "UTF-8";
     f.open("w");
     f.write(fileContents);
@@ -19,7 +19,7 @@ function writeFile(filePath, fileContents) {
 }
 
 function sanitizeOutputs(outputPaths) {
-    var sanitized = [];
+    const sanitized = [];
     var sanitizedPath = "";
     for (var i = 0; i < outputPaths.length; i++) {
         sanitizedPath = sanitizeFilePath(outputPaths[i]);
@@ -109,7 +109,7 @@ function adcAlert(message, errorIcon) {
 
 function __generateUtil() {
 
-    var scriptFileUtilName = "Util.jsx";
+    const scriptFileUtilName = "Util.jsx";
 
 
     function toBooleanString(value) {
@@ -156,7 +156,7 @@ function __generateUtil() {
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
         textObj.onChange = function() {
-            var newValue = parseFloat(textObj.text);
+            const newValue = parseFloat(textObj.text);
             if (!isNaN(newValue) && newValue >= minValue && newValue <= maxValue) {
                 sliderObj.value = newValue;
                 logger.log("Changed editText(" + textObj.name + ") value to: " + newValue, scriptFileUtilName, LOG_LEVEL.DEBUG);
@@ -178,7 +178,7 @@ function __generateUtil() {
          * @param {int} minValue - Minimum value that the slider/edittext can have.
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
-        var sliderValue = Math.round(sliderObj.value);
+        const sliderValue = Math.round(sliderObj.value);
         if (!isNaN(sliderValue) && sliderValue >= minValue && sliderValue <= maxValue) {
             textObj.text = sliderValue;
         }
@@ -194,7 +194,7 @@ function __generateUtil() {
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
 
-        var newValue = parseFloat(textObj.text);
+        const newValue = parseFloat(textObj.text);
         if (newValue < minValue) {
             textObj.text = minValue;
             sliderObj.value = minValue;
@@ -251,7 +251,7 @@ function __generateUtil() {
          * @param {Object} listBox - Source object to retrieve data from.
          * Returns array with assets available in the scene.
          */
-        var _assetsList = []
+        const _assetsList = []
         for (var i = 0; i < listBox.items.length; i++) {
             _assetsList.push(listBox.items[i].text);
         }
@@ -300,7 +300,7 @@ function __generateUtil() {
          * Inverts a given JavaScript object.
          * Only inverts the first level, does not handle nested objects properly.
          */
-        var ret = {};
+        const ret = {};
         for (var key in jsObject) {
             ret[jsObject[key]] = key;
         }
@@ -311,8 +311,8 @@ function __generateUtil() {
         /**
          * Return File instance from temporary directory with the given name.
          */
-        var _tempFilePath = normalizePath(getTempFolder() + "/" + fileName);
-        var _tempFile = File(_tempFilePath);
+        const _tempFilePath = normalizePath(getTempFolder() + "/" + fileName);
+        const _tempFile = File(_tempFilePath);
         return _tempFile;
     }
 
@@ -342,7 +342,7 @@ function __generateUtil() {
 
         // Test every path in our list by creating a test file
         for (var i = 0; i < altPaths.length; i++) {
-            var folder = new Folder(altPaths[i]);
+            const folder = new Folder(altPaths[i]);
 
             // Create the path if it does not already exist
             folder.create();
@@ -399,9 +399,9 @@ function __generateUtil() {
 
     function _wrappedCallSystemWindows(cmd) {
 
-        var tempOutputFile = getTempFile("deadline_cloud_ae_pipe.txt");
-        var tempBootstrapBatFile = getTempFile("aeCallSystemBootstrap.bat");
-        var tempBatFile = getTempFile("aeCallSystem.bat");
+        const tempOutputFile = getTempFile("deadline_cloud_ae_pipe.txt");
+        const tempBootstrapBatFile = getTempFile("aeCallSystemBootstrap.bat");
+        const tempBatFile = getTempFile("aeCallSystem.bat");
         logger.debug("Command output path: " + tempOutputFile.fsName, scriptFileUtilName);
         _makeBootstrapBatFile(tempBootstrapBatFile, tempBatFile);
         // Wrapped command with error code output
@@ -420,12 +420,12 @@ function __generateUtil() {
         logger.debug(cmd, scriptFileUtilName);
         // Call bootstrap script and return result via intermediary file.
         system.callSystem(tempBootstrapBatFile.fsName);
-        var output = system.callSystem("cmd /c \"type " + tempOutputFile.fsName + "\"");
+        const output = system.callSystem("cmd /c \"type " + tempOutputFile.fsName + "\"");
         return output;
     }
 
     function _makeBootstrapBatFile(bootstrapFile, tempFile) {
-        var _cmd = "@echo off" + "\nstart /min /wait " + tempFile.fsName + "\nexit"
+        const _cmd = "@echo off" + "\nstart /min /wait " + tempFile.fsName + "\nexit"
         bootstrapFile.open("w");
         bootstrapFile.writeln(_cmd);
         bootstrapFile.close();
@@ -448,12 +448,12 @@ function __generateUtil() {
         var result = "";
         var message = "";
         var return_code = 0;
-        var errorIndex = output.indexOf("ERROR CODE:");
+        const errorIndex = output.indexOf("ERROR CODE:");
         if (errorIndex !== -1) {
             // Extract the word and everything behind it
             result = output.substring(errorIndex);
             message = cmd + " Failed. Error has occurred.";
-            var regex = /ERROR CODE:(.*)/;
+            const regex = /ERROR CODE:(.*)/;
             return_code = regex.exec(result);
             return {
                 "return_code": return_code,
@@ -477,14 +477,14 @@ function __generateUtil() {
          * [MAJOR, MINOR, PATCH]
          */
         // Regular expression to match "version " followed by version number
-        var regex = /version\s+(\d+)\.(\d+)\.(\d+)/i;
+        const regex = /version\s+(\d+)\.(\d+)\.(\d+)/i;
 
         // Test if the inputString matches the pattern
-        var parsedVersionNumberOutput = output.match(regex);
+        const parsedVersionNumberOutput = output.match(regex);
 
         // Output the result
         if (parsedVersionNumberOutput) {
-            var versionNumbers = [
+            const versionNumbers = [
                 parseInt(parsedVersionNumberOutput[1]), // Major
                 parseInt(parsedVersionNumberOutput[2]), // Minor
                 parseInt(parsedVersionNumberOutput[3]) // Path
@@ -503,8 +503,8 @@ function __generateUtil() {
          * @param {string} fileName: Job name
          * Returns export directory
          */
-        var partialDir = getPartialExportDir(exportBundleDir);
-        var dir = getPath(partialDir, fileName, exportBundleDir);
+        const partialDir = getPartialExportDir(exportBundleDir);
+        const dir = getPath(partialDir, fileName, exportBundleDir);
         return dir.fsName;
     }
 
@@ -540,21 +540,21 @@ function __generateUtil() {
 
     function getPath(toCheckDir, fileName, rootDir) {
         // 1. Find highest sequence number used for today.
-        var splitDir = toCheckDir.split("//");
-        var toCheckFolderName = splitDir[splitDir.length - 1];
-        var parentDir = toCheckDir.replace(toCheckFolderName, "");
-        var mainDir = new Folder(parentDir);
-        var subFolders = mainDir.getFiles();
-        var regex = new RegExp(toCheckFolderName + "(\\d+)-.*");
+        const splitDir = toCheckDir.split("//");
+        const toCheckFolderName = splitDir[splitDir.length - 1];
+        const parentDir = toCheckDir.replace(toCheckFolderName, "");
+        const mainDir = new Folder(parentDir);
+        const subFolders = mainDir.getFiles();
+        const regex = new RegExp(toCheckFolderName + "(\\d+)-.*");
         var maxSeqNumber = 0;
         var folderName = "";
         for (var idx = 0; idx < subFolders.length; idx++) {
             folderName = subFolders[idx].fullName
-            var match = folderName.match(regex)
+            const match = folderName.match(regex)
             if (!match) {
                 continue;
             }
-            var seqNr = parseInt(match[1]) // Convert first capture group to int
+            const seqNr = parseInt(match[1]) // Convert first capture group to int
             if (seqNr > maxSeqNumber) {
                 maxSeqNumber = seqNr
             }
@@ -565,7 +565,7 @@ function __generateUtil() {
         if (nextSeqNumber < 10) {
             nextSeqNumber = "0" + nextSeqNumber;
         }
-        var folder = new Folder(toCheckDir + nextSeqNumber + "-AfterEffects-" + fileName);
+        const folder = new Folder(toCheckDir + nextSeqNumber + "-AfterEffects-" + fileName);
         if (!folder.exists) {
             folder.create();
         }
@@ -578,15 +578,15 @@ function __generateUtil() {
          * @param {string} job_history_dir: Directory where job bundles is written to on submission.
          * Returns partial job history directory.
          */
-        var currentDate = new Date();
-        var year = currentDate.getFullYear();
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
         // Zero pad all integers to a length of 2
-        var month = ("0" + (currentDate.getMonth() + 1)).slice(-2); // Months are zero-based
-        var day = ("0" + currentDate.getDate()).slice(-2);
+        const month = ("0" + (currentDate.getMonth() + 1)).slice(-2); // Months are zero-based
+        const day = ("0" + currentDate.getDate()).slice(-2);
         // Create the formatted string
-        var formattedYearMonth = year + '-' + month;
-        var formattedDate = year + '-' + month + '-' + day;
-        var dir = job_history_dir + "//" + formattedYearMonth + "//" + formattedDate + "-";
+        const formattedYearMonth = year + '-' + month;
+        const formattedDate = year + '-' + month + '-' + day;
+        const dir = job_history_dir + "//" + formattedYearMonth + "//" + formattedDate + "-";
         return dir;
     }
 
@@ -594,7 +594,7 @@ function __generateUtil() {
         // Remark: gpu memory and worker memory need to be scaled with *1024, for some of the amount capabilities, the unit displayed on the UI is different
         // then the unit used within template, so use this factor to scale the input values.
 
-        var hostRequirements = {
+        const hostRequirements = {
             "attributes": [{
                 "name": "attr.worker.os.family",
                 "anyOf": [
@@ -658,7 +658,7 @@ function __generateUtil() {
         }
 
         if (obj instanceof Array) {
-            var copyArray = [];
+            const copyArray = [];
             for (var i = 0; i < obj.length; i++) {
                 copyArray[i] = deepCopy(obj[i]);
             }
@@ -666,7 +666,7 @@ function __generateUtil() {
         }
 
         if (obj instanceof Object) {
-            var copyObject = {};
+            const copyObject = {};
             for (var key in obj) {
                 if (obj.hasOwnProperty(key)) {
                     copyObject[key] = deepCopy(obj[key]);
@@ -684,10 +684,10 @@ function __generateUtil() {
          */
         // If submit layers pressed -> itemName is not comp name and therefore comp will not be found with render command
         // Check if itemName is an available comp in the project, if not, it is a layer submission
-        var comp = itemName;
-        var compList = [];
+        const comp = itemName;
+        const compList = [];
         for (var i = 1; i <= app.project.rootFolder.items.length; i++) {
-            var item = app.project.rootFolder.items[i];
+            const item = app.project.rootFolder.items[i];
 
             if (item instanceof CompItem) {
                 compList.push(app.project.activeItem.name);
@@ -700,7 +700,7 @@ function __generateUtil() {
     }
 
     function normalizePath(path) {
-        var _file = new File(path);
+        const _file = new File(path);
         if (system.osName == "MacOS") {
             _file.changePath(_file.fsName.replace(/\\/g, "/"));
             return _file.fsName;
@@ -715,7 +715,7 @@ function __generateUtil() {
     }
 
     function removeIllegalCharacters(inputString) {
-        var outputString = inputString.replace(/[.\-\s]/g, "_");
+        const outputString = inputString.replace(/[.\-\s]/g, "_");
 
         return outputString;
     }
@@ -724,8 +724,7 @@ function __generateUtil() {
      * Replace %20 percentage back to space from the file name for Windows os.
      */
     function removePercentageFromFileName(fileName) {
-        var fileName = fileName.replace(/%20/g, " ");
-        return fileName;
+        return fileName.replace(/%20/g, " ");
     }
 
     function getUserDirectory() {
