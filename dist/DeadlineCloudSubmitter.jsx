@@ -1054,8 +1054,11 @@ function UiSettingsState() {
 }
 function UiSettingsStore(name) {
     this.name = name;
+    // _framesPerTask: string
     this._framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);;
+    // _multiFrameRendering: bool
     this._multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING);
+    // _maxCpuUsagePercentage: string
     this._maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
 
     this.framesPerTask = function () {
@@ -1063,7 +1066,7 @@ function UiSettingsStore(name) {
     }
     this.setFramesPerTask = function (value) {
         logger.warning("(" + this.name + ") Setting framesPerTask to " + value)
-        this._framesPerTask = value
+        this._framesPerTask = typeof value === "string" ? value : value.toString()
     }
 
     this.multiFrameRendering = function () {
@@ -1071,7 +1074,7 @@ function UiSettingsStore(name) {
     }
     this.setMultiFrameRendering = function (value) {
         logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value)
-        this._multiFrameRendering = value
+        this._multiFrameRendering = typeof value === "boolean" ? value : (value === "true")
     }
 
     this.maxCpuUsagePercentage = function () {
@@ -1079,8 +1082,26 @@ function UiSettingsStore(name) {
     }
     this.setMaxCpuUsagePercentage = function (value) {
         logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value)
-        this._maxCpuUsagePercentage = value
+        this._maxCpuUsagePercentage = typeof value === "string" ? value : value.toString()
     }
+}
+
+UiSettingsState.prototype.create = function (compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
+    if (!this.settings[compId]) {
+        this.settings[compId] = new UiSettingsStore(compId)
+    }
+    if (framesPerTask === undefined) {
+        framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
+    }
+    if (multiFrameRendering === undefined) {
+        multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING);
+    }
+    if (maxCpuUsagePercentage === undefined) {
+        maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
+    }
+    this.settings[compId].setFramesPerTask(framesPerTask);
+    this.settings[compId].setMultiFrameRendering(multiFrameRendering);
+    this.settings[compId].setMaxCpuUsagePercentage(maxCpuUsagePercentage);
 }
 
 UiSettingsState.prototype.get = function(compId) {
@@ -1127,7 +1148,7 @@ function parameterValues(
         },
         {
             name: prefix + "_MultiFrameRendering",
-            value: multiFrameRendering,
+            value: multiFrameRendering === true ? "ON" : "OFF",
         },
     ];
     if (maxCpuUsagePercentage) {
@@ -2686,7 +2707,67 @@ function buildUI(thisObj) {
     const listGroup = root.add("panel", undefined, "");
     listGroup.alignment = ['fill', 'fill'];
     listGroup.alignChildren = ['fill', 'fill']
-    var list = null;
+
+    const bounds = list == null ? undefined : list.bounds;
+    var list = listGroup.add("listbox", bounds, "", {
+        multiselect: true,
+        numberOfColumns: 4,
+        showHeaders: true,
+        columnTitles: ['#', 'Name', 'Frames', 'Output Path'],
+        columnWidths: [32, 160, 120, 240],
+    });
+    list.preferredSize.height = 400;
+    list.preferredSize.width = 500;
+
+    function onSelectionChange() {
+        const selection = list.selection;
+        if (selection == null) {
+            refreshList(list, uiSettingsState);
+            framesPerTaskTextBox.text = "";
+            return;
+        }
+        submitButton.enabled = true;
+        submitButton.active = false;
+        submitButton.active = true;
+
+        // Disable everything
+        framesPerTaskTextBox.enabled = false
+        mfrCheckBox.enabled = false
+        maxCpuUsagePercentageTextBox.enabled = false
+
+        if (selection.length !== 1) {
+            return
+        }
+        const selectionItem = selection[0]
+        logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
+        const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex))
+        framesPerTaskTextBox.enabled = imageOutput
+        mfrCheckBox.enabled = true
+        maxCpuUsagePercentageTextBox.enabled = true
+
+        logger.debug("    Setting framesPerTaskTextBox.text to: " + selectionItem.subItems[1].text);
+        framesPerTaskTextBox.text = selectionItem.subItems[1].text
+
+        const settings = uiSettingsState.get(selectionItem.compId)
+        if (settings === undefined) {
+            logger.warning("Could not find settings for : " + selectionItem.compId);
+            return
+        }
+
+        if (imageOutput === true) {
+            logger.debug("    Setting framesPerTaskTextBox.text to: " + (settings.framesPerTask() || selectionItem.subItems[1].text));
+            framesPerTaskTextBox.text = settings.framesPerTask() || selectionItem.subItems[1].text
+        }
+        logger.debug("    Setting mfrCheckBox.value to: " + settings.multiFrameRendering());
+        mfrCheckBox.value = settings.multiFrameRendering()
+        logger.debug("    Setting maxCpuUsagePercentageTextBox.text to: " + settings.maxCpuUsagePercentage());
+        maxCpuUsagePercentageTextBox.text = settings.maxCpuUsagePercentage()
+
+        maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value
+    }
+
+    list.onChange = onSelectionChange;
+
     const controlsGroup = root.add("group", undefined, "");
     controlsGroup.orientation = 'column';
     controlsGroup.alignment = ['fill', 'bottom'];
@@ -2727,6 +2808,9 @@ function buildUI(thisObj) {
         }
         app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskTextBox.text);
         for (var s = 0; s < list.selection.length; s++) {
+            if (list.selection == null) {
+                return;
+            }
             const selectionItem = list.selection[s];
             uiSettingsState.get(selectionItem.compId).setFramesPerTask(framesPerTaskTextBox.text)
         }
@@ -3016,12 +3100,15 @@ function buildUI(thisObj) {
     }
 
     updateList();
+    refreshList(list, uiSettingsState);
     if (list.selection != null && list.selection.length === 1) {
         const selectionItem = list.selection[0]
         const renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex)
         framesPerTaskTextBox.enabled = isRenderQueueItemImageOutput(renderQueueItem)
     }
-    refreshButton.onClick = updateList;
+    refreshButton.onClick = function() {
+        refreshList(list, uiSettingsState);
+    }
 
     submitterPanel.layout.layout(true);
 
