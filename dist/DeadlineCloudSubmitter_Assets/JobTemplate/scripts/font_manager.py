@@ -32,13 +32,16 @@ INSTALL_SCOPE_USER = "USER"
 INSTALL_SCOPE_SYSTEM = "SYSTEM"
 
 FONT_LOCATION_SYSTEM = os.path.join(os.environ.get("SystemRoot"), "Fonts")
-FONT_LOCATION_USER = os.path.join(os.environ.get("LocalAppData"), "Microsoft", "Windows", "Fonts")
+FONT_LOCATION_USER = os.path.join(
+    os.environ.get("LocalAppData"), "Microsoft", "Windows", "Fonts"
+)
 
 # Font extensions supported in gdi32.AddFontResourceW
 # OpenType fonts without an extension can also be installed (e.g. Adobe Fonts)
 FONT_EXTENSIONS = [".otf", ".ttf", ".fon", ""]
 
 logger = logging.getLogger(__name__)
+
 
 def find_fonts(session_dir):
     """
@@ -64,7 +67,9 @@ def find_fonts(session_dir):
                     break
 
         if not full_sub_dir:
-            logger.debug(f"Couldn't recursively find tempFonts in subfolder: {subfolder}")
+            logger.debug(
+                f"Couldn't recursively find tempFonts in subfolder: {subfolder}"
+            )
             continue
 
         for file_name in os.listdir(full_sub_dir):
@@ -74,7 +79,9 @@ def find_fonts(session_dir):
                 logger.debug(f"Adding: {full_assetpath}")
                 fonts.add(full_assetpath)
             else:
-                logger.warning(f"A file that is not a supported font was found in the tempFonts folder: {full_assetpath}")
+                logger.warning(
+                    f"A file that is not a supported font was found in the tempFonts folder: {full_assetpath}"
+                )
     return fonts
 
 
@@ -92,9 +99,13 @@ def get_font_name(dst_path):
 
         # Try to get the font's real name
         cb = wintypes.DWORD()
-        if gdi32.GetFontResourceInfoW(filename, ctypes.byref(cb), None, GFRI_DESCRIPTION):
+        if gdi32.GetFontResourceInfoW(
+            filename, ctypes.byref(cb), None, GFRI_DESCRIPTION
+        ):
             buf = (ctypes.c_wchar * cb.value)()
-            if gdi32.GetFontResourceInfoW(filename, ctypes.byref(cb), buf, GFRI_DESCRIPTION):
+            if gdi32.GetFontResourceInfoW(
+                filename, ctypes.byref(cb), buf, GFRI_DESCRIPTION
+            ):
                 fontname = buf.value
         is_truetype = wintypes.BOOL()
         cb.value = ctypes.sizeof(is_truetype)
@@ -134,6 +145,71 @@ def install_font(src_path, scope=INSTALL_SCOPE_USER):
         dst_path = os.path.join(dst_dir, os.path.basename(src_path))
 
         # Copy the font to the Windows Fonts folder
+        if os.path.exists(dst_path):
+            logger.info(f"Font file already exists at {dst_path}")
+
+            # Check if file is locked by trying to open it in "r+b" mode
+            try:
+                # Try to open the file to see if it's locked
+                with open(dst_path, "r+b") as f:
+                    pass  # File is not locked
+                logger.info(
+                    f"Font file at {dst_path} is not locked, proceeding with copy"
+                )
+            except (IOError, PermissionError):
+                logger.info(
+                    f"Font file at {dst_path} appears to be locked by another process"
+                )
+
+                # On Windows, implement approach to deal with locked files
+                import time
+
+                max_attempts = 3
+                attempts = 0
+                success = False
+
+                while attempts < max_attempts and not success:
+                    try:
+                        # Try to release resource through garbage collection
+                        import gc
+
+                        gc.collect()
+                        # Try copying with a different method
+                        with open(src_path, "rb") as src_file:
+                            with open(dst_path, "wb") as dst_file:
+                                dst_file.write(src_file.read())
+                        success = True
+                    except (IOError, PermissionError):
+                        # Wait with exponential backoff
+                        wait_time = 2**attempts
+                        logger.info(
+                            f"Attempt {attempts+1} failed, waiting {wait_time} seconds before retry"
+                        )
+                        time.sleep(wait_time)
+                        attempts += 1
+
+                if not success:
+                    # If we still can't copy the file, check if the file content is the same
+                    try:
+                        import filecmp
+
+                        if filecmp.cmp(src_path, dst_path):
+                            logger.info(
+                                "Source and destination files have identical content, continuing"
+                            )
+                            success = True
+                        else:
+                            # Different file with same name - this is a problem
+                            raise PermissionError(
+                                f"Could not copy {src_path} to {dst_path} after multiple attempts"
+                            )
+                    except:
+                        # If we can't compare files, we need to alert about the issue
+                        logger.warning(
+                            f"Could not copy or verify {src_path}, but existing file found at {dst_path}"
+                        )
+        else:
+        # Destination doesn't exist, proceed with regular copy
         shutil.copy(src_path, dst_path)
 
         # Load the font in the current session, remove font when loading fails
@@ -151,7 +227,9 @@ def install_font(src_path, scope=INSTALL_SCOPE_USER):
         fontname = get_font_name(dst_path)
 
         # Creates registry if it doesn't exist, opens when it does exist
-        with winreg.CreateKeyEx(registry_scope, FONTS_REG_PATH, 0, access= winreg.KEY_SET_VALUE) as key:
+        with winreg.CreateKeyEx(
+            registry_scope, FONTS_REG_PATH, 0, access=winreg.KEY_SET_VALUE
+        ) as key:
             winreg.SetValueEx(key, fontname, 0, winreg.REG_SZ, filename)
     except Exception:
         return False, traceback.format_exc()
@@ -178,7 +256,9 @@ def uninstall_font(src_path, scope=INSTALL_SCOPE_USER):
         # Remove the fontname/filename from the registry
         fontname = get_font_name(dst_path)
 
-        with winreg.OpenKey(registry_scope, FONTS_REG_PATH, 0, access= winreg.KEY_SET_VALUE) as key:
+        with winreg.OpenKey(
+            registry_scope, FONTS_REG_PATH, 0, access=winreg.KEY_SET_VALUE
+        ) as key:
             winreg.DeleteValue(key, fontname)
 
         # Unload the font in the current session
@@ -243,7 +323,7 @@ def setup_logger():
     Does a basic setup for a logger
     """
     logger.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(levelname)s:%(message)s')
+    formatter = logging.Formatter("%(levelname)s:%(message)s")
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
