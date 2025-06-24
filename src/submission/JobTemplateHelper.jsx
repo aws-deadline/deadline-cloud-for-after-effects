@@ -33,7 +33,7 @@ function parameterValues(
         },
         {
             name: prefix + "_MultiFrameRendering",
-            value: multiFrameRendering,
+            value: multiFrameRendering === true ? "ON" : "OFF",
         },
     ];
     if (maxCpuUsagePercentage) {
