@@ -684,7 +684,7 @@ function __generateUtil() {
          */
         // If submit layers pressed -> itemName is not comp name and therefore comp will not be found with render command
         // Check if itemName is an available comp in the project, if not, it is a layer submission
-        const comp = itemName;
+        var comp = itemName;
         const compList = [];
         for (var i = 1; i <= app.project.rootFolder.items.length; i++) {
             const item = app.project.rootFolder.items[i];
