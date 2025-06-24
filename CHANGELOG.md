@@ -1,3 +1,10 @@
+## 0.2.6 (2025-06-24)
+
+
+
+### Bug Fixes
+* including setting minor version for CondaPackages field and added version mismatch warnings (#204) ([`17dfb3e`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/17dfb3e80a0ab518d4227b96f91f82f739fd34bd))
+
 ## 0.2.5 (2025-06-04)
 
 
