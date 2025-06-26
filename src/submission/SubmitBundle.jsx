@@ -426,6 +426,7 @@ function SubmitSelection(selection, selectionSettings) {
             stepFramesPerTask,
             stepMultiFrameRendering,
             stepMaxCpuUsagePercentage,
+            stepIgnoreMissingDependencies,
             generateParameterName(renderQueueIndex, compName, "")
         );
         for (var p = 0; p < parameterValues.parameterValues.length; p++) {
