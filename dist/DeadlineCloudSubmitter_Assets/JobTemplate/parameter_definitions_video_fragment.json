@@ -101,6 +101,21 @@
       "default": 90
     },
     {
+      "name": "IgnoreMissingDependencies",
+      "type": "STRING",
+      "default": "OFF",
+      "allowedValues": [
+        "ON",
+        "OFF"
+      ],
+      "userInterface": {
+        "control": "DROPDOWN_LIST",
+        "label": "Ignore Missing Dependencies",
+        "groupLabel": "Ignore Missing Dependencies"
+      },
+      "description": "Missing dependencies rendering settings"
+    },
+    {
       "name": "JobScriptDir",
       "description": "Directory containing embedded scripts.",
       "userInterface": {

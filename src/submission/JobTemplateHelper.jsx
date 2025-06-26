@@ -13,6 +13,7 @@ function generateParameterValues(
     chunkSize,
     multiFrameRendering,
     maxCpuUsagePercentage,
+    ignoreMissingDependencies,
     prefix
 ) {
     const parameterValuesList = [{
@@ -47,6 +48,12 @@ function generateParameterValues(
             name: prefix + "_ChunkSize",
             value: chunkSize,
         });
+    }
+    if (ignoreMissingDependencies) {
+        parameterValuesList.push({
+            name: prefix + "_IgnoreMissingDependencies",
+            value: ignoreMissingDependencies === true ? "ON" : "OFF",
+        })
     }
     return {
         parameterValues: parameterValuesList

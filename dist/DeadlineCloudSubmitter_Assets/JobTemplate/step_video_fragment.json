@@ -26,7 +26,9 @@
               "--multi-frame-rendering",
               "{{Param.MultiFrameRendering}}",
               "--max-cpu-usage-percentage",
-              "{{Param.MaxCpuUsagePercentage}}"
+              "{{Param.MaxCpuUsagePercentage}}",
+              "--ignore-missing-dependencies",
+              "{{Param.IgnoreMissingDependencies}}"
             ]
           }
         }
