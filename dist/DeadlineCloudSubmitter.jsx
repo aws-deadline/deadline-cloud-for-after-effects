@@ -2045,6 +2045,8 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     const generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","))
     template.jobEnvironments = generatedJobEnvironment.jobEnvironments
 
+    writeFile(bundle.fsName + "/asset_references.json",JSON.stringify(jobAssetReferences, null, 4));
+
     writeFile(bundle.fsName + "/parameter_values.json",JSON.stringify(jobParameterValues, null, 4));
 
     writeFile(bundle.fsName + "/template.json", JSON.stringify(template, null, 4));
