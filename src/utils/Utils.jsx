@@ -44,6 +44,9 @@ if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
 if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
     const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
 }
+if (typeof DEADLINECLOUD_IGNORE_MISSING_DEPENDENCIES === "undefined") {
+    const DEADLINECLOUD_IGNORE_MISSING_DEPENDENCIES = "ignoreMissingDependencies";
+}
 if (typeof DEFAULT_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
     const DEFAULT_TASK_RUN_TIMEOUT_ENABLED = true;
 }
@@ -64,6 +67,9 @@ if (typeof DEFAULT_MULTI_FRAME_RENDERING === "undefined") {
 }
 if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
     const DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90;
+}
+if (typeof DEFAULT_IGNORE_MISSING_DEPENDENCIES === "undefined") {
+    const DEFAULT_IGNORE_MISSING_DEPENDENCIES = false;
 }
 
 var FootageTypes = {

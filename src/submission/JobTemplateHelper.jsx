@@ -76,11 +76,14 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
  * More efficient than just iterating through items in the project when
  * there is a lot of unused footage in the project
  **/
-function findJobAttachments(rootComp) {
+function findJobAttachments(rootComp, ignoreMissingDependencies) {
     if (rootComp == null) {
         return [];
     }
-    var attachments = [];
+    if (ignoreMissingDependencies === undefined) {
+        ignoreMissingDependencies = false;
+    }
+    const attachments = [];
     const exploredItems = {}; // using this object as a set because AE doesn't support sets
     attachments.push(app.project.file.fsName);
     exploredItems[rootComp.id] = true;
@@ -106,7 +109,8 @@ function findJobAttachments(rootComp) {
                     src instanceof FootageItem &&
                     src.mainSource instanceof FileSource
                 ) {
-                    if (src.footageMissing) {
+                    // We only care if the footage is missing when ignoreMissingDependencies is false
+                    if (src.footageMissing && !ignoreMissingDependencies) {
                         if (shouldShowPopup) {
                             adcAlert(
                                 "Missing Footage: " +
@@ -132,7 +136,8 @@ function findJobAttachments(rootComp) {
         // Notify the user if any fonts are missing or are substituted during the session.
         // A substituted font is a font that was already missing when the project is opened.
         // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
-        if (app.fonts.missingOrSubstitutedFonts != "") {
+        //  Again only only care if ignoreMissingDependencies is false
+        if (app.fonts.missingOrSubstitutedFonts != "" && !ignoreMissingDependencies) {
             adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString(), false);
         }
         // Formatting collected fonts
