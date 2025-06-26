@@ -146,6 +146,27 @@ function buildUI(thisObj) {
     }
     mfrCheckBox.onClick = onMfrCheckBoxClicked;
 
+    // Ignore Missing Dependencies GUI
+    const ignoreMissingDepsGroup = perCompSettingsGroup.add("group", undefined, "");
+    ignoreMissingDepsGroup.orientation = "column";
+    ignoreMissingDepsGroup.alignment = ['fill', 'top'];
+    ignoreMissingDepsGroup.alignChildren = ['left', 'center'];
+
+    const ignoreMissingDepsCheckBox = ignoreMissingDepsGroup.add("checkbox", undefined, "Ignore Missing Dependencies");
+    ignoreMissingDepsGroup.orientation = "column";
+
+    // Ignore Missing Dependencies Checkbox
+    function onIgnoreMissingDepsCheckBoxClicked() {
+        if (list.selection == null) {
+            return;
+        }
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
+            uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).setIgnoreMissingDependencies(ignoreMissingDepsCheckBox.value);
+        }
+    }
+    ignoreMissingDepsCheckBox.onClick = onIgnoreMissingDepsCheckBoxClicked;
+
     function isRenderQueueItemImageOutput(renderQueueItem) {
         if (renderQueueItem.numOutputModules === 1) {
             const outputModule = renderQueueItem.outputModule(1).file;
@@ -335,6 +356,7 @@ function buildUI(thisObj) {
             framesPerTaskTextBox.text = "";
             mfrCheckBox.value = false;
             maxCpuUsagePercentageTextBox.text = "";
+            ignoreMissingDepsCheckBox.value = false;
 
             if (selection === null) {
                 submitButton.enabled = false;
@@ -368,6 +390,8 @@ function buildUI(thisObj) {
             maxCpuUsagePercentageTextBox.onChange();
             mfrCheckBox.value = settings.multiFrameRendering();
             mfrCheckBox.onClick();
+            ignoreMissingDepsCheckBox.value = settings.ignoreMissingDependencies();
+            ignoreMissingDepsCheckBox.onClick();
         }
         list.onChange = onSelectionChange;
         list.selection = null;
