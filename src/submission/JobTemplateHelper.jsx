@@ -80,7 +80,7 @@ function findJobAttachments(rootComp) {
     if (rootComp == null) {
         return [];
     }
-    const attachments = [];
+    var attachments = [];
     const exploredItems = {}; // using this object as a set because AE doesn't support sets
     attachments.push(app.project.file.fsName);
     exploredItems[rootComp.id] = true;
@@ -119,7 +119,7 @@ function findJobAttachments(rootComp) {
                             shouldShowPopup = false;
                         }
                     } else {
-                        attachments.push(src.file.fsName);
+                        attachments = attachments.concat(dcUtil.filePathsFromFootageItem(src));
                     }
                 }
             }
