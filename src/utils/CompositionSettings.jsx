@@ -4,7 +4,7 @@ function UiSettingsState() {
 function UiSettingsStore(name) {
     this.name = name;
     // _framesPerTask: string
-    this._framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);;
+    this._framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
     // _multiFrameRendering: bool
     this._multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING);
     // _maxCpuUsagePercentage: string

@@ -83,7 +83,7 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
             if (!rolloverFile.exists) {
                 continue;
             }
-            const j = i + 1;
+            var j = i + 1;
             const rolloverTargetPath = logDirectoryPath + logFileName + "." + j
             rolloverFile.copy(rolloverTargetPath);
         }
