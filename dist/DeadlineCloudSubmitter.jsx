@@ -77,7 +77,7 @@ var FootageTypes = {
     Audio: 3,
     Unknown: 4
 }
-var ImageExtensionRegex = new RegExp("(ai|bmp|bw|cin|cr2|crw|dcr|dng|dib|dpx|eps|erf|exr|gif|hdr|icb|iff|jpe|jpeg|jpg|mos|mrw|nef|orf|pbm|pef|pct|pcx|pdf|pic|pict|png|ps|psd|pxr|raf|raw|rgb|rgbe|rla|rle|rpf|sgi|srf|tdi|tga|tif|tiff|vda|vst|x3f|xyze)", "i")
+const ImageExtensionRegex = /"(ai|bmp|bw|cin|cr2|crw|dcr|dng|dib|dpx|eps|erf|exr|gif|hdr|icb|iff|jpe|jpeg|jpg|mos|mrw|nef|orf|pbm|pef|pct|pcx|pdf|pic|pict|png|ps|psd|pxr|raf|raw|rgb|rgbe|rla|rle|rpf|sgi|srf|tdi|tga|tif|tiff|vda|vst|x3f|xyze)/i;
 
 function readFile(filePath) {
     const f = new File(filePath);
@@ -340,7 +340,7 @@ function __generateUtil() {
          * @param {int} minValue - Minimum value that the slider/edittext can have.
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
-        textObj.onChange = function() {
+        textObj.onChange = function () {
             const newValue = parseFloat(textObj.text);
             if (!isNaN(newValue) && newValue >= minValue && newValue <= maxValue) {
                 sliderObj.value = newValue;
@@ -349,7 +349,7 @@ function __generateUtil() {
         }
 
 
-        sliderObj.onChange = function() {
+        sliderObj.onChange = function () {
             textObj.text = Math.round(this.value);
             logger.log("Changed sliderObject(" + sliderObj.name + ") value to: " + Math.round(this.value), scriptFileUtilName, LOG_LEVEL.DEBUG);
         }
@@ -587,33 +587,28 @@ function __generateUtil() {
     }
 
     function filePathsFromFootageItem(footageItem) {
-        var paths = [];
+        const paths = [];
         if (determineFootageType(footageItem) === FootageTypes.ImageSequence) {
-            var source = footageItem.mainSource;
-            var frameCount = footageItem.duration / footageItem.frameDuration;
-            var firstFrame = new File(source.file.fsName).fsName;
+            const source = footageItem.mainSource;
+            const frameCount = footageItem.duration / footageItem.frameDuration;
+            const firstFrame = new File(source.file.fsName).fsName;
             logger.debug("Processing ImageSequence with (" + frameCount + ") frames: " + firstFrame);
-            var firstFramePattern = firstFrame.replace(new RegExp("[0-9]", "g"), "[0-9]").replace(new RegExp("\\\\", "g"), "\\\\");
-            var firstFrameRegex = new RegExp(firstFramePattern);
+            const firstFramePattern = firstFrame.replace(/\d/g, "\\d").replace(/\\\\/g, "\\\\");
+            const firstFrameRegex = new RegExp(firstFramePattern);
             logger.debug("  Regex pattern: " + firstFramePattern);
             var containingFolder = source.file.parent;
-
             function matchFilePattern(fileFolderObj) {
-                var fsName = fileFolderObj.fsName;
-                var result = fsName.match(firstFrameRegex);
-                return result
+                return fileFolderObj.fsName.match(firstFrameRegex);
             }
-            var containingFiles = containingFolder.getFiles(matchFilePattern).sort();
+            const containingFiles = containingFolder.getFiles(matchFilePattern).sort();
             logger.debug("  Pattern matched " + containingFiles.length + " files");
             var firstFrameFound = false;
             var indexOffset = 0;
             for (var index = 0; index < containingFiles.length; index++) {
                 var filePath = new File(containingFiles[index]).fsName;
-                if (firstFrameFound) {
-                    if ((index - indexOffset) < frameCount) {
-                        logger.debug("Adding frame (" + (index - indexOffset) + ") to paths: " + filePath);
-                        paths.push(filePath);
-                    }
+                if (firstFrameFound && ((index - indexOffset) < frameCount)) {
+                    logger.debug("Adding frame (" + (index - indexOffset) + ") to paths: " + filePath);
+                    paths.push(filePath);
                 }
                 if (filePath === firstFrame) {
                     firstFrameFound = true;
@@ -622,10 +617,8 @@ function __generateUtil() {
                     paths.push(filePath);
                 }
             }
-        } else {
-            if (footageItem.mainSource instanceof FileSource) {
-                paths.push(footageItem.mainSource.file.fsName);
-            }
+        } else if (footageItem.mainSource instanceof FileSource) {
+            paths.push(footageItem.mainSource.file.fsName);
         }
         return paths;
     }
@@ -843,43 +836,43 @@ function __generateUtil() {
 
         var hostRequirements = {
             "attributes": [{
-                    "name": "attr.worker.os.family",
-                    "anyOf": [
-                        osGroup.OSDropdownList.selection.text.toLowerCase()
-                    ]
-                },
-                {
-                    "name": "attr.worker.cpu.arch",
-                    "anyOf": [
-                        cpuArchGroup.cpuDropdownList.selection.text
-                    ]
-                }
+                "name": "attr.worker.os.family",
+                "anyOf": [
+                    osGroup.OSDropdownList.selection.text.toLowerCase()
+                ]
+            },
+            {
+                "name": "attr.worker.cpu.arch",
+                "anyOf": [
+                    cpuArchGroup.cpuDropdownList.selection.text
+                ]
+            }
             ],
             "amounts": [{
-                    "name": "amount.worker.vcpu",
-                    "min": parseInt(cpuGroup.cpuMinText.text),
-                    "max": parseInt(cpuGroup.cpuMaxText.text)
-                },
-                {
-                    "name": "amount.worker.memory",
-                    "min": parseInt(memoryGroup.memoryMinText.text) * 1024,
-                    "max": parseInt(memoryGroup.memoryMaxText.text) * 1024
-                },
-                {
-                    "name": "amount.worker.gpu",
-                    "min": parseInt(gpuGroup.gpuMinText.text),
-                    "max": parseInt(gpuGroup.gpuMaxText.text)
-                },
-                {
-                    "name": "amount.worker.gpu.memory",
-                    "min": parseInt(gpuMemoryGroup.gpuMemoryMinText.text) * 1024,
-                    "max": parseInt(gpuMemoryGroup.gpuMemoryMaxText.text) * 1024
-                },
-                {
-                    "name": "amount.worker.disk.scratch",
-                    "min": parseInt(scratchSpaceGroup.scratchSpaceMinText.text),
-                    "max": parseInt(scratchSpaceGroup.scratchSpaceMaxText.text)
-                }
+                "name": "amount.worker.vcpu",
+                "min": parseInt(cpuGroup.cpuMinText.text),
+                "max": parseInt(cpuGroup.cpuMaxText.text)
+            },
+            {
+                "name": "amount.worker.memory",
+                "min": parseInt(memoryGroup.memoryMinText.text) * 1024,
+                "max": parseInt(memoryGroup.memoryMaxText.text) * 1024
+            },
+            {
+                "name": "amount.worker.gpu",
+                "min": parseInt(gpuGroup.gpuMinText.text),
+                "max": parseInt(gpuGroup.gpuMaxText.text)
+            },
+            {
+                "name": "amount.worker.gpu.memory",
+                "min": parseInt(gpuMemoryGroup.gpuMemoryMinText.text) * 1024,
+                "max": parseInt(gpuMemoryGroup.gpuMemoryMaxText.text) * 1024
+            },
+            {
+                "name": "amount.worker.disk.scratch",
+                "min": parseInt(scratchSpaceGroup.scratchSpaceMinText.text),
+                "max": parseInt(scratchSpaceGroup.scratchSpaceMaxText.text)
+            }
             ]
         }
 
