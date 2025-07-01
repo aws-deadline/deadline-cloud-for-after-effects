@@ -1,5 +1,4 @@
 var scriptFolder = Folder.current.fsName;
-const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
 
 function readFile(filePath) {
     var f = new File(filePath);
@@ -758,28 +757,6 @@ function __generateUtil() {
         return version
     }
 
-    function getCompatibleAEVersion() {
-        /* Return compatible After Effects version for job submission.
-         * Warns if current version is not officially supported on service-managed fleets.
-         * Returns the version as float.
-         */
-        const currentVersion = getAEVersion();
-
-        if (SUPPORTED_VERSIONS.indexOf(currentVersion) !== -1) {
-            return currentVersion;
-        }
-
-        // Show warning if version is not supported
-        adcAlert(
-            "Warning: Your After Effects version " + currentVersion +
-            " is not officially supported on service-managed fleets. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
-            "This may result in compatibility issues or failed jobs.",
-            false
-        );
-
-        return Math.floor(currentVersion);
-    }
-
     return {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
@@ -813,9 +790,51 @@ function __generateUtil() {
         "getTempFile": getTempFile,
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
-        "getCompatibleAEVersion": getCompatibleAEVersion,
         "getTempFolder": getTempFolder
     }
 }
 
 dcUtil = __generateUtil();
+
+
+// Global constants, wrapped with if-blocks to ensure they are only defined once
+// to avoid errors due to redeclaration
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
+}
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
+}
+if (typeof SUPPORTED_VERSIONS === "undefined") {
+    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
+}
+if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
+    const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
+}
+if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
+    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
+}
+if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
+    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
+}
+if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
+    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
+}
+if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage"
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
+}

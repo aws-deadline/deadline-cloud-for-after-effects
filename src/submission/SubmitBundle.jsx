@@ -51,6 +51,33 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         // If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
         return;
     }
+
+    // Check if warning should be shown
+    const ignoreWarning = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING) === "true";
+    const savedVersion = parseFloat(app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION) || "0");
+    const currentVersion = dcUtil.getAEVersion();
+
+    // Is this AE version not supported in the deadline-cloud channel?
+    if (SUPPORTED_VERSIONS.indexOf(currentVersion) === -1) {
+        // If so, has the warning already been ignored or is the user on a different AE version and we should warn them again?
+        if (!ignoreWarning || savedVersion !== currentVersion) {
+            const versionMismatchWarningMessage = "Warning: Your After Effects version " + currentVersion +
+            " is not officially supported on service-managed fleets. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
+            "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
+
+            // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
+            if (confirm(versionMismatchWarningMessage)) {
+                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "true");
+                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
+            } else {
+                return;
+            }
+        } else {
+            logger.debug("Version mismatch already acknowledged, version warning skipped.")
+        }
+        logger.debug("Defaulting to After Effects major version conda package to minimize incompatibility issues.");
+    }
+
     var outputPath = "";
     var outputFile = "";
     var outputFolder = "";
@@ -151,14 +178,17 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
             logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
         }
-        const aftereffectsVersion = dcUtil.getCompatibleAEVersion();
-        logger.debug("The compatible version of After Effects is " + aftereffectsVersion, submitBundleFile);
+        var aftereffectsCondaVersion = dcUtil.getAEVersion();
+        if (SUPPORTED_VERSIONS.indexOf(aftereffectsCondaVersion) === -1) {
+            aftereffectsCondaVersion = Math.floor(aftereffectsCondaVersion);
+        }
+        logger.debug("The compatible version of After Effects is " + aftereffectsCondaVersion, submitBundleFile);
 
         var paramDefCopy = templateObject.parameterDefinitions;
 
         for (var i = paramDefCopy.length - 1; i >= 0; i--) {
             if (paramDefCopy[i].name == "CondaPackages") {
-                paramDefCopy[i].default = "aftereffects=" + aftereffectsVersion;
+                paramDefCopy[i].default = "aftereffects=" + aftereffectsCondaVersion;
             }
         }
         writeFile(bundlePath + "/template.json", JSON.stringify(templateObject, null, 4));
