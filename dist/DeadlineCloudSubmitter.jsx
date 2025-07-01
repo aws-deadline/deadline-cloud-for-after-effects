@@ -1584,7 +1584,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
                 return;
             }
         } else {
-            logger.debug("Version mismatch already acknowledged, version warning skipped.")
+            logger.debug("Version mismatch already acknowledged, version warning skipped.");
         }
         logger.debug("Defaulting to After Effects major version conda package to minimize incompatibility issues.");
     }
