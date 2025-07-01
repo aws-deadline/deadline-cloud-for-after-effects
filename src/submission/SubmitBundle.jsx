@@ -62,7 +62,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         // If so, has the warning already been ignored or is the user on a different AE version and we should warn them again?
         if (!ignoreWarning || savedVersion !== currentVersion) {
             const versionMismatchWarningMessage = "Warning: Your After Effects version " + currentVersion +
-            " is not officially supported on service-managed fleets. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
+            " is not officially supported in the deadline-cloud conda channel. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
             "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
 
             // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
