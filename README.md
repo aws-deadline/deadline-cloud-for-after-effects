@@ -146,10 +146,6 @@ user@7cf34df03377 ~ % where deadline
 1. Then follow the troubleshooting steps above for Python for your respective OS and verify that deadline is on your $PATH.
 1. If you have multiple Python installations and manage Deadline via Pip, verify that the Python on your $PATH is the Python that managed your Deadline installation. This can be done by running `python -m pip list` and `python3 -m pip list` to verify this.
 
-### Warning: Your After Effects version is not officially supported by the deadline-cloud Conda channel
-This means you are using a version of After Effects locally that the deadline-cloud Conda channel does not have. For example, should you be using 24.3, our deadline-cloud channel won't have this and you will be warned. If you continue job submission, the default major version will be prefilled in the CondaPackages field, but your job submission may fail unless you have packaged a specific version of After Effects you want to use in a custom conda channel and have that included in the CondaChannels parameter. To prevent this warning from appearing, you can either acknowledge the pop up or switch to a supported AE version.
-
-
 ### Warning: Unsupported After Effects Version Detected
 
 This means you are using an After Effects version that is not available in our deadline-cloud Conda channel, For example, if you're using After Effects 24.3, but the channel only supports 24.6.
