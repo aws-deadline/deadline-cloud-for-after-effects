@@ -66,10 +66,11 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
 
             // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
+            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
             if (confirm(versionMismatchWarningMessage)) {
                 app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "true");
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
             } else {
+                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
                 return;
             }
         } else {
