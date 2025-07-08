@@ -148,7 +148,7 @@ user@7cf34df03377 ~ % where deadline
 
 ### Warning: Unsupported After Effects Version Detected
 
-This means you are using an After Effects version that is not available in our deadline-cloud Conda channel, For example, if you're using After Effects 24.3, but the channel only supports 24.6.
+This means you are using an After Effects version that is not available in the deadline-cloud Conda channel, For example, if you're using After Effects 24.3, but the channel only supports 24.6.
 
 If you continue, the default major version in use locally will be filled in the CondaPackages field, but your job submission may fail unless you have created a custom Conda channel with your specific After Effects version and included this channel in the CondaChannels parameter
 
