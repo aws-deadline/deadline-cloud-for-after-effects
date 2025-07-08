@@ -1,3 +1,10 @@
+## 0.2.7 (2025-07-08)
+
+
+
+### Bug Fixes
+* refactor SUPPORTED_VERSIONS const declaration and add ignore warning functionality for version mismatch (#216) ([`1606c82`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/1606c82f5773e63dc668a30a223efe735b684775))
+
 ## 0.2.6 (2025-06-24)
 
 
