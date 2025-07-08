@@ -3,6 +3,14 @@
 
 
 ### Bug Fixes
+* added missing build changes to DeadlineCloudSubmitter.jsx (#220) ([`5843506`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/5843506890e04af3a2f8d62a6f45f50a5e0c11a8))
+* refactor SUPPORTED_VERSIONS const declaration and add ignore warning functionality for version mismatch (#216) ([`1606c82`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/1606c82f5773e63dc668a30a223efe735b684775))
+
+## 0.2.7 (2025-07-08)
+
+
+
+### Bug Fixes
 * refactor SUPPORTED_VERSIONS const declaration and add ignore warning functionality for version mismatch (#216) ([`1606c82`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/1606c82f5773e63dc668a30a223efe735b684775))
 
 ## 0.2.6 (2025-06-24)
