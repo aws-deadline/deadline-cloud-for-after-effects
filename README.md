@@ -146,6 +146,17 @@ user@7cf34df03377 ~ % where deadline
 1. Then follow the troubleshooting steps above for Python for your respective OS and verify that deadline is on your $PATH.
 1. If you have multiple Python installations and manage Deadline via Pip, verify that the Python on your $PATH is the Python that managed your Deadline installation. This can be done by running `python -m pip list` and `python3 -m pip list` to verify this.
 
+### Warning: Unsupported After Effects Version Detected
+
+This means you are using an After Effects version that is not available in the deadline-cloud Conda channel, For example, if you're using After Effects 24.3, but the channel only supports 24.6.
+
+If you continue, the default major version in use locally will be filled in the CondaPackages field, but your job submission may fail unless you have created a custom Conda channel with your specific After Effects version and included this channel in the CondaChannels parameter
+
+To resolve this, you can either:
+1. Switch to a supported After Effects version,
+2. Acknowledge the warning and proceed (at your own risk), or
+3. Create a custom Conda channel with your desired After Effects version
+
 
 ### After submission on Windows, a command prompt screen flashes open and close and submitter GUI doesn't pop open
 1. Go to the Windows Start menu and searching for "Manage app execution aliases". Then disable the `python3.exe` and `python.exe` aliases manually and retry submission.
@@ -171,7 +182,7 @@ To install fonts for non-Adobe apps in Creative Cloud:
 
 ## Setting up After Effects with your Deadline Cloud Farm
 
-After Effects 24.6.4, 25.1, and 25.2.2 conda packages are now available in AWS Deadline Cloud Service Managed Fleet (See this [link](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/create-queue-environment.html) for more information). If you would like to build a conda channel that contains different After Effects conda package, please follow
+After Effects 24.6, 25.1, and 25.2 conda packages are available in AWS Deadline Cloud Service Managed Fleet (See this [link](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/create-queue-environment.html) for more information). If you would like to build a conda channel that contains different After Effects conda package, please follow
 [the instruction](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html).
 You can also use After Effects conda recipe in
 [deadline-cloud-sample package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.0)
