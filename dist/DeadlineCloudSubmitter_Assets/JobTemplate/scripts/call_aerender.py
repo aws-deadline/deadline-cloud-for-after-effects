@@ -25,8 +25,18 @@ def main():
     )
     parser.add_argument("--chunk-size", type=int, help="The number of frames per task")
     parser.add_argument("--index", type=int, help="The starting frame of the chunk")
-    parser.add_argument("--multi-frame-rendering", type=str, default="OFF", help="Multi-frame render (MFR)")
-    parser.add_argument("--max-cpu-usage-percentage", type=int, default=90, help="Specifies the desired maximum CPU percentage power to use during rendering. Value is ignored if MFR is OFF")
+    parser.add_argument(
+        "--multi-frame-rendering",
+        type=str,
+        default="OFF",
+        help="Multi-frame render (MFR)",
+    )
+    parser.add_argument(
+        "--max-cpu-usage-percentage",
+        type=int,
+        default=90,
+        help="Specifies the desired maximum CPU percentage power to use during rendering. Value is ignored if MFR is OFF",
+    )
 
     args = parser.parse_args()
     print(f"Args: {args}", flush=True)
@@ -84,34 +94,80 @@ def main():
 
     aerender_exe = os.getenv("AERENDER_EXECUTABLE", "aerender.exe")
 
+    print(
+        f"[DEBUG] Starting aerender process with command: {aerender_exe} {' '.join(render_args)}",
+        flush=True,
+    )
+
+    error_found = False
+
     try:
         process = subprocess.Popen(
             [aerender_exe] + render_args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            bufsize=1,
         )
-        for line in process.stdout:
-            print(line, end="", flush=True)  # Print stdout line by line
+        stdout, stderr = process.communicate()
 
-            # Check for specific errors or warnings in stdout
-            if "WARNING:After Effects warning" in line:
-                print(f"After Effects Warning: {line.strip()}", file=sys.stderr)
+        print(
+            f"[DEBUG] Process finished with return code: {process.returncode}",
+            flush=True,
+        )
 
-        # Also handle stderr (errors)
-        for line in process.stderr:
-            print(line, end="", flush=True)  # Print stderr line by line
+        # Process stdout line by line
+        for line in stdout.splitlines():
+            print(f"[STDOUT] {line}", flush=True)
 
-            # Check for specific error messages in stderr
-            if "aerender ERROR" in line:
-                print(f"Aerender Error: {line.strip()}", file=sys.stderr)
+            # Check for errors in stdout (case insensitive)
+            line_lower = line.lower()
+            if "error" in line_lower:
+                print(
+                    f"[ERROR DETECTED] in stdout: {line}", file=sys.stderr, flush=True
+                )
+                error_found = True
 
-        process.wait()  # Wait for the process to finish
+        # Process stderr line by line
+        for line in stderr.splitlines():
+            print(f"[STDERR] {line}", file=sys.stderr, flush=True)
+
+            # Only consider stderr as error if it contains "error" (case insensitive)
+            if line.strip():
+                line_lower = line.lower()
+                if "error" in line_lower:
+                    print(
+                        f"[ERROR DETECTED] in stderr: {line}", file=sys.stderr, flush=True
+                    )
+                    error_found = True
+
+        # If process returned non-zero code, that's also an error
+        if process.returncode != 0:
+            print(
+                f"[ERROR] Process returned non-zero exit code: {process.returncode}",
+                file=sys.stderr,
+                flush=True,
+            )
+            error_found = True
+
+        # Exit with error if any errors were found
+        if error_found:
+            print("[DEBUG] Errors were detected, exiting with code 1", flush=True)
+            sys.exit(1)
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(
+            f"[ERROR] Exception during aerender execution: {str(e)}",
+            file=sys.stderr,
+            flush=True,
+        )
         sys.exit(1)
+
     # Exit with the same code as aerender
+    print(
+        f"[DEBUG] No errors detected, exiting with process return code: {process.returncode}",
+        flush=True,
+    )
     sys.exit(process.returncode)
 
 
