@@ -1,35 +1,3 @@
-// Global constants, wrapped with if-blocks to ensure they are only defined once
-// to avoid errors due to redeclaration
-if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
-    const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
-}
-if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
-    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
-}
-if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
-    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
-}
-if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
-    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
-}
-if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
-    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage"
-}
-
-// Set up default values for AE job submitter settings
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
-}
-
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-}
-
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
-}
-
-
 /**
  * Builds the Script UI for the Deadline Cloud Submitter
  **/

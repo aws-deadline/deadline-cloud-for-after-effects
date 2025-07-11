@@ -3,7 +3,6 @@
 // Please change the source files and regenerate this file instead.
 
 var scriptFolder = Folder.current.fsName;
-const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
 
 function readFile(filePath) {
     var f = new File(filePath);
@@ -762,28 +761,6 @@ function __generateUtil() {
         return version
     }
 
-    function getCompatibleAEVersion() {
-        /* Return compatible After Effects version for job submission.
-         * Warns if current version is not officially supported on service-managed fleets.
-         * Returns the version as float.
-         */
-        const currentVersion = getAEVersion();
-
-        if (SUPPORTED_VERSIONS.indexOf(currentVersion) !== -1) {
-            return currentVersion;
-        }
-
-        // Show warning if version is not supported
-        adcAlert(
-            "Warning: Your After Effects version " + currentVersion +
-            " is not officially supported on service-managed fleets. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
-            "This may result in compatibility issues or failed jobs.",
-            false
-        );
-
-        return Math.floor(currentVersion);
-    }
-
     return {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
@@ -817,13 +794,54 @@ function __generateUtil() {
         "getTempFile": getTempFile,
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
-        "getCompatibleAEVersion": getCompatibleAEVersion,
         "getTempFolder": getTempFolder
     }
 }
 
 dcUtil = __generateUtil();
 
+
+// Global constants, wrapped with if-blocks to ensure they are only defined once
+// to avoid errors due to redeclaration
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
+}
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
+}
+if (typeof SUPPORTED_VERSIONS === "undefined") {
+    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
+}
+if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
+    const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
+}
+if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
+    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
+}
+if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
+    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
+}
+if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
+    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
+}
+if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
+}
 
 
 var LOG_LEVEL = {
@@ -1544,6 +1562,34 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         // If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
         return;
     }
+
+    // Check if warning should be shown
+    const ignoreWarning = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING) === "true";
+    const savedVersion = parseFloat(app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION) || "0");
+    const currentVersion = dcUtil.getAEVersion();
+
+    // Is this AE version not supported in the deadline-cloud channel?
+    if (SUPPORTED_VERSIONS.indexOf(currentVersion) === -1) {
+        // If so, has the warning already been ignored or is the user on a different AE version and we should warn them again?
+        if (!ignoreWarning || savedVersion !== currentVersion) {
+            const versionMismatchWarningMessage = "Warning: Your After Effects version " + currentVersion +
+            " is not officially supported in the deadline-cloud conda channel. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
+            "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
+
+            // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
+            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
+            if (confirm(versionMismatchWarningMessage)) {
+                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "true");
+            } else {
+                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+                return;
+            }
+        } else {
+            logger.debug("Version mismatch already acknowledged, version warning skipped.");
+        }
+        logger.debug("Defaulting to After Effects major version conda package to minimize incompatibility issues.");
+    }
+
     var outputPath = "";
     var outputFile = "";
     var outputFolder = "";
@@ -1644,14 +1690,17 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
             logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
         }
-        const aftereffectsVersion = dcUtil.getCompatibleAEVersion();
-        logger.debug("The compatible version of After Effects is " + aftereffectsVersion, submitBundleFile);
+        var aftereffectsCondaVersion = dcUtil.getAEVersion();
+        if (SUPPORTED_VERSIONS.indexOf(aftereffectsCondaVersion) === -1) {
+            aftereffectsCondaVersion = Math.floor(aftereffectsCondaVersion);
+        }
+        logger.debug("The compatible version of After Effects is " + aftereffectsCondaVersion, submitBundleFile);
 
         var paramDefCopy = templateObject.parameterDefinitions;
 
         for (var i = paramDefCopy.length - 1; i >= 0; i--) {
             if (paramDefCopy[i].name == "CondaPackages") {
-                paramDefCopy[i].default = "aftereffects=" + aftereffectsVersion;
+                paramDefCopy[i].default = "aftereffects=" + aftereffectsCondaVersion;
             }
         }
         writeFile(bundlePath + "/template.json", JSON.stringify(templateObject, null, 4));
@@ -2324,38 +2373,6 @@ if (typeof JSON !== "object") {
 
 
 
-
-
-// Global constants, wrapped with if-blocks to ensure they are only defined once
-// to avoid errors due to redeclaration
-if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
-    const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
-}
-if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
-    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
-}
-if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
-    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
-}
-if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
-    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
-}
-if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
-    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage"
-}
-
-// Set up default values for AE job submitter settings
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
-}
-
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-}
-
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
-}
 
 
 /**
