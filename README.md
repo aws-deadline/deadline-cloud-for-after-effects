@@ -104,10 +104,11 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 1. Select your composition you want to render click `Submit` to submit a render job. Here are some settings you can set:
    1. (Optional) For image sequences output types you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the number and then Deadline Cloud will assign the tasks to available workers to delegate the load.
    1. You can also specify multi-frame rendering with your job submission. If you do, you can also specify the max percentage of CPU usage you wish to allocate towards rendering in case you would like to limit it to allow other background applications or processes to run smoothly. For more information about multi-frame rendering, visit Adobe's website [here](https://helpx.adobe.com/after-effects/using/multi-frame-rendering.html).
-1. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
-1. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
-1. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
-1. If you're running the submitter and hitting error messages, scroll down to the Troubleshooting section for more guidance.
+   1. You need to set up timeout days, hours and minutes to avoid the task gets stuck forever. The default timeout is 2 days.
+2. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
+3. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
+4. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
+5. If you're running the submitter and hitting error messages, scroll down to the Troubleshooting section for more guidance.
 
 **Note**: The After Effects submitter calls the Deadline GUI Submitter to complete job submission. If you hit any issues on the GUI submitter, please refer to [deadline-cloud](https://github.com/aws-deadline/deadline-cloud) library for help.
 

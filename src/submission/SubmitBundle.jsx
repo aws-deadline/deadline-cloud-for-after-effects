@@ -1,7 +1,16 @@
 /**
  * Submit the selected render queue item
  **/
-function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
+function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskTimeoutDays, taskTimeoutHours, taskTimeoutMinutes) {
+    // Calculate task run timeout in seconds
+    var taskTimeoutSeconds = 0;
+    // Validate timeout values during job submission
+    if (taskTimeoutDays === 0 && taskTimeoutHours === 0 && taskTimeoutMinutes === 0) {
+        adcAlert("The following timeout value must be greater than 0: TaskRun", true);
+        throw new Error("Task run timeout must be greater than zero");
+    }
+    taskTimeoutSeconds = (taskTimeoutDays * 24 * 60 * 60) + (taskTimeoutHours * 60 * 60) + (taskTimeoutMinutes * 60);
+
     const submitBundleFile = "SubmitButton.jsx";
     // first we must verify that our selection is valid
     if (selection == null) {
@@ -148,7 +157,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
                     endFrame,
                     framesPerTask,
                     multiFrameRendering,
-                    maxCpuUsagePercentage,
+                    maxCpuUsagePercentage
                 ),
                 null,
                 4,
@@ -179,6 +188,19 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
             logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
         }
+        try {
+            if (templateObject.steps[0].script && templateObject.steps[0].script.actions) {
+                // Add timeout to the onRun action
+                if (templateObject.steps[0].script.actions.onRun) {
+                    templateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
+                    logger.debug("Added timeout of " + taskTimeoutSeconds + " seconds to onRun action", submitBundleFile);
+                }
+            }
+        } catch (e) {
+            adcAlert("Error accessing the template's actions. \nPlease check your template.json.", true);
+            logger.debug("Error accessing the template's actions: " + e.message, submitBundleFile);
+        }
+
         var aftereffectsCondaVersion = dcUtil.getAEVersion();
         if (SUPPORTED_VERSIONS.indexOf(aftereffectsCondaVersion) === -1) {
             aftereffectsCondaVersion = Math.floor(aftereffectsCondaVersion);
