@@ -1,3 +1,12 @@
+## 0.3.0 (2025-07-15)
+
+
+### Features
+* add timeout checkbox for customers to set a timeout number for openjd (#224) ([`307809c`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/307809cdc1393b5334c5e57fd81ee6e43a84ebe1))
+
+### Bug Fixes
+* change the error handling for aerender cmd to fail the task when the aerender Error gets thrown (#223) ([`2d06a57`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/2d06a57191595d94160de98fe0a425c1ffd2aed7))
+
 ## 0.2.7 (2025-07-08)
 
 
