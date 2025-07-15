@@ -118,6 +118,85 @@ function buildUI(thisObj) {
         maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
     }
 
+    // Add Timeouts settings group
+    const timeoutsPanel = settingsGroup.add("panel", undefined, "Timeouts");
+    timeoutsPanel.orientation = "column";
+    timeoutsPanel.alignment = ['fill', 'top'];
+    timeoutsPanel.alignChildren = ['left', 'center'];
+    timeoutsPanel.margins = 5;
+
+    // Task run timeout
+    const taskRunGroup = timeoutsPanel.add("group");
+    taskRunGroup.orientation = "row";
+    taskRunGroup.alignment = ['fill', 'top'];
+    taskRunGroup.alignChildren = ['left', 'center'];
+
+    const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
+    taskRunCheckbox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
+
+    const taskRunDaysGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS));
+    taskRunDaysInput.characters = 3;
+    taskRunDaysGroup.add("statictext", undefined, "days");
+
+    const taskRunHoursGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS));
+    taskRunHoursInput.characters = 3;
+    taskRunHoursGroup.add("statictext", undefined, "hours");
+
+    const taskRunMinutesGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES));
+    taskRunMinutesInput.characters = 3;
+    taskRunMinutesGroup.add("statictext", undefined, "minutes");
+
+    // Function to validate timeout values
+    function validateTimeoutValues() {
+        // Check if all values are zero when checkbox is checked
+        if (taskRunCheckbox.value) {
+            var days = parseInt(taskRunDaysInput.text) || 0;
+            var hours = parseInt(taskRunHoursInput.text) || 0;
+            var minutes = parseInt(taskRunMinutesInput.text) || 0;
+
+            if (days === 0 && hours === 0 && minutes === 0) {
+                adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
+                // Set days back to default value of 2
+                taskRunDaysInput.text = "2";
+                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Add input validation and save values to settings
+    taskRunCheckbox.onClick = function() {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, dcUtil.toBooleanString(this.value));
+        if (this.value) {
+            validateTimeoutValues();
+        }
+    };
+
+    taskRunDaysInput.onChange = function() {
+        this.text = this.text.replace(/[^0-9]/g, "");
+        if (this.text === "") this.text = "0";
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, this.text);
+        validateTimeoutValues();
+    };
+
+    taskRunHoursInput.onChange = function() {
+        this.text = this.text.replace(/[^0-9]/g, "");
+        if (this.text === "") this.text = "0";
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, this.text);
+        validateTimeoutValues();
+    };
+
+    taskRunMinutesInput.onChange = function() {
+        this.text = this.text.replace(/[^0-9]/g, "");
+        if (this.text === "") this.text = "0";
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, this.text);
+        validateTimeoutValues();
+    };
+
     // If an image sequence was selected, enable frames per task textbox. Otherwise disable it.
     function isFramesPerTaskEnabled(selection) {
         if (selection == null) {
@@ -148,7 +227,12 @@ function buildUI(thisObj) {
             if (mfrCheckBox.value) {
                 maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
             }
-            SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage);
+            if (taskRunCheckbox.value) {
+                SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, parseInt(taskRunDaysInput.text), parseInt(taskRunHoursInput.text), parseInt(taskRunMinutesInput.text));
+            }
+            else {
+                SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, 2, 0, 0);
+            }
             list.selection = null;
         }
     }

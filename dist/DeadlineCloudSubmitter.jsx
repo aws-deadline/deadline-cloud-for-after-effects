@@ -827,6 +827,18 @@ if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
 if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
     const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
 }
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
+}
 if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
     app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
 }
@@ -841,6 +853,18 @@ if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MU
 }
 if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
     app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
 }
 
 
@@ -1512,7 +1536,16 @@ function isImageOutput(extension) {
 /**
  * Submit the selected render queue item
  **/
-function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
+function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskTimeoutDays, taskTimeoutHours, taskTimeoutMinutes) {
+    // Calculate task run timeout in seconds
+    var taskTimeoutSeconds = 0;
+    // Validate timeout values during job submission
+    if (taskTimeoutDays === 0 && taskTimeoutHours === 0 && taskTimeoutMinutes === 0) {
+        adcAlert("The following timeout value must be greater than 0: TaskRun", true);
+        throw new Error("Task run timeout must be greater than zero");
+    }
+    taskTimeoutSeconds = (taskTimeoutDays * 24 * 60 * 60) + (taskTimeoutHours * 60 * 60) + (taskTimeoutMinutes * 60);
+
     const submitBundleFile = "SubmitButton.jsx";
     // first we must verify that our selection is valid
     if (selection == null) {
@@ -1659,7 +1692,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
                     endFrame,
                     framesPerTask,
                     multiFrameRendering,
-                    maxCpuUsagePercentage,
+                    maxCpuUsagePercentage
                 ),
                 null,
                 4,
@@ -1690,6 +1723,19 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
             logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
         }
+        try {
+            if (templateObject.steps[0].script && templateObject.steps[0].script.actions) {
+                // Add timeout to the onRun action
+                if (templateObject.steps[0].script.actions.onRun) {
+                    templateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
+                    logger.debug("Added timeout of " + taskTimeoutSeconds + " seconds to onRun action", submitBundleFile);
+                }
+            }
+        } catch (e) {
+            adcAlert("Error accessing the template's actions. \nPlease check your template.json.", true);
+            logger.debug("Error accessing the template's actions: " + e.message, submitBundleFile);
+        }
+
         var aftereffectsCondaVersion = dcUtil.getAEVersion();
         if (SUPPORTED_VERSIONS.indexOf(aftereffectsCondaVersion) === -1) {
             aftereffectsCondaVersion = Math.floor(aftereffectsCondaVersion);
@@ -2495,6 +2541,85 @@ function buildUI(thisObj) {
         maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
     }
 
+    // Add Timeouts settings group
+    const timeoutsPanel = settingsGroup.add("panel", undefined, "Timeouts");
+    timeoutsPanel.orientation = "column";
+    timeoutsPanel.alignment = ['fill', 'top'];
+    timeoutsPanel.alignChildren = ['left', 'center'];
+    timeoutsPanel.margins = 5;
+
+    // Task run timeout
+    const taskRunGroup = timeoutsPanel.add("group");
+    taskRunGroup.orientation = "row";
+    taskRunGroup.alignment = ['fill', 'top'];
+    taskRunGroup.alignChildren = ['left', 'center'];
+
+    const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
+    taskRunCheckbox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
+
+    const taskRunDaysGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS));
+    taskRunDaysInput.characters = 3;
+    taskRunDaysGroup.add("statictext", undefined, "days");
+
+    const taskRunHoursGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS));
+    taskRunHoursInput.characters = 3;
+    taskRunHoursGroup.add("statictext", undefined, "hours");
+
+    const taskRunMinutesGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES));
+    taskRunMinutesInput.characters = 3;
+    taskRunMinutesGroup.add("statictext", undefined, "minutes");
+
+    // Function to validate timeout values
+    function validateTimeoutValues() {
+        // Check if all values are zero when checkbox is checked
+        if (taskRunCheckbox.value) {
+            var days = parseInt(taskRunDaysInput.text) || 0;
+            var hours = parseInt(taskRunHoursInput.text) || 0;
+            var minutes = parseInt(taskRunMinutesInput.text) || 0;
+
+            if (days === 0 && hours === 0 && minutes === 0) {
+                adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
+                // Set days back to default value of 2
+                taskRunDaysInput.text = "2";
+                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Add input validation and save values to settings
+    taskRunCheckbox.onClick = function() {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, dcUtil.toBooleanString(this.value));
+        if (this.value) {
+            validateTimeoutValues();
+        }
+    };
+
+    taskRunDaysInput.onChange = function() {
+        this.text = this.text.replace(/[^0-9]/g, "");
+        if (this.text === "") this.text = "0";
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, this.text);
+        validateTimeoutValues();
+    };
+
+    taskRunHoursInput.onChange = function() {
+        this.text = this.text.replace(/[^0-9]/g, "");
+        if (this.text === "") this.text = "0";
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, this.text);
+        validateTimeoutValues();
+    };
+
+    taskRunMinutesInput.onChange = function() {
+        this.text = this.text.replace(/[^0-9]/g, "");
+        if (this.text === "") this.text = "0";
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, this.text);
+        validateTimeoutValues();
+    };
+
     // If an image sequence was selected, enable frames per task textbox. Otherwise disable it.
     function isFramesPerTaskEnabled(selection) {
         if (selection == null) {
@@ -2525,7 +2650,12 @@ function buildUI(thisObj) {
             if (mfrCheckBox.value) {
                 maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
             }
-            SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage);
+            if (taskRunCheckbox.value) {
+                SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, parseInt(taskRunDaysInput.text), parseInt(taskRunHoursInput.text), parseInt(taskRunMinutesInput.text));
+            }
+            else {
+                SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, 2, 0, 0);
+            }
             list.selection = null;
         }
     }
