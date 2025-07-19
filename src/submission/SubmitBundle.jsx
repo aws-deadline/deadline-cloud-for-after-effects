@@ -111,20 +111,10 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             logger.debug("outputFolder is: " + outputFolder, submitBundleFile);
         }
     }
-    var renderSettings = rqi.getSettings(GetSettingsFormat.STRING_SETTABLE);
-    var startFrame = Number(
-        timeToFrames(
-            Number(renderSettings["Time Span Start"]),
-            Number(renderSettings["Use this frame rate"])
-        )
-    );
-    var endFrame =
-        Number(
-            timeToFrames(
-                Number(renderSettings["Time Span End"]),
-                Number(renderSettings["Use this frame rate"])
-            )
-        ) - 1; // end frame is inclusive so we subtract 1
+    // Calculate frame range using the utility function
+    const frameRange = dcUtil.calculateFrameRange(rqi);
+    const startFrame = frameRange.startFrame;
+    const endFrame = frameRange.endFrame;
 
     var dependencies = findJobAttachments(rqi.comp); // list of filenames
     var compName = dcUtil.removeIllegalCharacters(rqi.comp.name);

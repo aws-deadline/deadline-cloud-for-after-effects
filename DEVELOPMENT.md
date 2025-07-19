@@ -107,7 +107,7 @@ Default Windows InstallBuilder path: `"C:\\Program Files\\InstallBuilder Enterpr
 ### Build the installer
 
 ```bash
-hatch run installer:build-installer --local-dev-build --platform <PLATFORM> [--install-builder-location <LOCATION> --output-dir <DIR>]
+hatch run installer:build-installer --local-dev --platform <PLATFORM> [--install-builder-path <LOCATION> --output-dir <DIR>]
 ```
 Use the default locations listed above under Preqrequisites as guidance. For Platform, your options are Windows or MacOS. For local dev, remove `--output-dir` and specify `--local-dev` flag instead.
 

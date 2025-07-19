@@ -261,9 +261,10 @@ function buildUI(thisObj) {
             item.renderQueueIndex = i;
             item.compId = rqi.comp.id;
             item.subItems[0].text = rqi.comp.name;
-            var renderSettings = rqi.getSettings(GetSettingsFormat.STRING_SETTABLE);
-            var startFrame = Number(timeToFrames(Number(renderSettings["Time Span Start"]), Number(renderSettings["Use this frame rate"])));
-            var endFrame = Number(timeToFrames(Number(renderSettings["Time Span End"]), Number(renderSettings["Use this frame rate"]))) - 1; //end frame is inclusive so we subtract 1
+            // Calculate frame range using the utility function
+            var frameRange = dcUtil.calculateFrameRange(rqi);
+            var startFrame = frameRange.startFrame;
+            var endFrame = frameRange.endFrame;
             item.subItems[1].text = startFrame == endFrame ? startFrame.toString() : startFrame + "-" + endFrame;
             if (rqi.numOutputModules <= 0) {
                 item.subItems[2].text = "<not set>";

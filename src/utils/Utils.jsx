@@ -18,19 +18,6 @@ function writeFile(filePath, fileContents) {
     return;
 }
 
-function timeToFrames(time, fps) {
-    //temporarily change display format so we can convert seconds to frames
-    //We could perform the math ourselves, but using After Effects's internal methods ensure that we don't lose precision due to floating point errors
-    var prevFrameDisplay = app.project.timeDisplayType;
-    var prevFeetFrames = app.project.framesUseFeetFrames;
-    app.project.timeDisplayType = TimeDisplayType.FRAMES;
-    app.project.framesUseFeetFrames = false;
-    var frame = timeToCurrentFormat(time, fps, false);
-    app.project.timeDisplayType = prevFrameDisplay;
-    app.project.framesUseFeetFrames = prevFeetFrames;
-    return frame;
-}
-
 function sanitizeOutputs(outputPaths) {
     var sanitized = [];
     var sanitizedPath = "";
@@ -757,6 +744,24 @@ function __generateUtil() {
         return version
     }
 
+    function calculateFrameRange(rqi) {
+        /**
+         * Calculate start and end frames for a render queue item using render settings
+         * @param {RenderQueueItem} rqi - The render queue item to calculate frames for
+         * @returns {Object} Object containing startFrame and endFrame
+         */
+        const startFrame = Number(rqi.comp.displayStartFrame);
+        // Calculate number of frames using timeSpanDuration and frameRate
+        const timeSpanDuration = rqi.timeSpanDuration || rqi.comp.duration;
+        const numFrames = Math.floor(timeSpanDuration * rqi.comp.frameRate);
+        const endFrame = startFrame + numFrames - 1; // end frame is inclusive
+
+        return {
+            startFrame: startFrame,
+            endFrame: endFrame
+        };
+    }
+
     return {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
@@ -790,7 +795,8 @@ function __generateUtil() {
         "getTempFile": getTempFile,
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
-        "getTempFolder": getTempFolder
+        "getTempFolder": getTempFolder,
+        "calculateFrameRange": calculateFrameRange
     }
 }
 
