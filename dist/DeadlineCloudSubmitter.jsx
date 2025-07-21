@@ -757,146 +757,141 @@ function __generateUtil() {
         const startFrame = Number(Math.floor(rqi.comp.displayStartTime * rqi.comp.frameRate));
         const numFrames = Number(Math.floor(rqi.timeSpanDuration * rqi.comp.frameRate));
         const endFrame = startFrame + numFrames - 1; // end frame is inclusive
-
         return {
             startFrame: startFrame,
             endFrame: endFrame
         };
     }
 
-        function validateTimeoutValues(enabled, daysInput, hoursInput, minutesInput) {
-            if (enabled) {
-                var days = parseInt(daysInput.text) || 0;
-                var hours = parseInt(hoursInput.text) || 0;
-                var minutes = parseInt(minutesInput.text) || 0;
+    function validateTimeoutValues(enabled, daysInput, hoursInput, minutesInput) {
+        if (enabled) {
+            var days = parseInt(daysInput.text) || 0;
+            var hours = parseInt(hoursInput.text) || 0;
+            var minutes = parseInt(minutesInput.text) || 0;
 
-                if (days === 0 && hours === 0 && minutes === 0) {
-                    adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
-                    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        function getSelection(list) {
-            for (var s = 0; s < list.selection.length; s++) {
-                return list.selection[s];
+            if (days === 0 && hours === 0 && minutes === 0) {
+                adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
+                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
+                return false;
             }
         }
-
-        return {
-            "invertObject": invertObject,
-            "toBooleanString": toBooleanString,
-            "parseBool": parseBool,
-            "trimIllegalChars": trimIllegalChars,
-            "sliderTextSync": sliderTextSync,
-            "changeTextValue": changeTextValue,
-            "changeSliderValue": changeSliderValue,
-            "checkGPUAccelType": checkGPUAccelType,
-            "spinBoxLimiterMin": spinBoxLimiterMin,
-            "spinBoxLimiterMax": spinBoxLimiterMax,
-            "getAssetsInScene": getAssetsInScene,
-            "editTextIntValidation": editTextIntValidation,
-            "getDescription": getDescription,
-            "wrappedCallSystem": wrappedCallSystem,
-            "parseErrorData": parseErrorData,
-            "parseVersionData": parseVersionData,
-            "createExportBundleDir": createExportBundleDir,
-            "removeLineBreak": removeLineBreak,
-            "setListBoxSelection": setListBoxSelection,
-            "getPath": getPath,
-            "getPartialExportDir": getPartialExportDir,
-            "collectHostRequirements": collectHostRequirements,
-            "deepCopy": deepCopy,
-            "getActiveComp": getActiveComp,
-            "normalizePath": normalizePath,
-            "normPath": normalizePath,
-            "enforceForwardSlashes": enforceForwardSlashes,
-            "removeIllegalCharacters": removeIllegalCharacters,
-            "removePercentageFromFileName": removePercentageFromFileName,
-            "getTempFile": getTempFile,
-            "getUserDirectory": getUserDirectory,
-            "getAEVersion": getAEVersion,
-            "getTempFolder": getTempFolder,
-            "calculateFrameRange": calculateFrameRange
-            "validateTimeoutValues": validateTimeoutValues,
-            "getSelection": getSelection,
-            "getTempFolder": getTempFolder
+        return true;
     }
 
+    function getSelection(list) {
+        for (var s = 0; s < list.selection.length; s++) {
+            return list.selection[s];
+        }
+    }
+
+    return {
+        "invertObject": invertObject,
+        "toBooleanString": toBooleanString,
+        "parseBool": parseBool,
+        "trimIllegalChars": trimIllegalChars,
+        "sliderTextSync": sliderTextSync,
+        "changeTextValue": changeTextValue,
+        "changeSliderValue": changeSliderValue,
+        "checkGPUAccelType": checkGPUAccelType,
+        "spinBoxLimiterMin": spinBoxLimiterMin,
+        "spinBoxLimiterMax": spinBoxLimiterMax,
+        "getAssetsInScene": getAssetsInScene,
+        "editTextIntValidation": editTextIntValidation,
+        "getDescription": getDescription,
+        "wrappedCallSystem": wrappedCallSystem,
+        "parseErrorData": parseErrorData,
+        "parseVersionData": parseVersionData,
+        "createExportBundleDir": createExportBundleDir,
+        "removeLineBreak": removeLineBreak,
+        "setListBoxSelection": setListBoxSelection,
+        "getPath": getPath,
+        "getPartialExportDir": getPartialExportDir,
+        "collectHostRequirements": collectHostRequirements,
+        "deepCopy": deepCopy,
+        "getActiveComp": getActiveComp,
+        "normalizePath": normalizePath,
+        "normPath": normalizePath,
+        "enforceForwardSlashes": enforceForwardSlashes,
+        "removeIllegalCharacters": removeIllegalCharacters,
+        "removePercentageFromFileName": removePercentageFromFileName,
+        "getTempFile": getTempFile,
+        "getUserDirectory": getUserDirectory,
+        "getAEVersion": getAEVersion,
+        "getTempFolder": getTempFolder,
+        "calculateFrameRange": calculateFrameRange "validateTimeoutValues": validateTimeoutValues,
+        "getSelection": getSelection,
+        "getTempFolder": getTempFolder
+    }
+
+    dcUtil = __generateUtil();
+
+
+    // Global constants, wrapped with if-blocks to ensure they are only defined once
+    // to avoid errors due to redeclaration
+    if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
+        const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
+    }
+    if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
+        const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
+    }
+    if (typeof SUPPORTED_VERSIONS === "undefined") {
+        const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
+    }
+    if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
+        const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
+    }
+    if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
+        const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
+    }
+    if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
+        const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
+    }
+    if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
+        const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
+    }
+    if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+        const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
+    }
+    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+        const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
+    }
+    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+        const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
+    }
+    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+        const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
+    }
+    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+        const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
+    }
+    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+    }
+    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
+    }
+    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
+    }
+    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
+    }
+    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
+    }
+    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
+    }
+    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
+    }
+    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
+    }
+    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
+    }
 }
-
-
-
-dcUtil = __generateUtil();
-
-
-                        // Global constants, wrapped with if-blocks to ensure they are only defined once
-                        // to avoid errors due to redeclaration
-                        if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
-                            const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
-                        }
-                        if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
-                            const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
-                        }
-                        if (typeof SUPPORTED_VERSIONS === "undefined") {
-                            const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
-                        }
-                        if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
-                            const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
-                        }
-                        if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
-                            const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
-                        }
-                        if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
-                            const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
-                        }
-                        if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
-                            const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
-                        }
-                        if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
-                            const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
-                        }
-                        if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
-                            const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
-                        }
-                        if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
-                            const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
-                        }
-                        if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
-                            const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
-                        }
-                        if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
-                            const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
-                        }
-                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
-                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
-                        }
-                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
-                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
-                        }
-                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
-                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
-                        }
-                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
-                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-                        }
-                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
-                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
-                        }
-                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
-                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
-                        }
-                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
-                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-                        }
-                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
-                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
-                        }
-                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
-                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
-                        }
 
 
 var LOG_LEVEL = {
@@ -1674,7 +1669,7 @@ var JobParams = [
 ]
 
 var paramPattern = "Param\."
-for (var p=0;p<JobParams.length;p++) {
+for (var p = 0; p < JobParams.length; p++) {
     paramPattern = paramPattern + "(?!" + JobParams[p] + ")"
 }
 var paramPatternRegex = new RegExp(paramPattern, 'g')
@@ -1795,7 +1790,7 @@ function generateStepParameterFragment(bundlePath, isImageSeq, compName) {
     const stepParametersObject = JSON.parse(stepParametersContents);
 
     const updatedParameterDefinitions = []
-    for (var i=0;i<stepParametersObject.parameterDefinitions.length;i++) {
+    for (var i = 0; i < stepParametersObject.parameterDefinitions.length; i++) {
         if (JobParams.indexOf(stepParametersObject.parameterDefinitions[i].name) !== -1) {
             // Don't modify these values
             continue
@@ -1833,7 +1828,7 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, compName, taskTime
     // Replace any parameter names in onRun script
     const scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args
     const replacedArgs = []
-    for (var i=0;i<scriptArgs.length;i++) {
+    for (var i = 0; i < scriptArgs.length; i++) {
         // JobParams
         replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + compName + "_"))
     }
@@ -1853,7 +1848,7 @@ function generateJobEnvironmentFragment(bundlePath, outputFoldersStr) {
     // Parse the template string to a JSON object
     const jobEnvironmentsObject = JSON.parse(jobEnvironmentsContents);
 
-    for (var j=0;j<jobEnvironmentsObject.jobEnvironments.length;j++) {
+    for (var j = 0; j < jobEnvironmentsObject.jobEnvironments.length; j++) {
         if (jobEnvironmentsObject.jobEnvironments[j].name === "Create Output Directories") {
             jobEnvironmentsObject.jobEnvironments[j].script.actions.onEnter.args = [
                 "{{Param.JobScriptDir}}/create_output_directory.py",
@@ -1881,7 +1876,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     const renderQueueItems = []
 
     // Check to make sure that all of our selection indices are correct
-    for (var i=0;i<selection.length;i++) {
+    for (var i = 0; i < selection.length; i++) {
         var selectionItem = selection[i];
         var initialRenderQueueIndex = selectionItem.renderQueueIndex;
 
@@ -1894,59 +1889,10 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         renderQueueItems.push([initialRenderQueueItem, initialRenderQueueIndex])
     }
 
-    //We have a valid selection
-    var confirmation = confirm("Project must be saved before submitting. Continue?");
-    if (!confirmation) {
-        return;
-    } else {
-        app.project.save();
-    }
-    if (app.project.file == null) {
-        // If the user hit yes to the prompt, but the file had never been saved, a second prompt would appear asking where they would want to save the project.
-        // If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
-        return;
-    }
-
-    // Check if warning should be shown
-    const ignoreWarning = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING) === "true";
-    const savedVersion = parseFloat(app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION) || "0");
-    const currentVersion = dcUtil.getAEVersion();
-
-    // Is this AE version not supported in the deadline-cloud channel?
-    if (SUPPORTED_VERSIONS.indexOf(currentVersion) === -1) {
-        // If so, has the warning already been ignored or is the user on a different AE version and we should warn them again?
-        if (!ignoreWarning || savedVersion !== currentVersion) {
-            const versionMismatchWarningMessage = "Warning: Your After Effects version " + currentVersion +
-            " is not officially supported in the deadline-cloud conda channel. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
-            "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
-
-            // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
-            if (confirm(versionMismatchWarningMessage)) {
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "true");
-            } else {
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
-                return;
-            }
-        } else {
-            logger.debug("Version mismatch already acknowledged, version warning skipped.");
-        }
-        logger.debug("Defaulting to After Effects major version conda package to minimize incompatibility issues.");
-    }
-
-    var outputPath = "";
-    var outputFile = "";
-    var outputFolder = "";
-    for (var j = 1; j <= rqi.numOutputModules; j++) {
-        var outputModule = rqi.outputModule(j).file;
-        if (outputModule == null) {
-            if (rqi.numOutputModules > 1) {
-                adcAlert("Error: Output module does not have its output file set", true);
-            } else {
-                adcAlert(
-                    "Error: One of your output modules does not have its output file set", true
-                );
-            }
+    // We have valid selections check for saving
+    if (app.project.dirty) {
+        const confirmation = confirm("Project must be saved before submitting. Continue?");
+        if (!confirmation) {
             return;
         } else {
             app.project.save();
@@ -1973,8 +1919,8 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         // If so, has the warning already been ignored or is the user on a different AE version and we should warn them again?
         if (!ignoreWarning || savedVersion !== currentVersion) {
             const versionMismatchWarningMessage = "Warning: Your After Effects version " + currentVersion +
-            " is not officially supported in the deadline-cloud conda channel. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
-            "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
+                " is not officially supported in the deadline-cloud conda channel. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
+                "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
 
             // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
             app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
@@ -1990,87 +1936,113 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         logger.debug("Defaulting to After Effects major version conda package to minimize incompatibility issues.");
     }
 
+
     var aftereffectsCondaVersion = dcUtil.getAEVersion();
     if (SUPPORTED_VERSIONS.indexOf(aftereffectsCondaVersion) === -1) {
         aftereffectsCondaVersion = Math.floor(aftereffectsCondaVersion);
     }
     logger.debug("The compatible version of After Effects is " + aftereffectsCondaVersion, submitBundleFile);
 
-    /**
-     * Generates parameter_values json file
-     **/
-    function generateParameterValues(bundlePath, outputFolder, outputFileName, isImageSeq) {
-        var parametersOutDir = bundlePath + "/parameter_values.json";
-        writeFile(
-            parametersOutDir,
-            JSON.stringify(
-                parameterValues(
-                    renderQueueIndex,
-                    app.project.file.fsName,
-                    outputFolder,
-                    outputFileName,
-                    isImageSeq,
-                    startFrame,
-                    endFrame,
-                    framesPerTask,
-                    multiFrameRendering,
-                    maxCpuUsagePercentage
-                ),
-                null,
-                4,
-            )
-        );
+
+    const bundle = generateBundle();
+    const jobAssetReferences = {
+        assetReferences: {
+            inputs: {
+                directories: [],
+                filenames: [],
+            },
+            outputs: {
+                directories: [],
+            },
+            referencedPaths: [],
+        },
+    };
+    const jobParameterDefinitions = {
+        "parameterDefinitions": [{
+                "name": "ProjectFile",
+                "type": "PATH",
+                "objectType": "FILE",
+                "dataFlow": "IN",
+                "userInterface": {
+                    "control": "CHOOSE_INPUT_FILE",
+                    "label": "Project file",
+                    "groupLabel": "Source",
+                    "fileFilters": [{
+                            "label": "After Effects project files",
+                            "patterns": [
+                                "*.aep",
+                                "*.aepx"
+                            ]
+                        },
+                        {
+                            "label": "All Files",
+                            "patterns": [
+                                "*"
+                            ]
+                        }
+                    ]
+                },
+                "description": "The After Effects project file to render."
+            },
+            {
+                "name": "JobScriptDir",
+                "description": "Directory containing embedded scripts.",
+                "userInterface": {
+                    "control": "HIDDEN"
+                },
+                "type": "PATH",
+                "objectType": "DIRECTORY",
+                "dataFlow": "IN",
+                "default": "scripts"
+            },
+            {
+                "name": "CondaPackages",
+                "type": "STRING",
+                "userInterface": {
+                    "control": "HIDDEN"
+                },
+                "default": "aftereffects=" + aftereffectsCondaVersion,
+                "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
+            }
+        ]
+    }
+    const jobParameterValues = {
+        parameterValues: [{
+                name: "deadline:targetTaskRunStatus",
+                value: "READY",
+            },
+            {
+                name: "deadline:maxFailedTasksCount",
+                value: 20,
+            },
+            {
+                name: "deadline:maxRetriesPerTask",
+                value: 5,
+            },
+            {
+                name: "deadline:priority",
+                value: 50,
+            },
+            {
+                name: "ProjectFile",
+                value: app.project.file.fsName,
+            },
+        ]
     }
 
-    /**
-     * Generates job template json file
-     **/
-    function generateTemplate(bundlePath, isImageSeq) {
-        // Open the template depending on the output type
-        var path = bundlePath + "/video_template.json";
-        if (isImageSeq) {
-            path = bundlePath + "/image_template.json";
-        }
-        var templateContents = readFile(path);
-        // Parse the template string to a JSON object
-        var templateObject = JSON.parse(templateContents);
-        templateObject.name = File.decode(app.project.file.name) + " [" + compName + "]";
-        logger.debug("The template name is " + templateObject.name, submitBundleFile);
-        try {
-            if (templateObject.steps[0].name) {
-                templateObject.steps[0].name = compName;
-                logger.debug("The step name is " + templateObject.steps[0].name, submitBundleFile);
-            }
-        } catch (e) {
-            adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
-            logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
-        }
-        try {
-            if (templateObject.steps[0].script && templateObject.steps[0].script.actions) {
-                // Add timeout to the onRun action
-                if (templateObject.steps[0].script.actions.onRun) {
-                    templateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
-                    logger.debug("Added timeout of " + taskTimeoutSeconds + " seconds to onRun action", submitBundleFile);
-                }
-            }
-        } catch (e) {
-            adcAlert("Error accessing the template's actions. \nPlease check your template.json.", true);
-            logger.debug("Error accessing the template's actions: " + e.message, submitBundleFile);
-        }
-
-        var aftereffectsCondaVersion = dcUtil.getAEVersion();
-        if (SUPPORTED_VERSIONS.indexOf(aftereffectsCondaVersion) === -1) {
-            aftereffectsCondaVersion = Math.floor(aftereffectsCondaVersion);
-        }
-        logger.debug("The compatible version of After Effects is " + aftereffectsCondaVersion, submitBundleFile);
+    const template = loadDefaultJobTemplate(bundle.fsName, submitBundleFile);
+    template.steps = []
+    template.parameterDefinitions = jobParameterDefinitions.parameterDefinitions
 
     // generateTemplate(bundle.fsName, isImageSeq, compName, submitBundleFile);
     const stepOutputFolderParameters = [];
 
-        for (var i = paramDefCopy.length - 1; i >= 0; i--) {
-            if (paramDefCopy[i].name == "CondaPackages") {
-                paramDefCopy[i].default = "aftereffects=" + aftereffectsCondaVersion;
-            }
+    for (var i = 0; i < renderQueueItems.length; i++) {
+        var renderQueueItem = renderQueueItems[i][0];
+        var renderQueueIndex = renderQueueItems[i][1];
+
+        if (!validateRenderQueueItemOutputModule(renderQueueItem)) {
+            return;
         }
 
         var stepFramesPerTask = parseInt(selectionSettings.get(renderQueueItem.comp.id).framesPerTask() || framesPerTask)
@@ -2115,7 +2087,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         logger.debug("sanitizedOutputFileName is " + sanitizedOutputFileName, submitBundleFile);
 
         // Push step asset references
-        for (var d=0;d<dependencies.length;d++) {
+        for (var d = 0; d < dependencies.length; d++) {
             jobAssetReferences.assetReferences.inputs.filenames.push(dependencies[d])
         }
         jobAssetReferences.assetReferences.outputs.directories.push(sanitizedOutputFolder)
@@ -2133,7 +2105,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             stepMaxCpuUsagePercentage
         )
 
-        for (var p=0;p<parameterValues.parameterValues.length;p++) {
+        for (var p = 0; p < parameterValues.parameterValues.length; p++) {
             if (jobParameterValues.parameterValues.indexOf(parameterValues.parameterValues[p]) === -1) {
                 jobParameterValues.parameterValues.push(parameterValues.parameterValues[p])
             }
@@ -2142,13 +2114,13 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         stepOutputFolderParameters.push("{{Param." + compName + "_OutputDir}}")
 
         var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, compName, taskTimeoutSeconds)
-        for (var s=0;s<stepTemplate.steps.length;s++) {
+        for (var s = 0; s < stepTemplate.steps.length; s++) {
             template.steps.push(stepTemplate.steps[s])
         }
         var stepParameters = generateStepParameterFragment(bundle.fsName, isImageSeq, compName)
-        for (var p=0;p<stepParameters.parameterDefinitions.length;p++) {
+        for (var p = 0; p < stepParameters.parameterDefinitions.length; p++) {
             var parameterExists = false;
-            for (var tpd=0;tpd<template.parameterDefinitions.length;tpd++) {
+            for (var tpd = 0; tpd < template.parameterDefinitions.length; tpd++) {
                 var templateParameterDefinition = template.parameterDefinitions[tpd];
                 var stepParameterDefinition = stepParameters.parameterDefinitions[p];
                 if (templateParameterDefinition.name == stepParameterDefinition.name) {
@@ -2164,9 +2136,9 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     const generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","))
     template.jobEnvironments = generatedJobEnvironment.jobEnvironments
 
-    writeFile(bundle.fsName + "/asset_references.json",JSON.stringify(jobAssetReferences, null, 4));
+    writeFile(bundle.fsName + "/asset_references.json", JSON.stringify(jobAssetReferences, null, 4));
 
-    writeFile(bundle.fsName + "/parameter_values.json",JSON.stringify(jobParameterValues, null, 4));
+    writeFile(bundle.fsName + "/parameter_values.json", JSON.stringify(jobParameterValues, null, 4));
 
     writeFile(bundle.fsName + "/template.json", JSON.stringify(template, null, 4));
     logger.debug("Wrote the template.json file to the bundle folder " + bundle.fsName, submitBundleFile);
@@ -2796,6 +2768,61 @@ if (typeof JSON !== "object") {
 
 
 
+function populateListBoxItem(item, renderQueueItem, index) {
+    item.renderQueueIndex = index;
+    item.compId = renderQueueItem.comp.id;
+    item.subItems[0].text = renderQueueItem.comp.name;
+
+    const renderSettings = renderQueueItem.getSettings(GetSettingsFormat.STRING_SETTABLE);
+    const startFrame = Number(timeToFrames(Number(renderSettings["Time Span Start"]), Number(renderSettings["Use this frame rate"])));
+    const endFrame = Number(timeToFrames(Number(renderSettings["Time Span End"]), Number(renderSettings["Use this frame rate"]))) - 1; //end frame is inclusive so we subtract 1
+
+    item.subItems[1].text = startFrame == endFrame ? startFrame.toString() : startFrame + "-" + endFrame;
+    if (renderQueueItem.numOutputModules <= 0) {
+        item.subItems[2].text = "<not set>";
+    } else if (renderQueueItem.numOutputModules == 1) {
+        const outputFile = renderQueueItem.outputModule(1).file;
+        item.subItems[2].text = outputFile == null ? "<not set>" : outputFile.fsName;
+    } else {
+        item.subItems[2].text = "<multiple output modules>";
+    }
+}
+
+
+function refreshList(listBox, uiSettingsState) {
+    listBox.removeAll();
+    const framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK) || "50"
+    const multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)
+    const maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)
+
+    const InvalidRenderQueueItemStatuses = [
+        RQItemStatus.RENDERING,
+        RQItemStatus.WILL_CONTINUE,
+        RQItemStatus.USER_STOPPED,
+        RQItemStatus.ERR_STOPPED,
+        RQItemStatus.DONE
+    ]
+    for (var index = 1; index <= app.project.renderQueue.numItems; index++) {
+        var renderQueueItem = app.project.renderQueue.item(index);
+        if (renderQueueItem == null) {
+            continue;
+        }
+
+        if (InvalidRenderQueueItemStatuses.indexOf(renderQueueItem.status) !== -1) {
+            // Status is in InvalidRenderQueueItemStatuses.
+            continue;
+        }
+
+        var item = listBox.add('item', index.toString());
+        populateListBoxItem(item, renderQueueItem, index);
+        // TODO: Value
+
+        uiSettingsState.create(item.compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage);
+    }
+
+    listBox.selection = null;
+}
+
 /**
  * Builds the Script UI for the Deadline Cloud Submitter
  **/
@@ -2979,6 +3006,42 @@ function buildUI(thisObj) {
     }
     maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
 
+    // Disable max CPU percentage textbox when multi frame rendering is disabled
+    function onMfrCheckBoxClicked() {
+        const isMfrChecked = mfrCheckBox.value;
+        var settingsStateValue = false
+        if (!isMfrChecked) {
+            maxCpuUsagePercentageTextBox.text = "N/A";
+            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
+            settingsStateValue = false
+        } else {
+            maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
+            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "true");
+            settingsStateValue = true
+        }
+
+        maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
+
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
+            uiSettingsState.get(selectionItem.compId).setMultiFrameRendering(settingsStateValue)
+        }
+    }
+    mfrCheckBox.onClick = onMfrCheckBoxClicked;
+
+    function isRenderQueueItemImageOutput(renderQueueItem) {
+        if (renderQueueItem.numOutputModules === 1) {
+            const outputModule = renderQueueItem.outputModule(1).file;
+            if (outputModule != null) {
+                const outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
+                const extension = getFileExtension(outputFileNameNoRegex);
+                return isImageOutput(extension);
+            }
+        }
+        return false
+    }
+
+
     // Add Timeouts settings group
     const timeoutsPanel = settingsGroup.add("panel", undefined, "Timeouts");
     timeoutsPanel.orientation = "column";
@@ -3062,123 +3125,18 @@ function buildUI(thisObj) {
     }
     taskRunMinutesInput.onChange = onTaskRunMinutesChanged
 
-    // Disable max CPU percentage textbox when multi frame rendering is disabled
-    function onMfrCheckBoxClicked() {
-        const isMfrChecked = mfrCheckBox.value;
-        var settingsStateValue = false
-        if (!isMfrChecked) {
-            maxCpuUsagePercentageTextBox.text = "N/A";
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-            settingsStateValue = false
-        } else {
-            maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "true");
-            settingsStateValue = true
-        }
-
-        maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setMultiFrameRendering(settingsStateValue)
-        }
-    }
-    mfrCheckBox.onClick = onMfrCheckBoxClicked;
-
-    function isRenderQueueItemImageOutput(renderQueueItem) {
-        if (renderQueueItem.numOutputModules === 1) {
-            const outputModule = renderQueueItem.outputModule(1).file;
-            if (outputModule != null) {
-                const outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
-                const extension = getFileExtension(outputFileNameNoRegex);
-                return isImageOutput(extension);
+    // Check for duplicate names
+    function checkForInvalidCompositionNames(selection) {
+        const names = [];
+        const duplicateNames = [];
+        for (var i = 0; i < selection.length; i++) {
+            var selectionItem = selection[i];
+            var renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex);
+            var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
+            if (names.indexOf(compName) !== -1) {
+                duplicateNames.push(renderQueueItem.comp.name);
             }
-        }
-        return false
-    }
-
-    // Add Timeouts settings group
-    const timeoutsPanel = settingsGroup.add("panel", undefined, "Timeouts");
-    timeoutsPanel.orientation = "column";
-    timeoutsPanel.alignment = ['fill', 'top'];
-    timeoutsPanel.alignChildren = ['left', 'center'];
-    timeoutsPanel.margins = 5;
-
-    // Task run timeout
-    const taskRunGroup = timeoutsPanel.add("group");
-    taskRunGroup.orientation = "row";
-    taskRunGroup.alignment = ['fill', 'top'];
-    taskRunGroup.alignChildren = ['left', 'center'];
-
-    const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
-    taskRunCheckbox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
-
-    const taskRunDaysGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS));
-    taskRunDaysInput.characters = 3;
-    taskRunDaysGroup.add("statictext", undefined, "days");
-
-    const taskRunHoursGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS));
-    taskRunHoursInput.characters = 3;
-    taskRunHoursGroup.add("statictext", undefined, "hours");
-
-    const taskRunMinutesGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES));
-    taskRunMinutesInput.characters = 3;
-    taskRunMinutesGroup.add("statictext", undefined, "minutes");
-
-    // Function to validate timeout values
-    function validateTimeoutValues() {
-        // Check if all values are zero when checkbox is checked
-        if (taskRunCheckbox.value) {
-            var days = parseInt(taskRunDaysInput.text) || 0;
-            var hours = parseInt(taskRunHoursInput.text) || 0;
-            var minutes = parseInt(taskRunMinutesInput.text) || 0;
-
-            if (days === 0 && hours === 0 && minutes === 0) {
-                adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
-                // Set days back to default value of 2
-                taskRunDaysInput.text = "2";
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Add input validation and save values to settings
-    taskRunCheckbox.onClick = function() {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, dcUtil.toBooleanString(this.value));
-        if (this.value) {
-            validateTimeoutValues();
-        }
-    };
-
-    taskRunDaysInput.onChange = function() {
-        this.text = this.text.replace(/[^0-9]/g, "");
-        if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, this.text);
-        validateTimeoutValues();
-    };
-
-    taskRunHoursInput.onChange = function() {
-        this.text = this.text.replace(/[^0-9]/g, "");
-        if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, this.text);
-        validateTimeoutValues();
-    };
-
-    taskRunMinutesInput.onChange = function() {
-        this.text = this.text.replace(/[^0-9]/g, "");
-        if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, this.text);
-        validateTimeoutValues();
-    };
-
-    // If an image sequence was selected, enable frames per task textbox. Otherwise disable it.
-    function isFramesPerTaskEnabled(selection) {
-        if (selection == null) {
-            return false;
+            names.push(compName);
         }
         if (duplicateNames.length !== 0) {
             var message = "Selected submission items must have unique names. Found (" + duplicateNames.length * 2 + ") compositions with the same name: "
@@ -3199,10 +3157,13 @@ function buildUI(thisObj) {
             if (mfrCheckBox.value) {
                 maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
             }
+            if (checkForInvalidCompositionNames(list.selection)) {
+                return
+            }
             if (taskRunCheckbox.value) {
-                SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, parseInt(taskRunDaysInput.text), parseInt(taskRunHoursInput.text), parseInt(taskRunMinutesInput.text));
+                SubmitSelection(list.selection, uiSettingsState, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, parseInt(taskRunDaysInput.text), parseInt(taskRunHoursInput.text), parseInt(taskRunMinutesInput.text));
             } else {
-                SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, 2, 0, 0);
+                SubmitSelection(list.selection, uiSettingsState, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, 2, 0, 0);
             }
             list.selection = null;
         }

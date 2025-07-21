@@ -1,3 +1,58 @@
+function populateListBoxItem(item, renderQueueItem, index) {
+    item.renderQueueIndex = index;
+    item.compId = renderQueueItem.comp.id;
+    item.subItems[0].text = renderQueueItem.comp.name;
+
+    const renderSettings = renderQueueItem.getSettings(GetSettingsFormat.STRING_SETTABLE);
+    const startFrame = Number(timeToFrames(Number(renderSettings["Time Span Start"]), Number(renderSettings["Use this frame rate"])));
+    const endFrame = Number(timeToFrames(Number(renderSettings["Time Span End"]), Number(renderSettings["Use this frame rate"]))) - 1; //end frame is inclusive so we subtract 1
+
+    item.subItems[1].text = startFrame == endFrame ? startFrame.toString() : startFrame + "-" + endFrame;
+    if (renderQueueItem.numOutputModules <= 0) {
+        item.subItems[2].text = "<not set>";
+    } else if (renderQueueItem.numOutputModules == 1) {
+        const outputFile = renderQueueItem.outputModule(1).file;
+        item.subItems[2].text = outputFile == null ? "<not set>" : outputFile.fsName;
+    } else {
+        item.subItems[2].text = "<multiple output modules>";
+    }
+}
+
+
+function refreshList(listBox, uiSettingsState) {
+    listBox.removeAll();
+    const framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK) || "50"
+    const multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)
+    const maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)
+
+    const InvalidRenderQueueItemStatuses = [
+        RQItemStatus.RENDERING,
+        RQItemStatus.WILL_CONTINUE,
+        RQItemStatus.USER_STOPPED,
+        RQItemStatus.ERR_STOPPED,
+        RQItemStatus.DONE
+    ]
+    for (var index = 1; index <= app.project.renderQueue.numItems; index++) {
+        var renderQueueItem = app.project.renderQueue.item(index);
+        if (renderQueueItem == null) {
+            continue;
+        }
+
+        if (InvalidRenderQueueItemStatuses.indexOf(renderQueueItem.status) !== -1) {
+            // Status is in InvalidRenderQueueItemStatuses.
+            continue;
+        }
+
+        var item = listBox.add('item', index.toString());
+        populateListBoxItem(item, renderQueueItem, index);
+        // TODO: Value
+
+        uiSettingsState.create(item.compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage);
+    }
+
+    listBox.selection = null;
+}
+
 /**
  * Builds the Script UI for the Deadline Cloud Submitter
  **/
@@ -181,6 +236,42 @@ function buildUI(thisObj) {
     }
     maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
 
+    // Disable max CPU percentage textbox when multi frame rendering is disabled
+    function onMfrCheckBoxClicked() {
+        const isMfrChecked = mfrCheckBox.value;
+        var settingsStateValue = false
+        if (!isMfrChecked) {
+            maxCpuUsagePercentageTextBox.text = "N/A";
+            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
+            settingsStateValue = false
+        } else {
+            maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
+            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "true");
+            settingsStateValue = true
+        }
+
+        maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
+
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
+            uiSettingsState.get(selectionItem.compId).setMultiFrameRendering(settingsStateValue)
+        }
+    }
+    mfrCheckBox.onClick = onMfrCheckBoxClicked;
+
+    function isRenderQueueItemImageOutput(renderQueueItem) {
+        if (renderQueueItem.numOutputModules === 1) {
+            const outputModule = renderQueueItem.outputModule(1).file;
+            if (outputModule != null) {
+                const outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
+                const extension = getFileExtension(outputFileNameNoRegex);
+                return isImageOutput(extension);
+            }
+        }
+        return false
+    }
+
+
     // Add Timeouts settings group
     const timeoutsPanel = settingsGroup.add("panel", undefined, "Timeouts");
     timeoutsPanel.orientation = "column";
@@ -264,123 +355,18 @@ function buildUI(thisObj) {
     }
     taskRunMinutesInput.onChange = onTaskRunMinutesChanged
 
-    // Disable max CPU percentage textbox when multi frame rendering is disabled
-    function onMfrCheckBoxClicked() {
-        const isMfrChecked = mfrCheckBox.value;
-        var settingsStateValue = false
-        if (!isMfrChecked) {
-            maxCpuUsagePercentageTextBox.text = "N/A";
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-            settingsStateValue = false
-        } else {
-            maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "true");
-            settingsStateValue = true
-        }
-
-        maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setMultiFrameRendering(settingsStateValue)
-        }
-    }
-    mfrCheckBox.onClick = onMfrCheckBoxClicked;
-
-    function isRenderQueueItemImageOutput(renderQueueItem) {
-        if (renderQueueItem.numOutputModules === 1) {
-            const outputModule = renderQueueItem.outputModule(1).file;
-            if (outputModule != null) {
-                const outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
-                const extension = getFileExtension(outputFileNameNoRegex);
-                return isImageOutput(extension);
+    // Check for duplicate names
+    function checkForInvalidCompositionNames(selection) {
+        const names = [];
+        const duplicateNames = [];
+        for (var i = 0; i < selection.length; i++) {
+            var selectionItem = selection[i];
+            var renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex);
+            var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
+            if (names.indexOf(compName) !== -1) {
+                duplicateNames.push(renderQueueItem.comp.name);
             }
-        }
-        return false
-    }
-
-    // Add Timeouts settings group
-    const timeoutsPanel = settingsGroup.add("panel", undefined, "Timeouts");
-    timeoutsPanel.orientation = "column";
-    timeoutsPanel.alignment = ['fill', 'top'];
-    timeoutsPanel.alignChildren = ['left', 'center'];
-    timeoutsPanel.margins = 5;
-
-    // Task run timeout
-    const taskRunGroup = timeoutsPanel.add("group");
-    taskRunGroup.orientation = "row";
-    taskRunGroup.alignment = ['fill', 'top'];
-    taskRunGroup.alignChildren = ['left', 'center'];
-
-    const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
-    taskRunCheckbox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
-
-    const taskRunDaysGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS));
-    taskRunDaysInput.characters = 3;
-    taskRunDaysGroup.add("statictext", undefined, "days");
-
-    const taskRunHoursGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS));
-    taskRunHoursInput.characters = 3;
-    taskRunHoursGroup.add("statictext", undefined, "hours");
-
-    const taskRunMinutesGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES));
-    taskRunMinutesInput.characters = 3;
-    taskRunMinutesGroup.add("statictext", undefined, "minutes");
-
-    // Function to validate timeout values
-    function validateTimeoutValues() {
-        // Check if all values are zero when checkbox is checked
-        if (taskRunCheckbox.value) {
-            var days = parseInt(taskRunDaysInput.text) || 0;
-            var hours = parseInt(taskRunHoursInput.text) || 0;
-            var minutes = parseInt(taskRunMinutesInput.text) || 0;
-
-            if (days === 0 && hours === 0 && minutes === 0) {
-                adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
-                // Set days back to default value of 2
-                taskRunDaysInput.text = "2";
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Add input validation and save values to settings
-    taskRunCheckbox.onClick = function() {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, dcUtil.toBooleanString(this.value));
-        if (this.value) {
-            validateTimeoutValues();
-        }
-    };
-
-    taskRunDaysInput.onChange = function() {
-        this.text = this.text.replace(/[^0-9]/g, "");
-        if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, this.text);
-        validateTimeoutValues();
-    };
-
-    taskRunHoursInput.onChange = function() {
-        this.text = this.text.replace(/[^0-9]/g, "");
-        if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, this.text);
-        validateTimeoutValues();
-    };
-
-    taskRunMinutesInput.onChange = function() {
-        this.text = this.text.replace(/[^0-9]/g, "");
-        if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, this.text);
-        validateTimeoutValues();
-    };
-
-    // If an image sequence was selected, enable frames per task textbox. Otherwise disable it.
-    function isFramesPerTaskEnabled(selection) {
-        if (selection == null) {
-            return false;
+            names.push(compName);
         }
         if (duplicateNames.length !== 0) {
             var message = "Selected submission items must have unique names. Found (" + duplicateNames.length * 2 + ") compositions with the same name: "
@@ -401,10 +387,13 @@ function buildUI(thisObj) {
             if (mfrCheckBox.value) {
                 maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
             }
+            if (checkForInvalidCompositionNames(list.selection)) {
+                return
+            }
             if (taskRunCheckbox.value) {
-                SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, parseInt(taskRunDaysInput.text), parseInt(taskRunHoursInput.text), parseInt(taskRunMinutesInput.text));
+                SubmitSelection(list.selection, uiSettingsState, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, parseInt(taskRunDaysInput.text), parseInt(taskRunHoursInput.text), parseInt(taskRunMinutesInput.text));
             } else {
-                SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, 2, 0, 0);
+                SubmitSelection(list.selection, uiSettingsState, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, 2, 0, 0);
             }
             list.selection = null;
         }
