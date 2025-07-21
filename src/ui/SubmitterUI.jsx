@@ -259,7 +259,6 @@ function buildUI(thisObj) {
         if (!isMfrChecked) {
             maxCpuUsagePercentageTextBox.text = "N/A";
             app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-            settingsStateValue = false
         } else {
             maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
             app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "true");

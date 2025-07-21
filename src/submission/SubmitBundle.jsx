@@ -370,7 +370,6 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     template.steps = []
     template.parameterDefinitions = jobParameterDefinitions.parameterDefinitions
 
-    // generateTemplate(bundle.fsName, isImageSeq, compName, submitBundleFile);
     const stepOutputFolderParameters = [];
 
     for (var i = 0; i < renderQueueItems.length; i++) {

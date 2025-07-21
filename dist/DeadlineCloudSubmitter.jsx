@@ -782,6 +782,7 @@ function __generateUtil() {
         for (var s = 0; s < list.selection.length; s++) {
             return list.selection[s];
         }
+        return list.selection[0];
     }
 
     return {
@@ -2034,7 +2035,6 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     template.steps = []
     template.parameterDefinitions = jobParameterDefinitions.parameterDefinitions
 
-    // generateTemplate(bundle.fsName, isImageSeq, compName, submitBundleFile);
     const stepOutputFolderParameters = [];
 
     for (var i = 0; i < renderQueueItems.length; i++) {
@@ -3029,7 +3029,6 @@ function buildUI(thisObj) {
         if (!isMfrChecked) {
             maxCpuUsagePercentageTextBox.text = "N/A";
             app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-            settingsStateValue = false
         } else {
             maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
             app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "true");

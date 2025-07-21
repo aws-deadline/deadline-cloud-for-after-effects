@@ -778,6 +778,7 @@ function __generateUtil() {
         for (var s = 0; s < list.selection.length; s++) {
             return list.selection[s];
         }
+        return list.selection[0];
     }
 
     return {
