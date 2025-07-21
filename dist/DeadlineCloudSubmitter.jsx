@@ -756,8 +756,7 @@ function __generateUtil() {
          */
         const startFrame = Number(rqi.comp.displayStartFrame);
         // Calculate number of frames using timeSpanDuration and frameRate
-        const timeSpanDuration = rqi.timeSpanDuration || rqi.comp.duration;
-        const numFrames = Math.floor(timeSpanDuration * rqi.comp.frameRate);
+        const numFrames = Math.floor(rqi.timeSpanDuration * rqi.comp.frameRate);
         const endFrame = startFrame + numFrames - 1; // end frame is inclusive
 
         return {
