@@ -596,43 +596,43 @@ function __generateUtil() {
 
         const hostRequirements = {
             "attributes": [{
-                "name": "attr.worker.os.family",
-                "anyOf": [
-                    osGroup.OSDropdownList.selection.text.toLowerCase()
-                ]
-            },
-            {
-                "name": "attr.worker.cpu.arch",
-                "anyOf": [
-                    cpuArchGroup.cpuDropdownList.selection.text
-                ]
-            }
+                    "name": "attr.worker.os.family",
+                    "anyOf": [
+                        osGroup.OSDropdownList.selection.text.toLowerCase()
+                    ]
+                },
+                {
+                    "name": "attr.worker.cpu.arch",
+                    "anyOf": [
+                        cpuArchGroup.cpuDropdownList.selection.text
+                    ]
+                }
             ],
             "amounts": [{
-                "name": "amount.worker.vcpu",
-                "min": parseInt(cpuGroup.cpuMinText.text),
-                "max": parseInt(cpuGroup.cpuMaxText.text)
-            },
-            {
-                "name": "amount.worker.memory",
-                "min": parseInt(memoryGroup.memoryMinText.text) * 1024,
-                "max": parseInt(memoryGroup.memoryMaxText.text) * 1024
-            },
-            {
-                "name": "amount.worker.gpu",
-                "min": parseInt(gpuGroup.gpuMinText.text),
-                "max": parseInt(gpuGroup.gpuMaxText.text)
-            },
-            {
-                "name": "amount.worker.gpu.memory",
-                "min": parseInt(gpuMemoryGroup.gpuMemoryMinText.text) * 1024,
-                "max": parseInt(gpuMemoryGroup.gpuMemoryMaxText.text) * 1024
-            },
-            {
-                "name": "amount.worker.disk.scratch",
-                "min": parseInt(scratchSpaceGroup.scratchSpaceMinText.text),
-                "max": parseInt(scratchSpaceGroup.scratchSpaceMaxText.text)
-            }
+                    "name": "amount.worker.vcpu",
+                    "min": parseInt(cpuGroup.cpuMinText.text),
+                    "max": parseInt(cpuGroup.cpuMaxText.text)
+                },
+                {
+                    "name": "amount.worker.memory",
+                    "min": parseInt(memoryGroup.memoryMinText.text) * 1024,
+                    "max": parseInt(memoryGroup.memoryMaxText.text) * 1024
+                },
+                {
+                    "name": "amount.worker.gpu",
+                    "min": parseInt(gpuGroup.gpuMinText.text),
+                    "max": parseInt(gpuGroup.gpuMaxText.text)
+                },
+                {
+                    "name": "amount.worker.gpu.memory",
+                    "min": parseInt(gpuMemoryGroup.gpuMemoryMinText.text) * 1024,
+                    "max": parseInt(gpuMemoryGroup.gpuMemoryMaxText.text) * 1024
+                },
+                {
+                    "name": "amount.worker.disk.scratch",
+                    "min": parseInt(scratchSpaceGroup.scratchSpaceMinText.text),
+                    "max": parseInt(scratchSpaceGroup.scratchSpaceMaxText.text)
+                }
             ]
         }
 
@@ -749,7 +749,7 @@ function __generateUtil() {
          * @param {RenderQueueItem} rqi - The render queue item to calculate frames for
          * @returns {Object} Object containing startFrame and endFrame
          */
-         // NOTE: we're not using displayStartFrame since it is rounded up
+        // NOTE: we're not using displayStartFrame since it is rounded up
         const startFrame = Number(Math.floor(rqi.comp.displayStartTime * rqi.comp.frameRate));
         const numFrames = Number(Math.floor(rqi.timeSpanDuration * rqi.comp.frameRate));
         const endFrame = startFrame + numFrames - 1; // end frame is inclusive
@@ -760,109 +760,136 @@ function __generateUtil() {
         };
     }
 
-    return {
-        "invertObject": invertObject,
-        "toBooleanString": toBooleanString,
-        "parseBool": parseBool,
-        "trimIllegalChars": trimIllegalChars,
-        "sliderTextSync": sliderTextSync,
-        "changeTextValue": changeTextValue,
-        "changeSliderValue": changeSliderValue,
-        "checkGPUAccelType": checkGPUAccelType,
-        "spinBoxLimiterMin": spinBoxLimiterMin,
-        "spinBoxLimiterMax": spinBoxLimiterMax,
-        "getAssetsInScene": getAssetsInScene,
-        "editTextIntValidation": editTextIntValidation,
-        "getDescription": getDescription,
-        "wrappedCallSystem": wrappedCallSystem,
-        "parseErrorData": parseErrorData,
-        "parseVersionData": parseVersionData,
-        "createExportBundleDir": createExportBundleDir,
-        "removeLineBreak": removeLineBreak,
-        "setListBoxSelection": setListBoxSelection,
-        "getPath": getPath,
-        "getPartialExportDir": getPartialExportDir,
-        "collectHostRequirements": collectHostRequirements,
-        "deepCopy": deepCopy,
-        "getActiveComp": getActiveComp,
-        "normalizePath": normalizePath,
-        "normPath": normalizePath,
-        "enforceForwardSlashes": enforceForwardSlashes,
-        "removeIllegalCharacters": removeIllegalCharacters,
-        "removePercentageFromFileName": removePercentageFromFileName,
-        "getTempFile": getTempFile,
-        "getUserDirectory": getUserDirectory,
-        "getAEVersion": getAEVersion,
-        "getTempFolder": getTempFolder,
-        "calculateFrameRange": calculateFrameRange
+        function validateTimeoutValues(enabled, daysInput, hoursInput, minutesInput) {
+            if (enabled) {
+                var days = parseInt(daysInput.text) || 0;
+                var hours = parseInt(hoursInput.text) || 0;
+                var minutes = parseInt(minutesInput.text) || 0;
+
+                if (days === 0 && hours === 0 && minutes === 0) {
+                    adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
+                    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function getSelection(list) {
+            for (var s = 0; s < list.selection.length; s++) {
+                return list.selection[s];
+            }
+        }
+
+        return {
+            "invertObject": invertObject,
+            "toBooleanString": toBooleanString,
+            "parseBool": parseBool,
+            "trimIllegalChars": trimIllegalChars,
+            "sliderTextSync": sliderTextSync,
+            "changeTextValue": changeTextValue,
+            "changeSliderValue": changeSliderValue,
+            "checkGPUAccelType": checkGPUAccelType,
+            "spinBoxLimiterMin": spinBoxLimiterMin,
+            "spinBoxLimiterMax": spinBoxLimiterMax,
+            "getAssetsInScene": getAssetsInScene,
+            "editTextIntValidation": editTextIntValidation,
+            "getDescription": getDescription,
+            "wrappedCallSystem": wrappedCallSystem,
+            "parseErrorData": parseErrorData,
+            "parseVersionData": parseVersionData,
+            "createExportBundleDir": createExportBundleDir,
+            "removeLineBreak": removeLineBreak,
+            "setListBoxSelection": setListBoxSelection,
+            "getPath": getPath,
+            "getPartialExportDir": getPartialExportDir,
+            "collectHostRequirements": collectHostRequirements,
+            "deepCopy": deepCopy,
+            "getActiveComp": getActiveComp,
+            "normalizePath": normalizePath,
+            "normPath": normalizePath,
+            "enforceForwardSlashes": enforceForwardSlashes,
+            "removeIllegalCharacters": removeIllegalCharacters,
+            "removePercentageFromFileName": removePercentageFromFileName,
+            "getTempFile": getTempFile,
+            "getUserDirectory": getUserDirectory,
+            "getAEVersion": getAEVersion,
+            "getTempFolder": getTempFolder,
+            "calculateFrameRange": calculateFrameRange
+            "validateTimeoutValues": validateTimeoutValues,
+            "getSelection": getSelection,
+            "getTempFolder": getTempFolder
     }
+
 }
+
+
 
 dcUtil = __generateUtil();
 
 
-// Global constants, wrapped with if-blocks to ensure they are only defined once
-// to avoid errors due to redeclaration
-if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
-    const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
-}
-if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
-    const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
-}
-if (typeof SUPPORTED_VERSIONS === "undefined") {
-    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
-}
-if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
-    const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
-}
-if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
-    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
-}
-if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
-    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
-}
-if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
-    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
-}
-if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
-    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
-}
+                        // Global constants, wrapped with if-blocks to ensure they are only defined once
+                        // to avoid errors due to redeclaration
+                        if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
+                            const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
+                        }
+                        if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
+                            const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
+                        }
+                        if (typeof SUPPORTED_VERSIONS === "undefined") {
+                            const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
+                        }
+                        if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
+                            const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
+                        }
+                        if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
+                            const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
+                        }
+                        if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
+                            const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
+                        }
+                        if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
+                            const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
+                        }
+                        if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+                            const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
+                        }
+                        if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+                            const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
+                        }
+                        if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+                            const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
+                        }
+                        if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+                            const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
+                        }
+                        if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+                            const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
+                        }
+                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
+                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+                        }
+                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
+                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
+                        }
+                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
+                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
+                        }
+                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
+                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
+                        }
+                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
+                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
+                        }
+                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
+                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
+                        }
+                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
+                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
+                        }
+                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
+                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
+                        }
+                        if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
+                            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
+                        }

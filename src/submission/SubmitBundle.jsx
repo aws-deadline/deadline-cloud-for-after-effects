@@ -143,7 +143,7 @@ function generateStepParameterFragment(bundlePath, isImageSeq, compName) {
 
 // Generates the step chunk of the template for each step by loading the `step_<>_fragment.json`
 //      Replacing the parmaeters to be pointing to our per-CompName parameters and updating any parameters in the onRun
-function generateStepTemplateFragment(bundlePath, isImageSeq, compName) {
+function generateStepTemplateFragment(bundlePath, isImageSeq, compName, taskTimeoutSeconds) {
     var path = bundlePath + "/step_video_fragment.json";
     if (isImageSeq) {
         path = bundlePath + "/step_image_fragment.json";
@@ -169,6 +169,10 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, compName) {
         replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + compName + "_"))
     }
     stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs
+    if (templateObject.steps[0].script.actions.onRun) {
+        templateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
+        logger.debug("Added timeout of " + taskTimeoutSeconds + " seconds to onRun action", submitBundleFile);
+    }
 
     return stepTemplateObject
 }
@@ -468,7 +472,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
 
         stepOutputFolderParameters.push("{{Param." + compName + "_OutputDir}}")
 
-        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, compName)
+        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, compName, taskTimeoutSeconds)
         for (var s=0;s<stepTemplate.steps.length;s++) {
             template.steps.push(stepTemplate.steps[s])
         }

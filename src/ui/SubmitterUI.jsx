@@ -129,11 +129,11 @@ function buildUI(thisObj) {
             framesPerTaskTextBox.text = newFramesPerTaskValue;
         }
         app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskTextBox.text);
-        for (var s = 0; s < list.selection.length; s++) {
-            if (list.selection == null) {
-                return;
-            }
-            const selectionItem = list.selection[s];
+        if (list.selection == null) {
+            return;
+        }
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
             uiSettingsState.get(selectionItem.compId).setFramesPerTask(framesPerTaskTextBox.text)
         }
     }
@@ -174,12 +174,95 @@ function buildUI(thisObj) {
             maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageValue;
         }
         app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, maxCpuUsagePercentageTextBox.text);
-        for (var s = 0; s < list.selection.length; s++) {
-            const selectionItem = list.selection[s];
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
             uiSettingsState.get(selectionItem.compId).setMaxCpuUsagePercentage(maxCpuUsagePercentageTextBox.text)
         }
     }
     maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
+
+    // Add Timeouts settings group
+    const timeoutsPanel = settingsGroup.add("panel", undefined, "Timeouts");
+    timeoutsPanel.orientation = "column";
+    timeoutsPanel.alignment = ['fill', 'top'];
+    timeoutsPanel.alignChildren = ['left', 'center'];
+    timeoutsPanel.margins = 5;
+
+    // Task run timeout
+    const taskRunGroup = timeoutsPanel.add("group");
+    taskRunGroup.orientation = "row";
+    taskRunGroup.alignment = ['fill', 'top'];
+    taskRunGroup.alignChildren = ['left', 'center'];
+
+    const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
+    taskRunCheckbox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
+
+    const taskRunDaysGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS));
+    taskRunDaysInput.characters = 3;
+    taskRunDaysGroup.add("statictext", undefined, "days");
+
+    const taskRunHoursGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS));
+    taskRunHoursInput.characters = 3;
+    taskRunHoursGroup.add("statictext", undefined, "hours");
+
+    const taskRunMinutesGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES));
+    taskRunMinutesInput.characters = 3;
+    taskRunMinutesGroup.add("statictext", undefined, "minutes");
+
+    // Add input validation and save values to settings
+    function onTaskRunCheckboxClicked() {
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, dcUtil.toBooleanString(this.value));
+        if (this.value) {
+            dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
+        }
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
+            uiSettingsState.get(selectionItem.compId).setTaskRunTimeout(this.value)
+        }
+    }
+    taskRunCheckbox.onClick = onTaskRunCheckboxClicked
+
+    function onTaskRunDaysChanged() {
+        this.text = this.text.replace(/[^0-9]/g, "");
+        if (this.text === "") this.text = "0";
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, this.text);
+        dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
+
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
+            uiSettingsState.get(selectionItem.compId).setTaskRunDays(this.text)
+        }
+    }
+    taskRunDaysInput.onChange = onTaskRunDaysChanged
+
+    function onTaskRunHoursChanged() {
+        this.text = this.text.replace(/[^0-9]/g, "");
+        if (this.text === "") this.text = "0";
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, this.text);
+        dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
+
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
+            uiSettingsState.get(selectionItem.compId).setTaskRunHours(this.text)
+        }
+    }
+    taskRunHoursInput.onChange = onTaskRunHoursChanged
+
+    function onTaskRunMinutesChanged() {
+        this.text = this.text.replace(/[^0-9]/g, "");
+        if (this.text === "") this.text = "0";
+        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, this.text);
+        dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
+
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
+            uiSettingsState.get(selectionItem.compId).setTaskRunMinutes(this.text)
+        }
+    }
+    taskRunMinutesInput.onChange = onTaskRunMinutesChanged
 
     // Disable max CPU percentage textbox when multi frame rendering is disabled
     function onMfrCheckBoxClicked() {
@@ -196,8 +279,8 @@ function buildUI(thisObj) {
         }
 
         maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
-        for (var s = 0; s < list.selection.length; s++) {
-            const selectionItem = list.selection[s];
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
             uiSettingsState.get(selectionItem.compId).setMultiFrameRendering(settingsStateValue)
         }
     }
