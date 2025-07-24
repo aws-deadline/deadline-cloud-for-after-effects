@@ -1,6 +1,7 @@
 function UiSettingsState() {
     this.settings = {}
 }
+
 function UiSettingsStore(name) {
     this.name = name;
     // _framesPerTask: string
@@ -19,66 +20,66 @@ function UiSettingsStore(name) {
     // _taskRunMinutes: string
     this._taskRunMinutes = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES);
 
-    this.framesPerTask = function () {
+    this.framesPerTask = function() {
         return this._framesPerTask
     }
-    this.setFramesPerTask = function (value) {
+    this.setFramesPerTask = function(value) {
         logger.warning("(" + this.name + ") Setting framesPerTask to " + value)
         this._framesPerTask = typeof value === "string" ? value : value.toString()
     }
 
-    this.multiFrameRendering = function () {
+    this.multiFrameRendering = function() {
         return this._multiFrameRendering
     }
-    this.setMultiFrameRendering = function (value) {
+    this.setMultiFrameRendering = function(value) {
         logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value)
         this._multiFrameRendering = typeof value === "boolean" ? value : (value === "true")
     }
 
-    this.maxCpuUsagePercentage = function () {
+    this.maxCpuUsagePercentage = function() {
         return this._maxCpuUsagePercentage
     }
-    this.setMaxCpuUsagePercentage = function (value) {
+    this.setMaxCpuUsagePercentage = function(value) {
         logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value)
         this._maxCpuUsagePercentage = typeof value === "string" ? value : value.toString()
     }
 
-    this.taskRunTimeout = function () {
+    this.taskRunTimeout = function() {
         return this._taskRunTimeout
     }
-    this.setTaskRunTimeout = function (value) {
+    this.setTaskRunTimeout = function(value) {
         logger.warning("(" + this.name + ") Setting taskRunTimeout to " + value)
         this._taskRunTimeout = typeof value === "boolean" ? value : (value === "true")
     }
 
-    this.taskRunDays = function () {
+    this.taskRunDays = function() {
         return this._taskRunDays
     }
-    this.setTaskRunDays = function (value) {
+    this.setTaskRunDays = function(value) {
         logger.warning("(" + this.name + ") Setting taskRunDays to " + value)
         this._taskRunDays = typeof value === "boolean" ? value : (value === "true")
     }
 
-    this.taskRunHours = function () {
+    this.taskRunHours = function() {
         return this._taskRunHours
     }
-    this.setTaskRunHours = function (value) {
+    this.setTaskRunHours = function(value) {
         logger.warning("(" + this.name + ") Setting taskRunHours to " + value)
         this._taskRunHours = typeof value === "boolean" ? value : (value === "true")
     }
 
-    this.taskRunMinutes = function () {
+    this.taskRunMinutes = function() {
         return this._taskRunMinutes
     }
-    this.setTaskRunMinutes = function (value) {
+    this.setTaskRunMinutes = function(value) {
         logger.warning("(" + this.name + ") Setting taskRunMinutes to " + value)
         this._taskRunMinutes = typeof value === "boolean" ? value : (value === "true")
     }
 }
 
-UiSettingsState.prototype.create = function (compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskRunTimeout, taskRunTimeoutDays, taskRunTimeoutHours, taskRunTimeoutMinutes) {
+UiSettingsState.prototype.create = function(compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskRunTimeout, taskRunTimeoutDays, taskRunTimeoutHours, taskRunTimeoutMinutes) {
     if (!this.settings[compId]) {
-        this.settings[compId] = new UiSettingsStore(compId)
+        this.settings[compId] = new UiSettingsStore(compId);
     }
     if (framesPerTask === undefined) {
         framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);

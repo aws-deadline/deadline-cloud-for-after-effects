@@ -4,8 +4,9 @@ function populateListBoxItem(item, renderQueueItem, index) {
     item.subItems[0].text = renderQueueItem.comp.name;
 
     const renderSettings = renderQueueItem.getSettings(GetSettingsFormat.STRING_SETTABLE);
-    const startFrame = Number(timeToFrames(Number(renderSettings["Time Span Start"]), Number(renderSettings["Use this frame rate"])));
-    const endFrame = Number(timeToFrames(Number(renderSettings["Time Span End"]), Number(renderSettings["Use this frame rate"]))) - 1; //end frame is inclusive so we subtract 1
+    var frameRange = dcUtil.calculateFrameRange(renderQueueItem);
+    var startFrame = frameRange.startFrame;
+    var endFrame = frameRange.endFrame;
 
     item.subItems[1].text = startFrame == endFrame ? startFrame.toString() : startFrame + "-" + endFrame;
     if (renderQueueItem.numOutputModules <= 0) {
@@ -427,14 +428,14 @@ function buildUI(thisObj) {
         newList.preferredSize.height = 400
         newList.preferredSize.width = 500
         for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
-            const rqi = app.project.renderQueue.item(i);
+            var rqi = app.project.renderQueue.item(i);
             if (rqi == null) {
                 continue;
             }
             if (rqi.status == RQItemStatus.RENDERING || rqi.status == RQItemStatus.WILL_CONTINUE || rqi.status == RQItemStatus.USER_STOPPED || rqi.status == RQItemStatus.ERR_STOPPED || rqi.status == RQItemStatus.DONE) {
                 continue;
             }
-            const item = newList.add('item', i.toString());
+            var item = newList.add('item', i.toString());
             item.renderQueueIndex = i;
             item.compId = rqi.comp.id;
             // Create a default entry for each comp as needed.
@@ -450,7 +451,7 @@ function buildUI(thisObj) {
             if (rqi.numOutputModules <= 0) {
                 item.subItems[2].text = "<not set>";
             } else if (rqi.numOutputModules == 1) {
-                const outputFile = rqi.outputModule(1).file;
+                var outputFile = rqi.outputModule(1).file;
                 item.subItems[2].text = outputFile == null ? "<not set>" : outputFile.fsName;
             } else {
                 item.subItems[2].text = "<multiple output modules>";

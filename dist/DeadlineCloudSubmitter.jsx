@@ -819,79 +819,80 @@ function __generateUtil() {
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
         "getTempFolder": getTempFolder,
-        "calculateFrameRange": calculateFrameRange "validateTimeoutValues": validateTimeoutValues,
+        "calculateFrameRange": calculateFrameRange,
+        "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
         "getTempFolder": getTempFolder
     }
+}
 
-    dcUtil = __generateUtil();
+dcUtil = __generateUtil();
 
 
-    // Global constants, wrapped with if-blocks to ensure they are only defined once
-    // to avoid errors due to redeclaration
-    if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
-        const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
-    }
-    if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
-        const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
-    }
-    if (typeof SUPPORTED_VERSIONS === "undefined") {
-        const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
-    }
-    if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
-        const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
-    }
-    if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
-        const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
-    }
-    if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
-        const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
-    }
-    if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
-        const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
-    }
-    if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
-        const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
-    }
-    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
-        const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
-    }
-    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
-        const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
-    }
-    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
-        const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
-    }
-    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
-        const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
-    }
+// Global constants, wrapped with if-blocks to ensure they are only defined once
+// to avoid errors due to redeclaration
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
+}
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
+}
+if (typeof SUPPORTED_VERSIONS === "undefined") {
+    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
+}
+if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
+    const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
+}
+if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
+    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
+}
+if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
+    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
+}
+if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
+    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
+}
+if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
 }
 
 
@@ -1075,6 +1076,7 @@ var logger = Logger(logFileName, logNormDirectoryPath);
 function UiSettingsState() {
     this.settings = {}
 }
+
 function UiSettingsStore(name) {
     this.name = name;
     // _framesPerTask: string
@@ -1093,66 +1095,66 @@ function UiSettingsStore(name) {
     // _taskRunMinutes: string
     this._taskRunMinutes = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES);
 
-    this.framesPerTask = function () {
+    this.framesPerTask = function() {
         return this._framesPerTask
     }
-    this.setFramesPerTask = function (value) {
+    this.setFramesPerTask = function(value) {
         logger.warning("(" + this.name + ") Setting framesPerTask to " + value)
         this._framesPerTask = typeof value === "string" ? value : value.toString()
     }
 
-    this.multiFrameRendering = function () {
+    this.multiFrameRendering = function() {
         return this._multiFrameRendering
     }
-    this.setMultiFrameRendering = function (value) {
+    this.setMultiFrameRendering = function(value) {
         logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value)
         this._multiFrameRendering = typeof value === "boolean" ? value : (value === "true")
     }
 
-    this.maxCpuUsagePercentage = function () {
+    this.maxCpuUsagePercentage = function() {
         return this._maxCpuUsagePercentage
     }
-    this.setMaxCpuUsagePercentage = function (value) {
+    this.setMaxCpuUsagePercentage = function(value) {
         logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value)
         this._maxCpuUsagePercentage = typeof value === "string" ? value : value.toString()
     }
 
-    this.taskRunTimeout = function () {
+    this.taskRunTimeout = function() {
         return this._taskRunTimeout
     }
-    this.setTaskRunTimeout = function (value) {
+    this.setTaskRunTimeout = function(value) {
         logger.warning("(" + this.name + ") Setting taskRunTimeout to " + value)
         this._taskRunTimeout = typeof value === "boolean" ? value : (value === "true")
     }
 
-    this.taskRunDays = function () {
+    this.taskRunDays = function() {
         return this._taskRunDays
     }
-    this.setTaskRunDays = function (value) {
+    this.setTaskRunDays = function(value) {
         logger.warning("(" + this.name + ") Setting taskRunDays to " + value)
         this._taskRunDays = typeof value === "boolean" ? value : (value === "true")
     }
 
-    this.taskRunHours = function () {
+    this.taskRunHours = function() {
         return this._taskRunHours
     }
-    this.setTaskRunHours = function (value) {
+    this.setTaskRunHours = function(value) {
         logger.warning("(" + this.name + ") Setting taskRunHours to " + value)
         this._taskRunHours = typeof value === "boolean" ? value : (value === "true")
     }
 
-    this.taskRunMinutes = function () {
+    this.taskRunMinutes = function() {
         return this._taskRunMinutes
     }
-    this.setTaskRunMinutes = function (value) {
+    this.setTaskRunMinutes = function(value) {
         logger.warning("(" + this.name + ") Setting taskRunMinutes to " + value)
         this._taskRunMinutes = typeof value === "boolean" ? value : (value === "true")
     }
 }
 
-UiSettingsState.prototype.create = function (compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskRunTimeout, taskRunTimeoutDays, taskRunTimeoutHours, taskRunTimeoutMinutes) {
+UiSettingsState.prototype.create = function(compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskRunTimeout, taskRunTimeoutDays, taskRunTimeoutHours, taskRunTimeoutMinutes) {
     if (!this.settings[compId]) {
-        this.settings[compId] = new UiSettingsStore(compId)
+        this.settings[compId] = new UiSettingsStore(compId);
     }
     if (framesPerTask === undefined) {
         framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
@@ -1191,7 +1193,6 @@ UiSettingsState.prototype.get = function(compId) {
     }
     return this.settings[compId]
 }
-
 
 
 var jobTemplateHelperFile = "JobTemplateHelper.json";
@@ -1907,11 +1908,6 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
         }
     }
 
-    // Calculate frame range using the utility function
-    const frameRange = dcUtil.calculateFrameRange(rqi);
-    const startFrame = frameRange.startFrame;
-    const endFrame = frameRange.endFrame;
-
     // Check if warning should be shown
     const ignoreWarning = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING) === "true";
     const savedVersion = parseFloat(app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION) || "0");
@@ -2060,20 +2056,10 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
         logger.debug("OutputFile is: " + outputFile, submitBundleFile);
         logger.debug("OutputFolder is: " + outputFolder, submitBundleFile);
 
-        var renderSettings = renderQueueItem.getSettings(GetSettingsFormat.STRING_SETTABLE);
-        var startFrame = Number(
-            timeToFrames(
-                Number(renderSettings["Time Span Start"]),
-                Number(renderSettings["Use this frame rate"])
-            )
-        );
-        var endFrame =
-            Number(
-                timeToFrames(
-                    Number(renderSettings["Time Span End"]),
-                    Number(renderSettings["Use this frame rate"])
-                )
-            ) - 1; // end frame is inclusive so we subtract 1
+        // Calculate frame range using the utility function
+        const frameRange = dcUtil.calculateFrameRange(renderQueueItem);
+        const startFrame = frameRange.startFrame;
+        const endFrame = frameRange.endFrame;
 
         var dependencies = findJobAttachments(renderQueueItem.comp); // list of filenames
         var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
@@ -2776,8 +2762,9 @@ function populateListBoxItem(item, renderQueueItem, index) {
     item.subItems[0].text = renderQueueItem.comp.name;
 
     const renderSettings = renderQueueItem.getSettings(GetSettingsFormat.STRING_SETTABLE);
-    const startFrame = Number(timeToFrames(Number(renderSettings["Time Span Start"]), Number(renderSettings["Use this frame rate"])));
-    const endFrame = Number(timeToFrames(Number(renderSettings["Time Span End"]), Number(renderSettings["Use this frame rate"]))) - 1; //end frame is inclusive so we subtract 1
+    var frameRange = dcUtil.calculateFrameRange(renderQueueItem);
+    var startFrame = frameRange.startFrame;
+    var endFrame = frameRange.endFrame;
 
     item.subItems[1].text = startFrame == endFrame ? startFrame.toString() : startFrame + "-" + endFrame;
     if (renderQueueItem.numOutputModules <= 0) {
@@ -3199,14 +3186,14 @@ function buildUI(thisObj) {
         newList.preferredSize.height = 400
         newList.preferredSize.width = 500
         for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
-            const rqi = app.project.renderQueue.item(i);
+            var rqi = app.project.renderQueue.item(i);
             if (rqi == null) {
                 continue;
             }
             if (rqi.status == RQItemStatus.RENDERING || rqi.status == RQItemStatus.WILL_CONTINUE || rqi.status == RQItemStatus.USER_STOPPED || rqi.status == RQItemStatus.ERR_STOPPED || rqi.status == RQItemStatus.DONE) {
                 continue;
             }
-            const item = newList.add('item', i.toString());
+            var item = newList.add('item', i.toString());
             item.renderQueueIndex = i;
             item.compId = rqi.comp.id;
             // Create a default entry for each comp as needed.
@@ -3222,7 +3209,7 @@ function buildUI(thisObj) {
             if (rqi.numOutputModules <= 0) {
                 item.subItems[2].text = "<not set>";
             } else if (rqi.numOutputModules == 1) {
-                const outputFile = rqi.outputModule(1).file;
+                var outputFile = rqi.outputModule(1).file;
                 item.subItems[2].text = outputFile == null ? "<not set>" : outputFile.fsName;
             } else {
                 item.subItems[2].text = "<multiple output modules>";

@@ -242,11 +242,6 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
         }
     }
 
-    // Calculate frame range using the utility function
-    const frameRange = dcUtil.calculateFrameRange(rqi);
-    const startFrame = frameRange.startFrame;
-    const endFrame = frameRange.endFrame;
-
     // Check if warning should be shown
     const ignoreWarning = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING) === "true";
     const savedVersion = parseFloat(app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION) || "0");
@@ -395,20 +390,10 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
         logger.debug("OutputFile is: " + outputFile, submitBundleFile);
         logger.debug("OutputFolder is: " + outputFolder, submitBundleFile);
 
-        var renderSettings = renderQueueItem.getSettings(GetSettingsFormat.STRING_SETTABLE);
-        var startFrame = Number(
-            timeToFrames(
-                Number(renderSettings["Time Span Start"]),
-                Number(renderSettings["Use this frame rate"])
-            )
-        );
-        var endFrame =
-            Number(
-                timeToFrames(
-                    Number(renderSettings["Time Span End"]),
-                    Number(renderSettings["Use this frame rate"])
-                )
-            ) - 1; // end frame is inclusive so we subtract 1
+        // Calculate frame range using the utility function
+        const frameRange = dcUtil.calculateFrameRange(renderQueueItem);
+        const startFrame = frameRange.startFrame;
+        const endFrame = frameRange.endFrame;
 
         var dependencies = findJobAttachments(renderQueueItem.comp); // list of filenames
         var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);

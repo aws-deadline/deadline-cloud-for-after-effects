@@ -815,77 +815,78 @@ function __generateUtil() {
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
         "getTempFolder": getTempFolder,
-        "calculateFrameRange": calculateFrameRange "validateTimeoutValues": validateTimeoutValues,
+        "calculateFrameRange": calculateFrameRange,
+        "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
         "getTempFolder": getTempFolder
     }
+}
 
-    dcUtil = __generateUtil();
+dcUtil = __generateUtil();
 
 
-    // Global constants, wrapped with if-blocks to ensure they are only defined once
-    // to avoid errors due to redeclaration
-    if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
-        const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
-    }
-    if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
-        const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
-    }
-    if (typeof SUPPORTED_VERSIONS === "undefined") {
-        const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
-    }
-    if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
-        const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
-    }
-    if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
-        const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
-    }
-    if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
-        const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
-    }
-    if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
-        const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
-    }
-    if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
-        const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
-    }
-    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
-        const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
-    }
-    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
-        const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
-    }
-    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
-        const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
-    }
-    if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
-        const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
-    }
-    if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
-    }
+// Global constants, wrapped with if-blocks to ensure they are only defined once
+// to avoid errors due to redeclaration
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
+}
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
+}
+if (typeof SUPPORTED_VERSIONS === "undefined") {
+    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
+}
+if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
+    const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
+}
+if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
+    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
+}
+if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
+    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
+}
+if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
+    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
+}
+if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
+}
+if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
+    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
 }
