@@ -1675,6 +1675,9 @@ for (var p = 0; p < JobParams.length; p++) {
 }
 var paramPatternRegex = new RegExp(paramPattern, 'g')
 
+if (typeof submitBundleFile == 'undefined') {
+    const submitBundleFile = "SubmitButton.jsx";
+}
 
 // Validate that the RenderQueueIndex for each selectionItem is still valid
 function UpdateRenderQueueIndices(renderQueueIndex, selectionItem) {
@@ -1834,8 +1837,8 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, compName, taskTime
         replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + compName + "_"))
     }
     stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs
-    if (templateObject.steps[0].script.actions.onRun) {
-        templateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
+    if (stepTemplateObject.steps[0].script.actions.onRun) {
+        stepTemplateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
         logger.debug("Added timeout of " + taskTimeoutSeconds + " seconds to onRun action", submitBundleFile);
     }
 
@@ -1863,7 +1866,7 @@ function generateJobEnvironmentFragment(bundlePath, outputFoldersStr) {
 /**
  * Submit the selected render queue item
  **/
-function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskTimeoutDays, taskTimeoutHours, taskTimeoutMinutes) {
+function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskTimeoutDays, taskTimeoutHours, taskTimeoutMinutes) {
     // Calculate task run timeout in seconds
     var taskTimeoutSeconds = 0;
     // Validate timeout values during job submission
@@ -1873,7 +1876,6 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     }
     taskTimeoutSeconds = (taskTimeoutDays * 24 * 60 * 60) + (taskTimeoutHours * 60 * 60) + (taskTimeoutMinutes * 60);
 
-    const submitBundleFile = "SubmitButton.jsx";
     const renderQueueItems = []
 
     // Check to make sure that all of our selection indices are correct
@@ -3069,7 +3071,6 @@ function buildUI(thisObj) {
     taskRunGroup.orientation = "row";
     taskRunGroup.alignment = ['fill', 'top'];
     taskRunGroup.alignChildren = ['left', 'center'];
-
     const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
     taskRunCheckbox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
 

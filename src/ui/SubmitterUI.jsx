@@ -299,7 +299,6 @@ function buildUI(thisObj) {
     taskRunGroup.orientation = "row";
     taskRunGroup.alignment = ['fill', 'top'];
     taskRunGroup.alignChildren = ['left', 'center'];
-
     const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
     taskRunCheckbox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
 
