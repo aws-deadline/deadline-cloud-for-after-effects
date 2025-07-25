@@ -22,19 +22,6 @@ function writeFile(filePath, fileContents) {
     return;
 }
 
-function timeToFrames(time, fps) {
-    //temporarily change display format so we can convert seconds to frames
-    //We could perform the math ourselves, but using After Effects's internal methods ensure that we don't lose precision due to floating point errors
-    var prevFrameDisplay = app.project.timeDisplayType;
-    var prevFeetFrames = app.project.framesUseFeetFrames;
-    app.project.timeDisplayType = TimeDisplayType.FRAMES;
-    app.project.framesUseFeetFrames = false;
-    var frame = timeToCurrentFormat(time, fps, false);
-    app.project.timeDisplayType = prevFrameDisplay;
-    app.project.framesUseFeetFrames = prevFeetFrames;
-    return frame;
-}
-
 function sanitizeOutputs(outputPaths) {
     var sanitized = [];
     var sanitizedPath = "";
@@ -761,6 +748,23 @@ function __generateUtil() {
         return version
     }
 
+    function calculateFrameRange(rqi) {
+        /**
+         * Calculate start and end frames for a render queue item using render settings
+         * @param {RenderQueueItem} rqi - The render queue item to calculate frames for
+         * @returns {Object} Object containing startFrame and endFrame
+         */
+         // NOTE: we're not using displayStartFrame since it is rounded up
+        const startFrame = Number(Math.floor(rqi.comp.displayStartTime * rqi.comp.frameRate));
+        const numFrames = Number(Math.floor(rqi.timeSpanDuration * rqi.comp.frameRate));
+        const endFrame = startFrame + numFrames - 1; // end frame is inclusive
+
+        return {
+            startFrame: startFrame,
+            endFrame: endFrame
+        };
+    }
+
     return {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
@@ -794,7 +798,8 @@ function __generateUtil() {
         "getTempFile": getTempFile,
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
-        "getTempFolder": getTempFolder
+        "getTempFolder": getTempFolder,
+        "calculateFrameRange": calculateFrameRange
     }
 }
 
@@ -1646,20 +1651,10 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             logger.debug("outputFolder is: " + outputFolder, submitBundleFile);
         }
     }
-    var renderSettings = rqi.getSettings(GetSettingsFormat.STRING_SETTABLE);
-    var startFrame = Number(
-        timeToFrames(
-            Number(renderSettings["Time Span Start"]),
-            Number(renderSettings["Use this frame rate"])
-        )
-    );
-    var endFrame =
-        Number(
-            timeToFrames(
-                Number(renderSettings["Time Span End"]),
-                Number(renderSettings["Use this frame rate"])
-            )
-        ) - 1; // end frame is inclusive so we subtract 1
+    // Calculate frame range using the utility function
+    const frameRange = dcUtil.calculateFrameRange(rqi);
+    const startFrame = frameRange.startFrame;
+    const endFrame = frameRange.endFrame;
 
     var dependencies = findJobAttachments(rqi.comp); // list of filenames
     var compName = dcUtil.removeIllegalCharacters(rqi.comp.name);
@@ -2684,9 +2679,10 @@ function buildUI(thisObj) {
             item.renderQueueIndex = i;
             item.compId = rqi.comp.id;
             item.subItems[0].text = rqi.comp.name;
-            var renderSettings = rqi.getSettings(GetSettingsFormat.STRING_SETTABLE);
-            var startFrame = Number(timeToFrames(Number(renderSettings["Time Span Start"]), Number(renderSettings["Use this frame rate"])));
-            var endFrame = Number(timeToFrames(Number(renderSettings["Time Span End"]), Number(renderSettings["Use this frame rate"]))) - 1; //end frame is inclusive so we subtract 1
+            // Calculate frame range using the utility function
+            var frameRange = dcUtil.calculateFrameRange(rqi);
+            var startFrame = frameRange.startFrame;
+            var endFrame = frameRange.endFrame;
             item.subItems[1].text = startFrame == endFrame ? startFrame.toString() : startFrame + "-" + endFrame;
             if (rqi.numOutputModules <= 0) {
                 item.subItems[2].text = "<not set>";
