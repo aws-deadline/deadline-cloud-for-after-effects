@@ -2842,9 +2842,15 @@ function buildUI(thisObj) {
     }
     const refreshButton = headerButtonGroup.add("button", undefined, "Refresh");
     const listGroup = root.add("panel", undefined, "");
-    listGroup.alignment = ['fill', 'fill'];
-    listGroup.alignChildren = ['fill', 'fill']
-
+    listGroup.alignment = ['fill', 'top'];
+    listGroup.alignChildren = ['fill', 'top']
+    listGroup.orientation = "column"
+    var multiCompLabel = listGroup.add("statictext", undefined, "Shift+Click or Ctrl+Click can be used to select multiple precomps and group them together as a single job submission", {
+        multiline: true
+    })
+    // Label height needs to be set manually because ExtendScript does not accurately calculate the height of multiline text objects.
+    multiCompLabel.maximumSize.height = 30;
+    multiCompLabel.alignment = ['fill', 'top'];
     var list = listGroup.add("listbox", undefined, "", {
         multiselect: true,
         numberOfColumns: 4,
@@ -2927,14 +2933,14 @@ function buildUI(thisObj) {
     const controlsPanel = controlsGroup.add("panel", undefined, "");
     controlsPanel.alignment = ['fill', 'top'];
 
-    // Container with all settings to modify job submission
-    const settingsGroup = controlsPanel.add("group", undefined, "");
-    settingsGroup.orientation = "column";
-    settingsGroup.alignment = ['fill', 'top'];
-    settingsGroup.alignChildren = ['left', 'top'];
+    // Container with settings to modify comp-specific settings
+    const perCompSettingsGroup = controlsPanel.add("panel", undefined, "Precomp-Specific Settings");
+    perCompSettingsGroup.orientation = "column";
+    perCompSettingsGroup.alignment = ['fill', 'top'];
+    perCompSettingsGroup.alignChildren = ['left', 'top'];
 
     // Setting up frame per task GUI
-    const framesPerTaskGroup = settingsGroup.add("group", undefined, "");
+    const framesPerTaskGroup = perCompSettingsGroup.add("group", undefined, "");
     framesPerTaskGroup.orientation = "row";
     framesPerTaskGroup.alignment = ['fill', 'top'];
     framesPerTaskGroup.alignChildren = ['left', 'center'];
@@ -2970,7 +2976,7 @@ function buildUI(thisObj) {
     framesPerTaskTextBox.onChange = onFramesPerTaskChanged;
 
     // Multi-frame rendering (MFR) GUI
-    const mfrGroup = settingsGroup.add("group", undefined, "");
+    const mfrGroup = perCompSettingsGroup.add("group", undefined, "");
     mfrGroup.orientation = "column";
     mfrGroup.alignment = ['fill', 'top'];
     mfrGroup.alignChildren = ['left', 'center'];
@@ -3045,13 +3051,16 @@ function buildUI(thisObj) {
         return false
     }
 
-
+    const globalSettingsGroup = controlsPanel.add("panel", undefined, "Global Job Settings")
+    globalSettingsGroup.orientation = "column";
+    globalSettingsGroup.alignment = ['fill', 'top'];
+    globalSettingsGroup.alignChildren = ['left', 'top'];
     // Add Timeouts settings group
-    const timeoutsPanel = settingsGroup.add("panel", undefined, "Timeouts");
+    const timeoutsPanel = globalSettingsGroup.add("panel", undefined, "Timeouts");
     timeoutsPanel.orientation = "column";
     timeoutsPanel.alignment = ['fill', 'top'];
     timeoutsPanel.alignChildren = ['left', 'center'];
-    timeoutsPanel.margins = 5;
+    timeoutsPanel.margins = 10;
 
     // Task run timeout
     const taskRunGroup = timeoutsPanel.add("group");
