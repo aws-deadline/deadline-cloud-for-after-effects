@@ -1,118 +1,100 @@
 function UiSettingsState() {
+    /**
+     * Container that stores all of the configurable properties in the submitter UI
+     */
+
+    // Contains UiSettingsStore objects that store comp-specific settings
     this.settings = {}
-}
 
-function UiSettingsStore(name) {
-    this.name = name;
-    // _framesPerTask: string
-    this._framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
-    // _multiFrameRendering: bool
-    this._multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING);
-    // _maxCpuUsagePercentage: string
-    this._maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
-
-    // _taskRunTimeout: bool
-    this._taskRunTimeout = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
-    // _taskRunDays: string
-    this._taskRunDays = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS);
-    // _taskRunHours: string
-    this._taskRunHours = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS);
-    // _taskRunMinutes: string
-    this._taskRunMinutes = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES);
-
-    this.framesPerTask = function() {
-        return this._framesPerTask
+    // () -> bool
+    this.taskRunTimeoutEnabled = function() {
+        return dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, DEFAULT_TASK_RUN_TIMEOUT_ENABLED);
     }
-    this.setFramesPerTask = function(value) {
-        logger.warning("(" + this.name + ") Setting framesPerTask to " + value)
-        this._framesPerTask = typeof value === "string" ? value : value.toString()
+    // (value: bool) -> void
+    this.setTaskRunTimeoutEnabled = function(value) {
+        dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, value);
     }
-
-    this.multiFrameRendering = function() {
-        return this._multiFrameRendering
-    }
-    this.setMultiFrameRendering = function(value) {
-        logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value)
-        this._multiFrameRendering = typeof value === "boolean" ? value : (value === "true")
-    }
-
-    this.maxCpuUsagePercentage = function() {
-        return this._maxCpuUsagePercentage
-    }
-    this.setMaxCpuUsagePercentage = function(value) {
-        logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value)
-        this._maxCpuUsagePercentage = typeof value === "string" ? value : value.toString()
-    }
-
-    this.taskRunTimeout = function() {
-        return this._taskRunTimeout
-    }
-    this.setTaskRunTimeout = function(value) {
-        logger.warning("(" + this.name + ") Setting taskRunTimeout to " + value)
-        this._taskRunTimeout = typeof value === "boolean" ? value : (value === "true")
-    }
-
+    // () -> int
     this.taskRunDays = function() {
-        return this._taskRunDays
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, DEFAULT_TASK_RUN_TIMEOUT_DAYS);
     }
+
     this.setTaskRunDays = function(value) {
-        logger.warning("(" + this.name + ") Setting taskRunDays to " + value)
-        this._taskRunDays = typeof value === "boolean" ? value : (value === "true")
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, value);
     }
 
     this.taskRunHours = function() {
-        return this._taskRunHours
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, DEFAULT_TASK_RUN_TIMEOUT_HOURS);
     }
+
     this.setTaskRunHours = function(value) {
-        logger.warning("(" + this.name + ") Setting taskRunHours to " + value)
-        this._taskRunHours = typeof value === "boolean" ? value : (value === "true")
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, value);
     }
 
     this.taskRunMinutes = function() {
-        return this._taskRunMinutes
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, DEFAULT_TASK_RUN_TIMEOUT_MINUTES);
     }
+
     this.setTaskRunMinutes = function(value) {
-        logger.warning("(" + this.name + ") Setting taskRunMinutes to " + value)
-        this._taskRunMinutes = typeof value === "boolean" ? value : (value === "true")
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, value);
+    }
+
+}
+
+function UiSettingsStore(name) {
+    /**
+     * Stores comp-specific settings for the comp with given name.
+     */
+    this.name = name;
+
+    this.framesPerTask = function() {
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name +"_" + DEADLINECLOUD_FRAMESPERTASK, DEFAULT_FRAMESPERTASK);
+    }
+    this.setFramesPerTask = function(value) {
+        logger.warning("(" + this.name + ") Setting framesPerTask to " + value)
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_FRAMESPERTASK, value);
+    }
+
+    this.multiFrameRendering = function() {
+        return dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_MULTI_FRAME_RENDERING, DEFAULT_MULTI_FRAME_RENDERING);
+    }
+    this.setMultiFrameRendering = function(value) {
+        logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value)
+        dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_MULTI_FRAME_RENDERING, value);
+    }
+
+    this.maxCpuUsagePercentage = function() {
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name + "_" + DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, DEFAULT_MAX_CPU_USAGE_PERCENTAGE)
+
+    }
+    this.setMaxCpuUsagePercentage = function(value) {
+        logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value)
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name+"_"+DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, value)
     }
 }
 
-UiSettingsState.prototype.create = function(compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskRunTimeout, taskRunTimeoutDays, taskRunTimeoutHours, taskRunTimeoutMinutes) {
+UiSettingsState.prototype.create = function(compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
+    /**
+     * Adds new UISettingsStore to store settings for the comp associated with compId
+     */
     if (!this.settings[compId]) {
         this.settings[compId] = new UiSettingsStore(compId);
     }
-    if (framesPerTask === undefined) {
-        framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
+    if (framesPerTask !== undefined) {
+        this.settings[compId].setFramesPerTask(framesPerTask);
     }
-    if (multiFrameRendering === undefined) {
-        multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING);
+    if (multiFrameRendering !== undefined) {
+        this.settings[compId].setMultiFrameRendering(multiFrameRendering);
     }
-    if (maxCpuUsagePercentage === undefined) {
-        maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
+    if (maxCpuUsagePercentage !== undefined) {
+        this.settings[compId].setMaxCpuUsagePercentage(maxCpuUsagePercentage);
     }
-    if (taskRunTimeout === undefined) {
-        taskRunTimeout = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
-    }
-    if (taskRunTimeoutDays === undefined) {
-        taskRunTimeoutDays = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS);
-    }
-    if (taskRunTimeoutHours === undefined) {
-        taskRunTimeoutHours = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS);
-    }
-    if (taskRunTimeoutMinutes === undefined) {
-        taskRunTimeoutMinutes = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES);
-    }
-
-    this.settings[compId].setFramesPerTask(framesPerTask);
-    this.settings[compId].setMultiFrameRendering(multiFrameRendering);
-    this.settings[compId].setMaxCpuUsagePercentage(maxCpuUsagePercentage);
-    this.settings[compId].setTaskRunTimeout(taskRunTimeout);
-    this.settings[compId].setTaskRunDays(taskRunTimeoutDays);
-    this.settings[compId].setTaskRunHours(taskRunTimeoutHours);
-    this.settings[compId].setTaskRunMinutes(taskRunTimeoutMinutes);
 }
 
 UiSettingsState.prototype.get = function(compId) {
+    /**
+     * Gets UISettingsStore associated with given compId, or creates a new default one if it doesn't exit
+     */
     if (!this.settings[compId]) {
         this.settings[compId] = new UiSettingsStore(compId)
     }

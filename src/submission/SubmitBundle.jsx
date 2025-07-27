@@ -243,8 +243,8 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
     }
 
     // Check if warning should be shown
-    const ignoreWarning = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING) === "true";
-    const savedVersion = parseFloat(app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION) || "0");
+    const ignoreWarning = dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING) === "true";
+    const savedVersion = dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, 0);
     const currentVersion = dcUtil.getAEVersion();
 
     // Is this AE version not supported in the deadline-cloud channel?
@@ -256,11 +256,11 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
                 "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
 
             // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
+            dcUtil.saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString())
             if (confirm(versionMismatchWarningMessage)) {
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "true");
+                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, true)
             } else {
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false)
                 return;
             }
         } else {

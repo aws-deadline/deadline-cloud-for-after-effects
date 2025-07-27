@@ -22,10 +22,7 @@ function populateListBoxItem(item, renderQueueItem, index) {
 
 function refreshList(listBox, uiSettingsState) {
     listBox.removeAll();
-    const framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK) || "50"
-    const multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)
-    const maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)
-
+   
     const InvalidRenderQueueItemStatuses = [
         RQItemStatus.RENDERING,
         RQItemStatus.WILL_CONTINUE,
@@ -48,7 +45,7 @@ function refreshList(listBox, uiSettingsState) {
         populateListBoxItem(item, renderQueueItem, index);
         // TODO: Value
 
-        uiSettingsState.create(item.compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage);
+        uiSettingsState.create(item.compId);
     }
 
     listBox.selection = null;
@@ -157,7 +154,7 @@ function buildUI(thisObj) {
 
         maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value
 
-        taskRunCheckbox.value = settings.taskRunTimeout()
+        taskRunCheckbox.value = settings.taskRunTimeoutEnabled()
         taskRunDaysInput.enabled = taskRunCheckbox.value
         taskRunDaysInput.text = settings.taskRunDays()
         taskRunHoursInput.enabled = taskRunCheckbox.value
@@ -196,22 +193,18 @@ function buildUI(thisObj) {
     framesPerTaskTextBox.helpTip = framesPerTaskLabel.helpTip;
 
     function onFramesPerTaskChanged() {
-        const newFramesPerTaskValue = Math.abs(parseInt(framesPerTaskTextBox.text));
-        if (isNaN(newFramesPerTaskValue)) {
-            framesPerTaskTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
-        } else if (newFramesPerTaskValue > 9999) {
-            framesPerTaskTextBox.text = "9999";
-        } else {
-            // Need to reassign in case input string is a number followed my random characters
-            // since parseInt parses the first number it finds in a provided string.
-            framesPerTaskTextBox.text = newFramesPerTaskValue;
-        }
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskTextBox.text);
         if (list.selection == null) {
             return;
         }
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
+            if (isNaN(newFramesPerTaskValue)){
+                framesPerTaskTextBox.text = uiSettingsState.get(selectionItem.compId).framesPerTask;
+            } else if (newFramesPerTaskValue > 9999) {
+                framesPerTaskTextBox.text = "9999"
+            } else {
+                framesPerTaskTextBox.text = newFramesPerTaskValue
+            }
             uiSettingsState.get(selectionItem.compId).setFramesPerTask(framesPerTaskTextBox.text)
         }
     }
@@ -225,7 +218,7 @@ function buildUI(thisObj) {
     mfrGroup.margins = 5;
 
     const mfrCheckBox = mfrGroup.add("checkbox", undefined, "Enable Multi-Frame Rendering");
-    mfrCheckBox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING) === "true";
+    mfrCheckBox.value = DEFAULT_MULTI_FRAME_RENDERING;
 
     const maxCpuUsagePercentageGroup = mfrGroup.add("group", undefined, "");
     maxCpuUsagePercentageGroup.orientation = "row";
@@ -240,21 +233,21 @@ function buildUI(thisObj) {
     maxCpuUsagePercentageTextBox.alignment = ['fill', 'top'];
     maxCpuUsagePercentageTextBox.helpTip = maxCpuUsagePercentageLabel.helpTip;
     maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value;
-    maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageTextBox.enabled ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE) : "N/A";
+    maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageTextBox.enabled ? DEFAULT_MAX_CPU_USAGE_PERCENTAGE : "N/A";
 
     function onMaxCpuUsagePercentageChanged() {
         const maxCpuUsagePercentageValue = Math.abs(parseInt(maxCpuUsagePercentageTextBox.text));
         if (isNaN(maxCpuUsagePercentageValue) || maxCpuUsagePercentageValue > 100) {
-            maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
+            maxCpuUsagePercentageTextBox.text = DEFAULT_MAX_CPU_USAGE_PERCENTAGE;
         } else {
             // Need to reassign in case input string is a number followed my random characters
             // since parseInt parses the first number it finds in a provided string.
             maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageValue;
         }
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, maxCpuUsagePercentageTextBox.text);
-        const selectionItem = dcUtil.getSelection(list);
+        const selectionItem = dcUtil.getSelection(list)
         if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setMaxCpuUsagePercentage(maxCpuUsagePercentageTextBox.text)
+            var compId = selectionItem.compId;
+            uiSettingsState.get(compId).setMaxCpuUsagePercentage(parseInt(maxCpuPercentageTextBox.text));
         }
     }
     maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
@@ -262,22 +255,18 @@ function buildUI(thisObj) {
     // Disable max CPU percentage textbox when multi frame rendering is disabled
     function onMfrCheckBoxClicked() {
         const isMfrChecked = mfrCheckBox.value;
-        var settingsStateValue = false
-        if (!isMfrChecked) {
-            maxCpuUsagePercentageTextBox.text = "N/A";
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-        } else {
-            maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "true");
-            settingsStateValue = true
-        }
-
-        maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
-
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setMultiFrameRendering(settingsStateValue)
+            var compId = selectionItem.compId;
+            if (!isMfrChecked) {
+                maxCpuUsagePercentageTextBox.text = "N/A";
+                uiSettingsState.get(compId).setMultiFrameRendering(false);
+            } else {
+                maxCpuUsagePercentageTextBox.text = uiSettingsState.get(compId).maxCpuUsagePercentage();
+                uiSettingsState.get(compId).setMultiFrameRendering(true);
+            }
         }
+        maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
     }
     mfrCheckBox.onClick = onMfrCheckBoxClicked;
 
@@ -310,72 +299,82 @@ function buildUI(thisObj) {
     taskRunGroup.alignment = ['fill', 'top'];
     taskRunGroup.alignChildren = ['left', 'center'];
     const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
-    taskRunCheckbox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
+    taskRunCheckbox.value = uiSettingsState.taskRunTimeoutEnabled;
 
     const taskRunDaysGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS));
+    const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, uiSettingsState.taskRunDays());
     taskRunDaysInput.characters = 3;
     taskRunDaysGroup.add("statictext", undefined, "days");
 
     const taskRunHoursGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS));
+    const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, uiSettingsState.taskRunHours());
     taskRunHoursInput.characters = 3;
     taskRunHoursGroup.add("statictext", undefined, "hours");
 
     const taskRunMinutesGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES));
+    const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, uiSettingsState.taskRunMinutes());
     taskRunMinutesInput.characters = 3;
     taskRunMinutesGroup.add("statictext", undefined, "minutes");
 
     // Add input validation and save values to settings
     function onTaskRunCheckboxClicked() {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, dcUtil.toBooleanString(this.value));
+        uiSettingsState.setTaskRunTimeoutEnabled(this.value);
         if (this.value) {
-            dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
+            if (!dcUtil.validateTimeoutValues(this.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+                uiSettingsState.setTaskRunDays(DEFAULT_TASK_RUN_TIMEOUT_DAYS);
+                taskRunDaysInput.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS;
+                uiSettingsState.setTaskRunHours(DEFAULT_TASK_RUN_TIMEOUT_HOURS);
+                taskRunHoursInput.text = DEFAULT_TASK_RUN_TIMEOUT_HOURS;
+                uiSettingsState.setTaskRunMinutes(DEFAULT_TASK_RUN_TIMEOUT_MINUTES);
+                taskRunMinutesInput.text = DEFAULT_TASK_RUN_TIMEOUT_MINUTES;
+            }
         }
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setTaskRunTimeout(this.value)
-        }
+        uiSettingsState.setTaskRunTimeoutEnabled(this.value)
     }
     taskRunCheckbox.onClick = onTaskRunCheckboxClicked
 
     function onTaskRunDaysChanged() {
+        var old_text = this.text;
         this.text = this.text.replace(/[^0-9]/g, "");
         if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, this.text);
-        dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
-
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setTaskRunDays(this.text)
+        if (!dcUtil.validateTimeoutValues(this.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (isNaN(Number(old_text))) {
+                this.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS 
+            } else {
+                this.text = old_text
+            }
         }
+        uiSettingsState.setTaskRunDays(parseInt(this.text))
     }
     taskRunDaysInput.onChange = onTaskRunDaysChanged
 
     function onTaskRunHoursChanged() {
+        var old_text = this.text;
         this.text = this.text.replace(/[^0-9]/g, "");
         if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, this.text);
-        dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
-
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setTaskRunHours(this.text)
+        if (!dcUtil.validateTimeoutValues(this.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (isNaN(Number(old_text))) {
+                this.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS 
+            } else {
+                this.text = old_text
+            }
         }
+        uiSettingsState.setTaskRunHours(parseInt(this.text))
     }
     taskRunHoursInput.onChange = onTaskRunHoursChanged
 
     function onTaskRunMinutesChanged() {
+        var old_text = this.text;
         this.text = this.text.replace(/[^0-9]/g, "");
         if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, this.text);
-        dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
-
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setTaskRunMinutes(this.text)
+        if (!dcUtil.validateTimeoutValues(this.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (isNaN(Number(old_text))) {
+                this.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS 
+            } else {
+                this.text = old_text
+            }
         }
+        uiSettingsState.setTaskRunMinutes(parseInt(this.text))
     }
     taskRunMinutesInput.onChange = onTaskRunMinutesChanged
 

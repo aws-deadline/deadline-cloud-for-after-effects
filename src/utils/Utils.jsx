@@ -107,6 +107,13 @@ function adcAlert(message, errorIcon) {
     alert(message, "Deadline Cloud Submitter", errorIcon);
 }
 
+function validateType(item, item_type) {
+    actual_type = typeof item;
+    if (actual_type !== item_type) {
+        throw new Error("Object has type " + actual_type + " instead of desired type " + item_type);
+    }
+}
+
 function __generateUtil() {
 
     const scriptFileUtilName = "Util.jsx";
@@ -135,6 +142,82 @@ function __generateUtil() {
             return true;
 
         return false;
+    }
+
+    function saveBoolSetting(sectionName, keyName, value) {
+        /**
+         * Sets boolean value in app settings
+         */
+        validateType(value, "boolean")
+        app.settings.saveSetting(sectionName, keyName, value.toString())
+    }
+
+    function getBoolSetting(sectionName, keyName, default_value) {
+        /**
+         * Gets boolean value from app settings, or sets it to the default value if no setting exists.
+         * Set default_value to undefined to error on missing setting
+         */
+        if (!app.settings.haveSetting(sectionName, keyName)) {
+            if (default_value === undefined) {
+                throw new Error("Setting at " + sectionName + ":" + keyName + "does not exist!");
+            }
+            setBoolSetting(sectionName, keyName, default_value);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + "default_value");
+        }
+        return parseBool(app.settings.getSetting(sectionName, keyName));
+    }
+
+    function saveNumberSetting(sectionName, keyName, value) {
+        /**
+         * Sets integer value in app settings
+         */
+        validateType(value, "number")
+        app.settings.saveSetting(sectionName, keyName, value.toString())
+    }
+
+    function getNumberSetting(sectionName, keyName, default_value) {
+        /**
+         * Gets number value from app settings, or sets default_value if setting does not exist
+         * Set default_value to undefined to error on missing setting
+         */
+        if (!app.settings.haveSetting(sectionName, keyName)) {
+            if (default_value === undefined) {
+                throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!")
+            }
+            setNumberSetting(sectionName, keyName, default_value)
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
+        }
+        if (isNaN(Number(app.settings.getSetting(sectionName, keyName)))) {
+            if (default_value === undefined) {
+                throw new Error("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number!");
+            }
+            setNumberSetting(sectionName, keyName, default_value)
+            logger.warning("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number. Using default value of " + default_value);
+        }
+        return Number(app.settings.getSetting(sectionName, keyName));
+    }
+
+    function saveStringSetting(sectionName, keyName, value) {
+        /**
+         * Sets string in app settings
+         */
+        validateType(value, "string");
+        app.settings.saveSetting(sectionName, keyName, value);
+    }
+
+    function getStringSetting(sectionName, keyName, defaultValue) {
+         /**
+         * Gets string value from app settings, or sets default_value if setting does not exist
+         * Set default_value to undefined to error on missing setting
+         */
+        if (!app.settings.haveSetting(sectionName, keyName)) {
+            if (default_value === undefined) {
+                throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!");
+            }
+            setStringSetting(sectionName, keyName, default_value);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
+        }
+        return app.settings.getSetting(sectionName, keyName) 
     }
 
     function trimIllegalChars(stringToTrim) {
@@ -760,14 +843,16 @@ function __generateUtil() {
     }
 
     function validateTimeoutValues(enabled, daysInput, hoursInput, minutesInput) {
+        /**
+         * Parses in input strings for days, hours, and minutes in timeout, validates them, and alerts user if invalid
+         */
         if (enabled) {
-            var days = parseInt(daysInput.text) || 0;
-            var hours = parseInt(hoursInput.text) || 0;
+            var days = parseInt(daysInput) || 0;
+            var hours = parseInt(hoursInput) || 0;
             var minutes = parseInt(minutesInput.text) || 0;
 
             if (days === 0 && hours === 0 && minutes === 0) {
                 adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
                 return false;
             }
         }
@@ -785,6 +870,12 @@ function __generateUtil() {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
         "parseBool": parseBool,
+        "saveBoolSetting": saveBoolSetting,
+        "getBoolSetting": getBoolSetting,
+        "saveNumberSetting": saveNumberSetting,
+        "getNumberSetting": getNumberSetting,
+        "saveStringSetting": saveStringSetting,
+        "getStringSetting": getStringSetting,
         "trimIllegalChars": trimIllegalChars,
         "sliderTextSync": sliderTextSync,
         "changeTextValue": changeTextValue,
@@ -863,30 +954,31 @@ if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
 if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
     const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
 }
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_ENABLED = true;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_DAYS = 2;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_HOURS = 0;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_MINUTES = 0;
+}
+if (typeof DEFAULT_FRAMESPERTASK === "undefined") {
+    const DEFAULT_FRAMESPERTASK = 10;
+}
+if (typeof DEFAULT_MULTI_FRAME_RENDERING === "undefined") {
+    const DEFAULT_MULTI_FRAME_RENDERING = false;
+}
+if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE) {
+    const DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90;
+}
+
 if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+    dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
 }
 if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
+    saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
 }

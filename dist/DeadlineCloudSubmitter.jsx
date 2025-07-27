@@ -111,6 +111,13 @@ function adcAlert(message, errorIcon) {
     alert(message, "Deadline Cloud Submitter", errorIcon);
 }
 
+function validateType(item, item_type) {
+    actual_type = typeof item;
+    if (actual_type !== item_type) {
+        throw new Error("Object has type " + actual_type + " instead of desired type " + item_type);
+    }
+}
+
 function __generateUtil() {
 
     const scriptFileUtilName = "Util.jsx";
@@ -139,6 +146,82 @@ function __generateUtil() {
             return true;
 
         return false;
+    }
+
+    function saveBoolSetting(sectionName, keyName, value) {
+        /**
+         * Sets boolean value in app settings
+         */
+        validateType(value, "boolean")
+        app.settings.saveSetting(sectionName, keyName, value.toString())
+    }
+
+    function getBoolSetting(sectionName, keyName, default_value) {
+        /**
+         * Gets boolean value from app settings, or sets it to the default value if no setting exists.
+         * Set default_value to undefined to error on missing setting
+         */
+        if (!app.settings.haveSetting(sectionName, keyName)) {
+            if (default_value === undefined) {
+                throw new Error("Setting at " + sectionName + ":" + keyName + "does not exist!");
+            }
+            setBoolSetting(sectionName, keyName, default_value);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + "default_value");
+        }
+        return parseBool(app.settings.getSetting(sectionName, keyName));
+    }
+
+    function saveNumberSetting(sectionName, keyName, value) {
+        /**
+         * Sets integer value in app settings
+         */
+        validateType(value, "number")
+        app.settings.saveSetting(sectionName, keyName, value.toString())
+    }
+
+    function getNumberSetting(sectionName, keyName, default_value) {
+        /**
+         * Gets number value from app settings, or sets default_value if setting does not exist
+         * Set default_value to undefined to error on missing setting
+         */
+        if (!app.settings.haveSetting(sectionName, keyName)) {
+            if (default_value === undefined) {
+                throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!")
+            }
+            setNumberSetting(sectionName, keyName, default_value)
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
+        }
+        if (isNaN(Number(app.settings.getSetting(sectionName, keyName)))) {
+            if (default_value === undefined) {
+                throw new Error("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number!");
+            }
+            setNumberSetting(sectionName, keyName, default_value)
+            logger.warning("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number. Using default value of " + default_value);
+        }
+        return Number(app.settings.getSetting(sectionName, keyName));
+    }
+
+    function saveStringSetting(sectionName, keyName, value) {
+        /**
+         * Sets string in app settings
+         */
+        validateType(value, "string");
+        app.settings.saveSetting(sectionName, keyName, value);
+    }
+
+    function getStringSetting(sectionName, keyName, defaultValue) {
+         /**
+         * Gets string value from app settings, or sets default_value if setting does not exist
+         * Set default_value to undefined to error on missing setting
+         */
+        if (!app.settings.haveSetting(sectionName, keyName)) {
+            if (default_value === undefined) {
+                throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!");
+            }
+            setStringSetting(sectionName, keyName, default_value);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
+        }
+        return app.settings.getSetting(sectionName, keyName) 
     }
 
     function trimIllegalChars(stringToTrim) {
@@ -764,14 +847,16 @@ function __generateUtil() {
     }
 
     function validateTimeoutValues(enabled, daysInput, hoursInput, minutesInput) {
+        /**
+         * Parses in input strings for days, hours, and minutes in timeout, validates them, and alerts user if invalid
+         */
         if (enabled) {
-            var days = parseInt(daysInput.text) || 0;
-            var hours = parseInt(hoursInput.text) || 0;
+            var days = parseInt(daysInput) || 0;
+            var hours = parseInt(hoursInput) || 0;
             var minutes = parseInt(minutesInput.text) || 0;
 
             if (days === 0 && hours === 0 && minutes === 0) {
                 adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
                 return false;
             }
         }
@@ -789,6 +874,12 @@ function __generateUtil() {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
         "parseBool": parseBool,
+        "saveBoolSetting": saveBoolSetting,
+        "getBoolSetting": getBoolSetting,
+        "saveNumberSetting": saveNumberSetting,
+        "getNumberSetting": getNumberSetting,
+        "saveStringSetting": saveStringSetting,
+        "getStringSetting": getStringSetting,
         "trimIllegalChars": trimIllegalChars,
         "sliderTextSync": sliderTextSync,
         "changeTextValue": changeTextValue,
@@ -867,32 +958,33 @@ if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
 if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
     const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
 }
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_ENABLED = true;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_DAYS = 2;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_HOURS = 0;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_MINUTES = 0;
+}
+if (typeof DEFAULT_FRAMESPERTASK === "undefined") {
+    const DEFAULT_FRAMESPERTASK = 10;
+}
+if (typeof DEFAULT_MULTI_FRAME_RENDERING === "undefined") {
+    const DEFAULT_MULTI_FRAME_RENDERING = false;
+}
+if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE) {
+    const DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90;
+}
+
 if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+    dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
 }
 if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
+    saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
 }
 
 
@@ -1074,120 +1166,102 @@ var logger = Logger(logFileName, logNormDirectoryPath);
 
 
 function UiSettingsState() {
+    /**
+     * Container that stores all of the configurable properties in the submitter UI
+     */
+
+    // Contains UiSettingsStore objects that store comp-specific settings
     this.settings = {}
-}
 
-function UiSettingsStore(name) {
-    this.name = name;
-    // _framesPerTask: string
-    this._framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
-    // _multiFrameRendering: bool
-    this._multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING);
-    // _maxCpuUsagePercentage: string
-    this._maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
-
-    // _taskRunTimeout: bool
-    this._taskRunTimeout = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
-    // _taskRunDays: string
-    this._taskRunDays = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS);
-    // _taskRunHours: string
-    this._taskRunHours = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS);
-    // _taskRunMinutes: string
-    this._taskRunMinutes = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES);
-
-    this.framesPerTask = function() {
-        return this._framesPerTask
+    // () -> bool
+    this.taskRunTimeoutEnabled = function() {
+        return dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, DEFAULT_TASK_RUN_TIMEOUT_ENABLED);
     }
-    this.setFramesPerTask = function(value) {
-        logger.warning("(" + this.name + ") Setting framesPerTask to " + value)
-        this._framesPerTask = typeof value === "string" ? value : value.toString()
+    // (value: bool) -> void
+    this.setTaskRunTimeoutEnabled = function(value) {
+        dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, value);
     }
-
-    this.multiFrameRendering = function() {
-        return this._multiFrameRendering
-    }
-    this.setMultiFrameRendering = function(value) {
-        logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value)
-        this._multiFrameRendering = typeof value === "boolean" ? value : (value === "true")
-    }
-
-    this.maxCpuUsagePercentage = function() {
-        return this._maxCpuUsagePercentage
-    }
-    this.setMaxCpuUsagePercentage = function(value) {
-        logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value)
-        this._maxCpuUsagePercentage = typeof value === "string" ? value : value.toString()
-    }
-
-    this.taskRunTimeout = function() {
-        return this._taskRunTimeout
-    }
-    this.setTaskRunTimeout = function(value) {
-        logger.warning("(" + this.name + ") Setting taskRunTimeout to " + value)
-        this._taskRunTimeout = typeof value === "boolean" ? value : (value === "true")
-    }
-
+    // () -> int
     this.taskRunDays = function() {
-        return this._taskRunDays
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, DEFAULT_TASK_RUN_TIMEOUT_DAYS);
     }
+
     this.setTaskRunDays = function(value) {
-        logger.warning("(" + this.name + ") Setting taskRunDays to " + value)
-        this._taskRunDays = typeof value === "boolean" ? value : (value === "true")
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, value);
     }
 
     this.taskRunHours = function() {
-        return this._taskRunHours
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, DEFAULT_TASK_RUN_TIMEOUT_HOURS);
     }
+
     this.setTaskRunHours = function(value) {
-        logger.warning("(" + this.name + ") Setting taskRunHours to " + value)
-        this._taskRunHours = typeof value === "boolean" ? value : (value === "true")
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, value);
     }
 
     this.taskRunMinutes = function() {
-        return this._taskRunMinutes
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, DEFAULT_TASK_RUN_TIMEOUT_MINUTES);
     }
+
     this.setTaskRunMinutes = function(value) {
-        logger.warning("(" + this.name + ") Setting taskRunMinutes to " + value)
-        this._taskRunMinutes = typeof value === "boolean" ? value : (value === "true")
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, value);
+    }
+
+}
+
+function UiSettingsStore(name) {
+    /**
+     * Stores comp-specific settings for the comp with given name.
+     */
+    this.name = name;
+
+    this.framesPerTask = function() {
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name +"_" + DEADLINECLOUD_FRAMESPERTASK, DEFAULT_FRAMESPERTASK);
+    }
+    this.setFramesPerTask = function(value) {
+        logger.warning("(" + this.name + ") Setting framesPerTask to " + value)
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_FRAMESPERTASK, value);
+    }
+
+    this.multiFrameRendering = function() {
+        return dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_MULTI_FRAME_RENDERING, DEFAULT_MULTI_FRAME_RENDERING);
+    }
+    this.setMultiFrameRendering = function(value) {
+        logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value)
+        dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_MULTI_FRAME_RENDERING, value);
+    }
+
+    this.maxCpuUsagePercentage = function() {
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name + "_" + DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, DEFAULT_MAX_CPU_USAGE_PERCENTAGE)
+
+    }
+    this.setMaxCpuUsagePercentage = function(value) {
+        logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value)
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name+"_"+DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, value)
     }
 }
 
-UiSettingsState.prototype.create = function(compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskRunTimeout, taskRunTimeoutDays, taskRunTimeoutHours, taskRunTimeoutMinutes) {
+UiSettingsState.prototype.create = function(compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
+    /**
+     * Adds new UISettingsStore to store settings for the comp associated with compId
+     */
     if (!this.settings[compId]) {
         this.settings[compId] = new UiSettingsStore(compId);
     }
-    if (framesPerTask === undefined) {
-        framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
+    if (framesPerTask !== undefined) {
+        this.settings[compId].setFramesPerTask(framesPerTask);
     }
-    if (multiFrameRendering === undefined) {
-        multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING);
+    if (multiFrameRendering !== undefined) {
+        this.settings[compId].setMultiFrameRendering(multiFrameRendering);
     }
-    if (maxCpuUsagePercentage === undefined) {
-        maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
+    if (maxCpuUsagePercentage !== undefined) {
+        this.settings[compId].setMaxCpuUsagePercentage(maxCpuUsagePercentage);
     }
-    if (taskRunTimeout === undefined) {
-        taskRunTimeout = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
-    }
-    if (taskRunTimeoutDays === undefined) {
-        taskRunTimeoutDays = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS);
-    }
-    if (taskRunTimeoutHours === undefined) {
-        taskRunTimeoutHours = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS);
-    }
-    if (taskRunTimeoutMinutes === undefined) {
-        taskRunTimeoutMinutes = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES);
-    }
-
-    this.settings[compId].setFramesPerTask(framesPerTask);
-    this.settings[compId].setMultiFrameRendering(multiFrameRendering);
-    this.settings[compId].setMaxCpuUsagePercentage(maxCpuUsagePercentage);
-    this.settings[compId].setTaskRunTimeout(taskRunTimeout);
-    this.settings[compId].setTaskRunDays(taskRunTimeoutDays);
-    this.settings[compId].setTaskRunHours(taskRunTimeoutHours);
-    this.settings[compId].setTaskRunMinutes(taskRunTimeoutMinutes);
 }
 
 UiSettingsState.prototype.get = function(compId) {
+    /**
+     * Gets UISettingsStore associated with given compId, or creates a new default one if it doesn't exit
+     */
     if (!this.settings[compId]) {
         this.settings[compId] = new UiSettingsStore(compId)
     }
@@ -1909,8 +1983,8 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
     }
 
     // Check if warning should be shown
-    const ignoreWarning = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING) === "true";
-    const savedVersion = parseFloat(app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION) || "0");
+    const ignoreWarning = dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING) === "true";
+    const savedVersion = dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, 0);
     const currentVersion = dcUtil.getAEVersion();
 
     // Is this AE version not supported in the deadline-cloud channel?
@@ -1922,11 +1996,11 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
                 "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
 
             // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
+            dcUtil.saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString())
             if (confirm(versionMismatchWarningMessage)) {
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "true");
+                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, true)
             } else {
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false)
                 return;
             }
         } else {
@@ -2780,10 +2854,7 @@ function populateListBoxItem(item, renderQueueItem, index) {
 
 function refreshList(listBox, uiSettingsState) {
     listBox.removeAll();
-    const framesPerTask = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK) || "50"
-    const multiFrameRendering = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)
-    const maxCpuUsagePercentage = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)
-
+   
     const InvalidRenderQueueItemStatuses = [
         RQItemStatus.RENDERING,
         RQItemStatus.WILL_CONTINUE,
@@ -2806,7 +2877,7 @@ function refreshList(listBox, uiSettingsState) {
         populateListBoxItem(item, renderQueueItem, index);
         // TODO: Value
 
-        uiSettingsState.create(item.compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage);
+        uiSettingsState.create(item.compId);
     }
 
     listBox.selection = null;
@@ -2915,7 +2986,7 @@ function buildUI(thisObj) {
 
         maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value
 
-        taskRunCheckbox.value = settings.taskRunTimeout()
+        taskRunCheckbox.value = settings.taskRunTimeoutEnabled()
         taskRunDaysInput.enabled = taskRunCheckbox.value
         taskRunDaysInput.text = settings.taskRunDays()
         taskRunHoursInput.enabled = taskRunCheckbox.value
@@ -2954,22 +3025,18 @@ function buildUI(thisObj) {
     framesPerTaskTextBox.helpTip = framesPerTaskLabel.helpTip;
 
     function onFramesPerTaskChanged() {
-        const newFramesPerTaskValue = Math.abs(parseInt(framesPerTaskTextBox.text));
-        if (isNaN(newFramesPerTaskValue)) {
-            framesPerTaskTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
-        } else if (newFramesPerTaskValue > 9999) {
-            framesPerTaskTextBox.text = "9999";
-        } else {
-            // Need to reassign in case input string is a number followed my random characters
-            // since parseInt parses the first number it finds in a provided string.
-            framesPerTaskTextBox.text = newFramesPerTaskValue;
-        }
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskTextBox.text);
         if (list.selection == null) {
             return;
         }
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
+            if (isNaN(newFramesPerTaskValue)){
+                framesPerTaskTextBox.text = uiSettingsState.get(selectionItem.compId).framesPerTask;
+            } else if (newFramesPerTaskValue > 9999) {
+                framesPerTaskTextBox.text = "9999"
+            } else {
+                framesPerTaskTextBox.text = newFramesPerTaskValue
+            }
             uiSettingsState.get(selectionItem.compId).setFramesPerTask(framesPerTaskTextBox.text)
         }
     }
@@ -2983,7 +3050,7 @@ function buildUI(thisObj) {
     mfrGroup.margins = 5;
 
     const mfrCheckBox = mfrGroup.add("checkbox", undefined, "Enable Multi-Frame Rendering");
-    mfrCheckBox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING) === "true";
+    mfrCheckBox.value = DEFAULT_MULTI_FRAME_RENDERING;
 
     const maxCpuUsagePercentageGroup = mfrGroup.add("group", undefined, "");
     maxCpuUsagePercentageGroup.orientation = "row";
@@ -2998,21 +3065,21 @@ function buildUI(thisObj) {
     maxCpuUsagePercentageTextBox.alignment = ['fill', 'top'];
     maxCpuUsagePercentageTextBox.helpTip = maxCpuUsagePercentageLabel.helpTip;
     maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value;
-    maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageTextBox.enabled ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE) : "N/A";
+    maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageTextBox.enabled ? DEFAULT_MAX_CPU_USAGE_PERCENTAGE : "N/A";
 
     function onMaxCpuUsagePercentageChanged() {
         const maxCpuUsagePercentageValue = Math.abs(parseInt(maxCpuUsagePercentageTextBox.text));
         if (isNaN(maxCpuUsagePercentageValue) || maxCpuUsagePercentageValue > 100) {
-            maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
+            maxCpuUsagePercentageTextBox.text = DEFAULT_MAX_CPU_USAGE_PERCENTAGE;
         } else {
             // Need to reassign in case input string is a number followed my random characters
             // since parseInt parses the first number it finds in a provided string.
             maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageValue;
         }
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, maxCpuUsagePercentageTextBox.text);
-        const selectionItem = dcUtil.getSelection(list);
+        const selectionItem = dcUtil.getSelection(list)
         if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setMaxCpuUsagePercentage(maxCpuUsagePercentageTextBox.text)
+            var compId = selectionItem.compId;
+            uiSettingsState.get(compId).setMaxCpuUsagePercentage(parseInt(maxCpuPercentageTextBox.text));
         }
     }
     maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
@@ -3020,22 +3087,18 @@ function buildUI(thisObj) {
     // Disable max CPU percentage textbox when multi frame rendering is disabled
     function onMfrCheckBoxClicked() {
         const isMfrChecked = mfrCheckBox.value;
-        var settingsStateValue = false
-        if (!isMfrChecked) {
-            maxCpuUsagePercentageTextBox.text = "N/A";
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-        } else {
-            maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "true");
-            settingsStateValue = true
-        }
-
-        maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
-
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setMultiFrameRendering(settingsStateValue)
+            var compId = selectionItem.compId;
+            if (!isMfrChecked) {
+                maxCpuUsagePercentageTextBox.text = "N/A";
+                uiSettingsState.get(compId).setMultiFrameRendering(false);
+            } else {
+                maxCpuUsagePercentageTextBox.text = uiSettingsState.get(compId).maxCpuUsagePercentage();
+                uiSettingsState.get(compId).setMultiFrameRendering(true);
+            }
         }
+        maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
     }
     mfrCheckBox.onClick = onMfrCheckBoxClicked;
 
@@ -3068,72 +3131,82 @@ function buildUI(thisObj) {
     taskRunGroup.alignment = ['fill', 'top'];
     taskRunGroup.alignChildren = ['left', 'center'];
     const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
-    taskRunCheckbox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
+    taskRunCheckbox.value = uiSettingsState.taskRunTimeoutEnabled;
 
     const taskRunDaysGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS));
+    const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, uiSettingsState.taskRunDays());
     taskRunDaysInput.characters = 3;
     taskRunDaysGroup.add("statictext", undefined, "days");
 
     const taskRunHoursGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS));
+    const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, uiSettingsState.taskRunHours());
     taskRunHoursInput.characters = 3;
     taskRunHoursGroup.add("statictext", undefined, "hours");
 
     const taskRunMinutesGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES));
+    const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, uiSettingsState.taskRunMinutes());
     taskRunMinutesInput.characters = 3;
     taskRunMinutesGroup.add("statictext", undefined, "minutes");
 
     // Add input validation and save values to settings
     function onTaskRunCheckboxClicked() {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, dcUtil.toBooleanString(this.value));
+        uiSettingsState.setTaskRunTimeoutEnabled(this.value);
         if (this.value) {
-            dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
+            if (!dcUtil.validateTimeoutValues(this.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+                uiSettingsState.setTaskRunDays(DEFAULT_TASK_RUN_TIMEOUT_DAYS);
+                taskRunDaysInput.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS;
+                uiSettingsState.setTaskRunHours(DEFAULT_TASK_RUN_TIMEOUT_HOURS);
+                taskRunHoursInput.text = DEFAULT_TASK_RUN_TIMEOUT_HOURS;
+                uiSettingsState.setTaskRunMinutes(DEFAULT_TASK_RUN_TIMEOUT_MINUTES);
+                taskRunMinutesInput.text = DEFAULT_TASK_RUN_TIMEOUT_MINUTES;
+            }
         }
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setTaskRunTimeout(this.value)
-        }
+        uiSettingsState.setTaskRunTimeoutEnabled(this.value)
     }
     taskRunCheckbox.onClick = onTaskRunCheckboxClicked
 
     function onTaskRunDaysChanged() {
+        var old_text = this.text;
         this.text = this.text.replace(/[^0-9]/g, "");
         if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, this.text);
-        dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
-
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setTaskRunDays(this.text)
+        if (!dcUtil.validateTimeoutValues(this.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (isNaN(Number(old_text))) {
+                this.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS 
+            } else {
+                this.text = old_text
+            }
         }
+        uiSettingsState.setTaskRunDays(parseInt(this.text))
     }
     taskRunDaysInput.onChange = onTaskRunDaysChanged
 
     function onTaskRunHoursChanged() {
+        var old_text = this.text;
         this.text = this.text.replace(/[^0-9]/g, "");
         if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, this.text);
-        dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
-
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setTaskRunHours(this.text)
+        if (!dcUtil.validateTimeoutValues(this.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (isNaN(Number(old_text))) {
+                this.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS 
+            } else {
+                this.text = old_text
+            }
         }
+        uiSettingsState.setTaskRunHours(parseInt(this.text))
     }
     taskRunHoursInput.onChange = onTaskRunHoursChanged
 
     function onTaskRunMinutesChanged() {
+        var old_text = this.text;
         this.text = this.text.replace(/[^0-9]/g, "");
         if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, this.text);
-        dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text);
-
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(selectionItem.compId).setTaskRunMinutes(this.text)
+        if (!dcUtil.validateTimeoutValues(this.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (isNaN(Number(old_text))) {
+                this.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS 
+            } else {
+                this.text = old_text
+            }
         }
+        uiSettingsState.setTaskRunMinutes(parseInt(this.text))
     }
     taskRunMinutesInput.onChange = onTaskRunMinutesChanged
 
