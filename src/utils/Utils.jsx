@@ -161,7 +161,7 @@ function __generateUtil() {
             if (default_value === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + "does not exist!");
             }
-            setBoolSetting(sectionName, keyName, default_value);
+            saveBoolSetting(sectionName, keyName, default_value);
             logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + "default_value");
         }
         return parseBool(app.settings.getSetting(sectionName, keyName));
@@ -184,14 +184,14 @@ function __generateUtil() {
             if (default_value === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!")
             }
-            setNumberSetting(sectionName, keyName, default_value)
+            saveNumberSetting(sectionName, keyName, default_value)
             logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
         }
         if (isNaN(Number(app.settings.getSetting(sectionName, keyName)))) {
             if (default_value === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number!");
             }
-            setNumberSetting(sectionName, keyName, default_value)
+            saveNumberSetting(sectionName, keyName, default_value)
             logger.warning("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number. Using default value of " + default_value);
         }
         return Number(app.settings.getSetting(sectionName, keyName));
@@ -972,13 +972,13 @@ if (typeof DEFAULT_FRAMESPERTASK === "undefined") {
 if (typeof DEFAULT_MULTI_FRAME_RENDERING === "undefined") {
     const DEFAULT_MULTI_FRAME_RENDERING = false;
 }
-if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE) {
+if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
     const DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90;
 }
 
 if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
-    dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+    dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false);
 }
 if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
-    saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
+    dcUtil.saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
 }
