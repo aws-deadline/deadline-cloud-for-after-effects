@@ -1,3 +1,10 @@
+## 0.3.1 (2025-07-29)
+
+
+
+### Bug Fixes
+* update start and end frame to reflect frame numbers accurately (#228) ([`329b5b1`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/329b5b1633fff34e266d84dc27eaa31d39907ee5))
+
 ## 0.3.0 (2025-07-15)
 
 
