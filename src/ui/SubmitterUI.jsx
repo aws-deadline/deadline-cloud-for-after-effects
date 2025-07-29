@@ -248,7 +248,7 @@ function buildUI(thisObj) {
         const selectionItem = dcUtil.getSelection(list)
         if (selectionItem) {
             var compId = selectionItem.compId;
-            uiSettingsState.get(compId).setMaxCpuUsagePercentage(parseInt(maxCpuPercentageTextBox.text));
+            uiSettingsState.get(compId).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
         }
     }
     maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
@@ -330,7 +330,7 @@ function buildUI(thisObj) {
             } else {
                 onTaskRunDaysChanged();
                 onTaskRunHoursChanged();
-                OnTaskRunMinutesCHanged();
+                OnTaskRunMinutesChanged();
             }
         }
         uiSettingsState.setTaskRunTimeoutEnabled(taskRunCheckbox.value)
@@ -478,31 +478,26 @@ function buildUI(thisObj) {
 
         function onSelectionChange() {
             const selection = list.selection;
-            if (selection == null) {
-                updateList();
-                framesPerTaskTextBox.text = "";
-                return;
-            }
+            perCompSettingsGroup.enabled = false;
+            
+            framesPerTaskTextBox.text = "";
+            mfrCheckBox.value = false;
+            maxCpuUsagePercentageTextBox.text = ""
+
             submitButton.enabled = true;
             submitButton.active = false;
             submitButton.active = true;
 
-            // Disable everything
-            framesPerTaskTextBox.enabled = false
-            mfrCheckBox.enabled = false
-            maxCpuUsagePercentageTextBox.enabled = false
-
-            if (selection.length !== 1) {
+            if (selection == null || selection.length !== 1) {
                 return
             }
             const selectionItem = selection[0]
+            perCompSettingsGroup.enabled = true;
             logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
             const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex))
-            framesPerTaskTextBox.enabled = imageOutput
-            mfrCheckBox.enabled = true
-            maxCpuUsagePercentageTextBox.enabled = true
-
-            framesPerTaskTextBox.text = selectionItem.subItems[1].text
+            framesPerTaskTextBox.enabled = imageOutput;
+            mfrCheckBox.enabled = true;
+            maxCpuUsagePercentageTextBox.enabled = true;
 
             const settings = uiSettingsState.get(selectionItem.compId)
             if (settings === undefined) {
@@ -510,13 +505,14 @@ function buildUI(thisObj) {
                 return
             }
 
-            framesPerTaskTextBox.text = settings.framesPerTask() || selectionItem.subItems[1].text
-            mfrCheckBox.value = settings.multiFrameRendering()
-            maxCpuUsagePercentageTextBox.value = settings.maxCpuUsagePercentage()
-
-            maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value
+            framesPerTaskTextBox.text = settings.framesPerTask();
+            framesPerTaskTextBox.onChange();
+            maxCpuUsagePercentageTextBox.text = settings.maxCpuUsagePercentage();
+            maxCpuUsagePercentageTextBox.onChange();
+            mfrCheckBox.value = settings.multiFrameRendering();
+            mfrCheckBox.onClick();
         }
-
+        onSelectionChange();
         list.onChange = onSelectionChange;
         list.selection = null;
     }
