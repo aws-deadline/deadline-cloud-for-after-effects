@@ -330,7 +330,7 @@ function buildUI(thisObj) {
             } else {
                 onTaskRunDaysChanged();
                 onTaskRunHoursChanged();
-                OnTaskRunMinutesChanged();
+                onTaskRunMinutesChanged();
             }
         }
         uiSettingsState.setTaskRunTimeoutEnabled(taskRunCheckbox.value)
@@ -338,49 +338,46 @@ function buildUI(thisObj) {
     taskRunCheckbox.onClick = onTaskRunCheckboxClicked
 
     function onTaskRunDaysChanged() {
-        var old_text = taskRunDaysInput.text;
+        var original_value = uiSettingsState.taskRunDays();
         taskRunDaysInput.text = taskRunDaysInput.text.replace(/[^0-9]/g, "");
-        if (taskRunDaysInput.text === "") taskRunDaysInput.text = "0";
-        if (!dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
-            if (isNaN(Number(old_text))) {
-                taskRunDaysInput.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS
-            } else {
-                taskRunDaysInput.text = old_text
+        var new_value = parseInt(taskRunDaysInput.text)
+        if (taskRunDaysInput.text === "") new_value = 0;
+        if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (!isNaN(new_value)) {
+                uiSettingsState.setTaskRunDays(new_value)
             }
         }
-        uiSettingsState.setTaskRunDays(parseInt(taskRunDaysInput.text))
+        taskRunDaysInput.text = uiSettingsState.taskRunDays();
     }
-    taskRunDaysInput.onChange = onTaskRunDaysChanged
+    taskRunDaysInput.onChange = onTaskRunDaysChanged;
 
     function onTaskRunHoursChanged() {
-        var old_text = taskRunHoursInput.text;
+        var original_value = uiSettingsState.taskRunHours();
         taskRunHoursInput.text = taskRunHoursInput.text.replace(/[^0-9]/g, "");
-        if (taskRunHoursInput.text === "") taskRunHoursInput.text = "0";
-        if (!dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
-            if (isNaN(Number(old_text))) {
-                taskRunHoursInput.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS
-            } else {
-                taskRunHoursInput.text = old_text
+        var new_value = parseInt(taskRunHoursInput.text)
+        if (taskRunHoursInput.text === "") new_value = 0;
+        if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (!isNaN(new_value)) {
+                uiSettingsState.setTaskRunHours(new_value)
             }
         }
-        uiSettingsState.setTaskRunHours(parseInt(taskRunHoursInput.text))
+        taskRunHoursInput.text = uiSettingsState.taskRunHours();
     }
-    taskRunHoursInput.onChange = onTaskRunHoursChanged
+    taskRunHoursInput.onChange = onTaskRunHoursChanged;
 
     function onTaskRunMinutesChanged() {
-        var old_text = taskRunMinutesInput.text;
+        var original_value = uiSettingsState.taskRunMinutes();
         taskRunMinutesInput.text = taskRunMinutesInput.text.replace(/[^0-9]/g, "");
-        if (taskRunMinutesInput.text === "") taskRunMinutesInput.text = "0";
-        if (!dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
-            if (isNaN(Number(old_text))) {
-                taskRunMinutesInput.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS
-            } else {
-                taskRunMinutesInput.text = old_text
+        var new_value = parseInt(taskRunMinutesInput.text)
+        if (taskRunMinutesInput.text === "") new_value = 0;
+        if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (!isNaN(new_value)) {
+                uiSettingsState.setTaskRunMinutes(new_value)
             }
         }
-        uiSettingsState.setTaskRunMinutes(parseInt(taskRunMinutesInput.text))
+        taskRunMinutesInput.text = uiSettingsState.taskRunMinutes();
     }
-    taskRunMinutesInput.onChange = onTaskRunMinutesChanged
+    taskRunMinutesInput.onChange = onTaskRunMinutesChanged;
 
 
     // Check for duplicate names
@@ -479,7 +476,7 @@ function buildUI(thisObj) {
         function onSelectionChange() {
             const selection = list.selection;
             perCompSettingsGroup.enabled = false;
-            
+
             framesPerTaskTextBox.text = "";
             mfrCheckBox.value = false;
             maxCpuUsagePercentageTextBox.text = ""

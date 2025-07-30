@@ -849,7 +849,7 @@ function __generateUtil() {
         if (enabled) {
             var days = parseInt(daysInput) || 0;
             var hours = parseInt(hoursInput) || 0;
-            var minutes = parseInt(minutesInput.text) || 0;
+            var minutes = parseInt(minutesInput) || 0;
 
             if (days === 0 && hours === 0 && minutes === 0) {
                 adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
