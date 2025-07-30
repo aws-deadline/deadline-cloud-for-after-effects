@@ -424,11 +424,7 @@ function buildUI(thisObj) {
             if (checkForInvalidCompositionNames(list.selection)) {
                 return;
             }
-            if (taskRunCheckbox.value) {
-                SubmitSelection(list.selection, uiSettingsState, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, parseInt(taskRunDaysInput.text), parseInt(taskRunHoursInput.text), parseInt(taskRunMinutesInput.text));
-            } else {
-                SubmitSelection(list.selection, uiSettingsState, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, 2, 0, 0);
-            }
+            SubmitSelection(list.selection, uiSettingsState);
             list.selection = null;
         }
     }

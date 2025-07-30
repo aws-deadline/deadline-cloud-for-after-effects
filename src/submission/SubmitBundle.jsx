@@ -201,15 +201,14 @@ function generateJobEnvironmentFragment(bundlePath, outputFoldersStr) {
 /**
  * Submit the selected render queue item
  **/
-function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskTimeoutDays, taskTimeoutHours, taskTimeoutMinutes) {
+function SubmitSelection(selection, selectionSettings) {
     // Calculate task run timeout in seconds
-    var taskTimeoutSeconds = 0;
+    var taskTimeoutSeconds = (selectionSettings.taskRunDays() * 24 * 60 * 60) + (selectionSettings.taskRunHours() * 60 * 60) + (selectionSettings.taskRunMinutes() * 60);
     // Validate timeout values during job submission
-    if (taskTimeoutDays === 0 && taskTimeoutHours === 0 && taskTimeoutMinutes === 0) {
+    if (taskTimeoutSeconds <= 0) {
         adcAlert("The following timeout value must be greater than 0: TaskRun", true);
         throw new Error("Task run timeout must be greater than zero");
     }
-    taskTimeoutSeconds = (taskTimeoutDays * 24 * 60 * 60) + (taskTimeoutHours * 60 * 60) + (taskTimeoutMinutes * 60);
 
     const renderQueueItems = [];
 
@@ -377,9 +376,9 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
             return;
         }
 
-        var stepFramesPerTask = parseInt(selectionSettings.get(renderQueueItem.comp.id).framesPerTask() || framesPerTask);
-        var stepMaxCpuUsagePercentage = parseInt(selectionSettings.get(renderQueueItem.comp.id).maxCpuUsagePercentage() || maxCpuUsagePercentage);
-        var stepMultiFrameRendering = selectionSettings.get(renderQueueItem.comp.id).multiFrameRendering() || multiFrameRendering;
+        var stepFramesPerTask = selectionSettings.get(renderQueueItem.comp.id).framesPerTask();
+        var stepMaxCpuUsagePercentage = selectionSettings.get(renderQueueItem.comp.id).maxCpuUsagePercentage();
+        var stepMultiFrameRendering = selectionSettings.get(renderQueueItem.comp.id).multiFrameRendering();
 
         var outputModule = renderQueueItem.outputModule(1).file;
         var outputPath = outputModule.fsName;
