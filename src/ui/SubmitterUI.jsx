@@ -260,38 +260,10 @@ function buildUI(thisObj) {
     }
     taskRunMinutesInput.onChange = onTaskRunMinutesChanged;
 
-
-    // Check for duplicate names
-    function checkForInvalidCompositionNames(selection) {
-        const names = [];
-        const duplicateNames = [];
-        for (var i = 0; i < selection.length; i++) {
-            var selectionItem = selection[i];
-            var renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex);
-            var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
-            if (names.indexOf(compName) !== -1) {
-                duplicateNames.push(renderQueueItem.comp.name);
-            }
-            names.push(compName);
-        }
-        if (duplicateNames.length !== 0) {
-            var message = "Selected submission items must have unique names. Found (" + duplicateNames.length * 2 + ") compositions with the same name: ";
-            for (var i = 0; i < duplicateNames.length; i++) {
-                message = message + "\n\t" + duplicateNames[i];
-            }
-            adcAlert(message, true);
-            return true;
-        }
-        return false;
-    }
-
     const submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
         if (getPythonExecutable()) {
             if (list.selection === null) {
-                return;
-            }
-            if (checkForInvalidCompositionNames(list.selection)) {
                 return;
             }
             SubmitSelection(list.selection, uiSettingsState);
