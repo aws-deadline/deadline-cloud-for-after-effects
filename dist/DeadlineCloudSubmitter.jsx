@@ -872,8 +872,8 @@ function __generateUtil() {
 
     function getRQIID(renderQueueIndex) {
         /** Calculates an ID for the Render Queue Item with the given index in the render queue
-        * Not guaranteed to be unique
-        */
+         * Not guaranteed to be unique
+         */
         return app.project.file.name + "_" + app.project.renderQueue.item(renderQueueIndex).comp.id + "_" + renderQueueIndex.toString();
     }
 
@@ -920,7 +920,8 @@ function __generateUtil() {
         "calculateFrameRange": calculateFrameRange,
         "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
-        "getTempFolder": getTempFolder
+        "getTempFolder": getTempFolder,
+        "getRQIID": getRQIID
     }
 }
 
@@ -1247,32 +1248,32 @@ function UiSettingsStore(name) {
     }
 }
 
-UiSettingsState.prototype.create = function(compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
+UiSettingsState.prototype.create = function(RQIID, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
     /**
-     * Adds new UISettingsStore to store settings for the comp associated with compId
+     * Adds new UISettingsStore to store settings for the comp associated with Render Queue Item ID
      */
-    if (!this.settings[compId]) {
-        this.settings[compId] = new UiSettingsStore(compId);
+    if (!this.settings[RQIID]) {
+        this.settings[RQIID] = new UiSettingsStore(RQIID);
     }
     if (framesPerTask !== undefined) {
-        this.settings[compId].setFramesPerTask(framesPerTask);
+        this.settings[RQIID].setFramesPerTask(framesPerTask);
     }
     if (multiFrameRendering !== undefined) {
-        this.settings[compId].setMultiFrameRendering(multiFrameRendering);
+        this.settings[RQIID].setMultiFrameRendering(multiFrameRendering);
     }
     if (maxCpuUsagePercentage !== undefined) {
-        this.settings[compId].setMaxCpuUsagePercentage(maxCpuUsagePercentage);
+        this.settings[RQIID].setMaxCpuUsagePercentage(maxCpuUsagePercentage);
     }
 }
 
-UiSettingsState.prototype.get = function(compId) {
+UiSettingsState.prototype.get = function(RQIID) {
     /**
-     * Gets UISettingsStore associated with given compId, or creates a new default one if it doesn't exit
+     * Gets UISettingsStore associated with given RQIID, or creates a new default one if it doesn't exit
      */
-    if (!this.settings[compId]) {
-        this.settings[compId] = new UiSettingsStore(compId);
+    if (!this.settings[RQIID]) {
+        this.settings[RQIID] = new UiSettingsStore(RQIID);
     }
-    return this.settings[compId]
+    return this.settings[RQIID]
 }
 
 
@@ -2122,9 +2123,9 @@ function SubmitSelection(selection, selectionSettings) {
             return;
         }
 
-        var stepFramesPerTask = selectionSettings.get(renderQueueItem.comp.id).framesPerTask();
-        var stepMaxCpuUsagePercentage = selectionSettings.get(renderQueueItem.comp.id).maxCpuUsagePercentage();
-        var stepMultiFrameRendering = selectionSettings.get(renderQueueItem.comp.id).multiFrameRendering();
+        var stepFramesPerTask = selectionSettings.get(dcUtil.getRQIID(renderQueueIndex)).framesPerTask();
+        var stepMaxCpuUsagePercentage = selectionSettings.get(dcUtil.getRQIID(renderQueueIndex)).maxCpuUsagePercentage();
+        var stepMultiFrameRendering = selectionSettings.get(dcUtil.getRQIID(renderQueueIndex)).multiFrameRendering();
 
         var outputModule = renderQueueItem.outputModule(1).file;
         var outputPath = outputModule.fsName;
@@ -2913,13 +2914,13 @@ function buildUI(thisObj) {
         if (selectionItem) {
             var newFramesPerTaskValue = parseInt(framesPerTaskTextBox.text);
             if (isNaN(newFramesPerTaskValue)) {
-                newFramesPerTaskValue = uiSettingsState.get(selectionItem.compId).framesPerTask();
+                newFramesPerTaskValue = uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).framesPerTask();
             }
             if (newFramesPerTaskValue > 9999) {
                 newFramesPerTaskValue = 9999;
             }
             framesPerTaskTextBox.text = newFramesPerTaskValue.toString();
-            uiSettingsState.get(selectionItem.compId).setFramesPerTask(newFramesPerTaskValue);
+            uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).setFramesPerTask(newFramesPerTaskValue);
         }
     }
     framesPerTaskTextBox.onChange = onFramesPerTaskChanged;
@@ -2960,8 +2961,7 @@ function buildUI(thisObj) {
         }
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
-            var compId = selectionItem.compId;
-            uiSettingsState.get(compId).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
+            uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
         }
     }
     maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
@@ -2971,13 +2971,13 @@ function buildUI(thisObj) {
         const isMfrChecked = mfrCheckBox.value;
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
-            var compId = selectionItem.compId;
+            var RQIID = dcUtil.getRQIID(selectionItem.renderQueueIndex);
             if (!isMfrChecked) {
                 maxCpuUsagePercentageTextBox.text = "N/A";
-                uiSettingsState.get(compId).setMultiFrameRendering(false);
+                uiSettingsState.get(RQIID).setMultiFrameRendering(false);
             } else {
-                maxCpuUsagePercentageTextBox.text = uiSettingsState.get(compId).maxCpuUsagePercentage();
-                uiSettingsState.get(compId).setMultiFrameRendering(true);
+                maxCpuUsagePercentageTextBox.text = uiSettingsState.get(RQIID).maxCpuUsagePercentage();
+                uiSettingsState.get(RQIID).setMultiFrameRendering(true);
             }
         }
         maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
@@ -3162,7 +3162,7 @@ function buildUI(thisObj) {
             item.renderQueueIndex = i;
             item.compId = rqi.comp.id;
             // Create a default entry for each comp as needed.
-            uiSettingsState.get(item.compId);
+            uiSettingsState.get(i);
             item.subItems[0].text = rqi.comp.name;
 
             // Calculate frame range using the utility function
@@ -3206,19 +3206,22 @@ function buildUI(thisObj) {
             const selectionItem = selection[0];
             perCompSettingsGroup.enabled = true;
             logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
-            const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex));
-            framesPerTaskTextBox.enabled = imageOutput;
-            mfrCheckBox.enabled = true;
-            maxCpuUsagePercentageTextBox.enabled = true;
 
-            const settings = uiSettingsState.get(selectionItem.compId);
+            const settings = uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex));
             if (settings === undefined) {
                 logger.warning("Could not find settings for : " + selectionItem.compId);
                 return;
             }
 
-            framesPerTaskTextBox.text = settings.framesPerTask();
-            framesPerTaskTextBox.onChange();
+            const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex));
+            if (imageOutput) {
+                framesPerTaskTextBox.text = settings.framesPerTask();
+                framesPerTaskTextBox.enabled = true;
+                framesPerTaskTextBox.onChange()
+            } else {
+                framesPerTaskTextBox.text = "Selection is not image sequence";
+                framesPerTaskTextBox.enabled = false;
+            }
             maxCpuUsagePercentageTextBox.text = settings.maxCpuUsagePercentage();
             maxCpuUsagePercentageTextBox.onChange();
             mfrCheckBox.value = settings.multiFrameRendering();

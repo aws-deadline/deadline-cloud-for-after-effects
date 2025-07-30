@@ -73,30 +73,30 @@ function UiSettingsStore(name) {
     }
 }
 
-UiSettingsState.prototype.create = function(compId, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
+UiSettingsState.prototype.create = function(RQIID, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
     /**
-     * Adds new UISettingsStore to store settings for the comp associated with compId
+     * Adds new UISettingsStore to store settings for the comp associated with Render Queue Item ID
      */
-    if (!this.settings[compId]) {
-        this.settings[compId] = new UiSettingsStore(compId);
+    if (!this.settings[RQIID]) {
+        this.settings[RQIID] = new UiSettingsStore(RQIID);
     }
     if (framesPerTask !== undefined) {
-        this.settings[compId].setFramesPerTask(framesPerTask);
+        this.settings[RQIID].setFramesPerTask(framesPerTask);
     }
     if (multiFrameRendering !== undefined) {
-        this.settings[compId].setMultiFrameRendering(multiFrameRendering);
+        this.settings[RQIID].setMultiFrameRendering(multiFrameRendering);
     }
     if (maxCpuUsagePercentage !== undefined) {
-        this.settings[compId].setMaxCpuUsagePercentage(maxCpuUsagePercentage);
+        this.settings[RQIID].setMaxCpuUsagePercentage(maxCpuUsagePercentage);
     }
 }
 
-UiSettingsState.prototype.get = function(compId) {
+UiSettingsState.prototype.get = function(RQIID) {
     /**
-     * Gets UISettingsStore associated with given compId, or creates a new default one if it doesn't exit
+     * Gets UISettingsStore associated with given RQIID, or creates a new default one if it doesn't exit
      */
-    if (!this.settings[compId]) {
-        this.settings[compId] = new UiSettingsStore(compId);
+    if (!this.settings[RQIID]) {
+        this.settings[RQIID] = new UiSettingsStore(RQIID);
     }
-    return this.settings[compId]
+    return this.settings[RQIID]
 }

@@ -1,24 +1,3 @@
-function populateListBoxItem(item, renderQueueItem, index) {
-    item.renderQueueIndex = index;
-    item.compId = renderQueueItem.comp.id;
-    item.subItems[0].text = renderQueueItem.comp.name;
-
-    var frameRange = dcUtil.calculateFrameRange(renderQueueItem);
-    var startFrame = frameRange.startFrame;
-    var endFrame = frameRange.endFrame;
-
-    item.subItems[1].text = startFrame == endFrame ? startFrame.toString() : startFrame + "-" + endFrame;
-    if (renderQueueItem.numOutputModules <= 0) {
-        item.subItems[2].text = "<not set>";
-    } else if (renderQueueItem.numOutputModules == 1) {
-        const outputFile = renderQueueItem.outputModule(1).file;
-        item.subItems[2].text = outputFile == null ? "<not set>" : outputFile.fsName;
-    } else {
-        item.subItems[2].text = "<multiple output modules>";
-    }
-}
-
-
 /**
  * Builds the Script UI for the Deadline Cloud Submitter
  **/
@@ -97,13 +76,13 @@ function buildUI(thisObj) {
         if (selectionItem) {
             var newFramesPerTaskValue = parseInt(framesPerTaskTextBox.text);
             if (isNaN(newFramesPerTaskValue)) {
-                newFramesPerTaskValue = uiSettingsState.get(selectionItem.compId).framesPerTask();
+                newFramesPerTaskValue = uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).framesPerTask();
             }
             if (newFramesPerTaskValue > 9999) {
                 newFramesPerTaskValue = 9999;
             }
             framesPerTaskTextBox.text = newFramesPerTaskValue.toString();
-            uiSettingsState.get(selectionItem.compId).setFramesPerTask(newFramesPerTaskValue);
+            uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).setFramesPerTask(newFramesPerTaskValue);
         }
     }
     framesPerTaskTextBox.onChange = onFramesPerTaskChanged;
@@ -144,8 +123,7 @@ function buildUI(thisObj) {
         }
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
-            var compId = selectionItem.compId;
-            uiSettingsState.get(compId).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
+            uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
         }
     }
     maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
@@ -155,13 +133,13 @@ function buildUI(thisObj) {
         const isMfrChecked = mfrCheckBox.value;
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
-            var compId = selectionItem.compId;
+            var RQIID = dcUtil.getRQIID(selectionItem.renderQueueIndex);
             if (!isMfrChecked) {
                 maxCpuUsagePercentageTextBox.text = "N/A";
-                uiSettingsState.get(compId).setMultiFrameRendering(false);
+                uiSettingsState.get(RQIID).setMultiFrameRendering(false);
             } else {
-                maxCpuUsagePercentageTextBox.text = uiSettingsState.get(compId).maxCpuUsagePercentage();
-                uiSettingsState.get(compId).setMultiFrameRendering(true);
+                maxCpuUsagePercentageTextBox.text = uiSettingsState.get(RQIID).maxCpuUsagePercentage();
+                uiSettingsState.get(RQIID).setMultiFrameRendering(true);
             }
         }
         maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
@@ -346,7 +324,7 @@ function buildUI(thisObj) {
             item.renderQueueIndex = i;
             item.compId = rqi.comp.id;
             // Create a default entry for each comp as needed.
-            uiSettingsState.get(item.compId);
+            uiSettingsState.get(i);
             item.subItems[0].text = rqi.comp.name;
 
             // Calculate frame range using the utility function
@@ -390,19 +368,22 @@ function buildUI(thisObj) {
             const selectionItem = selection[0];
             perCompSettingsGroup.enabled = true;
             logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
-            const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex));
-            framesPerTaskTextBox.enabled = imageOutput;
-            mfrCheckBox.enabled = true;
-            maxCpuUsagePercentageTextBox.enabled = true;
 
-            const settings = uiSettingsState.get(selectionItem.compId);
+            const settings = uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex));
             if (settings === undefined) {
                 logger.warning("Could not find settings for : " + selectionItem.compId);
                 return;
             }
 
-            framesPerTaskTextBox.text = settings.framesPerTask();
-            framesPerTaskTextBox.onChange();
+            const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex));
+            if (imageOutput) {
+                framesPerTaskTextBox.text = settings.framesPerTask();
+                framesPerTaskTextBox.enabled = true;
+                framesPerTaskTextBox.onChange()
+            } else {
+                framesPerTaskTextBox.text = "Selection is not image sequence";
+                framesPerTaskTextBox.enabled = false;
+            }
             maxCpuUsagePercentageTextBox.text = settings.maxCpuUsagePercentage();
             maxCpuUsagePercentageTextBox.onChange();
             mfrCheckBox.value = settings.multiFrameRendering();

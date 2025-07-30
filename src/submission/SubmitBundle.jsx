@@ -376,9 +376,9 @@ function SubmitSelection(selection, selectionSettings) {
             return;
         }
 
-        var stepFramesPerTask = selectionSettings.get(renderQueueItem.comp.id).framesPerTask();
-        var stepMaxCpuUsagePercentage = selectionSettings.get(renderQueueItem.comp.id).maxCpuUsagePercentage();
-        var stepMultiFrameRendering = selectionSettings.get(renderQueueItem.comp.id).multiFrameRendering();
+        var stepFramesPerTask = selectionSettings.get(dcUtil.getRQIID(renderQueueIndex)).framesPerTask();
+        var stepMaxCpuUsagePercentage = selectionSettings.get(dcUtil.getRQIID(renderQueueIndex)).maxCpuUsagePercentage();
+        var stepMultiFrameRendering = selectionSettings.get(dcUtil.getRQIID(renderQueueIndex)).multiFrameRendering();
 
         var outputModule = renderQueueItem.outputModule(1).file;
         var outputPath = outputModule.fsName;

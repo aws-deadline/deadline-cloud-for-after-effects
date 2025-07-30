@@ -866,6 +866,13 @@ function __generateUtil() {
         return list.selection[0];
     }
 
+    function getRQIID(renderQueueIndex) {
+        /** Calculates an ID for the Render Queue Item with the given index in the render queue
+         * Not guaranteed to be unique
+         */
+        return app.project.file.name + "_" + app.project.renderQueue.item(renderQueueIndex).comp.id + "_" + renderQueueIndex.toString();
+    }
+
     return {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
@@ -909,7 +916,8 @@ function __generateUtil() {
         "calculateFrameRange": calculateFrameRange,
         "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
-        "getTempFolder": getTempFolder
+        "getTempFolder": getTempFolder,
+        "getRQIID": getRQIID
     }
 }
 
