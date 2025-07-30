@@ -870,6 +870,13 @@ function __generateUtil() {
         return list.selection[0];
     }
 
+    function getRQIID(renderQueueIndex) {
+        /** Calculates an ID for the Render Queue Item with the given index in the render queue
+        * Not guaranteed to be unique
+        */
+        return app.project.file.name + "_" + app.project.renderQueue.item(renderQueueIndex).comp.id + "_" + renderQueueIndex.toString();
+    }
+
     return {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
@@ -2826,27 +2833,6 @@ if (typeof JSON !== "object") {
 
 
 
-
-
-function populateListBoxItem(item, renderQueueItem, index) {
-    item.renderQueueIndex = index;
-    item.compId = renderQueueItem.comp.id;
-    item.subItems[0].text = renderQueueItem.comp.name;
-
-    var frameRange = dcUtil.calculateFrameRange(renderQueueItem);
-    var startFrame = frameRange.startFrame;
-    var endFrame = frameRange.endFrame;
-
-    item.subItems[1].text = startFrame == endFrame ? startFrame.toString() : startFrame + "-" + endFrame;
-    if (renderQueueItem.numOutputModules <= 0) {
-        item.subItems[2].text = "<not set>";
-    } else if (renderQueueItem.numOutputModules == 1) {
-        const outputFile = renderQueueItem.outputModule(1).file;
-        item.subItems[2].text = outputFile == null ? "<not set>" : outputFile.fsName;
-    } else {
-        item.subItems[2].text = "<multiple output modules>";
-    }
-}
 
 
 /**
