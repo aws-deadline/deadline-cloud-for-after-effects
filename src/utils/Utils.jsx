@@ -108,7 +108,7 @@ function adcAlert(message, errorIcon) {
 }
 
 function validateType(item, item_type) {
-    actual_type = typeof item;
+    var actual_type = typeof item;
     if (actual_type !== item_type) {
         throw new Error("Object has type " + actual_type + " instead of desired type " + item_type);
     }
@@ -148,8 +148,8 @@ function __generateUtil() {
         /**
          * Sets boolean value in app settings
          */
-        validateType(value, "boolean")
-        app.settings.saveSetting(sectionName, keyName, value.toString())
+        validateType(value, "boolean");
+        app.settings.saveSetting(sectionName, keyName, value.toString());
     }
 
     function getBoolSetting(sectionName, keyName, default_value) {
@@ -171,8 +171,8 @@ function __generateUtil() {
         /**
          * Sets integer value in app settings
          */
-        validateType(value, "number")
-        app.settings.saveSetting(sectionName, keyName, value.toString())
+        validateType(value, "number");
+        app.settings.saveSetting(sectionName, keyName, value.toString());
     }
 
     function getNumberSetting(sectionName, keyName, default_value) {
@@ -182,16 +182,16 @@ function __generateUtil() {
          */
         if (!app.settings.haveSetting(sectionName, keyName)) {
             if (default_value === undefined) {
-                throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!")
+                throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!");
             }
-            saveNumberSetting(sectionName, keyName, default_value)
+            saveNumberSetting(sectionName, keyName, default_value);
             logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
         }
         if (isNaN(Number(app.settings.getSetting(sectionName, keyName)))) {
             if (default_value === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number!");
             }
-            saveNumberSetting(sectionName, keyName, default_value)
+            saveNumberSetting(sectionName, keyName, default_value);
             logger.warning("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number. Using default value of " + default_value);
         }
         return Number(app.settings.getSetting(sectionName, keyName));
@@ -206,7 +206,7 @@ function __generateUtil() {
     }
 
     function getStringSetting(sectionName, keyName, defaultValue) {
-         /**
+        /**
          * Gets string value from app settings, or sets default_value if setting does not exist
          * Set default_value to undefined to error on missing setting
          */
@@ -217,7 +217,7 @@ function __generateUtil() {
             setStringSetting(sectionName, keyName, default_value);
             logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
         }
-        return app.settings.getSetting(sectionName, keyName) 
+        return app.settings.getSetting(sectionName, keyName)
     }
 
     function trimIllegalChars(stringToTrim) {
@@ -311,7 +311,7 @@ function __generateUtil() {
          */
         maxValue.text = maxValue.text.replace(/[^\d]/g, '');
         if (parseInt(maxValue.text) < parseInt(minValue.text)) {
-            maxValue.text = minValue.text
+            maxValue.text = minValue.text;
         }
     }
 
@@ -489,10 +489,10 @@ function __generateUtil() {
         _makeBootstrapBatFile(tempBootstrapBatFile, tempBatFile);
         // Wrapped command with error code output
         cmd = cmd + " > " + tempOutputFile.fsName;
-        cmd += "\nIF %ERRORLEVEL% NEQ 0 ("
-        cmd += "\n echo ERROR CODE: %ERRORLEVEL% >> " + tempOutputFile.fsName
-        cmd += "\n)"
-        cmd += "\nexit"
+        cmd += "\nIF %ERRORLEVEL% NEQ 0 (";
+        cmd += "\n echo ERROR CODE: %ERRORLEVEL% >> " + tempOutputFile.fsName;
+        cmd += "\n)";
+        cmd += "\nexit";
         tempBatFile.open("w");
         tempBatFile.writeln(cmd);
         tempBatFile.close();
@@ -508,7 +508,7 @@ function __generateUtil() {
     }
 
     function _makeBootstrapBatFile(bootstrapFile, tempFile) {
-        const _cmd = "@echo off" + "\nstart /min /wait " + tempFile.fsName + "\nexit"
+        const _cmd = "@echo off" + "\nstart /min /wait " + tempFile.fsName + "\nexit";
         bootstrapFile.open("w");
         bootstrapFile.writeln(_cmd);
         bootstrapFile.close();
@@ -545,7 +545,7 @@ function __generateUtil() {
             }
         }
         result = "";
-        message = cmd + " Successful."
+        message = cmd + " Successful.";
         return {
             "return_code": return_code,
             "message": message,
@@ -632,14 +632,14 @@ function __generateUtil() {
         var maxSeqNumber = 0;
         var folderName = "";
         for (var idx = 0; idx < subFolders.length; idx++) {
-            folderName = subFolders[idx].fullName
-            const match = folderName.match(regex)
+            folderName = subFolders[idx].fullName;
+            const match = folderName.match(regex);
             if (!match) {
                 continue;
             }
             const seqNr = parseInt(match[1]) // Convert first capture group to int
             if (seqNr > maxSeqNumber) {
-                maxSeqNumber = seqNr
+                maxSeqNumber = seqNr;
             }
         }
         // 2. Create new export directory with next sequence number
@@ -813,7 +813,7 @@ function __generateUtil() {
     function getUserDirectory() {
         /* Return OS specific user home directory. */
         if (system.osName == "MacOS") {
-            return $.getenv("HOME")
+            return $.getenv("HOME");
         }
         // Windows:
         return $.getenv("USERPROFILE");
@@ -823,7 +823,7 @@ function __generateUtil() {
         /* Return After Effects version as float. */
         const versionAsString = app.version.substring(0, 4);
         const version = parseFloat(versionAsString);
-        return version
+        return version;
     }
 
     function calculateFrameRange(rqi) {

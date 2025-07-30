@@ -48,10 +48,10 @@ function UiSettingsStore(name) {
     this.name = name;
 
     this.framesPerTask = function() {
-        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name +"_" + DEADLINECLOUD_FRAMESPERTASK, DEFAULT_FRAMESPERTASK);
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_FRAMESPERTASK, DEFAULT_FRAMESPERTASK);
     }
     this.setFramesPerTask = function(value) {
-        logger.warning("(" + this.name + ") Setting framesPerTask to " + value)
+        logger.warning("(" + this.name + ") Setting framesPerTask to " + value);
         dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_FRAMESPERTASK, value);
     }
 
@@ -59,17 +59,17 @@ function UiSettingsStore(name) {
         return dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_MULTI_FRAME_RENDERING, DEFAULT_MULTI_FRAME_RENDERING);
     }
     this.setMultiFrameRendering = function(value) {
-        logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value)
+        logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value);
         dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_MULTI_FRAME_RENDERING, value);
     }
 
     this.maxCpuUsagePercentage = function() {
-        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name + "_" + DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, DEFAULT_MAX_CPU_USAGE_PERCENTAGE)
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name + "_" + DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, DEFAULT_MAX_CPU_USAGE_PERCENTAGE);
 
     }
     this.setMaxCpuUsagePercentage = function(value) {
-        logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value)
-        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name+"_"+DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, value)
+        logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value);
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name + "_" + DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, value);
     }
 }
 
@@ -96,7 +96,7 @@ UiSettingsState.prototype.get = function(compId) {
      * Gets UISettingsStore associated with given compId, or creates a new default one if it doesn't exit
      */
     if (!this.settings[compId]) {
-        this.settings[compId] = new UiSettingsStore(compId)
+        this.settings[compId] = new UiSettingsStore(compId);
     }
     return this.settings[compId]
 }

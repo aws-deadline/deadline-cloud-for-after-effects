@@ -7,7 +7,7 @@ var LOG_LEVEL = {
     DEBUG: 4
 };
 
-var LOG_LEVEL_MAP = dcUtil.invertObject(LOG_LEVEL)
+var LOG_LEVEL_MAP = dcUtil.invertObject(LOG_LEVEL);
 
 // Global log level
 // Set the desired logging level
@@ -79,16 +79,16 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
         // Rollover older files first
         var rolloverFile;
         for (var i = backupCount - 1; i > 0; i--) { // Last file does not need rollover, it is allowed to get overwritten.
-            rolloverFile = new File(logDirectoryPath + logFileName + "." + i)
+            rolloverFile = new File(logDirectoryPath + logFileName + "." + i);
             if (!rolloverFile.exists) {
                 continue;
             }
             var j = i + 1;
-            const rolloverTargetPath = logDirectoryPath + logFileName + "." + j
+            const rolloverTargetPath = logDirectoryPath + logFileName + "." + j;
             rolloverFile.copy(rolloverTargetPath);
         }
         // Rollover active file
-        logFile.copy(logDirectoryPath + logFileName + "." + 1)
+        logFile.copy(logDirectoryPath + logFileName + "." + 1);
         logFile.open("w"); // Erase contents of active log file
         logFile.close();
     }
@@ -172,5 +172,5 @@ function getCurrentTimeAsStr() {
 var _scriptFileName = "OpenAeSubmitter.jsx";
 var logFileName = "aftereffects.log";
 var logDirectoryPath = dcUtil.getUserDirectory() + "/.deadline/logs/submitters/";
-var logNormDirectoryPath = dcUtil.normPath(logDirectoryPath)
+var logNormDirectoryPath = dcUtil.normPath(logDirectoryPath);
 var logger = Logger(logFileName, logNormDirectoryPath);

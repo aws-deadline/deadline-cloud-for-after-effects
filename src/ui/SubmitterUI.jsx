@@ -29,7 +29,7 @@ function refreshList(listBox, uiSettingsState) {
         RQItemStatus.USER_STOPPED,
         RQItemStatus.ERR_STOPPED,
         RQItemStatus.DONE
-    ]
+    ];
     for (var index = 1; index <= app.project.renderQueue.numItems; index++) {
         var renderQueueItem = app.project.renderQueue.item(index);
         if (renderQueueItem == null) {
@@ -64,7 +64,7 @@ function buildUI(thisObj) {
     const root = submitterPanel.add("group");
     root.orientation = "column";
     root.alignment = ['fill', 'fill'];
-    root.alignChildren = ['fill', 'top']
+    root.alignChildren = ['fill', 'top'];
     const logoGroup = root.add("group");
     logoGroup.alignment = 'left';
     logoGroup.add("image", undefined, logoData());
@@ -82,11 +82,11 @@ function buildUI(thisObj) {
     const refreshButton = headerButtonGroup.add("button", undefined, "Refresh");
     const listGroup = root.add("panel", undefined, "");
     listGroup.alignment = ['fill', 'top'];
-    listGroup.alignChildren = ['fill', 'top']
-    listGroup.orientation = "column"
+    listGroup.alignChildren = ['fill', 'top'];
+    listGroup.orientation = "column";
     var multiCompLabel = listGroup.add("statictext", undefined, "Shift+Click or Ctrl+Click can be used to select multiple precomps and group them together as a single job submission", {
         multiline: true
-    })
+    });
     // Label height needs to be set manually because ExtendScript does not accurately calculate the height of multiline text objects.
     multiCompLabel.maximumSize.height = 30;
     multiCompLabel.alignment = ['fill', 'top'];
@@ -112,55 +112,55 @@ function buildUI(thisObj) {
         submitButton.active = true;
 
         // Disable everything
-        framesPerTaskTextBox.enabled = false
-        mfrCheckBox.enabled = false
-        maxCpuUsagePercentageTextBox.enabled = false
-        taskRunCheckbox.enabled = false
-        taskRunDaysInput.enabled = false
-        taskRunHoursInput.enabled = false
-        taskRunMinutesInput.enabled = false
+        framesPerTaskTextBox.enabled = false;
+        mfrCheckBox.enabled = false;
+        maxCpuUsagePercentageTextBox.enabled = false;
+        taskRunCheckbox.enabled = false;
+        taskRunDaysInput.enabled = false;
+        taskRunHoursInput.enabled = false;
+        taskRunMinutesInput.enabled = false;
 
         if (selection.length !== 1) {
-            return
+            return;
         }
-        const selectionItem = selection[0]
+        const selectionItem = selection[0];
         logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
-        const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex))
-        framesPerTaskTextBox.enabled = imageOutput
-        mfrCheckBox.enabled = true
-        maxCpuUsagePercentageTextBox.enabled = true
-        taskRunCheckbox.enabled = true
-        taskRunDaysInput.enabled = true
-        taskRunHoursInput.enabled = true
-        taskRunMinutesInput.enabled = true
+        const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex));
+        framesPerTaskTextBox.enabled = imageOutput;
+        mfrCheckBox.enabled = true;
+        maxCpuUsagePercentageTextBox.enabled = true;
+        taskRunCheckbox.enabled = true;
+        taskRunDaysInput.enabled = true;
+        taskRunHoursInput.enabled = true;
+        taskRunMinutesInput.enabled = true;
 
         logger.debug("    Setting framesPerTaskTextBox.text to: " + selectionItem.subItems[1].text);
-        framesPerTaskTextBox.text = selectionItem.subItems[1].text
+        framesPerTaskTextBox.text = selectionItem.subItems[1].text;
 
-        const settings = uiSettingsState.get(selectionItem.compId)
+        const settings = uiSettingsState.get(selectionItem.compId);
         if (settings === undefined) {
             logger.warning("Could not find settings for : " + selectionItem.compId);
-            return
+            return;
         }
 
         if (imageOutput === true) {
             logger.debug("    Setting framesPerTaskTextBox.text to: " + (settings.framesPerTask() || selectionItem.subItems[1].text));
-            framesPerTaskTextBox.text = settings.framesPerTask() || selectionItem.subItems[1].text
+            framesPerTaskTextBox.text = settings.framesPerTask() || selectionItem.subItems[1].text;
         }
         logger.debug("    Setting mfrCheckBox.value to: " + settings.multiFrameRendering());
-        mfrCheckBox.value = settings.multiFrameRendering()
+        mfrCheckBox.value = settings.multiFrameRendering();
         logger.debug("    Setting maxCpuUsagePercentageTextBox.text to: " + settings.maxCpuUsagePercentage());
-        maxCpuUsagePercentageTextBox.text = settings.maxCpuUsagePercentage()
+        maxCpuUsagePercentageTextBox.text = settings.maxCpuUsagePercentage();
 
-        maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value
+        maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value;
 
-        taskRunCheckbox.value = settings.taskRunTimeoutEnabled()
-        taskRunDaysInput.enabled = taskRunCheckbox.value
-        taskRunDaysInput.text = settings.taskRunDays()
-        taskRunHoursInput.enabled = taskRunCheckbox.value
-        taskRunHoursInput.text = settings.taskRunHours()
-        taskRunMinutesInput.enabled = taskRunCheckbox.value
-        taskRunMinutesInput.text = settings.taskRunMinutes()
+        taskRunCheckbox.value = settings.taskRunTimeoutEnabled();
+        taskRunDaysInput.enabled = taskRunCheckbox.value;
+        taskRunDaysInput.text = settings.taskRunDays();
+        taskRunHoursInput.enabled = taskRunCheckbox.value;
+        taskRunHoursInput.text = settings.taskRunHours();
+        taskRunMinutesInput.enabled = taskRunCheckbox.value;
+        taskRunMinutesInput.text = settings.taskRunMinutes();
     }
 
     list.onChange = onSelectionChange;
@@ -186,7 +186,7 @@ function buildUI(thisObj) {
 
     const framesPerTaskLabel = framesPerTaskGroup.add("statictext", undefined, "Frames per task");
     framesPerTaskLabel.alignment = ['left', 'center'];
-    framesPerTaskLabel.helpTip = "The number of frames per task. Only affects image sequence output."
+    framesPerTaskLabel.helpTip = "The number of frames per task. Only affects image sequence output.";
 
     const framesPerTaskTextBox = framesPerTaskGroup.add("edittext", undefined, "");
     framesPerTaskTextBox.alignment = ['fill', 'top'];
@@ -245,7 +245,7 @@ function buildUI(thisObj) {
             // since parseInt parses the first number it finds in a provided string.
             maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageValue;
         }
-        const selectionItem = dcUtil.getSelection(list)
+        const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
             var compId = selectionItem.compId;
             uiSettingsState.get(compId).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
@@ -280,10 +280,10 @@ function buildUI(thisObj) {
                 return isImageOutput(extension);
             }
         }
-        return false
+        return false;
     }
 
-    const globalSettingsGroup = controlsPanel.add("panel", undefined, "Global Job Settings")
+    const globalSettingsGroup = controlsPanel.add("panel", undefined, "Global Job Settings");
     globalSettingsGroup.orientation = "column";
     globalSettingsGroup.alignment = ['fill', 'top'];
     globalSettingsGroup.alignChildren = ['left', 'top'];
@@ -338,7 +338,7 @@ function buildUI(thisObj) {
         taskRunDaysInput.enabled = taskRunCheckbox.value;
         taskRunHoursInput.enabled = taskRunCheckbox.value;
         taskRunMinutesInput.enabled = taskRunCheckbox.value;
-        uiSettingsState.setTaskRunTimeoutEnabled(taskRunCheckbox.value)
+        uiSettingsState.setTaskRunTimeoutEnabled(taskRunCheckbox.value);
     }
     taskRunCheckbox.onClick = onTaskRunCheckboxClicked;
     onTaskRunCheckboxClicked();
@@ -346,11 +346,11 @@ function buildUI(thisObj) {
     function onTaskRunDaysChanged() {
         var original_value = uiSettingsState.taskRunDays();
         taskRunDaysInput.text = taskRunDaysInput.text.replace(/[^0-9]/g, "");
-        var new_value = parseInt(taskRunDaysInput.text)
+        var new_value = parseInt(taskRunDaysInput.text);
         if (taskRunDaysInput.text === "") new_value = 0;
         if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
             if (!isNaN(new_value)) {
-                uiSettingsState.setTaskRunDays(new_value)
+                uiSettingsState.setTaskRunDays(new_value);
             }
         }
         taskRunDaysInput.text = uiSettingsState.taskRunDays();
@@ -360,11 +360,11 @@ function buildUI(thisObj) {
     function onTaskRunHoursChanged() {
         var original_value = uiSettingsState.taskRunHours();
         taskRunHoursInput.text = taskRunHoursInput.text.replace(/[^0-9]/g, "");
-        var new_value = parseInt(taskRunHoursInput.text)
+        var new_value = parseInt(taskRunHoursInput.text);
         if (taskRunHoursInput.text === "") new_value = 0;
         if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
             if (!isNaN(new_value)) {
-                uiSettingsState.setTaskRunHours(new_value)
+                uiSettingsState.setTaskRunHours(new_value);
             }
         }
         taskRunHoursInput.text = uiSettingsState.taskRunHours();
@@ -374,11 +374,11 @@ function buildUI(thisObj) {
     function onTaskRunMinutesChanged() {
         var original_value = uiSettingsState.taskRunMinutes();
         taskRunMinutesInput.text = taskRunMinutesInput.text.replace(/[^0-9]/g, "");
-        var new_value = parseInt(taskRunMinutesInput.text)
+        var new_value = parseInt(taskRunMinutesInput.text);
         if (taskRunMinutesInput.text === "") new_value = 0;
         if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
             if (!isNaN(new_value)) {
-                uiSettingsState.setTaskRunMinutes(new_value)
+                uiSettingsState.setTaskRunMinutes(new_value);
             }
         }
         taskRunMinutesInput.text = uiSettingsState.taskRunMinutes();
@@ -400,14 +400,14 @@ function buildUI(thisObj) {
             names.push(compName);
         }
         if (duplicateNames.length !== 0) {
-            var message = "Selected submission items must have unique names. Found (" + duplicateNames.length * 2 + ") compositions with the same name: "
+            var message = "Selected submission items must have unique names. Found (" + duplicateNames.length * 2 + ") compositions with the same name: ";
             for (var i = 0; i < duplicateNames.length; i++) {
                 message = message + "\n\t" + duplicateNames[i];
             }
-            adcAlert(message, true)
-            return true
+            adcAlert(message, true);
+            return true;
         }
-        return false
+        return false;
     }
 
     const submitButton = controlsGroup.add("button", undefined, "Submit");
@@ -416,10 +416,10 @@ function buildUI(thisObj) {
             const multiFrameRendering = mfrCheckBox.value ? "ON" : "OFF";
             var maxCpuUsagePercentage = undefined;
             if (mfrCheckBox.value) {
-                maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
+                maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text);
             }
             if (checkForInvalidCompositionNames(list.selection)) {
-                return
+                return;
             }
             if (taskRunCheckbox.value) {
                 SubmitSelection(list.selection, uiSettingsState, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, parseInt(taskRunDaysInput.text), parseInt(taskRunHoursInput.text), parseInt(taskRunMinutesInput.text));
@@ -455,7 +455,7 @@ function buildUI(thisObj) {
             item.renderQueueIndex = i;
             item.compId = rqi.comp.id;
             // Create a default entry for each comp as needed.
-            uiSettingsState.get(item.compId)
+            uiSettingsState.get(item.compId);
             item.subItems[0].text = rqi.comp.name;
 
             // Calculate frame range using the utility function
@@ -485,27 +485,27 @@ function buildUI(thisObj) {
 
             framesPerTaskTextBox.text = "";
             mfrCheckBox.value = false;
-            maxCpuUsagePercentageTextBox.text = ""
+            maxCpuUsagePercentageTextBox.text = "";
 
             submitButton.enabled = true;
             submitButton.active = false;
             submitButton.active = true;
 
             if (selection == null || selection.length !== 1) {
-                return
+                return;
             }
-            const selectionItem = selection[0]
+            const selectionItem = selection[0];
             perCompSettingsGroup.enabled = true;
             logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
-            const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex))
+            const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex));
             framesPerTaskTextBox.enabled = imageOutput;
             mfrCheckBox.enabled = true;
             maxCpuUsagePercentageTextBox.enabled = true;
 
-            const settings = uiSettingsState.get(selectionItem.compId)
+            const settings = uiSettingsState.get(selectionItem.compId);
             if (settings === undefined) {
                 logger.warning("Could not find settings for : " + selectionItem.compId);
-                return
+                return;
             }
 
             framesPerTaskTextBox.text = settings.framesPerTask();
@@ -523,9 +523,9 @@ function buildUI(thisObj) {
     updateList();
     refreshList(list, uiSettingsState);
     if (list.selection != null && list.selection.length === 1) {
-        const selectionItem = list.selection[0]
-        const renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex)
-        framesPerTaskTextBox.enabled = isRenderQueueItemImageOutput(renderQueueItem)
+        const selectionItem = list.selection[0];
+        const renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex);
+        framesPerTaskTextBox.enabled = isRenderQueueItemImageOutput(renderQueueItem);
     }
     refreshButton.onClick = function() {
         refreshList(list, uiSettingsState);
@@ -537,7 +537,7 @@ function buildUI(thisObj) {
         this.layout.resize();
     }
     if (!(thisObj instanceof Panel)) {
-        submitterPanel.center()
+        submitterPanel.center();
         submitterPanel.show();
         submitterPanel.update();
     }

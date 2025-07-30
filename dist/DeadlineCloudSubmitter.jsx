@@ -112,7 +112,7 @@ function adcAlert(message, errorIcon) {
 }
 
 function validateType(item, item_type) {
-    actual_type = typeof item;
+    var actual_type = typeof item;
     if (actual_type !== item_type) {
         throw new Error("Object has type " + actual_type + " instead of desired type " + item_type);
     }
@@ -152,8 +152,8 @@ function __generateUtil() {
         /**
          * Sets boolean value in app settings
          */
-        validateType(value, "boolean")
-        app.settings.saveSetting(sectionName, keyName, value.toString())
+        validateType(value, "boolean");
+        app.settings.saveSetting(sectionName, keyName, value.toString());
     }
 
     function getBoolSetting(sectionName, keyName, default_value) {
@@ -175,8 +175,8 @@ function __generateUtil() {
         /**
          * Sets integer value in app settings
          */
-        validateType(value, "number")
-        app.settings.saveSetting(sectionName, keyName, value.toString())
+        validateType(value, "number");
+        app.settings.saveSetting(sectionName, keyName, value.toString());
     }
 
     function getNumberSetting(sectionName, keyName, default_value) {
@@ -186,16 +186,16 @@ function __generateUtil() {
          */
         if (!app.settings.haveSetting(sectionName, keyName)) {
             if (default_value === undefined) {
-                throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!")
+                throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!");
             }
-            saveNumberSetting(sectionName, keyName, default_value)
+            saveNumberSetting(sectionName, keyName, default_value);
             logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
         }
         if (isNaN(Number(app.settings.getSetting(sectionName, keyName)))) {
             if (default_value === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number!");
             }
-            saveNumberSetting(sectionName, keyName, default_value)
+            saveNumberSetting(sectionName, keyName, default_value);
             logger.warning("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number. Using default value of " + default_value);
         }
         return Number(app.settings.getSetting(sectionName, keyName));
@@ -210,7 +210,7 @@ function __generateUtil() {
     }
 
     function getStringSetting(sectionName, keyName, defaultValue) {
-         /**
+        /**
          * Gets string value from app settings, or sets default_value if setting does not exist
          * Set default_value to undefined to error on missing setting
          */
@@ -221,7 +221,7 @@ function __generateUtil() {
             setStringSetting(sectionName, keyName, default_value);
             logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
         }
-        return app.settings.getSetting(sectionName, keyName) 
+        return app.settings.getSetting(sectionName, keyName)
     }
 
     function trimIllegalChars(stringToTrim) {
@@ -315,7 +315,7 @@ function __generateUtil() {
          */
         maxValue.text = maxValue.text.replace(/[^\d]/g, '');
         if (parseInt(maxValue.text) < parseInt(minValue.text)) {
-            maxValue.text = minValue.text
+            maxValue.text = minValue.text;
         }
     }
 
@@ -493,10 +493,10 @@ function __generateUtil() {
         _makeBootstrapBatFile(tempBootstrapBatFile, tempBatFile);
         // Wrapped command with error code output
         cmd = cmd + " > " + tempOutputFile.fsName;
-        cmd += "\nIF %ERRORLEVEL% NEQ 0 ("
-        cmd += "\n echo ERROR CODE: %ERRORLEVEL% >> " + tempOutputFile.fsName
-        cmd += "\n)"
-        cmd += "\nexit"
+        cmd += "\nIF %ERRORLEVEL% NEQ 0 (";
+        cmd += "\n echo ERROR CODE: %ERRORLEVEL% >> " + tempOutputFile.fsName;
+        cmd += "\n)";
+        cmd += "\nexit";
         tempBatFile.open("w");
         tempBatFile.writeln(cmd);
         tempBatFile.close();
@@ -512,7 +512,7 @@ function __generateUtil() {
     }
 
     function _makeBootstrapBatFile(bootstrapFile, tempFile) {
-        const _cmd = "@echo off" + "\nstart /min /wait " + tempFile.fsName + "\nexit"
+        const _cmd = "@echo off" + "\nstart /min /wait " + tempFile.fsName + "\nexit";
         bootstrapFile.open("w");
         bootstrapFile.writeln(_cmd);
         bootstrapFile.close();
@@ -549,7 +549,7 @@ function __generateUtil() {
             }
         }
         result = "";
-        message = cmd + " Successful."
+        message = cmd + " Successful.";
         return {
             "return_code": return_code,
             "message": message,
@@ -636,14 +636,14 @@ function __generateUtil() {
         var maxSeqNumber = 0;
         var folderName = "";
         for (var idx = 0; idx < subFolders.length; idx++) {
-            folderName = subFolders[idx].fullName
-            const match = folderName.match(regex)
+            folderName = subFolders[idx].fullName;
+            const match = folderName.match(regex);
             if (!match) {
                 continue;
             }
             const seqNr = parseInt(match[1]) // Convert first capture group to int
             if (seqNr > maxSeqNumber) {
-                maxSeqNumber = seqNr
+                maxSeqNumber = seqNr;
             }
         }
         // 2. Create new export directory with next sequence number
@@ -817,7 +817,7 @@ function __generateUtil() {
     function getUserDirectory() {
         /* Return OS specific user home directory. */
         if (system.osName == "MacOS") {
-            return $.getenv("HOME")
+            return $.getenv("HOME");
         }
         // Windows:
         return $.getenv("USERPROFILE");
@@ -827,7 +827,7 @@ function __generateUtil() {
         /* Return After Effects version as float. */
         const versionAsString = app.version.substring(0, 4);
         const version = parseFloat(versionAsString);
-        return version
+        return version;
     }
 
     function calculateFrameRange(rqi) {
@@ -995,7 +995,7 @@ var LOG_LEVEL = {
     DEBUG: 4
 };
 
-var LOG_LEVEL_MAP = dcUtil.invertObject(LOG_LEVEL)
+var LOG_LEVEL_MAP = dcUtil.invertObject(LOG_LEVEL);
 
 // Global log level
 // Set the desired logging level
@@ -1067,16 +1067,16 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
         // Rollover older files first
         var rolloverFile;
         for (var i = backupCount - 1; i > 0; i--) { // Last file does not need rollover, it is allowed to get overwritten.
-            rolloverFile = new File(logDirectoryPath + logFileName + "." + i)
+            rolloverFile = new File(logDirectoryPath + logFileName + "." + i);
             if (!rolloverFile.exists) {
                 continue;
             }
             var j = i + 1;
-            const rolloverTargetPath = logDirectoryPath + logFileName + "." + j
+            const rolloverTargetPath = logDirectoryPath + logFileName + "." + j;
             rolloverFile.copy(rolloverTargetPath);
         }
         // Rollover active file
-        logFile.copy(logDirectoryPath + logFileName + "." + 1)
+        logFile.copy(logDirectoryPath + logFileName + "." + 1);
         logFile.open("w"); // Erase contents of active log file
         logFile.close();
     }
@@ -1160,7 +1160,7 @@ function getCurrentTimeAsStr() {
 var _scriptFileName = "OpenAeSubmitter.jsx";
 var logFileName = "aftereffects.log";
 var logDirectoryPath = dcUtil.getUserDirectory() + "/.deadline/logs/submitters/";
-var logNormDirectoryPath = dcUtil.normPath(logDirectoryPath)
+var logNormDirectoryPath = dcUtil.normPath(logDirectoryPath);
 var logger = Logger(logFileName, logNormDirectoryPath);
 
 
@@ -1215,10 +1215,10 @@ function UiSettingsStore(name) {
     this.name = name;
 
     this.framesPerTask = function() {
-        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name +"_" + DEADLINECLOUD_FRAMESPERTASK, DEFAULT_FRAMESPERTASK);
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_FRAMESPERTASK, DEFAULT_FRAMESPERTASK);
     }
     this.setFramesPerTask = function(value) {
-        logger.warning("(" + this.name + ") Setting framesPerTask to " + value)
+        logger.warning("(" + this.name + ") Setting framesPerTask to " + value);
         dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_FRAMESPERTASK, value);
     }
 
@@ -1226,17 +1226,17 @@ function UiSettingsStore(name) {
         return dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_MULTI_FRAME_RENDERING, DEFAULT_MULTI_FRAME_RENDERING);
     }
     this.setMultiFrameRendering = function(value) {
-        logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value)
+        logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value);
         dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_MULTI_FRAME_RENDERING, value);
     }
 
     this.maxCpuUsagePercentage = function() {
-        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name + "_" + DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, DEFAULT_MAX_CPU_USAGE_PERCENTAGE)
+        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name + "_" + DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, DEFAULT_MAX_CPU_USAGE_PERCENTAGE);
 
     }
     this.setMaxCpuUsagePercentage = function(value) {
-        logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value)
-        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name+"_"+DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, value)
+        logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value);
+        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name + "_" + DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, value);
     }
 }
 
@@ -1263,7 +1263,7 @@ UiSettingsState.prototype.get = function(compId) {
      * Gets UISettingsStore associated with given compId, or creates a new default one if it doesn't exit
      */
     if (!this.settings[compId]) {
-        this.settings[compId] = new UiSettingsStore(compId)
+        this.settings[compId] = new UiSettingsStore(compId);
     }
     return this.settings[compId]
 }
@@ -1311,7 +1311,7 @@ function parameterValues(
         parameterValuesList.push({
             name: prefix + "_MaxCpuUsagePercentage",
             value: maxCpuUsagePercentage,
-        })
+        });
     }
     if (isImageSeq) {
         parameterValuesList.push({
@@ -1737,18 +1737,17 @@ function isImageOutput(extension) {
 }
 
 
-
 var JobParams = [
     "JobScriptDir",
     "CondaPackages",
     "ProjectFile"
 ]
 
-var paramPattern = "Param\."
+var paramPattern = "Param\.";
 for (var p = 0; p < JobParams.length; p++) {
-    paramPattern = paramPattern + "(?!" + JobParams[p] + ")"
+    paramPattern = paramPattern + "(?!" + JobParams[p] + ")";
 }
-var paramPatternRegex = new RegExp(paramPattern, 'g')
+var paramPatternRegex = new RegExp(paramPattern, 'g');
 
 if (typeof submitBundleFile == 'undefined') {
     const submitBundleFile = "SubmitButton.jsx";
@@ -1820,7 +1819,7 @@ function generateParameterValuesForStep(
         multiFrameRendering,
         maxCpuUsagePercentage,
         prefix,
-    )
+    );
 }
 
 // Loading our default template from disk
@@ -1832,7 +1831,7 @@ function loadDefaultJobTemplate(bundlePath, submitBundleFile) {
     templateObject.name = File.decode(app.project.file.name);
     logger.debug("The template name is " + templateObject.name, submitBundleFile);
 
-    return templateObject
+    return templateObject;
 }
 
 // Generates the job bundle and copies files from our template source folder into it
@@ -1872,16 +1871,16 @@ function generateStepParameterFragment(bundlePath, isImageSeq, compName) {
     for (var i = 0; i < stepParametersObject.parameterDefinitions.length; i++) {
         if (JobParams.indexOf(stepParametersObject.parameterDefinitions[i].name) !== -1) {
             // Don't modify these values
-            continue
+            continue;
         }
         var replacedDefinition = stepParametersObject.parameterDefinitions[i]
-        replacedDefinition.name = compName + "_" + stepParametersObject.parameterDefinitions[i].name
-        replacedDefinition.userInterface.label = "(" + compName + ") " + replacedDefinition.userInterface.label
+        replacedDefinition.name = compName + "_" + stepParametersObject.parameterDefinitions[i].name;
+        replacedDefinition.userInterface.label = "(" + compName + ") " + replacedDefinition.userInterface.label;
 
-        updatedParameterDefinitions.push(replacedDefinition)
+        updatedParameterDefinitions.push(replacedDefinition);
     }
-    stepParametersObject.parameterDefinitions = updatedParameterDefinitions
-    return stepParametersObject
+    stepParametersObject.parameterDefinitions = updatedParameterDefinitions;
+    return stepParametersObject;
 }
 
 // Generates the step chunk of the template for each step by loading the `step_<>_fragment.json`
@@ -1898,26 +1897,26 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, compName, taskTime
     if (isImageSeq) {
         // Replace parameter names in the creation of `Index`
         const taskParameters = stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0]
-        taskParameters.range = taskParameters.range.replace(paramPatternRegex, "Param." + compName + "_")
-        taskParameters.name = compName + "_" + taskParameters.name
-        stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0] = taskParameters
+        taskParameters.range = taskParameters.range.replace(paramPatternRegex, "Param." + compName + "_");
+        taskParameters.name = compName + "_" + taskParameters.name;
+        stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0] = taskParameters;
     }
 
     stepTemplateObject.steps[0].name = compName;
     // Replace any parameter names in onRun script
-    const scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args
+    const scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args;
     const replacedArgs = []
     for (var i = 0; i < scriptArgs.length; i++) {
         // JobParams
-        replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + compName + "_"))
+        replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + compName + "_"));
     }
-    stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs
+    stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs;
     if (stepTemplateObject.steps[0].script.actions.onRun) {
         stepTemplateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
         logger.debug("Added timeout of " + taskTimeoutSeconds + " seconds to onRun action", submitBundleFile);
     }
 
-    return stepTemplateObject
+    return stepTemplateObject;
 }
 
 // Modifies the `Create Output Directories` job environment by adding all of our output folder parameters
@@ -1935,7 +1934,7 @@ function generateJobEnvironmentFragment(bundlePath, outputFoldersStr) {
             ]
         }
     }
-    return jobEnvironmentsObject
+    return jobEnvironmentsObject;
 }
 
 /**
@@ -1951,7 +1950,7 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
     }
     taskTimeoutSeconds = (taskTimeoutDays * 24 * 60 * 60) + (taskTimeoutHours * 60 * 60) + (taskTimeoutMinutes * 60);
 
-    const renderQueueItems = []
+    const renderQueueItems = [];
 
     // Check to make sure that all of our selection indices are correct
     for (var i = 0; i < selection.length; i++) {
@@ -1964,7 +1963,7 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
             return;
         }
         var initialRenderQueueItem = app.project.renderQueue.item(initialRenderQueueIndex);
-        renderQueueItems.push([initialRenderQueueItem, initialRenderQueueIndex])
+        renderQueueItems.push([initialRenderQueueItem, initialRenderQueueIndex]);
     }
 
     // We have valid selections check for saving
@@ -1996,11 +1995,11 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
                 "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
 
             // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
-            dcUtil.saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString())
+            dcUtil.saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
             if (confirm(versionMismatchWarningMessage)) {
-                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, true)
+                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, true);
             } else {
-                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false)
+                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false);
                 return;
             }
         } else {
@@ -2104,8 +2103,8 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
     }
 
     const template = loadDefaultJobTemplate(bundle.fsName, submitBundleFile);
-    template.steps = []
-    template.parameterDefinitions = jobParameterDefinitions.parameterDefinitions
+    template.steps = [];
+    template.parameterDefinitions = jobParameterDefinitions.parameterDefinitions;
 
     const stepOutputFolderParameters = [];
 
@@ -2117,9 +2116,9 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
             return;
         }
 
-        var stepFramesPerTask = parseInt(selectionSettings.get(renderQueueItem.comp.id).framesPerTask() || framesPerTask)
-        var stepMaxCpuUsagePercentage = parseInt(selectionSettings.get(renderQueueItem.comp.id).maxCpuUsagePercentage() || maxCpuUsagePercentage)
-        var stepMultiFrameRendering = selectionSettings.get(renderQueueItem.comp.id).multiFrameRendering() || multiFrameRendering
+        var stepFramesPerTask = parseInt(selectionSettings.get(renderQueueItem.comp.id).framesPerTask() || framesPerTask);
+        var stepMaxCpuUsagePercentage = parseInt(selectionSettings.get(renderQueueItem.comp.id).maxCpuUsagePercentage() || maxCpuUsagePercentage);
+        var stepMultiFrameRendering = selectionSettings.get(renderQueueItem.comp.id).multiFrameRendering() || multiFrameRendering;
 
         var outputModule = renderQueueItem.outputModule(1).file;
         var outputPath = outputModule.fsName;
@@ -2150,9 +2149,9 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
 
         // Push step asset references
         for (var d = 0; d < dependencies.length; d++) {
-            jobAssetReferences.assetReferences.inputs.filenames.push(dependencies[d])
+            jobAssetReferences.assetReferences.inputs.filenames.push(dependencies[d]);
         }
-        jobAssetReferences.assetReferences.outputs.directories.push(sanitizedOutputFolder)
+        jobAssetReferences.assetReferences.outputs.directories.push(sanitizedOutputFolder);
 
         var parameterValues = generateParameterValuesForStep(
             compName,
@@ -2165,38 +2164,38 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
             stepFramesPerTask,
             stepMultiFrameRendering,
             stepMaxCpuUsagePercentage
-        )
+        );
 
         for (var p = 0; p < parameterValues.parameterValues.length; p++) {
             if (jobParameterValues.parameterValues.indexOf(parameterValues.parameterValues[p]) === -1) {
-                jobParameterValues.parameterValues.push(parameterValues.parameterValues[p])
+                jobParameterValues.parameterValues.push(parameterValues.parameterValues[p]);
             }
         }
 
-        stepOutputFolderParameters.push("{{Param." + compName + "_OutputDir}}")
+        stepOutputFolderParameters.push("{{Param." + compName + "_OutputDir}}");
 
-        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, compName, taskTimeoutSeconds)
+        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, compName, taskTimeoutSeconds);
         for (var s = 0; s < stepTemplate.steps.length; s++) {
-            template.steps.push(stepTemplate.steps[s])
+            template.steps.push(stepTemplate.steps[s]);
         }
-        var stepParameters = generateStepParameterFragment(bundle.fsName, isImageSeq, compName)
+        var stepParameters = generateStepParameterFragment(bundle.fsName, isImageSeq, compName);
         for (var p = 0; p < stepParameters.parameterDefinitions.length; p++) {
             var parameterExists = false;
             for (var tpd = 0; tpd < template.parameterDefinitions.length; tpd++) {
                 var templateParameterDefinition = template.parameterDefinitions[tpd];
                 var stepParameterDefinition = stepParameters.parameterDefinitions[p];
                 if (templateParameterDefinition.name == stepParameterDefinition.name) {
-                    parameterExists = true
-                    break
+                    parameterExists = true;
+                    break;
                 }
             }
             if (parameterExists === false) {
-                template.parameterDefinitions.push(stepParameters.parameterDefinitions[p])
+                template.parameterDefinitions.push(stepParameters.parameterDefinitions[p]);
             }
         }
     }
-    const generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","))
-    template.jobEnvironments = generatedJobEnvironment.jobEnvironments
+    const generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","));
+    template.jobEnvironments = generatedJobEnvironment.jobEnvironments;
 
     writeFile(bundle.fsName + "/asset_references.json", JSON.stringify(jobAssetReferences, null, 4));
 
@@ -2861,7 +2860,7 @@ function refreshList(listBox, uiSettingsState) {
         RQItemStatus.USER_STOPPED,
         RQItemStatus.ERR_STOPPED,
         RQItemStatus.DONE
-    ]
+    ];
     for (var index = 1; index <= app.project.renderQueue.numItems; index++) {
         var renderQueueItem = app.project.renderQueue.item(index);
         if (renderQueueItem == null) {
@@ -2896,7 +2895,7 @@ function buildUI(thisObj) {
     const root = submitterPanel.add("group");
     root.orientation = "column";
     root.alignment = ['fill', 'fill'];
-    root.alignChildren = ['fill', 'top']
+    root.alignChildren = ['fill', 'top'];
     const logoGroup = root.add("group");
     logoGroup.alignment = 'left';
     logoGroup.add("image", undefined, logoData());
@@ -2914,11 +2913,11 @@ function buildUI(thisObj) {
     const refreshButton = headerButtonGroup.add("button", undefined, "Refresh");
     const listGroup = root.add("panel", undefined, "");
     listGroup.alignment = ['fill', 'top'];
-    listGroup.alignChildren = ['fill', 'top']
-    listGroup.orientation = "column"
+    listGroup.alignChildren = ['fill', 'top'];
+    listGroup.orientation = "column";
     var multiCompLabel = listGroup.add("statictext", undefined, "Shift+Click or Ctrl+Click can be used to select multiple precomps and group them together as a single job submission", {
         multiline: true
-    })
+    });
     // Label height needs to be set manually because ExtendScript does not accurately calculate the height of multiline text objects.
     multiCompLabel.maximumSize.height = 30;
     multiCompLabel.alignment = ['fill', 'top'];
@@ -2944,55 +2943,55 @@ function buildUI(thisObj) {
         submitButton.active = true;
 
         // Disable everything
-        framesPerTaskTextBox.enabled = false
-        mfrCheckBox.enabled = false
-        maxCpuUsagePercentageTextBox.enabled = false
-        taskRunCheckbox.enabled = false
-        taskRunDaysInput.enabled = false
-        taskRunHoursInput.enabled = false
-        taskRunMinutesInput.enabled = false
+        framesPerTaskTextBox.enabled = false;
+        mfrCheckBox.enabled = false;
+        maxCpuUsagePercentageTextBox.enabled = false;
+        taskRunCheckbox.enabled = false;
+        taskRunDaysInput.enabled = false;
+        taskRunHoursInput.enabled = false;
+        taskRunMinutesInput.enabled = false;
 
         if (selection.length !== 1) {
-            return
+            return;
         }
-        const selectionItem = selection[0]
+        const selectionItem = selection[0];
         logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
-        const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex))
-        framesPerTaskTextBox.enabled = imageOutput
-        mfrCheckBox.enabled = true
-        maxCpuUsagePercentageTextBox.enabled = true
-        taskRunCheckbox.enabled = true
-        taskRunDaysInput.enabled = true
-        taskRunHoursInput.enabled = true
-        taskRunMinutesInput.enabled = true
+        const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex));
+        framesPerTaskTextBox.enabled = imageOutput;
+        mfrCheckBox.enabled = true;
+        maxCpuUsagePercentageTextBox.enabled = true;
+        taskRunCheckbox.enabled = true;
+        taskRunDaysInput.enabled = true;
+        taskRunHoursInput.enabled = true;
+        taskRunMinutesInput.enabled = true;
 
         logger.debug("    Setting framesPerTaskTextBox.text to: " + selectionItem.subItems[1].text);
-        framesPerTaskTextBox.text = selectionItem.subItems[1].text
+        framesPerTaskTextBox.text = selectionItem.subItems[1].text;
 
-        const settings = uiSettingsState.get(selectionItem.compId)
+        const settings = uiSettingsState.get(selectionItem.compId);
         if (settings === undefined) {
             logger.warning("Could not find settings for : " + selectionItem.compId);
-            return
+            return;
         }
 
         if (imageOutput === true) {
             logger.debug("    Setting framesPerTaskTextBox.text to: " + (settings.framesPerTask() || selectionItem.subItems[1].text));
-            framesPerTaskTextBox.text = settings.framesPerTask() || selectionItem.subItems[1].text
+            framesPerTaskTextBox.text = settings.framesPerTask() || selectionItem.subItems[1].text;
         }
         logger.debug("    Setting mfrCheckBox.value to: " + settings.multiFrameRendering());
-        mfrCheckBox.value = settings.multiFrameRendering()
+        mfrCheckBox.value = settings.multiFrameRendering();
         logger.debug("    Setting maxCpuUsagePercentageTextBox.text to: " + settings.maxCpuUsagePercentage());
-        maxCpuUsagePercentageTextBox.text = settings.maxCpuUsagePercentage()
+        maxCpuUsagePercentageTextBox.text = settings.maxCpuUsagePercentage();
 
-        maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value
+        maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value;
 
-        taskRunCheckbox.value = settings.taskRunTimeoutEnabled()
-        taskRunDaysInput.enabled = taskRunCheckbox.value
-        taskRunDaysInput.text = settings.taskRunDays()
-        taskRunHoursInput.enabled = taskRunCheckbox.value
-        taskRunHoursInput.text = settings.taskRunHours()
-        taskRunMinutesInput.enabled = taskRunCheckbox.value
-        taskRunMinutesInput.text = settings.taskRunMinutes()
+        taskRunCheckbox.value = settings.taskRunTimeoutEnabled();
+        taskRunDaysInput.enabled = taskRunCheckbox.value;
+        taskRunDaysInput.text = settings.taskRunDays();
+        taskRunHoursInput.enabled = taskRunCheckbox.value;
+        taskRunHoursInput.text = settings.taskRunHours();
+        taskRunMinutesInput.enabled = taskRunCheckbox.value;
+        taskRunMinutesInput.text = settings.taskRunMinutes();
     }
 
     list.onChange = onSelectionChange;
@@ -3018,7 +3017,7 @@ function buildUI(thisObj) {
 
     const framesPerTaskLabel = framesPerTaskGroup.add("statictext", undefined, "Frames per task");
     framesPerTaskLabel.alignment = ['left', 'center'];
-    framesPerTaskLabel.helpTip = "The number of frames per task. Only affects image sequence output."
+    framesPerTaskLabel.helpTip = "The number of frames per task. Only affects image sequence output.";
 
     const framesPerTaskTextBox = framesPerTaskGroup.add("edittext", undefined, "");
     framesPerTaskTextBox.alignment = ['fill', 'top'];
@@ -3077,7 +3076,7 @@ function buildUI(thisObj) {
             // since parseInt parses the first number it finds in a provided string.
             maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageValue;
         }
-        const selectionItem = dcUtil.getSelection(list)
+        const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
             var compId = selectionItem.compId;
             uiSettingsState.get(compId).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
@@ -3112,10 +3111,10 @@ function buildUI(thisObj) {
                 return isImageOutput(extension);
             }
         }
-        return false
+        return false;
     }
 
-    const globalSettingsGroup = controlsPanel.add("panel", undefined, "Global Job Settings")
+    const globalSettingsGroup = controlsPanel.add("panel", undefined, "Global Job Settings");
     globalSettingsGroup.orientation = "column";
     globalSettingsGroup.alignment = ['fill', 'top'];
     globalSettingsGroup.alignChildren = ['left', 'top'];
@@ -3170,7 +3169,7 @@ function buildUI(thisObj) {
         taskRunDaysInput.enabled = taskRunCheckbox.value;
         taskRunHoursInput.enabled = taskRunCheckbox.value;
         taskRunMinutesInput.enabled = taskRunCheckbox.value;
-        uiSettingsState.setTaskRunTimeoutEnabled(taskRunCheckbox.value)
+        uiSettingsState.setTaskRunTimeoutEnabled(taskRunCheckbox.value);
     }
     taskRunCheckbox.onClick = onTaskRunCheckboxClicked;
     onTaskRunCheckboxClicked();
@@ -3178,11 +3177,11 @@ function buildUI(thisObj) {
     function onTaskRunDaysChanged() {
         var original_value = uiSettingsState.taskRunDays();
         taskRunDaysInput.text = taskRunDaysInput.text.replace(/[^0-9]/g, "");
-        var new_value = parseInt(taskRunDaysInput.text)
+        var new_value = parseInt(taskRunDaysInput.text);
         if (taskRunDaysInput.text === "") new_value = 0;
         if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
             if (!isNaN(new_value)) {
-                uiSettingsState.setTaskRunDays(new_value)
+                uiSettingsState.setTaskRunDays(new_value);
             }
         }
         taskRunDaysInput.text = uiSettingsState.taskRunDays();
@@ -3192,11 +3191,11 @@ function buildUI(thisObj) {
     function onTaskRunHoursChanged() {
         var original_value = uiSettingsState.taskRunHours();
         taskRunHoursInput.text = taskRunHoursInput.text.replace(/[^0-9]/g, "");
-        var new_value = parseInt(taskRunHoursInput.text)
+        var new_value = parseInt(taskRunHoursInput.text);
         if (taskRunHoursInput.text === "") new_value = 0;
         if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
             if (!isNaN(new_value)) {
-                uiSettingsState.setTaskRunHours(new_value)
+                uiSettingsState.setTaskRunHours(new_value);
             }
         }
         taskRunHoursInput.text = uiSettingsState.taskRunHours();
@@ -3206,11 +3205,11 @@ function buildUI(thisObj) {
     function onTaskRunMinutesChanged() {
         var original_value = uiSettingsState.taskRunMinutes();
         taskRunMinutesInput.text = taskRunMinutesInput.text.replace(/[^0-9]/g, "");
-        var new_value = parseInt(taskRunMinutesInput.text)
+        var new_value = parseInt(taskRunMinutesInput.text);
         if (taskRunMinutesInput.text === "") new_value = 0;
         if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
             if (!isNaN(new_value)) {
-                uiSettingsState.setTaskRunMinutes(new_value)
+                uiSettingsState.setTaskRunMinutes(new_value);
             }
         }
         taskRunMinutesInput.text = uiSettingsState.taskRunMinutes();
@@ -3232,14 +3231,14 @@ function buildUI(thisObj) {
             names.push(compName);
         }
         if (duplicateNames.length !== 0) {
-            var message = "Selected submission items must have unique names. Found (" + duplicateNames.length * 2 + ") compositions with the same name: "
+            var message = "Selected submission items must have unique names. Found (" + duplicateNames.length * 2 + ") compositions with the same name: ";
             for (var i = 0; i < duplicateNames.length; i++) {
                 message = message + "\n\t" + duplicateNames[i];
             }
-            adcAlert(message, true)
-            return true
+            adcAlert(message, true);
+            return true;
         }
-        return false
+        return false;
     }
 
     const submitButton = controlsGroup.add("button", undefined, "Submit");
@@ -3248,10 +3247,10 @@ function buildUI(thisObj) {
             const multiFrameRendering = mfrCheckBox.value ? "ON" : "OFF";
             var maxCpuUsagePercentage = undefined;
             if (mfrCheckBox.value) {
-                maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
+                maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text);
             }
             if (checkForInvalidCompositionNames(list.selection)) {
-                return
+                return;
             }
             if (taskRunCheckbox.value) {
                 SubmitSelection(list.selection, uiSettingsState, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, parseInt(taskRunDaysInput.text), parseInt(taskRunHoursInput.text), parseInt(taskRunMinutesInput.text));
@@ -3287,7 +3286,7 @@ function buildUI(thisObj) {
             item.renderQueueIndex = i;
             item.compId = rqi.comp.id;
             // Create a default entry for each comp as needed.
-            uiSettingsState.get(item.compId)
+            uiSettingsState.get(item.compId);
             item.subItems[0].text = rqi.comp.name;
 
             // Calculate frame range using the utility function
@@ -3317,27 +3316,27 @@ function buildUI(thisObj) {
 
             framesPerTaskTextBox.text = "";
             mfrCheckBox.value = false;
-            maxCpuUsagePercentageTextBox.text = ""
+            maxCpuUsagePercentageTextBox.text = "";
 
             submitButton.enabled = true;
             submitButton.active = false;
             submitButton.active = true;
 
             if (selection == null || selection.length !== 1) {
-                return
+                return;
             }
-            const selectionItem = selection[0]
+            const selectionItem = selection[0];
             perCompSettingsGroup.enabled = true;
             logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
-            const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex))
+            const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex));
             framesPerTaskTextBox.enabled = imageOutput;
             mfrCheckBox.enabled = true;
             maxCpuUsagePercentageTextBox.enabled = true;
 
-            const settings = uiSettingsState.get(selectionItem.compId)
+            const settings = uiSettingsState.get(selectionItem.compId);
             if (settings === undefined) {
                 logger.warning("Could not find settings for : " + selectionItem.compId);
-                return
+                return;
             }
 
             framesPerTaskTextBox.text = settings.framesPerTask();
@@ -3355,9 +3354,9 @@ function buildUI(thisObj) {
     updateList();
     refreshList(list, uiSettingsState);
     if (list.selection != null && list.selection.length === 1) {
-        const selectionItem = list.selection[0]
-        const renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex)
-        framesPerTaskTextBox.enabled = isRenderQueueItemImageOutput(renderQueueItem)
+        const selectionItem = list.selection[0];
+        const renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex);
+        framesPerTaskTextBox.enabled = isRenderQueueItemImageOutput(renderQueueItem);
     }
     refreshButton.onClick = function() {
         refreshList(list, uiSettingsState);
@@ -3369,7 +3368,7 @@ function buildUI(thisObj) {
         this.layout.resize();
     }
     if (!(thisObj instanceof Panel)) {
-        submitterPanel.center()
+        submitterPanel.center();
         submitterPanel.show();
         submitterPanel.update();
     }

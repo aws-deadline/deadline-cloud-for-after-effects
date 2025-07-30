@@ -40,7 +40,7 @@ function parameterValues(
         parameterValuesList.push({
             name: prefix + "_MaxCpuUsagePercentage",
             value: maxCpuUsagePercentage,
-        })
+        });
     }
     if (isImageSeq) {
         parameterValuesList.push({

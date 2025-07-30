@@ -4,11 +4,11 @@ var JobParams = [
     "ProjectFile"
 ]
 
-var paramPattern = "Param\."
+var paramPattern = "Param\.";
 for (var p = 0; p < JobParams.length; p++) {
-    paramPattern = paramPattern + "(?!" + JobParams[p] + ")"
+    paramPattern = paramPattern + "(?!" + JobParams[p] + ")";
 }
-var paramPatternRegex = new RegExp(paramPattern, 'g')
+var paramPatternRegex = new RegExp(paramPattern, 'g');
 
 if (typeof submitBundleFile == 'undefined') {
     const submitBundleFile = "SubmitButton.jsx";
@@ -80,7 +80,7 @@ function generateParameterValuesForStep(
         multiFrameRendering,
         maxCpuUsagePercentage,
         prefix,
-    )
+    );
 }
 
 // Loading our default template from disk
@@ -92,7 +92,7 @@ function loadDefaultJobTemplate(bundlePath, submitBundleFile) {
     templateObject.name = File.decode(app.project.file.name);
     logger.debug("The template name is " + templateObject.name, submitBundleFile);
 
-    return templateObject
+    return templateObject;
 }
 
 // Generates the job bundle and copies files from our template source folder into it
@@ -132,16 +132,16 @@ function generateStepParameterFragment(bundlePath, isImageSeq, compName) {
     for (var i = 0; i < stepParametersObject.parameterDefinitions.length; i++) {
         if (JobParams.indexOf(stepParametersObject.parameterDefinitions[i].name) !== -1) {
             // Don't modify these values
-            continue
+            continue;
         }
         var replacedDefinition = stepParametersObject.parameterDefinitions[i]
-        replacedDefinition.name = compName + "_" + stepParametersObject.parameterDefinitions[i].name
-        replacedDefinition.userInterface.label = "(" + compName + ") " + replacedDefinition.userInterface.label
+        replacedDefinition.name = compName + "_" + stepParametersObject.parameterDefinitions[i].name;
+        replacedDefinition.userInterface.label = "(" + compName + ") " + replacedDefinition.userInterface.label;
 
-        updatedParameterDefinitions.push(replacedDefinition)
+        updatedParameterDefinitions.push(replacedDefinition);
     }
-    stepParametersObject.parameterDefinitions = updatedParameterDefinitions
-    return stepParametersObject
+    stepParametersObject.parameterDefinitions = updatedParameterDefinitions;
+    return stepParametersObject;
 }
 
 // Generates the step chunk of the template for each step by loading the `step_<>_fragment.json`
@@ -158,26 +158,26 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, compName, taskTime
     if (isImageSeq) {
         // Replace parameter names in the creation of `Index`
         const taskParameters = stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0]
-        taskParameters.range = taskParameters.range.replace(paramPatternRegex, "Param." + compName + "_")
-        taskParameters.name = compName + "_" + taskParameters.name
-        stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0] = taskParameters
+        taskParameters.range = taskParameters.range.replace(paramPatternRegex, "Param." + compName + "_");
+        taskParameters.name = compName + "_" + taskParameters.name;
+        stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0] = taskParameters;
     }
 
     stepTemplateObject.steps[0].name = compName;
     // Replace any parameter names in onRun script
-    const scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args
+    const scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args;
     const replacedArgs = []
     for (var i = 0; i < scriptArgs.length; i++) {
         // JobParams
-        replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + compName + "_"))
+        replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + compName + "_"));
     }
-    stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs
+    stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs;
     if (stepTemplateObject.steps[0].script.actions.onRun) {
         stepTemplateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
         logger.debug("Added timeout of " + taskTimeoutSeconds + " seconds to onRun action", submitBundleFile);
     }
 
-    return stepTemplateObject
+    return stepTemplateObject;
 }
 
 // Modifies the `Create Output Directories` job environment by adding all of our output folder parameters
@@ -195,7 +195,7 @@ function generateJobEnvironmentFragment(bundlePath, outputFoldersStr) {
             ]
         }
     }
-    return jobEnvironmentsObject
+    return jobEnvironmentsObject;
 }
 
 /**
@@ -211,7 +211,7 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
     }
     taskTimeoutSeconds = (taskTimeoutDays * 24 * 60 * 60) + (taskTimeoutHours * 60 * 60) + (taskTimeoutMinutes * 60);
 
-    const renderQueueItems = []
+    const renderQueueItems = [];
 
     // Check to make sure that all of our selection indices are correct
     for (var i = 0; i < selection.length; i++) {
@@ -224,7 +224,7 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
             return;
         }
         var initialRenderQueueItem = app.project.renderQueue.item(initialRenderQueueIndex);
-        renderQueueItems.push([initialRenderQueueItem, initialRenderQueueIndex])
+        renderQueueItems.push([initialRenderQueueItem, initialRenderQueueIndex]);
     }
 
     // We have valid selections check for saving
@@ -256,11 +256,11 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
                 "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
 
             // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
-            dcUtil.saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString())
+            dcUtil.saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
             if (confirm(versionMismatchWarningMessage)) {
-                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, true)
+                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, true);
             } else {
-                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false)
+                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false);
                 return;
             }
         } else {
@@ -364,8 +364,8 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
     }
 
     const template = loadDefaultJobTemplate(bundle.fsName, submitBundleFile);
-    template.steps = []
-    template.parameterDefinitions = jobParameterDefinitions.parameterDefinitions
+    template.steps = [];
+    template.parameterDefinitions = jobParameterDefinitions.parameterDefinitions;
 
     const stepOutputFolderParameters = [];
 
@@ -377,9 +377,9 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
             return;
         }
 
-        var stepFramesPerTask = parseInt(selectionSettings.get(renderQueueItem.comp.id).framesPerTask() || framesPerTask)
-        var stepMaxCpuUsagePercentage = parseInt(selectionSettings.get(renderQueueItem.comp.id).maxCpuUsagePercentage() || maxCpuUsagePercentage)
-        var stepMultiFrameRendering = selectionSettings.get(renderQueueItem.comp.id).multiFrameRendering() || multiFrameRendering
+        var stepFramesPerTask = parseInt(selectionSettings.get(renderQueueItem.comp.id).framesPerTask() || framesPerTask);
+        var stepMaxCpuUsagePercentage = parseInt(selectionSettings.get(renderQueueItem.comp.id).maxCpuUsagePercentage() || maxCpuUsagePercentage);
+        var stepMultiFrameRendering = selectionSettings.get(renderQueueItem.comp.id).multiFrameRendering() || multiFrameRendering;
 
         var outputModule = renderQueueItem.outputModule(1).file;
         var outputPath = outputModule.fsName;
@@ -410,9 +410,9 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
 
         // Push step asset references
         for (var d = 0; d < dependencies.length; d++) {
-            jobAssetReferences.assetReferences.inputs.filenames.push(dependencies[d])
+            jobAssetReferences.assetReferences.inputs.filenames.push(dependencies[d]);
         }
-        jobAssetReferences.assetReferences.outputs.directories.push(sanitizedOutputFolder)
+        jobAssetReferences.assetReferences.outputs.directories.push(sanitizedOutputFolder);
 
         var parameterValues = generateParameterValuesForStep(
             compName,
@@ -425,38 +425,38 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
             stepFramesPerTask,
             stepMultiFrameRendering,
             stepMaxCpuUsagePercentage
-        )
+        );
 
         for (var p = 0; p < parameterValues.parameterValues.length; p++) {
             if (jobParameterValues.parameterValues.indexOf(parameterValues.parameterValues[p]) === -1) {
-                jobParameterValues.parameterValues.push(parameterValues.parameterValues[p])
+                jobParameterValues.parameterValues.push(parameterValues.parameterValues[p]);
             }
         }
 
-        stepOutputFolderParameters.push("{{Param." + compName + "_OutputDir}}")
+        stepOutputFolderParameters.push("{{Param." + compName + "_OutputDir}}");
 
-        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, compName, taskTimeoutSeconds)
+        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, compName, taskTimeoutSeconds);
         for (var s = 0; s < stepTemplate.steps.length; s++) {
-            template.steps.push(stepTemplate.steps[s])
+            template.steps.push(stepTemplate.steps[s]);
         }
-        var stepParameters = generateStepParameterFragment(bundle.fsName, isImageSeq, compName)
+        var stepParameters = generateStepParameterFragment(bundle.fsName, isImageSeq, compName);
         for (var p = 0; p < stepParameters.parameterDefinitions.length; p++) {
             var parameterExists = false;
             for (var tpd = 0; tpd < template.parameterDefinitions.length; tpd++) {
                 var templateParameterDefinition = template.parameterDefinitions[tpd];
                 var stepParameterDefinition = stepParameters.parameterDefinitions[p];
                 if (templateParameterDefinition.name == stepParameterDefinition.name) {
-                    parameterExists = true
-                    break
+                    parameterExists = true;
+                    break;
                 }
             }
             if (parameterExists === false) {
-                template.parameterDefinitions.push(stepParameters.parameterDefinitions[p])
+                template.parameterDefinitions.push(stepParameters.parameterDefinitions[p]);
             }
         }
     }
-    const generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","))
-    template.jobEnvironments = generatedJobEnvironment.jobEnvironments
+    const generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","));
+    template.jobEnvironments = generatedJobEnvironment.jobEnvironments;
 
     writeFile(bundle.fsName + "/asset_references.json", JSON.stringify(jobAssetReferences, null, 4));
 
