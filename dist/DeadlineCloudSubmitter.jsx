@@ -3132,24 +3132,26 @@ function buildUI(thisObj) {
     taskRunGroup.alignment = ['fill', 'top'];
     taskRunGroup.alignChildren = ['left', 'center'];
     const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
-    taskRunCheckbox.value = uiSettingsState.taskRunTimeoutEnabled;
+    taskRunCheckbox.value = uiSettingsState.taskRunTimeoutEnabled();
 
     const taskRunDaysGroup = taskRunGroup.add("group", undefined, "");
     const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, uiSettingsState.taskRunDays());
     taskRunDaysInput.characters = 3;
     taskRunDaysGroup.add("statictext", undefined, "days");
+    taskRunDaysInput.text = uiSettingsState.taskRunDays();
 
     const taskRunHoursGroup = taskRunGroup.add("group", undefined, "");
     const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, uiSettingsState.taskRunHours());
     taskRunHoursInput.characters = 3;
     taskRunHoursGroup.add("statictext", undefined, "hours");
+    taskRunHoursInput.text = uiSettingsState.taskRunHours();
 
     const taskRunMinutesGroup = taskRunGroup.add("group", undefined, "");
     const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, uiSettingsState.taskRunMinutes());
     taskRunMinutesInput.characters = 3;
     taskRunMinutesGroup.add("statictext", undefined, "minutes");
+    taskRunMinutesInput.text = uiSettingsState.taskRunMinutes();
 
-    // Add input validation and save values to settings
     function onTaskRunCheckboxClicked() {
         if (taskRunCheckbox.value) {
             if (!dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
@@ -3165,9 +3167,13 @@ function buildUI(thisObj) {
                 onTaskRunMinutesChanged();
             }
         }
+        taskRunDaysInput.enabled = taskRunCheckbox.value;
+        taskRunHoursInput.enabled = taskRunCheckbox.value;
+        taskRunMinutesInput.enabled = taskRunCheckbox.value;
         uiSettingsState.setTaskRunTimeoutEnabled(taskRunCheckbox.value)
     }
-    taskRunCheckbox.onClick = onTaskRunCheckboxClicked
+    taskRunCheckbox.onClick = onTaskRunCheckboxClicked;
+    onTaskRunCheckboxClicked();
 
     function onTaskRunDaysChanged() {
         var original_value = uiSettingsState.taskRunDays();
