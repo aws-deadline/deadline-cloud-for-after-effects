@@ -413,11 +413,6 @@ function buildUI(thisObj) {
     const submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
         if (getPythonExecutable()) {
-            const multiFrameRendering = mfrCheckBox.value ? "ON" : "OFF";
-            var maxCpuUsagePercentage = undefined;
-            if (mfrCheckBox.value) {
-                maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text);
-            }
             if (list.selection === null) {
                 return;
             }
