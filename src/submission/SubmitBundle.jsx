@@ -396,7 +396,7 @@ function SubmitSelection(selection, selectionSettings) {
 
         var dependencies = findJobAttachments(renderQueueItem.comp); // list of filenames
         var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
-        var renderQueueItemID = renderQueueIndex + "_" + compName;
+        var renderQueueItemID = "_" + renderQueueIndex + "_" + compName;
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
 
         var outputFileNameNoRegex = getFileNameNoRegex(outputFile);
