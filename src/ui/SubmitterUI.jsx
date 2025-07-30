@@ -418,6 +418,9 @@ function buildUI(thisObj) {
             if (mfrCheckBox.value) {
                 maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text);
             }
+            if (list.selection === null) {
+                return;
+            }
             if (checkForInvalidCompositionNames(list.selection)) {
                 return;
             }
