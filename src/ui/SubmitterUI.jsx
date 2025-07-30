@@ -3,7 +3,6 @@ function populateListBoxItem(item, renderQueueItem, index) {
     item.compId = renderQueueItem.comp.id;
     item.subItems[0].text = renderQueueItem.comp.name;
 
-    const renderSettings = renderQueueItem.getSettings(GetSettingsFormat.STRING_SETTABLE);
     var frameRange = dcUtil.calculateFrameRange(renderQueueItem);
     var startFrame = frameRange.startFrame;
     var endFrame = frameRange.endFrame;
