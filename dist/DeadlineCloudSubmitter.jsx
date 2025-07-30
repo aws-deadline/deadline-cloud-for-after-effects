@@ -2131,9 +2131,9 @@ function SubmitSelection(selection, selectionSettings, framesPerTask, multiFrame
         logger.debug("OutputFolder is: " + outputFolder, submitBundleFile);
 
         // Calculate frame range using the utility function
-        const frameRange = dcUtil.calculateFrameRange(renderQueueItem);
-        const startFrame = frameRange.startFrame;
-        const endFrame = frameRange.endFrame;
+        var frameRange = dcUtil.calculateFrameRange(renderQueueItem);
+        var startFrame = frameRange.startFrame;
+        var endFrame = frameRange.endFrame;
 
         var dependencies = findJobAttachments(renderQueueItem.comp); // list of filenames
         var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
