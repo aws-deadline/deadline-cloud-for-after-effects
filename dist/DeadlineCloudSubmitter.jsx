@@ -3316,11 +3316,13 @@ function buildUI(thisObj) {
             mfrCheckBox.value = false;
             maxCpuUsagePercentageTextBox.text = "";
 
-            submitButton.enabled = true;
-            submitButton.active = false;
-            submitButton.active = true;
+            if (selection === null) {
+                submitButton.enabled = false;
+            } else {
+                submitButton.enabled = true;
+            }
 
-            if (selection == null || selection.length !== 1) {
+            if (selection === null || selection.length !== 1) {
                 return;
             }
             const selectionItem = selection[0];
