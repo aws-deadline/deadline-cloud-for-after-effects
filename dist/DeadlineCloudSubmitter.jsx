@@ -111,10 +111,10 @@ function adcAlert(message, errorIcon) {
     alert(message, "Deadline Cloud Submitter", errorIcon);
 }
 
-function validateType(item, item_type) {
-    var actual_type = typeof item;
-    if (actual_type !== item_type) {
-        throw new Error("Object has type " + actual_type + " instead of desired type " + item_type);
+function validateType(item, itemType) {
+    var actualType = typeof item;
+    if (actualType !== itemType) {
+        throw new Error("Object has type " + actualType + " instead of desired type " + itemType);
     }
 }
 
@@ -156,17 +156,17 @@ function __generateUtil() {
         app.settings.saveSetting(sectionName, keyName, value.toString());
     }
 
-    function getBoolSetting(sectionName, keyName, default_value) {
+    function getBoolSetting(sectionName, keyName, defaultValue) {
         /**
          * Gets boolean value from app settings, or sets it to the default value if no setting exists.
-         * Set default_value to undefined to error on missing setting
+         * Set defaultValue to undefined to error on missing setting
          */
         if (!app.settings.haveSetting(sectionName, keyName)) {
-            if (default_value === undefined) {
+            if (defaultValue === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + "does not exist!");
             }
-            saveBoolSetting(sectionName, keyName, default_value);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + "default_value");
+            saveBoolSetting(sectionName, keyName, defaultValue);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + "defaultValue");
         }
         return parseBool(app.settings.getSetting(sectionName, keyName));
     }
@@ -179,24 +179,24 @@ function __generateUtil() {
         app.settings.saveSetting(sectionName, keyName, value.toString());
     }
 
-    function getNumberSetting(sectionName, keyName, default_value) {
+    function getNumberSetting(sectionName, keyName, defaultValue) {
         /**
-         * Gets number value from app settings, or sets default_value if setting does not exist
-         * Set default_value to undefined to error on missing setting
+         * Gets number value from app settings, or sets defaultValue if setting does not exist
+         * Set defaultValue to undefined to error on missing setting
          */
         if (!app.settings.haveSetting(sectionName, keyName)) {
-            if (default_value === undefined) {
+            if (defaultValue === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!");
             }
-            saveNumberSetting(sectionName, keyName, default_value);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
+            saveNumberSetting(sectionName, keyName, defaultValue);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + defaultValue);
         }
         if (isNaN(Number(app.settings.getSetting(sectionName, keyName)))) {
-            if (default_value === undefined) {
+            if (defaultValue === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number!");
             }
-            saveNumberSetting(sectionName, keyName, default_value);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number. Using default value of " + default_value);
+            saveNumberSetting(sectionName, keyName, defaultValue);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number. Using default value of " + defaultValue);
         }
         return Number(app.settings.getSetting(sectionName, keyName));
     }
@@ -211,15 +211,15 @@ function __generateUtil() {
 
     function getStringSetting(sectionName, keyName, defaultValue) {
         /**
-         * Gets string value from app settings, or sets default_value if setting does not exist
-         * Set default_value to undefined to error on missing setting
+         * Gets string value from app settings, or sets defaultValue if setting does not exist
+         * Set defaultValue to undefined to error on missing setting
          */
         if (!app.settings.haveSetting(sectionName, keyName)) {
-            if (default_value === undefined) {
+            if (defaultValue === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!");
             }
-            setStringSetting(sectionName, keyName, default_value);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
+            setStringSetting(sectionName, keyName, defaultValue);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + defaultValue);
         }
         return app.settings.getSetting(sectionName, keyName)
     }
@@ -659,10 +659,10 @@ function __generateUtil() {
         return folder;
     }
 
-    function getPartialExportDir(job_history_dir) {
+    function getPartialExportDir(jobHistoryDir) {
         /**
          * Creates string with correct name and format to be used in job history directory creation.
-         * @param {string} job_history_dir: Directory where job bundles is written to on submission.
+         * @param {string} jobHistoryDir: Directory where job bundles is written to on submission.
          * Returns partial job history directory.
          */
         const currentDate = new Date();
@@ -673,7 +673,7 @@ function __generateUtil() {
         // Create the formatted string
         const formattedYearMonth = year + '-' + month;
         const formattedDate = year + '-' + month + '-' + day;
-        const dir = job_history_dir + "//" + formattedYearMonth + "//" + formattedDate + "-";
+        const dir = jobHistoryDir + "//" + formattedYearMonth + "//" + formattedDate + "-";
         return dir;
     }
 
@@ -1365,7 +1365,7 @@ function findJobAttachments(rootComp) {
     exploredItems[rootComp.id] = true;
     const queue = [rootComp];
     while (queue.length > 0) {
-        const comp = queue.pop();
+        var comp = queue.pop();
         var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
         for (var i = 1; i <= comp.numLayers; i++) {
             var layer = comp.layer(i);
@@ -1888,9 +1888,9 @@ function generatePrettyParameterName(index, compName, parameter) {
         parameter = "";
     }
     index = index.toString();
-    const max_length = 10;
-    if (compName.length >= max_length) {
-        compName = compName.substring(0, max_length - 3) + "...";
+    const maxLength = 10;
+    if (compName.length >= maxLength) {
+        compName = compName.substring(0, maxLength - 3) + "...";
     }
     return "(" + index + "_" + compName + ") " + parameter;
 }
@@ -3087,13 +3087,12 @@ function buildUI(thisObj) {
     onTaskRunCheckboxClicked();
 
     function onTaskRunDaysChanged() {
-        var original_value = uiSettingsState.taskRunDays();
         taskRunDaysInput.text = taskRunDaysInput.text.replace(/[^0-9]/g, "");
-        var new_value = parseInt(taskRunDaysInput.text);
-        if (taskRunDaysInput.text === "") new_value = 0;
+        var newValue = parseInt(taskRunDaysInput.text);
+        if (taskRunDaysInput.text === "") newValue = 0;
         if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
-            if (!isNaN(new_value)) {
-                uiSettingsState.setTaskRunDays(new_value);
+            if (!isNaN(newValue)) {
+                uiSettingsState.setTaskRunDays(newValue);
             }
         }
         taskRunDaysInput.text = uiSettingsState.taskRunDays();
@@ -3101,13 +3100,12 @@ function buildUI(thisObj) {
     taskRunDaysInput.onChange = onTaskRunDaysChanged;
 
     function onTaskRunHoursChanged() {
-        var original_value = uiSettingsState.taskRunHours();
         taskRunHoursInput.text = taskRunHoursInput.text.replace(/[^0-9]/g, "");
-        var new_value = parseInt(taskRunHoursInput.text);
-        if (taskRunHoursInput.text === "") new_value = 0;
+        var newValue = parseInt(taskRunHoursInput.text);
+        if (taskRunHoursInput.text === "") newValue = 0;
         if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
-            if (!isNaN(new_value)) {
-                uiSettingsState.setTaskRunHours(new_value);
+            if (!isNaN(newValue)) {
+                uiSettingsState.setTaskRunHours(newValue);
             }
         }
         taskRunHoursInput.text = uiSettingsState.taskRunHours();
@@ -3115,13 +3113,12 @@ function buildUI(thisObj) {
     taskRunHoursInput.onChange = onTaskRunHoursChanged;
 
     function onTaskRunMinutesChanged() {
-        var original_value = uiSettingsState.taskRunMinutes();
         taskRunMinutesInput.text = taskRunMinutesInput.text.replace(/[^0-9]/g, "");
-        var new_value = parseInt(taskRunMinutesInput.text);
-        if (taskRunMinutesInput.text === "") new_value = 0;
+        var newValue = parseInt(taskRunMinutesInput.text);
+        if (taskRunMinutesInput.text === "") newValue = 0;
         if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
-            if (!isNaN(new_value)) {
-                uiSettingsState.setTaskRunMinutes(new_value);
+            if (!isNaN(newValue)) {
+                uiSettingsState.setTaskRunMinutes(newValue);
             }
         }
         taskRunMinutesInput.text = uiSettingsState.taskRunMinutes();

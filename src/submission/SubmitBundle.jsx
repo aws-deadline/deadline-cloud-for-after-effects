@@ -141,9 +141,9 @@ function generatePrettyParameterName(index, compName, parameter) {
         parameter = "";
     }
     index = index.toString();
-    const max_length = 10;
-    if (compName.length >= max_length) {
-        compName = compName.substring(0, max_length - 3) + "...";
+    const maxLength = 10;
+    if (compName.length >= maxLength) {
+        compName = compName.substring(0, maxLength - 3) + "...";
     }
     return "(" + index + "_" + compName + ") " + parameter;
 }

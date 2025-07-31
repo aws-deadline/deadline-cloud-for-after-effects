@@ -107,10 +107,10 @@ function adcAlert(message, errorIcon) {
     alert(message, "Deadline Cloud Submitter", errorIcon);
 }
 
-function validateType(item, item_type) {
-    var actual_type = typeof item;
-    if (actual_type !== item_type) {
-        throw new Error("Object has type " + actual_type + " instead of desired type " + item_type);
+function validateType(item, itemType) {
+    var actualType = typeof item;
+    if (actualType !== itemType) {
+        throw new Error("Object has type " + actualType + " instead of desired type " + itemType);
     }
 }
 
@@ -152,17 +152,17 @@ function __generateUtil() {
         app.settings.saveSetting(sectionName, keyName, value.toString());
     }
 
-    function getBoolSetting(sectionName, keyName, default_value) {
+    function getBoolSetting(sectionName, keyName, defaultValue) {
         /**
          * Gets boolean value from app settings, or sets it to the default value if no setting exists.
-         * Set default_value to undefined to error on missing setting
+         * Set defaultValue to undefined to error on missing setting
          */
         if (!app.settings.haveSetting(sectionName, keyName)) {
-            if (default_value === undefined) {
+            if (defaultValue === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + "does not exist!");
             }
-            saveBoolSetting(sectionName, keyName, default_value);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + "default_value");
+            saveBoolSetting(sectionName, keyName, defaultValue);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + "defaultValue");
         }
         return parseBool(app.settings.getSetting(sectionName, keyName));
     }
@@ -175,24 +175,24 @@ function __generateUtil() {
         app.settings.saveSetting(sectionName, keyName, value.toString());
     }
 
-    function getNumberSetting(sectionName, keyName, default_value) {
+    function getNumberSetting(sectionName, keyName, defaultValue) {
         /**
-         * Gets number value from app settings, or sets default_value if setting does not exist
-         * Set default_value to undefined to error on missing setting
+         * Gets number value from app settings, or sets defaultValue if setting does not exist
+         * Set defaultValue to undefined to error on missing setting
          */
         if (!app.settings.haveSetting(sectionName, keyName)) {
-            if (default_value === undefined) {
+            if (defaultValue === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!");
             }
-            saveNumberSetting(sectionName, keyName, default_value);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
+            saveNumberSetting(sectionName, keyName, defaultValue);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + defaultValue);
         }
         if (isNaN(Number(app.settings.getSetting(sectionName, keyName)))) {
-            if (default_value === undefined) {
+            if (defaultValue === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number!");
             }
-            saveNumberSetting(sectionName, keyName, default_value);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number. Using default value of " + default_value);
+            saveNumberSetting(sectionName, keyName, defaultValue);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number. Using default value of " + defaultValue);
         }
         return Number(app.settings.getSetting(sectionName, keyName));
     }
@@ -207,15 +207,15 @@ function __generateUtil() {
 
     function getStringSetting(sectionName, keyName, defaultValue) {
         /**
-         * Gets string value from app settings, or sets default_value if setting does not exist
-         * Set default_value to undefined to error on missing setting
+         * Gets string value from app settings, or sets defaultValue if setting does not exist
+         * Set defaultValue to undefined to error on missing setting
          */
         if (!app.settings.haveSetting(sectionName, keyName)) {
-            if (default_value === undefined) {
+            if (defaultValue === undefined) {
                 throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!");
             }
-            setStringSetting(sectionName, keyName, default_value);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + default_value);
+            setStringSetting(sectionName, keyName, defaultValue);
+            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + defaultValue);
         }
         return app.settings.getSetting(sectionName, keyName)
     }
@@ -655,10 +655,10 @@ function __generateUtil() {
         return folder;
     }
 
-    function getPartialExportDir(job_history_dir) {
+    function getPartialExportDir(jobHistoryDir) {
         /**
          * Creates string with correct name and format to be used in job history directory creation.
-         * @param {string} job_history_dir: Directory where job bundles is written to on submission.
+         * @param {string} jobHistoryDir: Directory where job bundles is written to on submission.
          * Returns partial job history directory.
          */
         const currentDate = new Date();
@@ -669,7 +669,7 @@ function __generateUtil() {
         // Create the formatted string
         const formattedYearMonth = year + '-' + month;
         const formattedDate = year + '-' + month + '-' + day;
-        const dir = job_history_dir + "//" + formattedYearMonth + "//" + formattedDate + "-";
+        const dir = jobHistoryDir + "//" + formattedYearMonth + "//" + formattedDate + "-";
         return dir;
     }
 
