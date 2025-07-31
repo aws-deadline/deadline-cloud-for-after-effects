@@ -1864,9 +1864,40 @@ function generateBundle() {
     return bundleRoot;
 }
 
+function generateParameterName(index, compName, parameter) {
+    /** Generates the name of the parameter to be used in the job submission
+     * by prefixing with the index and compName
+     * Truncates compname to avoid going over character limit.
+     **/
+    if (parameter === undefined) {
+        parameter = "";
+    }
+    if (parameter !== "") {
+        parameter = "_" + parameter;
+    }
+    index = index.toString();
+    compName = compName.substring(0, 15);
+    return "_" + index + "_" + compName + parameter;
+}
+
+function generatePrettyParameterName(index, compName, parameter) {
+    /** Generates name of the parameter to be displayed in job submission UI
+     * Truncates compname to avoid going over character limit
+     **/
+    if (parameter === undefined) {
+        parameter = "";
+    }
+    index = index.toString();
+    const max_length = 10;
+    if (compName.length >= max_length) {
+        compName = compName.substring(0, max_length - 3) + "...";
+    }
+    return "(" + index + "_" + compName + ") " + parameter;
+}
+
 // Generates the parameter definitions for each step by loading the `parameter_definitions_<>_fragment.json`
 //      Adding our `( <RenderQueueItemID> )` to the label and changing the name to prefixed by `<RenderQueueItemID>_`
-function generateStepParameterFragment(bundlePath, isImageSeq, renderQueueItemID) {
+function generateStepParameterFragment(bundlePath, isImageSeq, renderQueueIndex, compName) {
     var path = bundlePath + "/parameter_definitions_video_fragment.json";
     if (isImageSeq) {
         path = bundlePath + "/parameter_definitions_image_fragment.json";
@@ -1882,8 +1913,8 @@ function generateStepParameterFragment(bundlePath, isImageSeq, renderQueueItemID
             continue;
         }
         var replacedDefinition = stepParametersObject.parameterDefinitions[i]
-        replacedDefinition.name = renderQueueItemID + "_" + stepParametersObject.parameterDefinitions[i].name;
-        replacedDefinition.userInterface.label = "(" + renderQueueItemID + ") " + replacedDefinition.userInterface.label;
+        replacedDefinition.name = generateParameterName(renderQueueIndex, compName, replacedDefinition.name);
+        replacedDefinition.userInterface.label = generatePrettyParameterName(renderQueueIndex, compName, replacedDefinition.userInterface.label);
 
         updatedParameterDefinitions.push(replacedDefinition);
     }
@@ -1893,7 +1924,7 @@ function generateStepParameterFragment(bundlePath, isImageSeq, renderQueueItemID
 
 // Generates the step chunk of the template for each step by loading the `step_<>_fragment.json`
 //      Replacing the parmaeters to be pointing to our per-renderQueueItem parameters and updating any parameters in the onRun
-function generateStepTemplateFragment(bundlePath, isImageSeq, renderQueueItemID, taskTimeoutSeconds) {
+function generateStepTemplateFragment(bundlePath, isImageSeq, renderQueueItemIndex, compName, taskTimeoutSeconds) {
     var path = bundlePath + "/step_video_fragment.json";
     if (isImageSeq) {
         path = bundlePath + "/step_image_fragment.json";
@@ -1905,18 +1936,18 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, renderQueueItemID,
     if (isImageSeq) {
         // Replace parameter names in the creation of `Index`
         const taskParameters = stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0]
-        taskParameters.range = taskParameters.range.replace(paramPatternRegex, "Param." + renderQueueItemID + "_");
-        taskParameters.name = renderQueueItemID + "_" + taskParameters.name;
+        taskParameters.range = taskParameters.range.replace(paramPatternRegex, "Param." + generateParameterName(renderQueueItemIndex, compName, "") + "_");
+        taskParameters.name = generateParameterName(renderQueueItemIndex, compName, taskParameters.name);
         stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0] = taskParameters;
     }
 
-    stepTemplateObject.steps[0].name = renderQueueItemID;
+    stepTemplateObject.steps[0].name = generateParameterName(renderQueueItemIndex, compName, "");
     // Replace any parameter names in onRun script
     const scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args;
     const replacedArgs = []
     for (var i = 0; i < scriptArgs.length; i++) {
         // JobParams
-        replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + renderQueueItemID + "_"));
+        replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + generateParameterName(renderQueueItemIndex, compName, "") + "_"));
     }
     stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs;
     if (stepTemplateObject.steps[0].script.actions.onRun) {
@@ -2143,7 +2174,6 @@ function SubmitSelection(selection, selectionSettings) {
 
         var dependencies = findJobAttachments(renderQueueItem.comp); // list of filenames
         var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
-        var renderQueueItemID = "_" + renderQueueIndex + "_" + compName;
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
 
         var outputFileNameNoRegex = getFileNameNoRegex(outputFile);
@@ -2161,7 +2191,7 @@ function SubmitSelection(selection, selectionSettings) {
         jobAssetReferences.assetReferences.outputs.directories.push(sanitizedOutputFolder);
 
         var parameterValues = generateParameterValuesForStep(
-            renderQueueItemID,
+            generateParameterName(renderQueueIndex, compName, ""),
             renderQueueIndex,
             sanitizedOutputFolder,
             sanitizedOutputFileName,
@@ -2179,13 +2209,13 @@ function SubmitSelection(selection, selectionSettings) {
             }
         }
 
-        stepOutputFolderParameters.push("{{Param." + renderQueueItemID + "_OutputDir}}");
+        stepOutputFolderParameters.push("{{Param." + generateParameterName(renderQueueIndex, compName, "OutputDir") + "}}");
 
-        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, renderQueueItemID, taskTimeoutSeconds);
+        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, renderQueueIndex, compName, taskTimeoutSeconds);
         for (var s = 0; s < stepTemplate.steps.length; s++) {
             template.steps.push(stepTemplate.steps[s]);
         }
-        var stepParameters = generateStepParameterFragment(bundle.fsName, isImageSeq, renderQueueItemID);
+        var stepParameters = generateStepParameterFragment(bundle.fsName, isImageSeq, renderQueueIndex, compName);
         for (var p = 0; p < stepParameters.parameterDefinitions.length; p++) {
             var parameterExists = false;
             for (var tpd = 0; tpd < template.parameterDefinitions.length; tpd++) {
