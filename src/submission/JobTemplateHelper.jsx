@@ -86,7 +86,7 @@ function findJobAttachments(rootComp) {
     exploredItems[rootComp.id] = true;
     const queue = [rootComp];
     while (queue.length > 0) {
-        const comp = queue.pop();
+        var comp = queue.pop();
         var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
         for (var i = 1; i <= comp.numLayers; i++) {
             var layer = comp.layer(i);
