@@ -281,6 +281,7 @@ function buildUI(thisObj) {
         });
         newList.preferredSize.height = 400
         newList.preferredSize.width = 500
+
         for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
             var rqi = app.project.renderQueue.item(i);
             if (rqi == null) {
@@ -311,6 +312,8 @@ function buildUI(thisObj) {
                 item.subItems[2].text = "<multiple output modules>";
             }
         }
+
+        dcUtil.deleteUnusedMetadata(uiSettingsState.rqiXmpPath);
 
         if (list != null) {
             listGroup.remove(list);

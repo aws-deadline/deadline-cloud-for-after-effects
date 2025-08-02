@@ -966,6 +966,39 @@ function __generateUtil() {
         return "_" + renderQueueIndex.toString() + "_" + app.project.renderQueue.item(renderQueueIndex).comp.id;
     }
 
+    function getXMPPathLeaf(path) {
+        const regex = /.*xmp:(.*)/;
+        return regex.exec(path)[1];
+    }
+
+    function deleteUnusedMetadata(renderMetadataRoot) {
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        var paths = []
+        var iterator = metadata.iterator(XMPConst.ITERATOR_JUST_CHILDREN, XMPConst.NS_XMP, renderMetadataRoot);
+        while (property = iterator.next()) {
+            paths.push(property.path);
+        }
+        var ids = []
+        for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
+            ids.push(getRQIID(i));
+        }
+        for (var i = 0; i < paths.length; i++) {
+            var presentInArray = false;
+            var currentPath = paths[i];
+            for (var j = 0; j < ids.length; j++) {
+                var renderQueueID = ids[j];
+                if (getXMPPathLeaf(currentPath) === renderQueueID) {
+                    presentInArray=true;
+                    break;
+                }
+            }
+            if (!presentInArray) {
+                metadata.deleteProperty(XMPConst.NS_XMP, currentPath);
+            }
+        }
+        app.project.xmpPacket = metadata.serialize();
+    }
+
     return {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
@@ -1014,7 +1047,8 @@ function __generateUtil() {
         "composeXMPPath": composeXMPPath,
         "saveToMetadata": saveToMetadata,
         "loadFromMetadata": loadFromMetadata,
-        "metadataKeyExists": metadataKeyExists
+        "metadataKeyExists": metadataKeyExists,
+        "deleteUnusedMetadata": deleteUnusedMetadata
     }
 }
 
@@ -1211,6 +1245,7 @@ function UiSettingsState() {
     this.settings = {}
 
     this.xmpPath = dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, "UiSettingsState");
+    this.rqiXmpPath = dcUtil.composeXMPPath(this.xmpPath, "rqiSpecificSettings");
 
     // () -> bool
     this.taskRunTimeoutEnabled = function() {
@@ -1285,7 +1320,7 @@ UiSettingsState.prototype.get = function(RQIID) {
      * Gets UISettingsStore associated with given RQIID, or creates a new default one if it doesn't exit
      */
     if (!this.settings[RQIID]) {
-        this.settings[RQIID] = new UiSettingsStore(dcUtil.composeXMPPath(this.xmpPath, "rqi_specific_settings"), RQIID);
+        this.settings[RQIID] = new UiSettingsStore(this.rqiXmpPath, RQIID);
     }
     return this.settings[RQIID]
 }
@@ -3153,6 +3188,8 @@ function buildUI(thisObj) {
     submitButton.enabled = false;
 
     function updateList() {
+        dcUtil.deleteUnusedMetadata(uiSettingsState.rqiXmpPath);
+
         const bounds = list == null ? undefined : list.bounds;
         const newList = listGroup.add("listbox", bounds, "", {
             multiselect: true,
@@ -3163,6 +3200,7 @@ function buildUI(thisObj) {
         });
         newList.preferredSize.height = 400
         newList.preferredSize.width = 500
+
         for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
             var rqi = app.project.renderQueue.item(i);
             if (rqi == null) {
