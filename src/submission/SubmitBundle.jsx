@@ -434,6 +434,7 @@ function SubmitSelection(selection, selectionSettings) {
 
         stepOutputFolderParameters.push("{{Param." + generateParameterName(renderQueueIndex, compName, "OutputDir") + "}}");
 
+        // Generates template and parameters for the current render queue item, then pushes them to the main template
         var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, renderQueueIndex, compName, taskTimeoutSeconds);
         for (var s = 0; s < stepTemplate.steps.length; s++) {
             template.steps.push(stepTemplate.steps[s]);
@@ -454,6 +455,8 @@ function SubmitSelection(selection, selectionSettings) {
             }
         }
     }
+
+    // Writes out final bundle files
     const generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","));
     template.jobEnvironments = generatedJobEnvironment.jobEnvironments;
 
