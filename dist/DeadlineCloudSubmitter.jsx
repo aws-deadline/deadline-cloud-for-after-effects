@@ -1810,7 +1810,7 @@ if (typeof submitBundleFile == 'undefined') {
     const submitBundleFile = "SubmitButton.jsx";
 }
 
-// Validate that the RenderQueueIndex for each selectionItem is still valid
+// Validate that the RenderQueueIndex for each selectionItem is still valid and update list if they're out of date
 function UpdateRenderQueueIndices(renderQueueIndex, selectionItem) {
     if (
         renderQueueIndex < 1 ||
