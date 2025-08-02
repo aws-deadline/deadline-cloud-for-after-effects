@@ -265,7 +265,7 @@ function __generateUtil() {
         return metadata.getProperty(XMPConst.NS_XMP, key, type).value;
     }
 
-    function saveBoolSetting(keyName, value) {
+    function saveBoolMetadata(keyName, value) {
         /**
          * Sets boolean value in app settings
          */
@@ -273,7 +273,7 @@ function __generateUtil() {
         saveToMetadata(keyName, value, XMPConst.BOOLEAN);
     }
 
-    function getBoolSetting(keyName, defaultValue) {
+    function getBoolMetadata(keyName, defaultValue) {
         /**
          * Gets boolean value from app settings, or sets it to the default value if no setting exists.
          * Set defaultValue to undefined to error on missing setting
@@ -281,7 +281,7 @@ function __generateUtil() {
         return loadFromMetadata(keyName, defaultValue, XMPConst.BOOLEAN)
     }
 
-    function saveNumberSetting(keyName, value) {
+    function saveNumberMetadata(keyName, value) {
         /**
          * Sets integer value in app settings
          */
@@ -289,7 +289,7 @@ function __generateUtil() {
         saveToMetadata(keyName, value, XMPConst.NUMBER);
     }
 
-    function getNumberSetting(keyName, defaultValue) {
+    function getNumberMetadata(keyName, defaultValue) {
         /**
          * Gets number value from app settings, or sets defaultValue if setting does not exist
          * Set defaultValue to undefined to error on missing setting
@@ -297,7 +297,7 @@ function __generateUtil() {
         return loadFromMetadata(keyName, defaultValue, XMPConst.NUMBER);
     }
 
-    function saveStringSetting(keyName, value) {
+    function saveStringMetadata(keyName, value) {
         /**
          * Sets string in app settings
          */
@@ -305,7 +305,7 @@ function __generateUtil() {
         saveToMetadata(keyName, defaultValue, XMPConst.STRING);
     }
 
-    function getStringSetting(keyName, defaultValue) {
+    function getStringMetadata(keyName, defaultValue) {
         /**
          * Gets string value from app settings, or sets defaultValue if setting does not exist
          * Set defaultValue to undefined to error on missing setting
@@ -1003,12 +1003,12 @@ function __generateUtil() {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
         "parseBool": parseBool,
-        "saveBoolSetting": saveBoolSetting,
-        "getBoolSetting": getBoolSetting,
-        "saveNumberSetting": saveNumberSetting,
-        "getNumberSetting": getNumberSetting,
-        "saveStringSetting": saveStringSetting,
-        "getStringSetting": getStringSetting,
+        "saveBoolMetadata": saveBoolMetadata,
+        "getBoolMetadata": getBoolMetadata,
+        "saveNumberMetadata": saveNumberMetadata,
+        "getNumberMetadata": getNumberMetadata,
+        "saveStringMetadata": saveStringMetadata,
+        "getStringMetadata": getStringMetadata,
         "trimIllegalChars": trimIllegalChars,
         "sliderTextSync": sliderTextSync,
         "changeTextValue": changeTextValue,
@@ -1055,8 +1055,8 @@ function __generateUtil() {
 var dcUtil = __generateUtil();
 
 // Getting a setting that doesn't already exist will set it to its default value
-dcUtil.getBoolSetting(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
-dcUtil.getStringSetting(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), dcUtil.getAEVersion().toString());
+dcUtil.getBoolMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
+dcUtil.getStringMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), dcUtil.getAEVersion().toString());
 
 
 var LOG_LEVEL = {
@@ -1249,35 +1249,35 @@ function UiSettingsState() {
 
     // () -> bool
     this.taskRunTimeoutEnabled = function() {
-        return dcUtil.getBoolSetting(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED), DEFAULT_TASK_RUN_TIMEOUT_ENABLED);
+        return dcUtil.getBoolMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED), DEFAULT_TASK_RUN_TIMEOUT_ENABLED);
     }
     // (value: bool) -> void
     this.setTaskRunTimeoutEnabled = function(value) {
-        dcUtil.saveBoolSetting(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED), value);
+        dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED), value);
     }
     // () -> int
     this.taskRunDays = function() {
-        return dcUtil.getNumberSetting(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS), DEFAULT_TASK_RUN_TIMEOUT_DAYS);
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS), DEFAULT_TASK_RUN_TIMEOUT_DAYS);
     }
 
     this.setTaskRunDays = function(value) {
-        dcUtil.saveNumberSetting(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS), value);
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS), value);
     }
 
     this.taskRunHours = function() {
-        return dcUtil.getNumberSetting(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS), DEFAULT_TASK_RUN_TIMEOUT_HOURS);
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS), DEFAULT_TASK_RUN_TIMEOUT_HOURS);
     }
 
     this.setTaskRunHours = function(value) {
-        dcUtil.saveNumberSetting(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS), value);
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS), value);
     }
 
     this.taskRunMinutes = function() {
-        return dcUtil.getNumberSetting(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES), DEFAULT_TASK_RUN_TIMEOUT_MINUTES);
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES), DEFAULT_TASK_RUN_TIMEOUT_MINUTES);
     }
 
     this.setTaskRunMinutes = function(value) {
-        dcUtil.saveNumberSetting(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES), value);
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES), value);
     }
 
 }
@@ -1290,28 +1290,28 @@ function UiSettingsStore(xmpPathPrefix, name) {
     this.xmpPathPrefix = dcUtil.composeXMPPath(xmpPathPrefix, name);
 
     this.framesPerTask = function() {
-        return dcUtil.getNumberSetting(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), DEFAULT_FRAMESPERTASK);
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), DEFAULT_FRAMESPERTASK);
     }
     this.setFramesPerTask = function(value) {
         logger.warning("(" + this.name + ") Setting framesPerTask to " + value);
-        dcUtil.saveNumberSetting(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), value);
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), value);
     }
 
     this.multiFrameRendering = function() {
-        return dcUtil.getBoolSetting(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), DEFAULT_MULTI_FRAME_RENDERING);
+        return dcUtil.getBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), DEFAULT_MULTI_FRAME_RENDERING);
     }
     this.setMultiFrameRendering = function(value) {
         logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value);
-        dcUtil.saveBoolSetting(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), value);
+        dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), value);
     }
 
     this.maxCpuUsagePercentage = function() {
-        return dcUtil.getNumberSetting(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), DEFAULT_MAX_CPU_USAGE_PERCENTAGE);
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), DEFAULT_MAX_CPU_USAGE_PERCENTAGE);
 
     }
     this.setMaxCpuUsagePercentage = function(value) {
         logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value);
-        dcUtil.saveNumberSetting(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), value);
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), value);
     }
 }
 
@@ -2039,8 +2039,8 @@ function SubmitSelection(selection, selectionSettings) {
     }
 
     // Check if warning should be shown
-    const ignoreWarning = dcUtil.getBoolSetting(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING)) === "true";
-    const savedVersion = dcUtil.getNumberSetting(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), 0);
+    const ignoreWarning = dcUtil.getBoolMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING)) === "true";
+    const savedVersion = dcUtil.getNumberMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), 0);
     const currentVersion = dcUtil.getAEVersion();
 
     // Is this AE version not supported in the deadline-cloud channel?
@@ -2052,11 +2052,11 @@ function SubmitSelection(selection, selectionSettings) {
                 "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
 
             // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
-            dcUtil.saveStringSetting(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), currentVersion.toString());
+            dcUtil.saveStringMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), currentVersion.toString());
             if (confirm(versionMismatchWarningMessage)) {
-                dcUtil.saveBoolSetting(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), true);
+                dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), true);
             } else {
-                dcUtil.saveBoolSetting(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
+                dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
                 return;
             }
         } else {

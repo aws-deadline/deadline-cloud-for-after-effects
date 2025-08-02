@@ -261,7 +261,7 @@ function __generateUtil() {
         return metadata.getProperty(XMPConst.NS_XMP, key, type).value;
     }
 
-    function saveBoolSetting(keyName, value) {
+    function saveBoolMetadata(keyName, value) {
         /**
          * Sets boolean value in app settings
          */
@@ -269,7 +269,7 @@ function __generateUtil() {
         saveToMetadata(keyName, value, XMPConst.BOOLEAN);
     }
 
-    function getBoolSetting(keyName, defaultValue) {
+    function getBoolMetadata(keyName, defaultValue) {
         /**
          * Gets boolean value from app settings, or sets it to the default value if no setting exists.
          * Set defaultValue to undefined to error on missing setting
@@ -277,7 +277,7 @@ function __generateUtil() {
         return loadFromMetadata(keyName, defaultValue, XMPConst.BOOLEAN)
     }
 
-    function saveNumberSetting(keyName, value) {
+    function saveNumberMetadata(keyName, value) {
         /**
          * Sets integer value in app settings
          */
@@ -285,7 +285,7 @@ function __generateUtil() {
         saveToMetadata(keyName, value, XMPConst.NUMBER);
     }
 
-    function getNumberSetting(keyName, defaultValue) {
+    function getNumberMetadata(keyName, defaultValue) {
         /**
          * Gets number value from app settings, or sets defaultValue if setting does not exist
          * Set defaultValue to undefined to error on missing setting
@@ -293,7 +293,7 @@ function __generateUtil() {
         return loadFromMetadata(keyName, defaultValue, XMPConst.NUMBER);
     }
 
-    function saveStringSetting(keyName, value) {
+    function saveStringMetadata(keyName, value) {
         /**
          * Sets string in app settings
          */
@@ -301,7 +301,7 @@ function __generateUtil() {
         saveToMetadata(keyName, defaultValue, XMPConst.STRING);
     }
 
-    function getStringSetting(keyName, defaultValue) {
+    function getStringMetadata(keyName, defaultValue) {
         /**
          * Gets string value from app settings, or sets defaultValue if setting does not exist
          * Set defaultValue to undefined to error on missing setting
@@ -999,12 +999,12 @@ function __generateUtil() {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
         "parseBool": parseBool,
-        "saveBoolSetting": saveBoolSetting,
-        "getBoolSetting": getBoolSetting,
-        "saveNumberSetting": saveNumberSetting,
-        "getNumberSetting": getNumberSetting,
-        "saveStringSetting": saveStringSetting,
-        "getStringSetting": getStringSetting,
+        "saveBoolMetadata": saveBoolMetadata,
+        "getBoolMetadata": getBoolMetadata,
+        "saveNumberMetadata": saveNumberMetadata,
+        "getNumberMetadata": getNumberMetadata,
+        "saveStringMetadata": saveStringMetadata,
+        "getStringMetadata": getStringMetadata,
         "trimIllegalChars": trimIllegalChars,
         "sliderTextSync": sliderTextSync,
         "changeTextValue": changeTextValue,
@@ -1051,5 +1051,5 @@ function __generateUtil() {
 var dcUtil = __generateUtil();
 
 // Getting a setting that doesn't already exist will set it to its default value
-dcUtil.getBoolSetting(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
-dcUtil.getStringSetting(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), dcUtil.getAEVersion().toString());
+dcUtil.getBoolMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
+dcUtil.getStringMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), dcUtil.getAEVersion().toString());
