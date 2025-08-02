@@ -221,16 +221,6 @@ function __generateUtil() {
     }
 
     /**
-     * Creates XMP path to access field of struct 
-     * @param {String} structPath 
-     * @param {String} fieldName 
-     * @returns 
-     */
-    function composeXMPField(structPath, fieldName) {
-        return structPath + "/xmp:" + fieldName
-    }
-
-    /**
      * Saves item to project's XMP Metadata
      * @param {String} key 
      * @param {*} value 
@@ -1018,7 +1008,6 @@ function __generateUtil() {
         "getTempFolder": getTempFolder,
         "getRQIID": getRQIID,
         "composeXMPPath": composeXMPPath,
-        "composeXMPField": composeXMPField,
         "saveToMetadata": saveToMetadata,
         "loadFromMetadata": loadFromMetadata,
         "metadataKeyExists": metadataKeyExists
@@ -1028,5 +1017,5 @@ function __generateUtil() {
 var dcUtil = __generateUtil();
 
 // Getting a setting that doesn't already exist will set it to its default value
-dcUtil.getBoolSetting(dcUtil.composeXMPField(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
-dcUtil.getStringSetting(dcUtil.composeXMPField(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), dcUtil.getAEVersion().toString());
+dcUtil.getBoolSetting(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
+dcUtil.getStringSetting(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), dcUtil.getAEVersion().toString());
