@@ -1210,6 +1210,8 @@ function UiSettingsState() {
     // Contains UiSettingsStore objects that store comp-specific settings
     this.settings = {}
 
+    this.xmpPath = dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, "UiSettingsState");
+
     // () -> bool
     this.taskRunTimeoutEnabled = function() {
         return dcUtil.getBoolSetting(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED), DEFAULT_TASK_RUN_TIMEOUT_ENABLED);
@@ -1283,7 +1285,7 @@ UiSettingsState.prototype.get = function(RQIID) {
      * Gets UISettingsStore associated with given RQIID, or creates a new default one if it doesn't exit
      */
     if (!this.settings[RQIID]) {
-        this.settings[RQIID] = new UiSettingsStore(this.xmpPath, RQIID);
+        this.settings[RQIID] = new UiSettingsStore(dcUtil.composeXMPPath(this.xmpPath, "rqi_specific_settings"), RQIID);
     }
     return this.settings[RQIID]
 }
