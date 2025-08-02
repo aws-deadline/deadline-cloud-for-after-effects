@@ -955,7 +955,7 @@ function __generateUtil() {
         return list.selection[0];
     }
 
-    function getRQIID(renderQueueIndex) {
+    function getRenderQueueItemID(renderQueueIndex) {
         /** Calculates an ID for the Render Queue Item with the given index in the render queue
          * Not guaranteed to be unique if render queue items are reordered
          */
@@ -976,7 +976,7 @@ function __generateUtil() {
         }
         var ids = []
         for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
-            ids.push(getRQIID(i));
+            ids.push(getRenderQueueItemID(i));
         }
         for (var i = 0; i < paths.length; i++) {
             var presentInArray = false;
@@ -1039,7 +1039,7 @@ function __generateUtil() {
         "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
         "getTempFolder": getTempFolder,
-        "getRQIID": getRQIID,
+        "getRenderQueueItemID": getRenderQueueItemID,
         "composeXMPPath": composeXMPPath,
         "saveToMetadata": saveToMetadata,
         "loadFromMetadata": loadFromMetadata,

@@ -959,7 +959,7 @@ function __generateUtil() {
         return list.selection[0];
     }
 
-    function getRQIID(renderQueueIndex) {
+    function getRenderQueueItemID(renderQueueIndex) {
         /** Calculates an ID for the Render Queue Item with the given index in the render queue
          * Not guaranteed to be unique if render queue items are reordered
          */
@@ -980,7 +980,7 @@ function __generateUtil() {
         }
         var ids = []
         for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
-            ids.push(getRQIID(i));
+            ids.push(getRenderQueueItemID(i));
         }
         for (var i = 0; i < paths.length; i++) {
             var presentInArray = false;
@@ -1043,7 +1043,7 @@ function __generateUtil() {
         "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
         "getTempFolder": getTempFolder,
-        "getRQIID": getRQIID,
+        "getRenderQueueItemID": getRenderQueueItemID,
         "composeXMPPath": composeXMPPath,
         "saveToMetadata": saveToMetadata,
         "loadFromMetadata": loadFromMetadata,
@@ -2203,9 +2203,9 @@ function SubmitSelection(selection, selectionSettings) {
             return;
         }
 
-        var stepFramesPerTask = selectionSettings.get(dcUtil.getRQIID(renderQueueIndex)).framesPerTask();
-        var stepMaxCpuUsagePercentage = selectionSettings.get(dcUtil.getRQIID(renderQueueIndex)).maxCpuUsagePercentage();
-        var stepMultiFrameRendering = selectionSettings.get(dcUtil.getRQIID(renderQueueIndex)).multiFrameRendering();
+        var stepFramesPerTask = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).framesPerTask();
+        var stepMaxCpuUsagePercentage = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).maxCpuUsagePercentage();
+        var stepMultiFrameRendering = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).multiFrameRendering();
 
         var outputModule = renderQueueItem.outputModule(1).file;
         var outputPath = outputModule.fsName;
@@ -2993,13 +2993,13 @@ function buildUI(thisObj) {
         if (selectionItem) {
             var newFramesPerTaskValue = parseInt(framesPerTaskTextBox.text);
             if (isNaN(newFramesPerTaskValue)) {
-                newFramesPerTaskValue = uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).framesPerTask();
+                newFramesPerTaskValue = uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).framesPerTask();
             }
             if (newFramesPerTaskValue > 9999) {
                 newFramesPerTaskValue = 9999;
             }
             framesPerTaskTextBox.text = newFramesPerTaskValue.toString();
-            uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).setFramesPerTask(newFramesPerTaskValue);
+            uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).setFramesPerTask(newFramesPerTaskValue);
         }
     }
     framesPerTaskTextBox.onChange = onFramesPerTaskChanged;
@@ -3040,7 +3040,7 @@ function buildUI(thisObj) {
         }
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
-            uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
+            uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
         }
     }
     maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
@@ -3050,7 +3050,7 @@ function buildUI(thisObj) {
         const isMfrChecked = mfrCheckBox.value;
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
-            var RQIID = dcUtil.getRQIID(selectionItem.renderQueueIndex);
+            var RQIID = dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex);
             if (!isMfrChecked) {
                 maxCpuUsagePercentageTextBox.text = "N/A";
                 uiSettingsState.get(RQIID).setMultiFrameRendering(false);
@@ -3188,8 +3188,6 @@ function buildUI(thisObj) {
     submitButton.enabled = false;
 
     function updateList() {
-        dcUtil.deleteUnusedMetadata(uiSettingsState.rqiXmpPath);
-
         const bounds = list == null ? undefined : list.bounds;
         const newList = listGroup.add("listbox", bounds, "", {
             multiselect: true,
@@ -3232,6 +3230,8 @@ function buildUI(thisObj) {
             }
         }
 
+        dcUtil.deleteUnusedMetadata(uiSettingsState.rqiXmpPath);
+
         if (list != null) {
             listGroup.remove(list);
         }
@@ -3258,7 +3258,7 @@ function buildUI(thisObj) {
             perCompSettingsGroup.enabled = true;
             logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
 
-            const settings = uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex));
+            const settings = uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex));
             if (settings === undefined) {
                 logger.warning("Could not find settings for : " + selectionItem.compId);
                 return;

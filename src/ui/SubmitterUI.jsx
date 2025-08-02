@@ -76,13 +76,13 @@ function buildUI(thisObj) {
         if (selectionItem) {
             var newFramesPerTaskValue = parseInt(framesPerTaskTextBox.text);
             if (isNaN(newFramesPerTaskValue)) {
-                newFramesPerTaskValue = uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).framesPerTask();
+                newFramesPerTaskValue = uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).framesPerTask();
             }
             if (newFramesPerTaskValue > 9999) {
                 newFramesPerTaskValue = 9999;
             }
             framesPerTaskTextBox.text = newFramesPerTaskValue.toString();
-            uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).setFramesPerTask(newFramesPerTaskValue);
+            uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).setFramesPerTask(newFramesPerTaskValue);
         }
     }
     framesPerTaskTextBox.onChange = onFramesPerTaskChanged;
@@ -123,7 +123,7 @@ function buildUI(thisObj) {
         }
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
-            uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex)).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
+            uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
         }
     }
     maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
@@ -133,7 +133,7 @@ function buildUI(thisObj) {
         const isMfrChecked = mfrCheckBox.value;
         const selectionItem = dcUtil.getSelection(list);
         if (selectionItem) {
-            var RQIID = dcUtil.getRQIID(selectionItem.renderQueueIndex);
+            var RQIID = dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex);
             if (!isMfrChecked) {
                 maxCpuUsagePercentageTextBox.text = "N/A";
                 uiSettingsState.get(RQIID).setMultiFrameRendering(false);
@@ -341,7 +341,7 @@ function buildUI(thisObj) {
             perCompSettingsGroup.enabled = true;
             logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
 
-            const settings = uiSettingsState.get(dcUtil.getRQIID(selectionItem.renderQueueIndex));
+            const settings = uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex));
             if (settings === undefined) {
                 logger.warning("Could not find settings for : " + selectionItem.compId);
                 return;
