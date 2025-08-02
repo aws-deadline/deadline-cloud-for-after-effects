@@ -2,14 +2,16 @@
 // Manual changes in this file may be overwritten by a new installation.
 // Please change the source files and regenerate this file instead.
 
-if ( ExternalObject.AdobeXMPScript == undefined ) {
-    ExternalObject.AdobeXMPScript = new ExternalObject( "lib:AdobeXMPScript");
+if (ExternalObject.AdobeXMPScript == undefined) {
+    ExternalObject.AdobeXMPScript = new ExternalObject("lib:AdobeXMPScript");
 }
 
 var scriptFolder = Folder.current.fsName;
 
 // Global constants, wrapped with if-blocks to ensure they are only defined once
 // to avoid errors due to redeclaration
+// Note that once these values have been set their values will persist until Aftereffects is relaunched,
+// So make sure to restart Aftereffects is you change them
 if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
     const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
 }
@@ -19,8 +21,8 @@ if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
 if (typeof SUPPORTED_VERSIONS === "undefined") {
     const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
 }
-if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
-    const DEADLINECLOUD_SUBMITTER_SETTINGS = "DeadlineCloudSubmitter";
+if (typeof DEADLINECLOUD_SETTINGS_ROOT === "undefined") {
+    const DEADLINECLOUD_SETTINGS_ROOT = "xmp:DeadlineCloudSubmitter";
 }
 if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
     const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
@@ -213,105 +215,112 @@ function __generateUtil() {
     }
 
     /**
-     * Combines prefix and key to construct a key for accessing a value in XMPMetadata 
-     * @param {String} prefix 
-     * @param {String} key 
+     * Appends stem to existing XMP path
+     * @param {String} root 
+     * @param {String} stem 
      * @returns {String}
      */
-    function buildMetadataKey(prefix, key) {
-        return "xmp:" + prefix + "__" + key;
+    function composeXMPPath(root, stem) {
+        return root + "/xmp:" + stem;
+    }
+
+    /**
+     * Creates XMP path to access field of struct 
+     * @param {String} structPath 
+     * @param {String} fieldName 
+     * @returns 
+     */
+    function composeXMPField(structPath, fieldName) {
+        return structPath + "/xmp:" + fieldName
     }
 
     /**
      * Saves item to project's XMP Metadata
-     * @param {String} prefix 
      * @param {String} key 
      * @param {*} value 
      * @param {String} [type] Optional data type for value. These are enumerated in XMPConst.
      */
-    function saveToMetadata(prefix, key, value, type) {
+    function saveToMetadata(key, value, type) {
         var metadata = new XMPMeta(app.project.xmpPacket);
-        metadata.setProperty(XMPConst.NS_XMP, buildMetadataKey(prefix, key), value, type);
+        metadata.setProperty(XMPConst.NS_XMP, key, value, type);
         app.project.xmpPacket = metadata.serialize();
     }
 
     /**
      * Checks if item with given key exists in project's XMPMetadata
-     * @param {String} prefix 
      * @param {String} key 
      * @returns {boolean}
      */
-    function metadataKeyExists(prefix, key) {
+    function metadataKeyExists(key) {
         var metadata = new XMPMeta(app.project.xmpPacket);
-        return metadata.getProperty(XMPConst.NS_XMP, buildMetadataKey(prefix, key)) !== undefined;
+        return metadata.getProperty(XMPConst.NS_XMP, key) !== undefined;
     }
 
     /**
      * Loads value from project's XMP metadata 
-     * @param {String} prefix 
      * @param {String} key 
      * @param {*} [defaultValue] If value with given key doesn't exist in the XMPMetadata yet, a new one will be created with this value and the new value will be returned
      * @param {String} [type] Optionally specify type of object being stored. These are enumerated in XMPConst
      * @returns {XMPProperty} Returns property if it exists, or defaultValue if it doesn't, or throws an error if no defaultValue is defined and property doesn't exist. 
      */
-    function loadFromMetadata(prefix, key, defaultValue, type) {
-        if (!metadataKeyExists(prefix, key)) {
+    function loadFromMetadata(key, defaultValue, type) {
+        if (!metadataKeyExists(key)) {
             if (defaultValue !== undefined) {
-                saveToMetadata(prefix, key, defaultValue, type);
+                saveToMetadata(key, defaultValue, type);
             } else {
-                throw Error("Key '" + buildMetadataKey(prefix, key) + "' does not exist in project XMP Metadata, and no default value is set.")
+                throw Error("Key '" + key + "' does not exist in project XMP Metadata, and no default value is set.")
             }
         }
         var metadata = new XMPMeta(app.project.xmpPacket);
-        return metadata.getProperty(XMPConst.NS_XMP, buildMetadataKey(prefix, key), type).value;
+        return metadata.getProperty(XMPConst.NS_XMP, key, type).value;
     }
 
-    function saveBoolSetting(sectionName, keyName, value) {
+    function saveBoolSetting(keyName, value) {
         /**
          * Sets boolean value in app settings
          */
         validateType(value, "boolean");
-        saveToMetadata(sectionName, keyName, value, XMPConst.BOOLEAN);
+        saveToMetadata(keyName, value, XMPConst.BOOLEAN);
     }
 
-    function getBoolSetting(sectionName, keyName, defaultValue) {
+    function getBoolSetting(keyName, defaultValue) {
         /**
          * Gets boolean value from app settings, or sets it to the default value if no setting exists.
          * Set defaultValue to undefined to error on missing setting
          */
-        return loadFromMetadata(sectionName, keyName, defaultValue, XMPConst.BOOLEAN)
+        return loadFromMetadata(keyName, defaultValue, XMPConst.BOOLEAN)
     }
 
-    function saveNumberSetting(sectionName, keyName, value) {
+    function saveNumberSetting(keyName, value) {
         /**
          * Sets integer value in app settings
          */
         validateType(value, "number");
-        saveToMetadata(sectionName, keyName, value, XMPConst.NUMBER);
+        saveToMetadata(keyName, value, XMPConst.NUMBER);
     }
 
-    function getNumberSetting(sectionName, keyName, defaultValue) {
+    function getNumberSetting(keyName, defaultValue) {
         /**
          * Gets number value from app settings, or sets defaultValue if setting does not exist
          * Set defaultValue to undefined to error on missing setting
          */
-        return loadFromMetadata(sectionName, keyName, defaultValue, XMPConst.NUMBER);
+        return loadFromMetadata(keyName, defaultValue, XMPConst.NUMBER);
     }
 
-    function saveStringSetting(sectionName, keyName, value) {
+    function saveStringSetting(keyName, value) {
         /**
          * Sets string in app settings
          */
         validateType(value, "string");
-        saveToMetadata(sectionName, keyName, defaultValue, XMPConst.STRING);
+        saveToMetadata(keyName, defaultValue, XMPConst.STRING);
     }
 
-    function getStringSetting(sectionName, keyName, defaultValue) {
+    function getStringSetting(keyName, defaultValue) {
         /**
          * Gets string value from app settings, or sets defaultValue if setting does not exist
          * Set defaultValue to undefined to error on missing setting
          */
-        return loadFromMetadata(sectionName, keyName, defaultValue, XMPConst.STRING);
+        return loadFromMetadata(keyName, defaultValue, XMPConst.STRING);
     }
 
     function trimIllegalChars(stringToTrim) {
@@ -964,7 +973,7 @@ function __generateUtil() {
         /** Calculates an ID for the Render Queue Item with the given index in the render queue
          * Not guaranteed to be unique if render queue items are reordered
          */
-        return app.project.renderQueue.item(renderQueueIndex).comp.id + "_" + renderQueueIndex.toString();
+        return "_" + renderQueueIndex.toString() + "_" + app.project.renderQueue.item(renderQueueIndex).comp.id;
     }
 
     return {
@@ -1011,15 +1020,20 @@ function __generateUtil() {
         "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
         "getTempFolder": getTempFolder,
-        "getRQIID": getRQIID
+        "getRQIID": getRQIID,
+        "composeXMPPath": composeXMPPath,
+        "composeXMPField": composeXMPField,
+        "saveToMetadata": saveToMetadata,
+        "loadFromMetadata": loadFromMetadata,
+        "metadataKeyExists": metadataKeyExists
     }
 }
 
 var dcUtil = __generateUtil();
 
 // Getting a setting that doesn't already exist will set it to its default value
-dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false);
-dcUtil.getStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
+dcUtil.getBoolSetting(dcUtil.composeXMPField(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
+dcUtil.getStringSetting(dcUtil.composeXMPField(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), dcUtil.getAEVersion().toString());
 
 
 var LOG_LEVEL = {
@@ -1207,88 +1221,78 @@ function UiSettingsState() {
     // Contains UiSettingsStore objects that store comp-specific settings
     this.settings = {}
 
-    // () -> bool
+    this.xmpPath = DEADLINECLOUD_SETTINGS_ROOT;
+
+    /**
+     * @returns {boolean} 
+     */
     this.taskRunTimeoutEnabled = function() {
-        return dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, DEFAULT_TASK_RUN_TIMEOUT_ENABLED);
+        return dcUtil.getBoolSetting(dcUtil.composeXMPField(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED), DEFAULT_TASK_RUN_TIMEOUT_ENABLED);
     }
-    // (value: bool) -> void
+
+    /**
+     * @param {boolean} value 
+     */
     this.setTaskRunTimeoutEnabled = function(value) {
-        dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, value);
+        dcUtil.saveBoolSetting(dcUtil.composeXMPField(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED), value);
     }
     // () -> int
     this.taskRunDays = function() {
-        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, DEFAULT_TASK_RUN_TIMEOUT_DAYS);
+        return dcUtil.getNumberSetting(dcUtil.composeXMPField(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS), DEFAULT_TASK_RUN_TIMEOUT_DAYS);
     }
 
     this.setTaskRunDays = function(value) {
-        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, value);
+        dcUtil.saveNumberSetting(dcUtil.composeXMPField(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS), value);
     }
 
     this.taskRunHours = function() {
-        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, DEFAULT_TASK_RUN_TIMEOUT_HOURS);
+        return dcUtil.getNumberSetting(dcUtil.composeXMPField(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS), DEFAULT_TASK_RUN_TIMEOUT_HOURS);
     }
 
     this.setTaskRunHours = function(value) {
-        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, value);
+        dcUtil.saveNumberSetting(dcUtil.composeXMPField(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS), value);
     }
 
     this.taskRunMinutes = function() {
-        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, DEFAULT_TASK_RUN_TIMEOUT_MINUTES);
+        return dcUtil.getNumberSetting(dcUtil.composeXMPField(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES), DEFAULT_TASK_RUN_TIMEOUT_MINUTES);
     }
 
     this.setTaskRunMinutes = function(value) {
-        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, value);
+        dcUtil.saveNumberSetting(dcUtil.composeXMPField(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES), value);
     }
 
 }
 
-function UiSettingsStore(name) {
+function UiSettingsStore(xmpPathPrefix, name) {
     /**
      * Stores comp-specific settings for the comp with given name.
      */
     this.name = name;
+    this.xmpPathPrefix = dcUtil.composeXMPPath(xmpPathPrefix, name);
 
     this.framesPerTask = function() {
-        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_FRAMESPERTASK, DEFAULT_FRAMESPERTASK);
+        return dcUtil.getNumberSetting(dcUtil.composeXMPField(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), DEFAULT_FRAMESPERTASK);
     }
     this.setFramesPerTask = function(value) {
         logger.warning("(" + this.name + ") Setting framesPerTask to " + value);
-        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_FRAMESPERTASK, value);
+        dcUtil.saveNumberSetting(dcUtil.composeXMPField(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), value);
     }
 
     this.multiFrameRendering = function() {
-        return dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_MULTI_FRAME_RENDERING, DEFAULT_MULTI_FRAME_RENDERING);
+        return dcUtil.getBoolSetting(dcUtil.composeXMPField(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), DEFAULT_MULTI_FRAME_RENDERING);
     }
     this.setMultiFrameRendering = function(value) {
         logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value);
-        dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, this.name + "_" + DEADLINECLOUD_MULTI_FRAME_RENDERING, value);
+        dcUtil.saveBoolSetting(dcUtil.composeXMPField(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), value);
     }
 
     this.maxCpuUsagePercentage = function() {
-        return dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name + "_" + DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, DEFAULT_MAX_CPU_USAGE_PERCENTAGE);
+        return dcUtil.getNumberSetting(dcUtil.composeXMPField(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), DEFAULT_MAX_CPU_USAGE_PERCENTAGE);
 
     }
     this.setMaxCpuUsagePercentage = function(value) {
         logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value);
-        dcUtil.saveNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, name + "_" + DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, value);
-    }
-}
-
-UiSettingsState.prototype.create = function(RQIID, framesPerTask, multiFrameRendering, maxCpuUsagePercentage) {
-    /**
-     * Adds new UISettingsStore to store settings for the comp associated with Render Queue Item ID
-     */
-    if (!this.settings[RQIID]) {
-        this.settings[RQIID] = new UiSettingsStore(RQIID);
-    }
-    if (framesPerTask !== undefined) {
-        this.settings[RQIID].setFramesPerTask(framesPerTask);
-    }
-    if (multiFrameRendering !== undefined) {
-        this.settings[RQIID].setMultiFrameRendering(multiFrameRendering);
-    }
-    if (maxCpuUsagePercentage !== undefined) {
-        this.settings[RQIID].setMaxCpuUsagePercentage(maxCpuUsagePercentage);
+        dcUtil.saveNumberSetting(dcUtil.composeXMPField(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), value);
     }
 }
 
@@ -1297,7 +1301,7 @@ UiSettingsState.prototype.get = function(RQIID) {
      * Gets UISettingsStore associated with given RQIID, or creates a new default one if it doesn't exit
      */
     if (!this.settings[RQIID]) {
-        this.settings[RQIID] = new UiSettingsStore(RQIID);
+        this.settings[RQIID] = new UiSettingsStore(this.xmpPath, RQIID);
     }
     return this.settings[RQIID]
 }
@@ -2046,8 +2050,8 @@ function SubmitSelection(selection, selectionSettings) {
     }
 
     // Check if warning should be shown
-    const ignoreWarning = dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING) === "true";
-    const savedVersion = dcUtil.getNumberSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, 0);
+    const ignoreWarning = dcUtil.getBoolSetting(dcUtil.composeXMPField(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING)) === "true";
+    const savedVersion = dcUtil.getNumberSetting(dcUtil.composeXMPField(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), 0);
     const currentVersion = dcUtil.getAEVersion();
 
     // Is this AE version not supported in the deadline-cloud channel?
@@ -2059,11 +2063,11 @@ function SubmitSelection(selection, selectionSettings) {
                 "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
 
             // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
-            dcUtil.saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
+            dcUtil.saveStringSetting(dcUtil.composeXMPField(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), currentVersion.toString());
             if (confirm(versionMismatchWarningMessage)) {
-                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, true);
+                dcUtil.saveBoolSetting(dcUtil.composeXMPField(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), true);
             } else {
-                dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false);
+                dcUtil.saveBoolSetting(dcUtil.composeXMPField(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
                 return;
             }
         } else {

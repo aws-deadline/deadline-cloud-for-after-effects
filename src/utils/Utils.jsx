@@ -1,11 +1,13 @@
-if ( ExternalObject.AdobeXMPScript == undefined ) {
-    ExternalObject.AdobeXMPScript = new ExternalObject( "lib:AdobeXMPScript");
+if (ExternalObject.AdobeXMPScript == undefined) {
+    ExternalObject.AdobeXMPScript = new ExternalObject("lib:AdobeXMPScript");
 }
 
 var scriptFolder = Folder.current.fsName;
 
 // Global constants, wrapped with if-blocks to ensure they are only defined once
 // to avoid errors due to redeclaration
+// Note that once these values have been set their values will persist until Aftereffects is relaunched,
+// So make sure to restart Aftereffects is you change them
 if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
     const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
 }
@@ -15,8 +17,8 @@ if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
 if (typeof SUPPORTED_VERSIONS === "undefined") {
     const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
 }
-if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
-    const DEADLINECLOUD_SUBMITTER_SETTINGS = "DeadlineCloudSubmitter";
+if (typeof DEADLINECLOUD_SETTINGS_ROOT === "undefined") {
+    const DEADLINECLOUD_SETTINGS_ROOT = "xmp:DeadlineCloudSubmitter";
 }
 if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
     const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
@@ -209,105 +211,112 @@ function __generateUtil() {
     }
 
     /**
-     * Combines prefix and key to construct a key for accessing a value in XMPMetadata 
-     * @param {String} prefix 
-     * @param {String} key 
+     * Appends stem to existing XMP path
+     * @param {String} root 
+     * @param {String} stem 
      * @returns {String}
      */
-    function buildMetadataKey(prefix, key) {
-        return "xmp:" + prefix + "__" + key;
+    function composeXMPPath(root, stem) {
+        return root + "/xmp:" + stem;
+    }
+
+    /**
+     * Creates XMP path to access field of struct 
+     * @param {String} structPath 
+     * @param {String} fieldName 
+     * @returns 
+     */
+    function composeXMPField(structPath, fieldName) {
+        return structPath + "/xmp:" + fieldName
     }
 
     /**
      * Saves item to project's XMP Metadata
-     * @param {String} prefix 
      * @param {String} key 
      * @param {*} value 
      * @param {String} [type] Optional data type for value. These are enumerated in XMPConst.
      */
-    function saveToMetadata(prefix, key, value, type) {
+    function saveToMetadata(key, value, type) {
         var metadata = new XMPMeta(app.project.xmpPacket);
-        metadata.setProperty(XMPConst.NS_XMP, buildMetadataKey(prefix, key), value, type);
+        metadata.setProperty(XMPConst.NS_XMP, key, value, type);
         app.project.xmpPacket = metadata.serialize();
     }
 
     /**
      * Checks if item with given key exists in project's XMPMetadata
-     * @param {String} prefix 
      * @param {String} key 
      * @returns {boolean}
      */
-    function metadataKeyExists(prefix, key) {
+    function metadataKeyExists(key) {
         var metadata = new XMPMeta(app.project.xmpPacket);
-        return metadata.getProperty(XMPConst.NS_XMP, buildMetadataKey(prefix, key)) !== undefined;
+        return metadata.getProperty(XMPConst.NS_XMP, key) !== undefined;
     }
 
     /**
      * Loads value from project's XMP metadata 
-     * @param {String} prefix 
      * @param {String} key 
      * @param {*} [defaultValue] If value with given key doesn't exist in the XMPMetadata yet, a new one will be created with this value and the new value will be returned
      * @param {String} [type] Optionally specify type of object being stored. These are enumerated in XMPConst
      * @returns {XMPProperty} Returns property if it exists, or defaultValue if it doesn't, or throws an error if no defaultValue is defined and property doesn't exist. 
      */
-    function loadFromMetadata(prefix, key, defaultValue, type) {
-        if (!metadataKeyExists(prefix, key)) {
+    function loadFromMetadata(key, defaultValue, type) {
+        if (!metadataKeyExists(key)) {
             if (defaultValue !== undefined) {
-                saveToMetadata(prefix, key, defaultValue, type);
+                saveToMetadata(key, defaultValue, type);
             } else {
-                throw Error("Key '" + buildMetadataKey(prefix, key) + "' does not exist in project XMP Metadata, and no default value is set.")
+                throw Error("Key '" + key + "' does not exist in project XMP Metadata, and no default value is set.")
             }
         }
         var metadata = new XMPMeta(app.project.xmpPacket);
-        return metadata.getProperty(XMPConst.NS_XMP, buildMetadataKey(prefix, key), type).value;
+        return metadata.getProperty(XMPConst.NS_XMP, key, type).value;
     }
 
-    function saveBoolSetting(sectionName, keyName, value) {
+    function saveBoolSetting(keyName, value) {
         /**
          * Sets boolean value in app settings
          */
         validateType(value, "boolean");
-        saveToMetadata(sectionName, keyName, value, XMPConst.BOOLEAN);
+        saveToMetadata(keyName, value, XMPConst.BOOLEAN);
     }
 
-    function getBoolSetting(sectionName, keyName, defaultValue) {
+    function getBoolSetting(keyName, defaultValue) {
         /**
          * Gets boolean value from app settings, or sets it to the default value if no setting exists.
          * Set defaultValue to undefined to error on missing setting
          */
-        return loadFromMetadata(sectionName, keyName, defaultValue, XMPConst.BOOLEAN)
+        return loadFromMetadata(keyName, defaultValue, XMPConst.BOOLEAN)
     }
 
-    function saveNumberSetting(sectionName, keyName, value) {
+    function saveNumberSetting(keyName, value) {
         /**
          * Sets integer value in app settings
          */
         validateType(value, "number");
-        saveToMetadata(sectionName, keyName, value, XMPConst.NUMBER);
+        saveToMetadata(keyName, value, XMPConst.NUMBER);
     }
 
-    function getNumberSetting(sectionName, keyName, defaultValue) {
+    function getNumberSetting(keyName, defaultValue) {
         /**
          * Gets number value from app settings, or sets defaultValue if setting does not exist
          * Set defaultValue to undefined to error on missing setting
          */
-        return loadFromMetadata(sectionName, keyName, defaultValue, XMPConst.NUMBER);
+        return loadFromMetadata(keyName, defaultValue, XMPConst.NUMBER);
     }
 
-    function saveStringSetting(sectionName, keyName, value) {
+    function saveStringSetting(keyName, value) {
         /**
          * Sets string in app settings
          */
         validateType(value, "string");
-        saveToMetadata(sectionName, keyName, defaultValue, XMPConst.STRING);
+        saveToMetadata(keyName, defaultValue, XMPConst.STRING);
     }
 
-    function getStringSetting(sectionName, keyName, defaultValue) {
+    function getStringSetting(keyName, defaultValue) {
         /**
          * Gets string value from app settings, or sets defaultValue if setting does not exist
          * Set defaultValue to undefined to error on missing setting
          */
-        return loadFromMetadata(sectionName, keyName, defaultValue, XMPConst.STRING);
+        return loadFromMetadata(keyName, defaultValue, XMPConst.STRING);
     }
 
     function trimIllegalChars(stringToTrim) {
@@ -960,7 +969,7 @@ function __generateUtil() {
         /** Calculates an ID for the Render Queue Item with the given index in the render queue
          * Not guaranteed to be unique if render queue items are reordered
          */
-        return app.project.renderQueue.item(renderQueueIndex).comp.id + "_" + renderQueueIndex.toString();
+        return "_" + renderQueueIndex.toString() + "_" + app.project.renderQueue.item(renderQueueIndex).comp.id;
     }
 
     return {
@@ -1007,12 +1016,17 @@ function __generateUtil() {
         "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
         "getTempFolder": getTempFolder,
-        "getRQIID": getRQIID
+        "getRQIID": getRQIID,
+        "composeXMPPath": composeXMPPath,
+        "composeXMPField": composeXMPField,
+        "saveToMetadata": saveToMetadata,
+        "loadFromMetadata": loadFromMetadata,
+        "metadataKeyExists": metadataKeyExists
     }
 }
 
 var dcUtil = __generateUtil();
 
 // Getting a setting that doesn't already exist will set it to its default value
-dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false);
-dcUtil.getStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
+dcUtil.getBoolSetting(dcUtil.composeXMPField(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
+dcUtil.getStringSetting(dcUtil.composeXMPField(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), dcUtil.getAEVersion().toString());
