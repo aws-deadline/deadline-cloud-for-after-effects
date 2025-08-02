@@ -1971,10 +1971,8 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, renderQueueItemInd
         replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + generateParameterName(renderQueueItemIndex, compName, "") + "_"));
     }
     stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs;
-    if (stepTemplateObject.steps[0].script.actions.onRun) {
-        stepTemplateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
-        logger.debug("Added timeout of " + taskTimeoutSeconds + " seconds to onRun action", submitBundleFile);
-    }
+    stepTemplateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
+    logger.debug("Added timeout of " + taskTimeoutSeconds + " seconds to onRun action", submitBundleFile);
 
     return stepTemplateObject;
 }
