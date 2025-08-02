@@ -1,4 +1,68 @@
+if ( ExternalObject.AdobeXMPScript == undefined ) {
+    ExternalObject.AdobeXMPScript = new ExternalObject( "lib:AdobeXMPScript");
+}
+
 var scriptFolder = Folder.current.fsName;
+
+// Global constants, wrapped with if-blocks to ensure they are only defined once
+// to avoid errors due to redeclaration
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
+}
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
+}
+if (typeof SUPPORTED_VERSIONS === "undefined") {
+    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
+}
+if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
+    const DEADLINECLOUD_SUBMITTER_SETTINGS = "DeadlineCloudSubmitter";
+}
+if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
+    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
+}
+if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
+    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
+}
+if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
+    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
+}
+if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_ENABLED = true;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_DAYS = 2;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_HOURS = 0;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_MINUTES = 0;
+}
+if (typeof DEFAULT_FRAMESPERTASK === "undefined") {
+    const DEFAULT_FRAMESPERTASK = 10;
+}
+if (typeof DEFAULT_MULTI_FRAME_RENDERING === "undefined") {
+    const DEFAULT_MULTI_FRAME_RENDERING = false;
+}
+if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+    const DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90;
+}
 
 function readFile(filePath) {
     const f = new File(filePath);
@@ -144,12 +208,66 @@ function __generateUtil() {
         return false;
     }
 
+    /**
+     * Combines prefix and key to construct a key for accessing a value in XMPMetadata 
+     * @param {String} prefix 
+     * @param {String} key 
+     * @returns {String}
+     */
+    function buildMetadataKey(prefix, key) {
+        return "xmp:" + prefix + "__" + key;
+    }
+
+    /**
+     * Saves item to project's XMP Metadata
+     * @param {String} prefix 
+     * @param {String} key 
+     * @param {*} value 
+     * @param {String} [type] Optional data type for value. These are enumerated in XMPConst.
+     */
+    function saveToMetadata(prefix, key, value, type) {
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        metadata.setProperty(XMPConst.NS_XMP, buildMetadataKey(prefix, key), value, type);
+        app.project.xmpPacket = metadata.serialize();
+    }
+
+    /**
+     * Checks if item with given key exists in project's XMPMetadata
+     * @param {String} prefix 
+     * @param {String} key 
+     * @returns {boolean}
+     */
+    function metadataKeyExists(prefix, key) {
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        return metadata.getProperty(XMPConst.NS_XMP, buildMetadataKey(prefix, key)) !== undefined;
+    }
+
+    /**
+     * Loads value from project's XMP metadata 
+     * @param {String} prefix 
+     * @param {String} key 
+     * @param {*} [defaultValue] If value with given key doesn't exist in the XMPMetadata yet, a new one will be created with this value and the new value will be returned
+     * @param {String} [type] Optionally specify type of object being stored. These are enumerated in XMPConst
+     * @returns {XMPProperty} Returns property if it exists, or defaultValue if it doesn't, or throws an error if no defaultValue is defined and property doesn't exist. 
+     */
+    function loadFromMetadata(prefix, key, defaultValue, type) {
+        if (!metadataKeyExists(prefix, key)) {
+            if (defaultValue !== undefined) {
+                saveToMetadata(prefix, key, defaultValue, type);
+            } else {
+                throw Error("Key '" + buildMetadataKey(prefix, key) + "' does not exist in project XMP Metadata, and no default value is set.")
+            }
+        }
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        return metadata.getProperty(XMPConst.NS_XMP, buildMetadataKey(prefix, key), type).value;
+    }
+
     function saveBoolSetting(sectionName, keyName, value) {
         /**
          * Sets boolean value in app settings
          */
         validateType(value, "boolean");
-        app.settings.saveSetting(sectionName, keyName, value.toString());
+        saveToMetadata(sectionName, keyName, value, XMPConst.BOOLEAN);
     }
 
     function getBoolSetting(sectionName, keyName, defaultValue) {
@@ -157,14 +275,7 @@ function __generateUtil() {
          * Gets boolean value from app settings, or sets it to the default value if no setting exists.
          * Set defaultValue to undefined to error on missing setting
          */
-        if (!app.settings.haveSetting(sectionName, keyName)) {
-            if (defaultValue === undefined) {
-                throw new Error("Setting at " + sectionName + ":" + keyName + "does not exist!");
-            }
-            saveBoolSetting(sectionName, keyName, defaultValue);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + "defaultValue");
-        }
-        return parseBool(app.settings.getSetting(sectionName, keyName));
+        return loadFromMetadata(sectionName, keyName, defaultValue, XMPConst.BOOLEAN)
     }
 
     function saveNumberSetting(sectionName, keyName, value) {
@@ -172,7 +283,7 @@ function __generateUtil() {
          * Sets integer value in app settings
          */
         validateType(value, "number");
-        app.settings.saveSetting(sectionName, keyName, value.toString());
+        saveToMetadata(sectionName, keyName, value, XMPConst.NUMBER);
     }
 
     function getNumberSetting(sectionName, keyName, defaultValue) {
@@ -180,21 +291,7 @@ function __generateUtil() {
          * Gets number value from app settings, or sets defaultValue if setting does not exist
          * Set defaultValue to undefined to error on missing setting
          */
-        if (!app.settings.haveSetting(sectionName, keyName)) {
-            if (defaultValue === undefined) {
-                throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!");
-            }
-            saveNumberSetting(sectionName, keyName, defaultValue);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + defaultValue);
-        }
-        if (isNaN(Number(app.settings.getSetting(sectionName, keyName)))) {
-            if (defaultValue === undefined) {
-                throw new Error("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number!");
-            }
-            saveNumberSetting(sectionName, keyName, defaultValue);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " is " + app.settings.getSetting(sectionName, keyName) + ", which cannot be parsed as a Number. Using default value of " + defaultValue);
-        }
-        return Number(app.settings.getSetting(sectionName, keyName));
+        return loadFromMetadata(sectionName, keyName, defaultValue, XMPConst.NUMBER);
     }
 
     function saveStringSetting(sectionName, keyName, value) {
@@ -202,7 +299,7 @@ function __generateUtil() {
          * Sets string in app settings
          */
         validateType(value, "string");
-        app.settings.saveSetting(sectionName, keyName, value);
+        saveToMetadata(sectionName, keyName, defaultValue, XMPConst.STRING);
     }
 
     function getStringSetting(sectionName, keyName, defaultValue) {
@@ -210,14 +307,7 @@ function __generateUtil() {
          * Gets string value from app settings, or sets defaultValue if setting does not exist
          * Set defaultValue to undefined to error on missing setting
          */
-        if (!app.settings.haveSetting(sectionName, keyName)) {
-            if (defaultValue === undefined) {
-                throw new Error("Setting at " + sectionName + ":" + keyName + " does not exist!");
-            }
-            setStringSetting(sectionName, keyName, defaultValue);
-            logger.warning("Setting at " + sectionName + ":" + keyName + " does not exist, using default value of " + defaultValue);
-        }
-        return app.settings.getSetting(sectionName, keyName)
+        return loadFromMetadata(sectionName, keyName, defaultValue, XMPConst.STRING);
     }
 
     function trimIllegalChars(stringToTrim) {
@@ -238,7 +328,7 @@ function __generateUtil() {
          * @param {int} minValue - Minimum value that the slider/edittext can have.
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
-        textObj.onChange = function() {
+        textObj.onChange = function () {
             const newValue = parseFloat(textObj.text);
             if (!isNaN(newValue) && newValue >= minValue && newValue <= maxValue) {
                 sliderObj.value = newValue;
@@ -247,7 +337,7 @@ function __generateUtil() {
         }
 
 
-        sliderObj.onChange = function() {
+        sliderObj.onChange = function () {
             textObj.text = Math.round(this.value);
             logger.log("Changed sliderObject(" + sliderObj.name + ") value to: " + Math.round(this.value), scriptFileUtilName, LOG_LEVEL.DEBUG);
         }
@@ -679,43 +769,43 @@ function __generateUtil() {
 
         const hostRequirements = {
             "attributes": [{
-                    "name": "attr.worker.os.family",
-                    "anyOf": [
-                        osGroup.OSDropdownList.selection.text.toLowerCase()
-                    ]
-                },
-                {
-                    "name": "attr.worker.cpu.arch",
-                    "anyOf": [
-                        cpuArchGroup.cpuDropdownList.selection.text
-                    ]
-                }
+                "name": "attr.worker.os.family",
+                "anyOf": [
+                    osGroup.OSDropdownList.selection.text.toLowerCase()
+                ]
+            },
+            {
+                "name": "attr.worker.cpu.arch",
+                "anyOf": [
+                    cpuArchGroup.cpuDropdownList.selection.text
+                ]
+            }
             ],
             "amounts": [{
-                    "name": "amount.worker.vcpu",
-                    "min": parseInt(cpuGroup.cpuMinText.text),
-                    "max": parseInt(cpuGroup.cpuMaxText.text)
-                },
-                {
-                    "name": "amount.worker.memory",
-                    "min": parseInt(memoryGroup.memoryMinText.text) * 1024,
-                    "max": parseInt(memoryGroup.memoryMaxText.text) * 1024
-                },
-                {
-                    "name": "amount.worker.gpu",
-                    "min": parseInt(gpuGroup.gpuMinText.text),
-                    "max": parseInt(gpuGroup.gpuMaxText.text)
-                },
-                {
-                    "name": "amount.worker.gpu.memory",
-                    "min": parseInt(gpuMemoryGroup.gpuMemoryMinText.text) * 1024,
-                    "max": parseInt(gpuMemoryGroup.gpuMemoryMaxText.text) * 1024
-                },
-                {
-                    "name": "amount.worker.disk.scratch",
-                    "min": parseInt(scratchSpaceGroup.scratchSpaceMinText.text),
-                    "max": parseInt(scratchSpaceGroup.scratchSpaceMaxText.text)
-                }
+                "name": "amount.worker.vcpu",
+                "min": parseInt(cpuGroup.cpuMinText.text),
+                "max": parseInt(cpuGroup.cpuMaxText.text)
+            },
+            {
+                "name": "amount.worker.memory",
+                "min": parseInt(memoryGroup.memoryMinText.text) * 1024,
+                "max": parseInt(memoryGroup.memoryMaxText.text) * 1024
+            },
+            {
+                "name": "amount.worker.gpu",
+                "min": parseInt(gpuGroup.gpuMinText.text),
+                "max": parseInt(gpuGroup.gpuMaxText.text)
+            },
+            {
+                "name": "amount.worker.gpu.memory",
+                "min": parseInt(gpuMemoryGroup.gpuMemoryMinText.text) * 1024,
+                "max": parseInt(gpuMemoryGroup.gpuMemoryMaxText.text) * 1024
+            },
+            {
+                "name": "amount.worker.disk.scratch",
+                "min": parseInt(scratchSpaceGroup.scratchSpaceMinText.text),
+                "max": parseInt(scratchSpaceGroup.scratchSpaceMaxText.text)
+            }
             ]
         }
 
@@ -868,9 +958,9 @@ function __generateUtil() {
 
     function getRQIID(renderQueueIndex) {
         /** Calculates an ID for the Render Queue Item with the given index in the render queue
-         * Not guaranteed to be unique
+         * Not guaranteed to be unique if render queue items are reordered
          */
-        return app.project.file.name + "_" + app.project.renderQueue.item(renderQueueIndex).comp.id + "_" + renderQueueIndex.toString();
+        return app.project.renderQueue.item(renderQueueIndex).comp.id + "_" + renderQueueIndex.toString();
     }
 
     return {
@@ -921,72 +1011,8 @@ function __generateUtil() {
     }
 }
 
-dcUtil = __generateUtil();
+var dcUtil = __generateUtil();
 
-
-// Global constants, wrapped with if-blocks to ensure they are only defined once
-// to avoid errors due to redeclaration
-if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
-    const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
-}
-if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
-    const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
-}
-if (typeof SUPPORTED_VERSIONS === "undefined") {
-    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
-}
-if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
-    const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
-}
-if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
-    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
-}
-if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
-    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
-}
-if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
-    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
-}
-if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
-    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
-}
-if (typeof DEFAULT_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
-    const DEFAULT_TASK_RUN_TIMEOUT_ENABLED = true;
-}
-if (typeof DEFAULT_TASK_RUN_TIMEOUT_DAYS === "undefined") {
-    const DEFAULT_TASK_RUN_TIMEOUT_DAYS = 2;
-}
-if (typeof DEFAULT_TASK_RUN_TIMEOUT_HOURS === "undefined") {
-    const DEFAULT_TASK_RUN_TIMEOUT_HOURS = 0;
-}
-if (typeof DEFAULT_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
-    const DEFAULT_TASK_RUN_TIMEOUT_MINUTES = 0;
-}
-if (typeof DEFAULT_FRAMESPERTASK === "undefined") {
-    const DEFAULT_FRAMESPERTASK = 10;
-}
-if (typeof DEFAULT_MULTI_FRAME_RENDERING === "undefined") {
-    const DEFAULT_MULTI_FRAME_RENDERING = false;
-}
-if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
-    const DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90;
-}
-
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
-    dcUtil.saveBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false);
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
-    dcUtil.saveStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
-}
+// Getting a setting that doesn't already exist will set it to its default value
+dcUtil.getBoolSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, false);
+dcUtil.getStringSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
