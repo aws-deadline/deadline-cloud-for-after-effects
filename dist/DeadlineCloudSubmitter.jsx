@@ -2004,7 +2004,7 @@ function SubmitSelection(selection, selectionSettings) {
     // Validate timeout values during job submission
     if (taskTimeoutSeconds <= 0) {
         adcAlert("The following timeout value must be greater than 0: TaskRun", true);
-        throw new Error("Task run timeout must be greater than zero");
+        return;
     }
 
     const renderQueueItems = [];
