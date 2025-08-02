@@ -1944,7 +1944,7 @@ function generateStepParameterFragment(bundlePath, isImageSeq, renderQueueIndex,
 }
 
 // Generates the step chunk of the template for each step by loading the `step_<>_fragment.json`
-//      Replacing the parmaeters to be pointing to our per-renderQueueItem parameters and updating any parameters in the onRun
+//      Replacing the parameters to be pointing to our per-renderQueueItem parameters and updating any parameters in the onRun
 function generateStepTemplateFragment(bundlePath, isImageSeq, renderQueueItemIndex, compName, taskTimeoutSeconds) {
     var path = bundlePath + "/step_video_fragment.json";
     if (isImageSeq) {
