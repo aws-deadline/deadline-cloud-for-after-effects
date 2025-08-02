@@ -55,34 +55,6 @@ function validateRenderQueueItemOutputModule(renderQueueItem) {
     return true;
 }
 
-// Generate our prefixed Parameter Values for the provided comp
-function generateParameterValuesForStep(
-    prefix,
-    renderQueueIndex,
-    outputFolder,
-    outputFileName,
-    isImageSeq,
-    startFrame,
-    endFrame,
-    chunkSize,
-    multiFrameRendering,
-    maxCpuUsagePercentage,
-) {
-    return parameterValues(
-        renderQueueIndex,
-        app.project.file.fsName,
-        outputFolder,
-        outputFileName,
-        isImageSeq,
-        startFrame,
-        endFrame,
-        chunkSize,
-        multiFrameRendering,
-        maxCpuUsagePercentage,
-        prefix,
-    );
-}
-
 // Loading our default template from disk
 function loadDefaultJobTemplate(bundlePath, submitBundleFile) {
     const path = bundlePath + "/template.json";
@@ -443,9 +415,9 @@ function SubmitSelection(selection, selectionSettings) {
         }
         jobAssetReferences.assetReferences.outputs.directories.push(sanitizedOutputFolder);
 
-        var parameterValues = generateParameterValuesForStep(
-            generateParameterName(renderQueueIndex, compName, ""),
+        var parameterValues = generateParameterValues(
             renderQueueIndex,
+            app.project.file.fsName,
             sanitizedOutputFolder,
             sanitizedOutputFileName,
             isImageSeq,
@@ -453,9 +425,9 @@ function SubmitSelection(selection, selectionSettings) {
             endFrame,
             stepFramesPerTask,
             stepMultiFrameRendering,
-            stepMaxCpuUsagePercentage
+            stepMaxCpuUsagePercentage,
+            generateParameterName(renderQueueIndex, compName, "")
         );
-
         for (var p = 0; p < parameterValues.parameterValues.length; p++) {
             if (jobParameterValues.parameterValues.indexOf(parameterValues.parameterValues[p]) === -1) {
                 jobParameterValues.parameterValues.push(parameterValues.parameterValues[p]);

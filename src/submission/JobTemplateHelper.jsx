@@ -2,7 +2,7 @@ var jobTemplateHelperFile = "JobTemplateHelper.json";
 /**
  * Generates the basic parameterValue file for the job template
  **/
-function parameterValues(
+function generateParameterValues(
     renderQueueIndex,
     projectFile,
     outputDir,
