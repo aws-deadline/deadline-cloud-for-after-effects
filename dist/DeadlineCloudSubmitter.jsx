@@ -3196,8 +3196,8 @@ function buildUI(thisObj) {
             columnTitles: ['#', 'Name', 'Frames', 'Output Path'],
             columnWidths: [32, 160, 120, 240],
         });
-        newList.preferredSize.height = 400
-        newList.preferredSize.width = 500
+        newList.preferredSize.height = 200;
+        newList.preferredSize.width = 500;
 
         for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
             var rqi = app.project.renderQueue.item(i);
