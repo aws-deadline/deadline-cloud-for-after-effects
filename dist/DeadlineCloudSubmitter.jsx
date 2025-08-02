@@ -2948,7 +2948,7 @@ function buildUI(thisObj) {
     listGroup.alignment = ['fill', 'top'];
     listGroup.alignChildren = ['fill', 'top'];
     listGroup.orientation = "column";
-    var multiCompLabel = listGroup.add("statictext", undefined, "Shift+Click or Ctrl+Click can be used to select multiple precomps and group them together as a single job submission", {
+    var multiCompLabel = listGroup.add("statictext", undefined, "Shift+Click, Command+Click (Mac), or Ctrl+Click (Windows) can be used to select multiple render queue items and group them together as a single job submission", {
         multiline: true
     });
     // Label height needs to be set manually because ExtendScript does not accurately calculate the height of multiline text objects.
@@ -2966,7 +2966,7 @@ function buildUI(thisObj) {
     controlsPanel.alignment = ['fill', 'top'];
 
     // Container with settings to modify comp-specific settings
-    const perCompSettingsGroup = controlsPanel.add("panel", undefined, "Precomp-Specific Settings");
+    const perCompSettingsGroup = controlsPanel.add("panel", undefined, "Render Queue Item Settings");
     perCompSettingsGroup.orientation = "column";
     perCompSettingsGroup.alignment = ['fill', 'top'];
     perCompSettingsGroup.alignChildren = ['left', 'top'];
