@@ -971,6 +971,7 @@ function __generateUtil() {
         var metadata = new XMPMeta(app.project.xmpPacket);
         var paths = []
         var iterator = metadata.iterator(XMPConst.ITERATOR_JUST_CHILDREN, XMPConst.NS_XMP, renderMetadataRoot);
+        var property;
         while (property = iterator.next()) {
             paths.push(property.path);
         }

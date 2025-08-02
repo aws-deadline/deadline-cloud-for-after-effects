@@ -975,6 +975,7 @@ function __generateUtil() {
         var metadata = new XMPMeta(app.project.xmpPacket);
         var paths = []
         var iterator = metadata.iterator(XMPConst.ITERATOR_JUST_CHILDREN, XMPConst.NS_XMP, renderMetadataRoot);
+        var property;
         while (property = iterator.next()) {
             paths.push(property.path);
         }
@@ -1800,7 +1801,7 @@ var JobParams = [
     "ProjectFile"
 ]
 
-var paramPattern = "Param\.";
+var paramPattern = "Param\\.";
 for (var p = 0; p < JobParams.length; p++) {
     paramPattern = paramPattern + "(?!" + JobParams[p] + ")";
 }
@@ -3241,7 +3242,7 @@ function buildUI(thisObj) {
             if (imageOutput) {
                 framesPerTaskTextBox.text = settings.framesPerTask();
                 framesPerTaskTextBox.enabled = true;
-                framesPerTaskTextBox.onChange()
+                framesPerTaskTextBox.onChange();
             } else {
                 framesPerTaskTextBox.text = "Selection is not image sequence";
                 framesPerTaskTextBox.enabled = false;

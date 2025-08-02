@@ -351,7 +351,7 @@ function buildUI(thisObj) {
             if (imageOutput) {
                 framesPerTaskTextBox.text = settings.framesPerTask();
                 framesPerTaskTextBox.enabled = true;
-                framesPerTaskTextBox.onChange()
+                framesPerTaskTextBox.onChange();
             } else {
                 framesPerTaskTextBox.text = "Selection is not image sequence";
                 framesPerTaskTextBox.enabled = false;

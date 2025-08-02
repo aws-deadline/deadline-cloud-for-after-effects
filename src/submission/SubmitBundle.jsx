@@ -4,7 +4,7 @@ var JobParams = [
     "ProjectFile"
 ]
 
-var paramPattern = "Param\.";
+var paramPattern = "Param\\.";
 for (var p = 0; p < JobParams.length; p++) {
     paramPattern = paramPattern + "(?!" + JobParams[p] + ")";
 }
