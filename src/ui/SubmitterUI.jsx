@@ -282,6 +282,14 @@ function buildUI(thisObj) {
         newList.preferredSize.height = 200;
         newList.preferredSize.width = 500;
 
+        // Disable all controls if the render queue is empty
+        // This forces the user to click "refresh" when a new project is opened and populate the list
+        controlsGroup.enabled = app.project.renderQueue.numItems > 0;
+        // Also populate timeout settings because the values could be stale if a new project has been opened since the last refresh
+        taskRunDaysInput.text = uiSettingsState.taskRunDays();
+        taskRunHoursInput.text = uiSettingsState.taskRunHours();
+        taskRunMinutesInput.text = uiSettingsState.taskRunMinutes();
+
         for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
             var rqi = app.project.renderQueue.item(i);
             if (rqi == null) {
