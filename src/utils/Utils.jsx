@@ -922,9 +922,8 @@ function __generateUtil() {
          * @returns {Object} Object containing startFrame and endFrame
          */
         // NOTE: we're not using displayStartFrame since it is rounded up
-        const startFrame = Number(Math.floor(rqi.timeSpanStart * rqi.comp.frameRate));
-        const numFrames = Number(Math.floor(rqi.timeSpanDuration * rqi.comp.frameRate));
-        const endFrame = startFrame + numFrames - 1; // end frame is inclusive
+        const startFrame = Number(Math.round(rqi.timeSpanStart * rqi.comp.frameRate));
+        const endFrame = Number(Math.round((rqi.timeSpanStart + rqi.timeSpanDuration) * rqi.comp.frameRate))
         return {
             startFrame: startFrame,
             endFrame: endFrame
