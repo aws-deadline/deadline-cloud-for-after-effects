@@ -582,35 +582,39 @@ function __generateUtil() {
         return FootageTypes.Unknown
     }
 
+    /**
+     * Extracts image 
+     * @param {string} fileName 
+     * @returns Object containing prefix, name, and suffix 
+     */
+    function getImageSequenceInformation(fileName) {
+        var regex = /^(.*?)(\d*)(\D*?)$/;
+        var match = fileName.match(regex);
+        return {
+            prefix: match[1],
+            frame: parseInt(match[2], 10),
+            suffix: match[3]
+        }
+    }
+
     function filePathsFromFootageItem(footageItem) {
         const paths = [];
         if (determineFootageType(footageItem) === FootageTypes.ImageSequence) {
             const source = footageItem.mainSource;
             const frameCount = footageItem.duration / footageItem.frameDuration;
-            const firstFrame = new File(source.file.fsName).fsName;
-            logger.debug("Processing ImageSequence with (" + frameCount + ") frames: " + firstFrame);
-            const firstFramePattern = firstFrame.replace(/\d/g, "\\d").replace(/\\\\/g, "\\\\");
-            const firstFrameRegex = new RegExp(firstFramePattern);
-            logger.debug("  Regex pattern: " + firstFramePattern);
+            const firstFrameName = new File(source.file.fsName).fsName;
+            const firstFrameInfo = getImageSequenceInformation(firstFrameName);
+            const firstFrameNumber = firstFrameInfo.frame; 
+            const lastFrameNumber = firstFrameNumber + frameCount;
+            logger.debug("Processing ImageSequence with range (" + firstFrameNumber + "-" + lastFrameNumber + ") and with name \"" + firstFrameName + "\"");
             var containingFolder = source.file.parent;
-            function matchFilePattern(fileFolderObj) {
-                return fileFolderObj.fsName.match(firstFrameRegex);
-            }
-            const containingFiles = containingFolder.getFiles(matchFilePattern).sort();
-            logger.debug("  Pattern matched " + containingFiles.length + " files");
-            var firstFrameFound = false;
-            var indexOffset = 0;
-            for (var index = 0; index < containingFiles.length; index++) {
-                var filePath = new File(containingFiles[index]).fsName;
-                if (firstFrameFound && ((index - indexOffset) < frameCount)) {
-                    logger.debug("Adding frame (" + (index - indexOffset) + ") to paths: " + filePath);
-                    paths.push(filePath);
-                }
-                if (filePath === firstFrame) {
-                    firstFrameFound = true;
-                    indexOffset = index;
-                    logger.debug("Adding frame (" + (index - indexOffset) + ") to paths: " + filePath);
-                    paths.push(filePath);
+            var containingFiles = containingFolder.getFiles();
+            for (var i = 0; i < containingFiles.length; i++) {
+                var currentFrameFile = new File(containingFiles[i]).fsName;
+                var currentFrameInfo = getImageSequenceInformation(currentFrameFile);
+                if (currentFrameInfo.prefix === firstFrameInfo.prefix && currentFrameInfo.suffix === firstFrameInfo.suffix && currentFrameInfo.frame <= lastFrameNumber && currentFrameInfo.frame >= firstFrameNumber) {
+                    logger.debug("Adding frame " + currentFrameFile + "to paths");
+                    paths.push(currentFrameFile);
                 }
             }
         } else if (footageItem.mainSource instanceof FileSource) {
