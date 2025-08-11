@@ -1039,7 +1039,6 @@ function __generateUtil() {
         "calculateFrameRange": calculateFrameRange,
         "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
-        "getTempFolder": getTempFolder,
         "getRenderQueueItemID": getRenderQueueItemID,
         "composeXMPPath": composeXMPPath,
         "saveToMetadata": saveToMetadata,
