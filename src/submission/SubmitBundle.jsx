@@ -41,6 +41,7 @@ function UpdateRenderQueueIndices(renderQueueIndex, selectionItem) {
         );
         return false;
     }
+    validateRenderQueueItemOutputModule(renderQueueItem);
     return true;
 }
 
