@@ -186,7 +186,7 @@ function validateType(item, itemType) {
 
 function __generateUtil() {
 
-    const scriptFileUtilName = "Util.jsx";
+    const scriptFileUtilName = "Utils.jsx";
 
 
     function toBooleanString(value) {
@@ -926,8 +926,10 @@ function __generateUtil() {
          * @returns {Object} Object containing startFrame and endFrame
          */
         // NOTE: we're not using displayStartFrame since it is rounded up
-        const startFrame = Number(Math.round(rqi.timeSpanStart * rqi.comp.frameRate));
-        const endFrame = Number(Math.round((rqi.timeSpanStart + rqi.timeSpanDuration) * rqi.comp.frameRate))
+        const startFrame = Number(Math.floor(rqi.comp.displayStartTime * rqi.comp.frameRate));
+        const numFrames = Number(Math.floor(rqi.timeSpanDuration * rqi.comp.frameRate));
+        const endFrame = startFrame + numFrames - 1; // end frame is inclusive
+
         return {
             startFrame: startFrame,
             endFrame: endFrame
@@ -952,10 +954,9 @@ function __generateUtil() {
     }
 
     function getSelection(list) {
-        for (var s = 0; s < list.selection.length; s++) {
-            return list.selection[s];
+        if (list.selection.length >= 1) {
+            return list.selection[0];
         }
-        return list.selection[0];
     }
 
     function getRenderQueueItemID(renderQueueIndex) {
@@ -1042,7 +1043,6 @@ function __generateUtil() {
         "calculateFrameRange": calculateFrameRange,
         "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
-        "getTempFolder": getTempFolder,
         "getRenderQueueItemID": getRenderQueueItemID,
         "composeXMPPath": composeXMPPath,
         "saveToMetadata": saveToMetadata,
@@ -1057,6 +1057,7 @@ var dcUtil = __generateUtil();
 // Getting a setting that doesn't already exist will set it to its default value
 dcUtil.getBoolMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
 dcUtil.getStringMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), dcUtil.getAEVersion().toString());
+
 
 
 var LOG_LEVEL = {
@@ -1837,6 +1838,7 @@ function UpdateRenderQueueIndices(renderQueueIndex, selectionItem) {
         );
         return false;
     }
+    validateRenderQueueItemOutputModule(renderQueueItem);
     return true;
 }
 
@@ -2307,6 +2309,7 @@ function SubmitSelection(selection, selectionSettings) {
         logger.error("Error when launching Deadline GUI submitter: " + output, "Utils.jsx");
     }
 }
+
 
 
 /**
