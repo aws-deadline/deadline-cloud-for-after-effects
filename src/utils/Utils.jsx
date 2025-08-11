@@ -948,10 +948,9 @@ function __generateUtil() {
     }
 
     function getSelection(list) {
-        for (var s = 0; s < list.selection.length; s++) {
-            return list.selection[s];
+        if (list.selection.length >= 1) {
+            return list.selection[0];
         }
-        return list.selection[0];
     }
 
     function getRenderQueueItemID(renderQueueIndex) {
