@@ -182,7 +182,7 @@ function validateType(item, itemType) {
 
 function __generateUtil() {
 
-    const scriptFileUtilName = "Util.jsx";
+    const scriptFileUtilName = "Utils.jsx";
 
 
     function toBooleanString(value) {
