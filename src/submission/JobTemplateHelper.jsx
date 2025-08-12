@@ -155,9 +155,9 @@ function getFontsFromFile() {
     if (dcUtil.getAEVersion() >= 24.5) {
         const usedList = app.project.usedFonts;
         for (var i = 0; i < usedList.length; i++) {
-            const font = usedList[i].font;
-            const fontPostScriptName = font.postScriptName;
-            const fontLocation = font.location || getLocationForFont(fontPostScriptName);
+            var font = usedList[i].font;
+            var fontPostScriptName = font.postScriptName;
+            var fontLocation = font.location || getLocationForFont(fontPostScriptName);
             if (!fontLocation) {
                 adcAlert(
                     "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
@@ -165,7 +165,7 @@ function getFontsFromFile() {
                 );
                 continue;
             }
-            const fontName = createFontFilename(fontLocation, fontPostScriptName);
+            var fontName = createFontFilename(fontLocation, fontPostScriptName);
             if (fontName) {
                 fontLocations.push([fontName, fontLocation]);
             }
@@ -211,7 +211,7 @@ function getPythonExecutable() {
         try {
             output = system.callSystem(pythonExecutable + " --version");
             if (output && output.indexOf("Python ") !== -1) {
-                const pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
+                var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
                 if (pythonVersion >= 3) {
                     return pythonExecutable;
                 }
@@ -352,18 +352,18 @@ function getFontsFromFileLegacy() {
     const fontLocations = [];
     const items = app.project.items;
     for (var i = items.length; i >= 1; i--) {
-        const item = app.project.item(i);
+        var item = app.project.item(i);
         // Only look at CompItems
         if (!(item instanceof CompItem)) {
             continue;
         }
         for (var j = item.layers.length; j >= 1; j--) {
-            const layer = item.layers[j];
+            var layer = item.layers[j];
             // Only look at TextLayers
             if (!(layer instanceof TextLayer)) {
                 continue;
             }
-            const sourceText = layer.text.sourceText;
+            var sourceText = layer.text.sourceText;
             // Check if the sourceText property has keys.
             // If it has keys, the font can change over time and we need to check all keys for their font
             if (sourceText.numKeys) {
@@ -435,12 +435,12 @@ function generateFontReferences(fontPaths) {
 
     // Copy the font files to the temp folder
     for (var i = 0; i < fontPaths.length; i++) {
-        const fontName = fontPaths[i][0];
-        const fontLocation = fontPaths[i][1];
+        var fontName = fontPaths[i][0];
+        var fontLocation = fontPaths[i][1];
 
-        const fontFile = File(fontLocation);
-        const _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
-        const fontCopied = fontFile.copy(_tempFontPath);
+        var fontFile = File(fontLocation);
+        var _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
+        var fontCopied = fontFile.copy(_tempFontPath);
         // Check if font file was actually copied.
         if (fontCopied) {
             formattedFontsPaths.push(_tempFontPath);

@@ -216,8 +216,8 @@ function __generateUtil() {
 
     /**
      * Appends stem to existing XMP path
-     * @param {String} root 
-     * @param {String} stem 
+     * @param {String} root
+     * @param {String} stem
      * @returns {String}
      */
     function composeXMPPath(root, stem) {
@@ -226,8 +226,8 @@ function __generateUtil() {
 
     /**
      * Saves item to project's XMP Metadata
-     * @param {String} key 
-     * @param {*} value 
+     * @param {String} key
+     * @param {*} value
      * @param {String} [type] Optional data type for value. These are enumerated in XMPConst.
      */
     function saveToMetadata(key, value, type) {
@@ -238,7 +238,7 @@ function __generateUtil() {
 
     /**
      * Checks if item with given key exists in project's XMPMetadata
-     * @param {String} key 
+     * @param {String} key
      * @returns {boolean}
      */
     function metadataKeyExists(key) {
@@ -247,11 +247,11 @@ function __generateUtil() {
     }
 
     /**
-     * Loads value from project's XMP metadata 
-     * @param {String} key 
+     * Loads value from project's XMP metadata
+     * @param {String} key
      * @param {*} [defaultValue] If value with given key doesn't exist in the XMPMetadata yet, a new one will be created with this value and the new value will be returned
      * @param {String} [type] Optionally specify type of object being stored. These are enumerated in XMPConst
-     * @returns {XMPProperty} Returns property if it exists, or defaultValue if it doesn't, or throws an error if no defaultValue is defined and property doesn't exist. 
+     * @returns {XMPProperty} Returns property if it exists, or defaultValue if it doesn't, or throws an error if no defaultValue is defined and property doesn't exist.
      */
     function loadFromMetadata(key, defaultValue, type) {
         if (!metadataKeyExists(key)) {
@@ -534,7 +534,7 @@ function __generateUtil() {
             }
 
             // Create and write to a test file to make sure we have write permissions
-            const file = new File(folder.fsName + testFileSuffix);
+            var file = new File(folder.fsName + testFileSuffix);
             file.open("w");
             file.writeln("test");
             file.close();
@@ -726,11 +726,11 @@ function __generateUtil() {
         var folderName = "";
         for (var idx = 0; idx < subFolders.length; idx++) {
             folderName = subFolders[idx].fullName;
-            const match = folderName.match(regex);
+            var match = folderName.match(regex);
             if (!match) {
                 continue;
             }
-            const seqNr = parseInt(match[1]) // Convert first capture group to int
+            var seqNr = parseInt(match[1]) // Convert first capture group to int
             if (seqNr > maxSeqNumber) {
                 maxSeqNumber = seqNr;
             }
@@ -770,7 +770,7 @@ function __generateUtil() {
         // Remark: gpu memory and worker memory need to be scaled with *1024, for some of the amount capabilities, the unit displayed on the UI is different
         // then the unit used within template, so use this factor to scale the input values.
 
-        const hostRequirements = {
+        var hostRequirements = {
             "attributes": [{
                 "name": "attr.worker.os.family",
                 "anyOf": [
@@ -863,7 +863,7 @@ function __generateUtil() {
         var comp = itemName;
         const compList = [];
         for (var i = 1; i <= app.project.rootFolder.items.length; i++) {
-            const item = app.project.rootFolder.items[i];
+            var item = app.project.rootFolder.items[i];
 
             if (item instanceof CompItem) {
                 compList.push(app.project.activeItem.name);
@@ -1144,7 +1144,7 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
                 continue;
             }
             var j = i + 1;
-            const rolloverTargetPath = logDirectoryPath + logFileName + "." + j;
+            var rolloverTargetPath = logDirectoryPath + logFileName + "." + j;
             rolloverFile.copy(rolloverTargetPath);
         }
         // Rollover active file
@@ -1484,9 +1484,9 @@ function getFontsFromFile() {
     if (dcUtil.getAEVersion() >= 24.5) {
         const usedList = app.project.usedFonts;
         for (var i = 0; i < usedList.length; i++) {
-            const font = usedList[i].font;
-            const fontPostScriptName = font.postScriptName;
-            const fontLocation = font.location || getLocationForFont(fontPostScriptName);
+            var font = usedList[i].font;
+            var fontPostScriptName = font.postScriptName;
+            var fontLocation = font.location || getLocationForFont(fontPostScriptName);
             if (!fontLocation) {
                 adcAlert(
                     "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
@@ -1494,7 +1494,7 @@ function getFontsFromFile() {
                 );
                 continue;
             }
-            const fontName = createFontFilename(fontLocation, fontPostScriptName);
+            var fontName = createFontFilename(fontLocation, fontPostScriptName);
             if (fontName) {
                 fontLocations.push([fontName, fontLocation]);
             }
@@ -1540,7 +1540,7 @@ function getPythonExecutable() {
         try {
             output = system.callSystem(pythonExecutable + " --version");
             if (output && output.indexOf("Python ") !== -1) {
-                const pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
+                var pythonVersion = parseInt(output.substring(output.indexOf(" ") + 1));
                 if (pythonVersion >= 3) {
                     return pythonExecutable;
                 }
@@ -1681,18 +1681,18 @@ function getFontsFromFileLegacy() {
     const fontLocations = [];
     const items = app.project.items;
     for (var i = items.length; i >= 1; i--) {
-        const item = app.project.item(i);
+        var item = app.project.item(i);
         // Only look at CompItems
         if (!(item instanceof CompItem)) {
             continue;
         }
         for (var j = item.layers.length; j >= 1; j--) {
-            const layer = item.layers[j];
+            var layer = item.layers[j];
             // Only look at TextLayers
             if (!(layer instanceof TextLayer)) {
                 continue;
             }
-            const sourceText = layer.text.sourceText;
+            var sourceText = layer.text.sourceText;
             // Check if the sourceText property has keys.
             // If it has keys, the font can change over time and we need to check all keys for their font
             if (sourceText.numKeys) {
@@ -1764,12 +1764,12 @@ function generateFontReferences(fontPaths) {
 
     // Copy the font files to the temp folder
     for (var i = 0; i < fontPaths.length; i++) {
-        const fontName = fontPaths[i][0];
-        const fontLocation = fontPaths[i][1];
+        var fontName = fontPaths[i][0];
+        var fontLocation = fontPaths[i][1];
 
-        const fontFile = File(fontLocation);
-        const _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
-        const fontCopied = fontFile.copy(_tempFontPath);
+        var fontFile = File(fontLocation);
+        var _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
+        var fontCopied = fontFile.copy(_tempFontPath);
         // Check if font file was actually copied.
         if (fontCopied) {
             formattedFontsPaths.push(_tempFontPath);

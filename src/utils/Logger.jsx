@@ -84,7 +84,7 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
                 continue;
             }
             var j = i + 1;
-            const rolloverTargetPath = logDirectoryPath + logFileName + "." + j;
+            var rolloverTargetPath = logDirectoryPath + logFileName + "." + j;
             rolloverFile.copy(rolloverTargetPath);
         }
         // Rollover active file
