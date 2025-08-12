@@ -963,7 +963,7 @@ function __generateUtil() {
     }
 
     function getXMPPathLeaf(path) {
-        const regex = /xmp:([^\/]+)$/
+        const regex = /xmp:([^\/]+)$/;
         return regex.exec(path)[1];
     }
 
