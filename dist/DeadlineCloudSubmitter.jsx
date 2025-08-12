@@ -967,7 +967,8 @@ function __generateUtil() {
     }
 
     function getXMPPathLeaf(path) {
-        const regex = /.*xmp:(.*)/;
+        // The backslash is needed for this regex, so we need to skip SonarQube scan
+        const regex = /xmp:([^\/]+)$/;
         return regex.exec(path)[1];
     }
 
