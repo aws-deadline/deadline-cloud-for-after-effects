@@ -1,0 +1,36 @@
+{
+  "steps": [
+    {
+      "name": "{{COMP_NAME}}",
+      "hostRequirements": {
+        "attributes": [
+          {
+            "name": "attr.worker.os.family",
+            "anyOf": [
+              "windows",
+              "macos"
+            ]
+          }
+        ]
+      },
+      "script": {
+        "actions": {
+          "onRun": {
+            "command": "python",
+            "args": [
+              "{{Param.JobScriptDir}}/call_aerender.py",
+              "{{Param.ProjectFile}}",
+              "{{Param.RenderQueueIndex}}",
+              "{{Param.OutputDir}}/{{Param.OutputFileName}}",
+              "{{Param.Frames}}",
+              "--multi-frame-rendering",
+              "{{Param.MultiFrameRendering}}",
+              "--max-cpu-usage-percentage",
+              "{{Param.MaxCpuUsagePercentage}}"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -2,19 +2,85 @@
 // Manual changes in this file may be overwritten by a new installation.
 // Please change the source files and regenerate this file instead.
 
+if (ExternalObject.AdobeXMPScript == undefined) {
+    ExternalObject.AdobeXMPScript = new ExternalObject("lib:AdobeXMPScript");
+}
+
 var scriptFolder = Folder.current.fsName;
 
+// Global constants, wrapped with if-blocks to ensure they are only defined once
+// to avoid errors due to redeclaration
+// Note that once these values have been set their values will persist until Aftereffects is relaunched,
+// So make sure to restart Aftereffects is you change them
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
+}
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
+}
+if (typeof SUPPORTED_VERSIONS === "undefined") {
+    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
+}
+if (typeof DEADLINECLOUD_SETTINGS_ROOT === "undefined") {
+    const DEADLINECLOUD_SETTINGS_ROOT = "xmp:DeadlineCloudSubmitter";
+}
+if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
+    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
+}
+if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
+    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
+}
+if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
+    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
+}
+if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_ENABLED = true;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_DAYS = 2;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_HOURS = 0;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_MINUTES = 0;
+}
+if (typeof DEFAULT_FRAMESPERTASK === "undefined") {
+    const DEFAULT_FRAMESPERTASK = 10;
+}
+if (typeof DEFAULT_MULTI_FRAME_RENDERING === "undefined") {
+    const DEFAULT_MULTI_FRAME_RENDERING = false;
+}
+if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+    const DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90;
+}
+
 function readFile(filePath) {
-    var f = new File(filePath);
+    const f = new File(filePath);
     f.encoding = "UTF-8";
     f.open("r");
-    var fileContents = f.read();
+    const fileContents = f.read();
     f.close();
     return fileContents;
 }
 
 function writeFile(filePath, fileContents) {
-    var f = new File(filePath);
+    const f = new File(filePath);
     f.encoding = "UTF-8";
     f.open("w");
     f.write(fileContents);
@@ -23,7 +89,7 @@ function writeFile(filePath, fileContents) {
 }
 
 function sanitizeOutputs(outputPaths) {
-    var sanitized = [];
+    const sanitized = [];
     var sanitizedPath = "";
     for (var i = 0; i < outputPaths.length; i++) {
         sanitizedPath = sanitizeFilePath(outputPaths[i]);
@@ -111,9 +177,16 @@ function adcAlert(message, errorIcon) {
     alert(message, "Deadline Cloud Submitter", errorIcon);
 }
 
+function validateType(item, itemType) {
+    var actualType = typeof item;
+    if (actualType !== itemType) {
+        throw new Error("Object has type " + actualType + " instead of desired type " + itemType);
+    }
+}
+
 function __generateUtil() {
 
-    var scriptFileUtilName = "Util.jsx";
+    const scriptFileUtilName = "Utils.jsx";
 
 
     function toBooleanString(value) {
@@ -141,6 +214,105 @@ function __generateUtil() {
         return false;
     }
 
+    /**
+     * Appends stem to existing XMP path
+     * @param {String} root
+     * @param {String} stem
+     * @returns {String}
+     */
+    function composeXMPPath(root, stem) {
+        return root + "/xmp:" + stem;
+    }
+
+    /**
+     * Saves item to project's XMP Metadata
+     * @param {String} key
+     * @param {*} value
+     * @param {String} [type] Optional data type for value. These are enumerated in XMPConst.
+     */
+    function saveToMetadata(key, value, type) {
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        metadata.setProperty(XMPConst.NS_XMP, key, value, type);
+        app.project.xmpPacket = metadata.serialize();
+    }
+
+    /**
+     * Checks if item with given key exists in project's XMPMetadata
+     * @param {String} key
+     * @returns {boolean}
+     */
+    function metadataKeyExists(key) {
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        return metadata.getProperty(XMPConst.NS_XMP, key) !== undefined;
+    }
+
+    /**
+     * Loads value from project's XMP metadata
+     * @param {String} key
+     * @param {*} [defaultValue] If value with given key doesn't exist in the XMPMetadata yet, a new one will be created with this value and the new value will be returned
+     * @param {String} [type] Optionally specify type of object being stored. These are enumerated in XMPConst
+     * @returns {XMPProperty} Returns property if it exists, or defaultValue if it doesn't, or throws an error if no defaultValue is defined and property doesn't exist.
+     */
+    function loadFromMetadata(key, defaultValue, type) {
+        if (!metadataKeyExists(key)) {
+            if (defaultValue !== undefined) {
+                saveToMetadata(key, defaultValue, type);
+            } else {
+                throw Error("Key '" + key + "' does not exist in project XMP Metadata, and no default value is set.")
+            }
+        }
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        return metadata.getProperty(XMPConst.NS_XMP, key, type).value;
+    }
+
+    function saveBoolMetadata(keyName, value) {
+        /**
+         * Sets boolean value in app settings
+         */
+        validateType(value, "boolean");
+        saveToMetadata(keyName, value, XMPConst.BOOLEAN);
+    }
+
+    function getBoolMetadata(keyName, defaultValue) {
+        /**
+         * Gets boolean value from app settings, or sets it to the default value if no setting exists.
+         * Set defaultValue to undefined to error on missing setting
+         */
+        return loadFromMetadata(keyName, defaultValue, XMPConst.BOOLEAN)
+    }
+
+    function saveNumberMetadata(keyName, value) {
+        /**
+         * Sets integer value in app settings
+         */
+        validateType(value, "number");
+        saveToMetadata(keyName, value, XMPConst.NUMBER);
+    }
+
+    function getNumberMetadata(keyName, defaultValue) {
+        /**
+         * Gets number value from app settings, or sets defaultValue if setting does not exist
+         * Set defaultValue to undefined to error on missing setting
+         */
+        return loadFromMetadata(keyName, defaultValue, XMPConst.NUMBER);
+    }
+
+    function saveStringMetadata(keyName, value) {
+        /**
+         * Sets string in app settings
+         */
+        validateType(value, "string");
+        saveToMetadata(keyName, defaultValue, XMPConst.STRING);
+    }
+
+    function getStringMetadata(keyName, defaultValue) {
+        /**
+         * Gets string value from app settings, or sets defaultValue if setting does not exist
+         * Set defaultValue to undefined to error on missing setting
+         */
+        return loadFromMetadata(keyName, defaultValue, XMPConst.STRING);
+    }
+
     function trimIllegalChars(stringToTrim) {
         /**
          * Trims certain characters out of a given string
@@ -159,8 +331,8 @@ function __generateUtil() {
          * @param {int} minValue - Minimum value that the slider/edittext can have.
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
-        textObj.onChange = function() {
-            var newValue = parseFloat(textObj.text);
+        textObj.onChange = function () {
+            const newValue = parseFloat(textObj.text);
             if (!isNaN(newValue) && newValue >= minValue && newValue <= maxValue) {
                 sliderObj.value = newValue;
                 logger.log("Changed editText(" + textObj.name + ") value to: " + newValue, scriptFileUtilName, LOG_LEVEL.DEBUG);
@@ -168,7 +340,7 @@ function __generateUtil() {
         }
 
 
-        sliderObj.onChange = function() {
+        sliderObj.onChange = function () {
             textObj.text = Math.round(this.value);
             logger.log("Changed sliderObject(" + sliderObj.name + ") value to: " + Math.round(this.value), scriptFileUtilName, LOG_LEVEL.DEBUG);
         }
@@ -182,7 +354,7 @@ function __generateUtil() {
          * @param {int} minValue - Minimum value that the slider/edittext can have.
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
-        var sliderValue = Math.round(sliderObj.value);
+        const sliderValue = Math.round(sliderObj.value);
         if (!isNaN(sliderValue) && sliderValue >= minValue && sliderValue <= maxValue) {
             textObj.text = sliderValue;
         }
@@ -198,7 +370,7 @@ function __generateUtil() {
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
 
-        var newValue = parseFloat(textObj.text);
+        const newValue = parseFloat(textObj.text);
         if (newValue < minValue) {
             textObj.text = minValue;
             sliderObj.value = minValue;
@@ -232,7 +404,7 @@ function __generateUtil() {
          */
         maxValue.text = maxValue.text.replace(/[^\d]/g, '');
         if (parseInt(maxValue.text) < parseInt(minValue.text)) {
-            maxValue.text = minValue.text
+            maxValue.text = minValue.text;
         }
     }
 
@@ -255,7 +427,7 @@ function __generateUtil() {
          * @param {Object} listBox - Source object to retrieve data from.
          * Returns array with assets available in the scene.
          */
-        var _assetsList = []
+        const _assetsList = []
         for (var i = 0; i < listBox.items.length; i++) {
             _assetsList.push(listBox.items[i].text);
         }
@@ -304,7 +476,7 @@ function __generateUtil() {
          * Inverts a given JavaScript object.
          * Only inverts the first level, does not handle nested objects properly.
          */
-        var ret = {};
+        const ret = {};
         for (var key in jsObject) {
             ret[jsObject[key]] = key;
         }
@@ -315,8 +487,8 @@ function __generateUtil() {
         /**
          * Return File instance from temporary directory with the given name.
          */
-        var _tempFilePath = normalizePath(getTempFolder() + "/" + fileName);
-        var _tempFile = File(_tempFilePath);
+        const _tempFilePath = normalizePath(getTempFolder() + "/" + fileName);
+        const _tempFile = File(_tempFilePath);
         return _tempFile;
     }
 
@@ -362,7 +534,7 @@ function __generateUtil() {
             }
 
             // Create and write to a test file to make sure we have write permissions
-            const file = new File(folder.fsName + testFileSuffix);
+            var file = new File(folder.fsName + testFileSuffix);
             file.open("w");
             file.writeln("test");
             file.close();
@@ -403,17 +575,17 @@ function __generateUtil() {
 
     function _wrappedCallSystemWindows(cmd) {
 
-        var tempOutputFile = getTempFile("deadline_cloud_ae_pipe.txt");
-        var tempBootstrapBatFile = getTempFile("aeCallSystemBootstrap.bat");
-        var tempBatFile = getTempFile("aeCallSystem.bat");
+        const tempOutputFile = getTempFile("deadline_cloud_ae_pipe.txt");
+        const tempBootstrapBatFile = getTempFile("aeCallSystemBootstrap.bat");
+        const tempBatFile = getTempFile("aeCallSystem.bat");
         logger.debug("Command output path: " + tempOutputFile.fsName, scriptFileUtilName);
         _makeBootstrapBatFile(tempBootstrapBatFile, tempBatFile);
         // Wrapped command with error code output
         cmd = cmd + " > " + tempOutputFile.fsName;
-        cmd += "\nIF %ERRORLEVEL% NEQ 0 ("
-        cmd += "\n echo ERROR CODE: %ERRORLEVEL% >> " + tempOutputFile.fsName
-        cmd += "\n)"
-        cmd += "\nexit"
+        cmd += "\nIF %ERRORLEVEL% NEQ 0 (";
+        cmd += "\n echo ERROR CODE: %ERRORLEVEL% >> " + tempOutputFile.fsName;
+        cmd += "\n)";
+        cmd += "\nexit";
         tempBatFile.open("w");
         tempBatFile.writeln(cmd);
         tempBatFile.close();
@@ -424,12 +596,12 @@ function __generateUtil() {
         logger.debug(cmd, scriptFileUtilName);
         // Call bootstrap script and return result via intermediary file.
         system.callSystem(tempBootstrapBatFile.fsName);
-        var output = system.callSystem("cmd /c \"type " + tempOutputFile.fsName + "\"");
+        const output = system.callSystem("cmd /c \"type " + tempOutputFile.fsName + "\"");
         return output;
     }
 
     function _makeBootstrapBatFile(bootstrapFile, tempFile) {
-        var _cmd = "@echo off" + "\nstart /min /wait " + tempFile.fsName + "\nexit"
+        const _cmd = "@echo off" + "\nstart /min /wait " + tempFile.fsName + "\nexit";
         bootstrapFile.open("w");
         bootstrapFile.writeln(_cmd);
         bootstrapFile.close();
@@ -452,12 +624,12 @@ function __generateUtil() {
         var result = "";
         var message = "";
         var return_code = 0;
-        var errorIndex = output.indexOf("ERROR CODE:");
+        const errorIndex = output.indexOf("ERROR CODE:");
         if (errorIndex !== -1) {
             // Extract the word and everything behind it
             result = output.substring(errorIndex);
             message = cmd + " Failed. Error has occurred.";
-            var regex = /ERROR CODE:(.*)/;
+            const regex = /ERROR CODE:(.*)/;
             return_code = regex.exec(result);
             return {
                 "return_code": return_code,
@@ -466,7 +638,7 @@ function __generateUtil() {
             }
         }
         result = "";
-        message = cmd + " Successful."
+        message = cmd + " Successful.";
         return {
             "return_code": return_code,
             "message": message,
@@ -481,14 +653,14 @@ function __generateUtil() {
          * [MAJOR, MINOR, PATCH]
          */
         // Regular expression to match "version " followed by version number
-        var regex = /version\s+(\d+)\.(\d+)\.(\d+)/i;
+        const regex = /version\s+(\d+)\.(\d+)\.(\d+)/i;
 
         // Test if the inputString matches the pattern
-        var parsedVersionNumberOutput = output.match(regex);
+        const parsedVersionNumberOutput = output.match(regex);
 
         // Output the result
         if (parsedVersionNumberOutput) {
-            var versionNumbers = [
+            const versionNumbers = [
                 parseInt(parsedVersionNumberOutput[1]), // Major
                 parseInt(parsedVersionNumberOutput[2]), // Minor
                 parseInt(parsedVersionNumberOutput[3]) // Path
@@ -507,8 +679,8 @@ function __generateUtil() {
          * @param {string} fileName: Job name
          * Returns export directory
          */
-        var partialDir = getPartialExportDir(exportBundleDir);
-        var dir = getPath(partialDir, fileName, exportBundleDir);
+        const partialDir = getPartialExportDir(exportBundleDir);
+        const dir = getPath(partialDir, fileName, exportBundleDir);
         return dir.fsName;
     }
 
@@ -544,23 +716,23 @@ function __generateUtil() {
 
     function getPath(toCheckDir, fileName, rootDir) {
         // 1. Find highest sequence number used for today.
-        var splitDir = toCheckDir.split("//");
-        var toCheckFolderName = splitDir[splitDir.length - 1];
-        var parentDir = toCheckDir.replace(toCheckFolderName, "");
-        var mainDir = new Folder(parentDir);
-        var subFolders = mainDir.getFiles();
-        var regex = new RegExp(toCheckFolderName + "(\\d+)-.*");
+        const splitDir = toCheckDir.split("//");
+        const toCheckFolderName = splitDir[splitDir.length - 1];
+        const parentDir = toCheckDir.replace(toCheckFolderName, "");
+        const mainDir = new Folder(parentDir);
+        const subFolders = mainDir.getFiles();
+        const regex = new RegExp(toCheckFolderName + "(\\d+)-.*");
         var maxSeqNumber = 0;
         var folderName = "";
         for (var idx = 0; idx < subFolders.length; idx++) {
-            folderName = subFolders[idx].fullName
-            var match = folderName.match(regex)
+            folderName = subFolders[idx].fullName;
+            var match = folderName.match(regex);
             if (!match) {
                 continue;
             }
             var seqNr = parseInt(match[1]) // Convert first capture group to int
             if (seqNr > maxSeqNumber) {
-                maxSeqNumber = seqNr
+                maxSeqNumber = seqNr;
             }
         }
         // 2. Create new export directory with next sequence number
@@ -569,28 +741,28 @@ function __generateUtil() {
         if (nextSeqNumber < 10) {
             nextSeqNumber = "0" + nextSeqNumber;
         }
-        var folder = new Folder(toCheckDir + nextSeqNumber + "-AfterEffects-" + fileName);
+        const folder = new Folder(toCheckDir + nextSeqNumber + "-AfterEffects-" + fileName);
         if (!folder.exists) {
             folder.create();
         }
         return folder;
     }
 
-    function getPartialExportDir(job_history_dir) {
+    function getPartialExportDir(jobHistoryDir) {
         /**
          * Creates string with correct name and format to be used in job history directory creation.
-         * @param {string} job_history_dir: Directory where job bundles is written to on submission.
+         * @param {string} jobHistoryDir: Directory where job bundles is written to on submission.
          * Returns partial job history directory.
          */
-        var currentDate = new Date();
-        var year = currentDate.getFullYear();
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
         // Zero pad all integers to a length of 2
-        var month = ("0" + (currentDate.getMonth() + 1)).slice(-2); // Months are zero-based
-        var day = ("0" + currentDate.getDate()).slice(-2);
+        const month = ("0" + (currentDate.getMonth() + 1)).slice(-2); // Months are zero-based
+        const day = ("0" + currentDate.getDate()).slice(-2);
         // Create the formatted string
-        var formattedYearMonth = year + '-' + month;
-        var formattedDate = year + '-' + month + '-' + day;
-        var dir = job_history_dir + "//" + formattedYearMonth + "//" + formattedDate + "-";
+        const formattedYearMonth = year + '-' + month;
+        const formattedDate = year + '-' + month + '-' + day;
+        const dir = jobHistoryDir + "//" + formattedYearMonth + "//" + formattedDate + "-";
         return dir;
     }
 
@@ -662,7 +834,7 @@ function __generateUtil() {
         }
 
         if (obj instanceof Array) {
-            var copyArray = [];
+            const copyArray = [];
             for (var i = 0; i < obj.length; i++) {
                 copyArray[i] = deepCopy(obj[i]);
             }
@@ -670,7 +842,7 @@ function __generateUtil() {
         }
 
         if (obj instanceof Object) {
-            var copyObject = {};
+            const copyObject = {};
             for (var key in obj) {
                 if (obj.hasOwnProperty(key)) {
                     copyObject[key] = deepCopy(obj[key]);
@@ -689,7 +861,7 @@ function __generateUtil() {
         // If submit layers pressed -> itemName is not comp name and therefore comp will not be found with render command
         // Check if itemName is an available comp in the project, if not, it is a layer submission
         var comp = itemName;
-        var compList = [];
+        const compList = [];
         for (var i = 1; i <= app.project.rootFolder.items.length; i++) {
             var item = app.project.rootFolder.items[i];
 
@@ -704,7 +876,7 @@ function __generateUtil() {
     }
 
     function normalizePath(path) {
-        var _file = new File(path);
+        const _file = new File(path);
         if (system.osName == "MacOS") {
             _file.changePath(_file.fsName.replace(/\\/g, "/"));
             return _file.fsName;
@@ -719,7 +891,7 @@ function __generateUtil() {
     }
 
     function removeIllegalCharacters(inputString) {
-        var outputString = inputString.replace(/[.\-\s]/g, "_");
+        const outputString = inputString.replace(/[.\-\s]/g, "_");
 
         return outputString;
     }
@@ -728,14 +900,13 @@ function __generateUtil() {
      * Replace %20 percentage back to space from the file name for Windows os.
      */
     function removePercentageFromFileName(fileName) {
-        var fileName = fileName.replace(/%20/g, " ");
-        return fileName;
+        return fileName.replace(/%20/g, " ");
     }
 
     function getUserDirectory() {
         /* Return OS specific user home directory. */
         if (system.osName == "MacOS") {
-            return $.getenv("HOME")
+            return $.getenv("HOME");
         }
         // Windows:
         return $.getenv("USERPROFILE");
@@ -745,7 +916,7 @@ function __generateUtil() {
         /* Return After Effects version as float. */
         const versionAsString = app.version.substring(0, 4);
         const version = parseFloat(versionAsString);
-        return version
+        return version;
     }
 
     function calculateFrameRange(rqi) {
@@ -754,7 +925,7 @@ function __generateUtil() {
          * @param {RenderQueueItem} rqi - The render queue item to calculate frames for
          * @returns {Object} Object containing startFrame and endFrame
          */
-         // NOTE: we're not using displayStartFrame since it is rounded up
+        // NOTE: we're not using displayStartFrame since it is rounded up
         const startFrame = Number(Math.floor(rqi.comp.displayStartTime * rqi.comp.frameRate));
         const numFrames = Number(Math.floor(rqi.timeSpanDuration * rqi.comp.frameRate));
         const endFrame = startFrame + numFrames - 1; // end frame is inclusive
@@ -765,10 +936,80 @@ function __generateUtil() {
         };
     }
 
+    function validateTimeoutValues(enabled, daysInput, hoursInput, minutesInput) {
+        /**
+         * Parses in input strings for days, hours, and minutes in timeout, validates them, and alerts user if invalid
+         */
+        if (enabled) {
+            var days = parseInt(daysInput) || 0;
+            var hours = parseInt(hoursInput) || 0;
+            var minutes = parseInt(minutesInput) || 0;
+
+            if (days === 0 && hours === 0 && minutes === 0) {
+                adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function getSelection(list) {
+        if (list.selection.length >= 1) {
+            return list.selection[0];
+        }
+    }
+
+    function getRenderQueueItemID(renderQueueIndex) {
+        /** Calculates an ID for the Render Queue Item with the given index in the render queue
+         * Not guaranteed to be unique if render queue items are reordered
+         */
+        return "_" + renderQueueIndex.toString() + "_" + app.project.renderQueue.item(renderQueueIndex).comp.id;
+    }
+
+    function getXMPPathLeaf(path) {
+        const regex = /.*xmp:(.*)/;
+        return regex.exec(path)[1];
+    }
+
+    function deleteUnusedMetadata(renderMetadataRoot) {
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        var paths = []
+        var iterator = metadata.iterator(XMPConst.ITERATOR_JUST_CHILDREN, XMPConst.NS_XMP, renderMetadataRoot);
+        var property;
+        while (property = iterator.next()) {
+            paths.push(property.path);
+        }
+        var ids = []
+        for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
+            ids.push(getRenderQueueItemID(i));
+        }
+        for (var i = 0; i < paths.length; i++) {
+            var presentInArray = false;
+            var currentPath = paths[i];
+            for (var j = 0; j < ids.length; j++) {
+                var renderQueueID = ids[j];
+                if (getXMPPathLeaf(currentPath) === renderQueueID) {
+                    presentInArray=true;
+                    break;
+                }
+            }
+            if (!presentInArray) {
+                metadata.deleteProperty(XMPConst.NS_XMP, currentPath);
+            }
+        }
+        app.project.xmpPacket = metadata.serialize();
+    }
+
     return {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
         "parseBool": parseBool,
+        "saveBoolMetadata": saveBoolMetadata,
+        "getBoolMetadata": getBoolMetadata,
+        "saveNumberMetadata": saveNumberMetadata,
+        "getNumberMetadata": getNumberMetadata,
+        "saveStringMetadata": saveStringMetadata,
+        "getStringMetadata": getStringMetadata,
         "trimIllegalChars": trimIllegalChars,
         "sliderTextSync": sliderTextSync,
         "changeTextValue": changeTextValue,
@@ -799,78 +1040,24 @@ function __generateUtil() {
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
         "getTempFolder": getTempFolder,
-        "calculateFrameRange": calculateFrameRange
+        "calculateFrameRange": calculateFrameRange,
+        "validateTimeoutValues": validateTimeoutValues,
+        "getSelection": getSelection,
+        "getRenderQueueItemID": getRenderQueueItemID,
+        "composeXMPPath": composeXMPPath,
+        "saveToMetadata": saveToMetadata,
+        "loadFromMetadata": loadFromMetadata,
+        "metadataKeyExists": metadataKeyExists,
+        "deleteUnusedMetadata": deleteUnusedMetadata
     }
 }
 
-dcUtil = __generateUtil();
+var dcUtil = __generateUtil();
 
+// Getting a setting that doesn't already exist will set it to its default value
+dcUtil.getBoolMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
+dcUtil.getStringMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), dcUtil.getAEVersion().toString());
 
-// Global constants, wrapped with if-blocks to ensure they are only defined once
-// to avoid errors due to redeclaration
-if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
-    const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
-}
-if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
-    const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
-}
-if (typeof SUPPORTED_VERSIONS === "undefined") {
-    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
-}
-if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
-    const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
-}
-if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
-    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
-}
-if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
-    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
-}
-if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
-    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
-}
-if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
-    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
-}
 
 
 var LOG_LEVEL = {
@@ -880,7 +1067,7 @@ var LOG_LEVEL = {
     DEBUG: 4
 };
 
-var LOG_LEVEL_MAP = dcUtil.invertObject(LOG_LEVEL)
+var LOG_LEVEL_MAP = dcUtil.invertObject(LOG_LEVEL);
 
 // Global log level
 // Set the desired logging level
@@ -918,7 +1105,7 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
         backupCount = backupCount || _DC_LOGGER_DEFAULT_BACKUP_COUNT;
         logDirectoryPath = logDirectoryPath || dcUtil.getUserDirectory() + "/.deadline/logs/submitters";
         logDirectoryPath = dcUtil.normPath(logDirectoryPath);
-        var folderObject = new Folder(logDirectoryPath);
+        const folderObject = new Folder(logDirectoryPath);
         if (!folderObject.exists) {
             folderObject.create();
         }
@@ -952,16 +1139,16 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
         // Rollover older files first
         var rolloverFile;
         for (var i = backupCount - 1; i > 0; i--) { // Last file does not need rollover, it is allowed to get overwritten.
-            rolloverFile = new File(logDirectoryPath + logFileName + "." + i)
+            rolloverFile = new File(logDirectoryPath + logFileName + "." + i);
             if (!rolloverFile.exists) {
                 continue;
             }
             var j = i + 1;
-            var rolloverTargetPath = logDirectoryPath + logFileName + "." + j
+            var rolloverTargetPath = logDirectoryPath + logFileName + "." + j;
             rolloverFile.copy(rolloverTargetPath);
         }
         // Rollover active file
-        logFile.copy(logDirectoryPath + logFileName + "." + 1)
+        logFile.copy(logDirectoryPath + logFileName + "." + 1);
         logFile.open("w"); // Erase contents of active log file
         logFile.close();
     }
@@ -978,16 +1165,16 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
 
             var levelName = LOG_LEVEL_MAP[level];
             // Check the length of the string
-            var currentLength = levelName.length;
+            const currentLength = levelName.length;
 
             // If the length is less than the target length, pad with spaces
             if (currentLength < 8) {
-                var spacesToAdd = 8 - currentLength;
+                const spacesToAdd = 8 - currentLength;
                 for (var i = 0; i < spacesToAdd; i++) {
                     levelName += " ";
                 }
             }
-            var logMessage = getCurrentTimeAsStr() + " - " + "[" + levelName + "] " + " " + src_module + ": " + msg;
+            const logMessage = getCurrentTimeAsStr() + " - " + "[" + levelName + "] " + " " + src_module + ": " + msg;
 
             logFile.open("a");
             logFile.writeln(logMessage);
@@ -1025,18 +1212,18 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
 }
 
 function getCurrentTimeAsStr() {
-    var date = new Date();
-    var year = date.getFullYear();
+    const date = new Date();
+    const year = date.getFullYear();
     // Zero pad all integers to a length of 2
-    var month = ("0" + (date.getMonth() + 1)).slice(-2); // Months are zero-based
-    var day = ("0" + date.getDate()).slice(-2);
+    const month = ("0" + (date.getMonth() + 1)).slice(-2); // Months are zero-based
+    const day = ("0" + date.getDate()).slice(-2);
 
-    var currentDate = year + "-" + month + "-" + day;
-    var hours = ("0" + date.getHours()).slice(-2);
-    var minutes = ("0" + date.getMinutes()).slice(-2);
-    var seconds = ("0" + date.getSeconds()).slice(-2);
-    var currentTime = hours + ":" + minutes + ":" + seconds;
-    var logDateTime = currentDate + " " + currentTime;
+    const currentDate = year + "-" + month + "-" + day;
+    const hours = ("0" + date.getHours()).slice(-2);
+    const minutes = ("0" + date.getMinutes()).slice(-2);
+    const seconds = ("0" + date.getSeconds()).slice(-2);
+    const currentTime = hours + ":" + minutes + ":" + seconds;
+    const logDateTime = currentDate + " " + currentTime;
     return logDateTime;
 }
 
@@ -1045,16 +1232,106 @@ function getCurrentTimeAsStr() {
 var _scriptFileName = "OpenAeSubmitter.jsx";
 var logFileName = "aftereffects.log";
 var logDirectoryPath = dcUtil.getUserDirectory() + "/.deadline/logs/submitters/";
-var logNormDirectoryPath = dcUtil.normPath(logDirectoryPath)
+var logNormDirectoryPath = dcUtil.normPath(logDirectoryPath);
 var logger = Logger(logFileName, logNormDirectoryPath);
 
+
+
+function UiSettingsState() {
+    /**
+     * Container that stores all of the configurable properties in the submitter UI
+     */
+
+    // Contains UiSettingsStore objects that store comp-specific settings
+    this.settings = {}
+
+    this.xmpPath = dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, "UiSettingsState");
+    this.rqiXmpPath = dcUtil.composeXMPPath(this.xmpPath, "rqiSpecificSettings");
+
+    // () -> bool
+    this.taskRunTimeoutEnabled = function() {
+        return dcUtil.getBoolMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED), DEFAULT_TASK_RUN_TIMEOUT_ENABLED);
+    }
+    // (value: bool) -> void
+    this.setTaskRunTimeoutEnabled = function(value) {
+        dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED), value);
+    }
+    // () -> int
+    this.taskRunDays = function() {
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS), DEFAULT_TASK_RUN_TIMEOUT_DAYS);
+    }
+
+    this.setTaskRunDays = function(value) {
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS), value);
+    }
+
+    this.taskRunHours = function() {
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS), DEFAULT_TASK_RUN_TIMEOUT_HOURS);
+    }
+
+    this.setTaskRunHours = function(value) {
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS), value);
+    }
+
+    this.taskRunMinutes = function() {
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES), DEFAULT_TASK_RUN_TIMEOUT_MINUTES);
+    }
+
+    this.setTaskRunMinutes = function(value) {
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES), value);
+    }
+
+}
+
+function UiSettingsStore(xmpPathPrefix, name) {
+    /**
+     * Stores comp-specific settings for the comp with given name.
+     */
+    this.name = name;
+    this.xmpPathPrefix = dcUtil.composeXMPPath(xmpPathPrefix, name);
+
+    this.framesPerTask = function() {
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), DEFAULT_FRAMESPERTASK);
+    }
+    this.setFramesPerTask = function(value) {
+        logger.warning("(" + this.name + ") Setting framesPerTask to " + value);
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), value);
+    }
+
+    this.multiFrameRendering = function() {
+        return dcUtil.getBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), DEFAULT_MULTI_FRAME_RENDERING);
+    }
+    this.setMultiFrameRendering = function(value) {
+        logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value);
+        dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), value);
+    }
+
+    this.maxCpuUsagePercentage = function() {
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), DEFAULT_MAX_CPU_USAGE_PERCENTAGE);
+
+    }
+    this.setMaxCpuUsagePercentage = function(value) {
+        logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value);
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), value);
+    }
+}
+
+UiSettingsState.prototype.get = function(RQIID) {
+    /**
+     * Gets UISettingsStore associated with given RQIID, or creates a new default one if it doesn't exit
+     */
+    if (!this.settings[RQIID]) {
+        this.settings[RQIID] = new UiSettingsStore(this.rqiXmpPath, RQIID);
+    }
+    return this.settings[RQIID]
+}
 
 
 var jobTemplateHelperFile = "JobTemplateHelper.json";
 /**
  * Generates the basic parameterValue file for the job template
  **/
-function parameterValues(
+function generateParameterValues(
     renderQueueIndex,
     projectFile,
     outputDir,
@@ -1064,58 +1341,39 @@ function parameterValues(
     endFrame,
     chunkSize,
     multiFrameRendering,
-    maxCpuUsagePercentage
+    maxCpuUsagePercentage,
+    prefix
 ) {
-    var parameterValuesList = [{
-            name: "deadline:targetTaskRunStatus",
-            value: "READY",
-        },
-        {
-            name: "deadline:maxFailedTasksCount",
-            value: 20,
-        },
-        {
-            name: "deadline:maxRetriesPerTask",
-            value: 5,
-        },
-        {
-            name: "deadline:priority",
-            value: 50,
-        },
-        {
-            name: "ProjectFile",
-            value: projectFile,
-        },
-        {
-            name: "RenderQueueIndex",
+    const parameterValuesList = [{
+            name: prefix + "_RenderQueueIndex",
             value: renderQueueIndex,
         },
         {
-            name: "OutputDir",
+            name: prefix + "_OutputDir",
             value: outputDir,
         },
         {
-            name: "OutputFileName",
+            name: prefix + "_OutputFileName",
             value: outputFileName,
         },
         {
-            name: "Frames",
+            name: prefix + "_Frames",
             value: startFrame.toString() + "-" + endFrame.toString(),
         },
         {
-            name: "MultiFrameRendering",
-            value: multiFrameRendering,
+            name: prefix + "_MultiFrameRendering",
+            value: multiFrameRendering === true ? "ON" : "OFF",
         },
     ];
     if (maxCpuUsagePercentage) {
         parameterValuesList.push({
-            name: "MaxCpuUsagePercentage",
+            name: prefix + "_MaxCpuUsagePercentage",
             value: maxCpuUsagePercentage,
-        })
+        });
     }
     if (isImageSeq) {
         parameterValuesList.push({
-            name: "ChunkSize",
+            name: prefix + "_ChunkSize",
             value: chunkSize,
         });
     }
@@ -1151,11 +1409,11 @@ function findJobAttachments(rootComp) {
     if (rootComp == null) {
         return [];
     }
-    var attachments = [];
-    var exploredItems = {}; // using this object as a set because AE doesn't support sets
+    const attachments = [];
+    const exploredItems = {}; // using this object as a set because AE doesn't support sets
     attachments.push(app.project.file.fsName);
     exploredItems[rootComp.id] = true;
-    var queue = [rootComp];
+    const queue = [rootComp];
     while (queue.length > 0) {
         var comp = queue.pop();
         var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
@@ -1197,7 +1455,7 @@ function findJobAttachments(rootComp) {
         }
     }
 
-    var fontsInProject = getFontsFromFile();
+    const fontsInProject = getFontsFromFile();
 
     if (fontsInProject.length > 0) {
         // Notify the user if any fonts are missing or are substituted during the session.
@@ -1207,7 +1465,7 @@ function findJobAttachments(rootComp) {
             adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString(), false);
         }
         // Formatting collected fonts
-        var fontReferences = generateFontReferences(fontsInProject);
+        const fontReferences = generateFontReferences(fontsInProject);
         for (var i = 0; i < fontReferences.length; i++) {
             attachments.push(fontReferences[i]);
         }
@@ -1224,7 +1482,7 @@ function getFontsFromFile() {
     var fontLocations = [];
     // app.project.usedFonts was introduced in 24.5. Fall back to scanning text layers if version is older
     if (dcUtil.getAEVersion() >= 24.5) {
-        var usedList = app.project.usedFonts;
+        const usedList = app.project.usedFonts;
         for (var i = 0; i < usedList.length; i++) {
             var font = usedList[i].font;
             var fontPostScriptName = font.postScriptName;
@@ -1253,7 +1511,7 @@ function getFontsFromFile() {
  * @return String with executable name corresponding to Python 3, or an empty string if not found
  **/
 function getPythonExecutable() {
-    var pythonExecutables = ["python3", "python", "py"];
+    const pythonExecutables = ["python3", "python", "py"];
 
     for (var i = 0; i < pythonExecutables.length; i++) {
         // Search for python executable
@@ -1294,7 +1552,7 @@ function getPythonExecutable() {
     }
 
     // If reaching here, this means python version was too low or executable was not found
-    var errorMessage =
+    const errorMessage =
         "Error: Couldn't find Python 3 or higher on your PATH.\n" +
         "\n" +
         "Please ensure that Python 3 or higher is installed correctly and added to your PATH.";
@@ -1310,12 +1568,12 @@ function getPythonExecutable() {
 function getFontPaths() {
     var errorMessage = "";
     // Ensure Python exists and is at least version 3
-    var pythonExecutable = getPythonExecutable();
+    const pythonExecutable = getPythonExecutable();
     if (!pythonExecutable) {
         return null;
     }
-    var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
-    var scriptFile = new File(scriptPath);
+    const scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
+    const scriptFile = new File(scriptPath);
     if (!scriptFile.exists) {
         errorMessage =
             "Error: Missing font script at " + scriptFile.fsName + "\n" +
@@ -1327,7 +1585,7 @@ function getFontPaths() {
 
     var output = {};
     try {
-        var outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\"");
+        const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\"");
         output = JSON.parse(outputRaw);
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
@@ -1357,7 +1615,7 @@ function getLocationForFont(fontPostScriptName) {
     var fontPath = null;
     try {
         // Get user-installed fonts
-        var fontPaths = getFontPaths();
+        const fontPaths = getFontPaths();
         if (!fontPaths) {
             return null;
         }
@@ -1380,16 +1638,16 @@ function getLocationForFont(fontPostScriptName) {
  **/
 function createFontFilename(fontLocation, fontPostScriptName) {
     var fileExtension = "";
-    var lastDotIndex = fontLocation.lastIndexOf('.');
-    var extensionRegex = /\.[a-zA-Z]+$/;
+    const lastDotIndex = fontLocation.lastIndexOf('.');
+    const extensionRegex = /\.[a-zA-Z]+$/;
 
     var fontName = "";
 
     var validExtension = true;
-    var fontExtensions = [".otf", ".ttf"];
+    const fontExtensions = [".otf", ".ttf"];
 
     // Windows also supports .fon files
-    var os = $.os.toLowerCase();
+    const os = $.os.toLowerCase();
     if (os.indexOf("windows") !== -1) {
         fontExtensions.push(".fon");
     }
@@ -1397,7 +1655,7 @@ function createFontFilename(fontLocation, fontPostScriptName) {
     // Some Adobe Fonts files have a dot followed by numbers as its name with no extension (e.g. ".52741")
     if (extensionRegex.test(fontLocation)) {
         fileExtension = fontLocation.substring(lastDotIndex).toLowerCase();
-        var fontExtensionsAsString = fontExtensions.toString();
+        const fontExtensionsAsString = fontExtensions.toString();
         if (fontExtensionsAsString.indexOf(fileExtension) == -1) {
             adcAlert(
                 "font with an unsupported extension '" + fileExtension +
@@ -1420,8 +1678,8 @@ function createFontFilename(fontLocation, fontPostScriptName) {
  * @return an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
  **/
 function getFontsFromFileLegacy() {
-    var fontLocations = [];
-    var items = app.project.items;
+    const fontLocations = [];
+    const items = app.project.items;
     for (var i = items.length; i >= 1; i--) {
         var item = app.project.item(i);
         // Only look at CompItems
@@ -1497,9 +1755,9 @@ function getFontsFromFileLegacy() {
  **/
 function generateFontReferences(fontPaths) {
     // Create a temp folder where all used fonts get gathered
-    var _tempFontsFolder = dcUtil.normPath(dcUtil.getTempFolder() + '/' + "tempFonts");
-    var formattedFontsPaths = [];
-    var tempFontPath = new Folder(_tempFontsFolder);
+    const _tempFontsFolder = dcUtil.normPath(dcUtil.getTempFolder() + '/' + "tempFonts");
+    const formattedFontsPaths = [];
+    const tempFontPath = new Folder(_tempFontsFolder);
     if (!tempFontPath.exists) {
         tempFontPath.create();
     }
@@ -1537,32 +1795,24 @@ function isImageOutput(extension) {
 }
 
 
+var JobParams = [
+    "JobScriptDir",
+    "CondaPackages",
+    "ProjectFile"
+]
 
-/**
- * Submit the selected render queue item
- **/
-function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUsagePercentage, taskTimeoutDays, taskTimeoutHours, taskTimeoutMinutes) {
-    // Calculate task run timeout in seconds
-    var taskTimeoutSeconds = 0;
-    // Validate timeout values during job submission
-    if (taskTimeoutDays === 0 && taskTimeoutHours === 0 && taskTimeoutMinutes === 0) {
-        adcAlert("The following timeout value must be greater than 0: TaskRun", true);
-        throw new Error("Task run timeout must be greater than zero");
-    }
-    taskTimeoutSeconds = (taskTimeoutDays * 24 * 60 * 60) + (taskTimeoutHours * 60 * 60) + (taskTimeoutMinutes * 60);
+var paramPattern = "Param\\.";
+for (var p = 0; p < JobParams.length; p++) {
+    paramPattern = paramPattern + "(?!" + JobParams[p] + ")";
+}
+var paramPatternRegex = new RegExp(paramPattern, 'g');
 
+if (typeof submitBundleFile == 'undefined') {
     const submitBundleFile = "SubmitButton.jsx";
-    // first we must verify that our selection is valid
-    if (selection == null) {
-        adcAlert("Error: No selection", true);
-        return;
-    }
+}
 
-    var renderQueueIndex = selection.renderQueueIndex;
-    var rqi;
-
-    // because our panel is updated independently of the render queue, the two may become out of sync
-    // we need to verify that the selection made actually matches what is in the render queue
+// Validate that the RenderQueueIndex for each selectionItem is still valid and update list if they're out of date
+function UpdateRenderQueueIndices(renderQueueIndex, selectionItem) {
     if (
         renderQueueIndex < 1 ||
         renderQueueIndex > app.project.renderQueue.numItems
@@ -1571,39 +1821,228 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
             "Error: Render Queue has changed since last refreshing. Refreshing panel now. Please try again.", true
         );
         updateList();
-        return;
+        return false;
     }
-    rqi = app.project.renderQueue.item(renderQueueIndex);
-    if (rqi == null || rqi.comp.id != selection.compId) {
+
+    const renderQueueItem = app.project.renderQueue.item(renderQueueIndex);
+    if (renderQueueItem == null || renderQueueItem.comp.id != selectionItem.compId) {
         adcAlert(
             "Error: Render Queue has changed since last refresh. Refreshing panel now. Please try again.", true
         );
         updateList();
-        return;
+        return false;
     }
-    if (rqi.numOutputModules > 1) {
+    if (renderQueueItem.numOutputModules > 1) {
         adcAlert(
             "Warning: Multiple output modules detected. It is not supported in current submitter. Please raise an issue on Github repo for feature request.", false
         );
+        return false;
+    }
+    validateRenderQueueItemOutputModule(renderQueueItem);
+    return true;
+}
+
+// Validate that our outputModule is set
+function validateRenderQueueItemOutputModule(renderQueueItem) {
+    // We have already validated that we don't have more than 1 `numOutputModels`
+    const outputModule = renderQueueItem.outputModule(1).file;
+    if (outputModule == null) {
+        adcAlert("Error: Render Queue Item " + renderQueueItem.comp.name + " does not have its output file set", true);
+        return false;
+    }
+    return true;
+}
+
+// Loading our default template from disk
+function loadDefaultJobTemplate(bundlePath, submitBundleFile) {
+    const path = bundlePath + "/template.json";
+    const templateContents = readFile(path);
+    // Parse the template string to a JSON object
+    const templateObject = JSON.parse(templateContents);
+    templateObject.name = File.decode(app.project.file.name);
+    logger.debug("The template name is " + templateObject.name, submitBundleFile);
+
+    return templateObject;
+}
+
+// Generates the job bundle and copies files from our template source folder into it
+function generateBundle() {
+    // create the job bundle folder
+    const bundleRoot = new Folder(
+        dcUtil.getTempFolder() + "/DeadlineCloudAESubmission"
+    ); //forward slash works on all operating systems
+    recursiveDelete(bundleRoot);
+    bundleRoot.create();
+
+    const jobTemplateSourceFolder = new Folder(
+        scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
+    );
+    if (!jobTemplateSourceFolder.exists) {
+        adcAlert(
+            "Error: Missing job template at " + jobTemplateSourceFolder.fsName, true
+        );
+        return null;
+    }
+    recursiveCopy(jobTemplateSourceFolder, bundleRoot);
+    return bundleRoot;
+}
+
+function generateParameterName(index, compName, parameter) {
+    /** Generates the name of the parameter to be used in the job submission
+     * by prefixing with the index and compName
+     * Truncates compname to avoid going over character limit.
+     **/
+    if (parameter === undefined) {
+        parameter = "";
+    }
+    if (parameter !== "") {
+        parameter = "_" + parameter;
+    }
+    index = index.toString();
+    compName = compName.substring(0, 15);
+    return "_" + index + "_" + compName + parameter;
+}
+
+function generatePrettyParameterName(index, compName, parameter) {
+    /** Generates name of the parameter to be displayed in job submission UI
+     * Truncates compname to avoid going over character limit
+     **/
+    if (parameter === undefined) {
+        parameter = "";
+    }
+    index = index.toString();
+    const maxLength = 10;
+    if (compName.length >= maxLength) {
+        compName = compName.substring(0, maxLength - 3) + "...";
+    }
+    return "(" + index + "_" + compName + ") " + parameter;
+}
+
+// Generates the parameter definitions for each step by loading the `parameter_definitions_<>_fragment.json`
+//      Adding our `( <RenderQueueItemID> )` to the label and changing the name to prefixed by `<RenderQueueItemID>_`
+function generateStepParameterFragment(bundlePath, isImageSeq, renderQueueIndex, compName) {
+    var path = bundlePath + "/parameter_definitions_video_fragment.json";
+    if (isImageSeq) {
+        path = bundlePath + "/parameter_definitions_image_fragment.json";
+    }
+    const stepParametersContents = readFile(path);
+    // Parse the template string to a JSON object
+    const stepParametersObject = JSON.parse(stepParametersContents);
+
+    const updatedParameterDefinitions = []
+    for (var i = 0; i < stepParametersObject.parameterDefinitions.length; i++) {
+        if (JobParams.indexOf(stepParametersObject.parameterDefinitions[i].name) !== -1) {
+            // Don't modify these values
+            continue;
+        }
+        var replacedDefinition = stepParametersObject.parameterDefinitions[i]
+        replacedDefinition.name = generateParameterName(renderQueueIndex, compName, replacedDefinition.name);
+        replacedDefinition.userInterface.label = generatePrettyParameterName(renderQueueIndex, compName, replacedDefinition.userInterface.label);
+
+        updatedParameterDefinitions.push(replacedDefinition);
+    }
+    stepParametersObject.parameterDefinitions = updatedParameterDefinitions;
+    return stepParametersObject;
+}
+
+// Generates the step chunk of the template for each step by loading the `step_<>_fragment.json`
+//      Replacing the parameters to be pointing to our per-renderQueueItem parameters and updating any parameters in the onRun
+function generateStepTemplateFragment(bundlePath, isImageSeq, renderQueueItemIndex, compName, taskTimeoutSeconds) {
+    var path = bundlePath + "/step_video_fragment.json";
+    if (isImageSeq) {
+        path = bundlePath + "/step_image_fragment.json";
+    }
+    const stepTemplateContents = readFile(path);
+    // Parse the template string to a JSON object
+    const stepTemplateObject = JSON.parse(stepTemplateContents);
+
+    if (isImageSeq) {
+        // Replace parameter names in the creation of `Index`
+        const taskParameters = stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0]
+        taskParameters.range = taskParameters.range.replace(paramPatternRegex, "Param." + generateParameterName(renderQueueItemIndex, compName, "") + "_");
+        taskParameters.name = generateParameterName(renderQueueItemIndex, compName, taskParameters.name);
+        stepTemplateObject.steps[0].parameterSpace.taskParameterDefinitions[0] = taskParameters;
+    }
+
+    stepTemplateObject.steps[0].name = generateParameterName(renderQueueItemIndex, compName, "");
+    // Replace any parameter names in onRun script
+    const scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args;
+    const replacedArgs = []
+    for (var i = 0; i < scriptArgs.length; i++) {
+        // JobParams
+        replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + generateParameterName(renderQueueItemIndex, compName, "") + "_"));
+    }
+    stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs;
+    stepTemplateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
+    logger.debug("Added timeout of " + taskTimeoutSeconds + " seconds to onRun action", submitBundleFile);
+
+    return stepTemplateObject;
+}
+
+// Modifies the `Create Output Directories` job environment by adding all of our output folder parameters
+function generateJobEnvironmentFragment(bundlePath, outputFoldersStr) {
+    const path = bundlePath + "/job_environments_fragment.json";
+    const jobEnvironmentsContents = readFile(path);
+    // Parse the template string to a JSON object
+    const jobEnvironmentsObject = JSON.parse(jobEnvironmentsContents);
+
+    for (var j = 0; j < jobEnvironmentsObject.jobEnvironments.length; j++) {
+        if (jobEnvironmentsObject.jobEnvironments[j].name === "Create Output Directories") {
+            jobEnvironmentsObject.jobEnvironments[j].script.actions.onEnter.args = [
+                "{{Param.JobScriptDir}}/create_output_directory.py",
+                outputFoldersStr
+            ]
+        }
+    }
+    return jobEnvironmentsObject;
+}
+
+/**
+ * Submit the selected render queue item
+ **/
+function SubmitSelection(selection, selectionSettings) {
+    // Calculate task run timeout in seconds
+    var taskTimeoutSeconds = (selectionSettings.taskRunDays() * 24 * 60 * 60) + (selectionSettings.taskRunHours() * 60 * 60) + (selectionSettings.taskRunMinutes() * 60);
+    // Validate timeout values during job submission
+    if (taskTimeoutSeconds <= 0) {
+        adcAlert("The following timeout value must be greater than 0: TaskRun", true);
         return;
     }
 
-    //We have a valid selection
-    var confirmation = confirm("Project must be saved before submitting. Continue?");
-    if (!confirmation) {
-        return;
-    } else {
-        app.project.save();
+    const renderQueueItems = [];
+
+    // Check to make sure that all of our selection indices are correct
+    for (var i = 0; i < selection.length; i++) {
+        var selectionItem = selection[i];
+        var initialRenderQueueIndex = selectionItem.renderQueueIndex;
+
+        // because our panel is updated independently of the render queue, the two may become out of sync
+        // we need to verify that the selection made actually matches what is in the render queue
+        if (!UpdateRenderQueueIndices(initialRenderQueueIndex, selectionItem)) {
+            return;
+        }
+        var initialRenderQueueItem = app.project.renderQueue.item(initialRenderQueueIndex);
+        renderQueueItems.push([initialRenderQueueItem, initialRenderQueueIndex]);
     }
-    if (app.project.file == null) {
-        // If the user hit yes to the prompt, but the file had never been saved, a second prompt would appear asking where they would want to save the project.
-        // If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
-        return;
+
+    // We have valid selections check for saving
+    if (app.project.dirty) {
+        const confirmation = confirm("Project must be saved before submitting. Continue?");
+        if (!confirmation) {
+            return;
+        } else {
+            app.project.save();
+        }
+        if (app.project.file == null) {
+            // If the user hit yes to the prompt, but the file had never been saved, a second prompt would appear asking where they would want to save the project.
+            // If they hit cancel on the second prompt, the project file should be null and we should cancel the submission.
+            return;
+        }
     }
 
     // Check if warning should be shown
-    const ignoreWarning = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING) === "true";
-    const savedVersion = parseFloat(app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION) || "0");
+    const ignoreWarning = dcUtil.getBoolMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING)) === "true";
+    const savedVersion = dcUtil.getNumberMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), 0);
     const currentVersion = dcUtil.getAEVersion();
 
     // Is this AE version not supported in the deadline-cloud channel?
@@ -1611,15 +2050,15 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         // If so, has the warning already been ignored or is the user on a different AE version and we should warn them again?
         if (!ignoreWarning || savedVersion !== currentVersion) {
             const versionMismatchWarningMessage = "Warning: Your After Effects version " + currentVersion +
-            " is not officially supported in the deadline-cloud conda channel. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
-            "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
+                " is not officially supported in the deadline-cloud conda channel. Supported versions are: " + SUPPORTED_VERSIONS.join(", ") + ". " +
+                "This may result in compatibility issues or failed jobs.\n\nDon't show this warning again for version " + currentVersion + "?";
 
             // Provide warning, and if acknowledged, store their current version and warning preference. Otherwise, block job submission.
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, currentVersion.toString());
+            dcUtil.saveStringMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), currentVersion.toString());
             if (confirm(versionMismatchWarningMessage)) {
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "true");
+                dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), true);
             } else {
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
+                dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
                 return;
             }
         } else {
@@ -1628,177 +2067,213 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
         logger.debug("Defaulting to After Effects major version conda package to minimize incompatibility issues.");
     }
 
-    var outputPath = "";
-    var outputFile = "";
-    var outputFolder = "";
-    for (var j = 1; j <= rqi.numOutputModules; j++) {
-        var outputModule = rqi.outputModule(j).file;
-        if (outputModule == null) {
-            if (rqi.numOutputModules > 1) {
-                adcAlert("Error: Output module does not have its output file set", true);
-            } else {
-                adcAlert(
-                    "Error: One of your output modules does not have its output file set", true
-                );
+
+    var aftereffectsCondaVersion = dcUtil.getAEVersion();
+    if (SUPPORTED_VERSIONS.indexOf(aftereffectsCondaVersion) === -1) {
+        aftereffectsCondaVersion = Math.floor(aftereffectsCondaVersion);
+    }
+    logger.debug("The compatible version of After Effects is " + aftereffectsCondaVersion, submitBundleFile);
+
+
+    const bundle = generateBundle();
+    const jobAssetReferences = {
+        assetReferences: {
+            inputs: {
+                directories: [],
+                filenames: [],
+            },
+            outputs: {
+                directories: [],
+            },
+            referencedPaths: [],
+        },
+    };
+    const jobParameterDefinitions = {
+        "parameterDefinitions": [{
+                "name": "ProjectFile",
+                "type": "PATH",
+                "objectType": "FILE",
+                "dataFlow": "IN",
+                "userInterface": {
+                    "control": "CHOOSE_INPUT_FILE",
+                    "label": "Project file",
+                    "groupLabel": "Source",
+                    "fileFilters": [{
+                            "label": "After Effects project files",
+                            "patterns": [
+                                "*.aep",
+                                "*.aepx"
+                            ]
+                        },
+                        {
+                            "label": "All Files",
+                            "patterns": [
+                                "*"
+                            ]
+                        }
+                    ]
+                },
+                "description": "The After Effects project file to render."
+            },
+            {
+                "name": "JobScriptDir",
+                "description": "Directory containing embedded scripts.",
+                "userInterface": {
+                    "control": "HIDDEN"
+                },
+                "type": "PATH",
+                "objectType": "DIRECTORY",
+                "dataFlow": "IN",
+                "default": "scripts"
+            },
+            {
+                "name": "CondaPackages",
+                "type": "STRING",
+                "userInterface": {
+                    "control": "HIDDEN"
+                },
+                "default": "aftereffects=" + aftereffectsCondaVersion,
+                "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
             }
+        ]
+    }
+    const jobParameterValues = {
+        parameterValues: [{
+                name: "deadline:targetTaskRunStatus",
+                value: "READY",
+            },
+            {
+                name: "deadline:maxFailedTasksCount",
+                value: 20,
+            },
+            {
+                name: "deadline:maxRetriesPerTask",
+                value: 5,
+            },
+            {
+                name: "deadline:priority",
+                value: 50,
+            },
+            {
+                name: "ProjectFile",
+                value: app.project.file.fsName,
+            },
+        ]
+    }
+
+    const template = loadDefaultJobTemplate(bundle.fsName, submitBundleFile);
+    template.steps = [];
+    template.parameterDefinitions = jobParameterDefinitions.parameterDefinitions;
+
+    const stepOutputFolderParameters = [];
+
+    for (var i = 0; i < renderQueueItems.length; i++) {
+        var renderQueueItem = renderQueueItems[i][0];
+        var renderQueueIndex = renderQueueItems[i][1];
+
+        if (!validateRenderQueueItemOutputModule(renderQueueItem)) {
             return;
-        } else {
-            outputPath = outputModule.fsName;
-            outputFile = outputModule.name;
-            outputFolder = outputModule.parent.fsName;
-            logger.debug("OutputPath is: " + outputPath, submitBundleFile);
-            logger.debug("OutputFile is: " + outputFile, submitBundleFile);
-            logger.debug("outputFolder is: " + outputFolder, submitBundleFile);
-        }
-    }
-    // Calculate frame range using the utility function
-    const frameRange = dcUtil.calculateFrameRange(rqi);
-    const startFrame = frameRange.startFrame;
-    const endFrame = frameRange.endFrame;
-
-    var dependencies = findJobAttachments(rqi.comp); // list of filenames
-    var compName = dcUtil.removeIllegalCharacters(rqi.comp.name);
-
-    function generateAssetReferences(bundlePath, sanitizedOutputFolder) {
-        // Write the asset_references.json file
-        var jobAttachmentsContents = jobAttachmentsJson(
-            dependencies,
-            sanitizedOutputFolder
-        );
-        var assetReferencesOutDir = bundlePath + "/asset_references.json";
-        writeFile(assetReferencesOutDir, JSON.stringify(jobAttachmentsContents, null, 4));
-    }
-
-    /**
-     * Generates parameter_values json file
-     **/
-    function generateParameterValues(bundlePath, outputFolder, outputFileName, isImageSeq) {
-        var parametersOutDir = bundlePath + "/parameter_values.json";
-        writeFile(
-            parametersOutDir,
-            JSON.stringify(
-                parameterValues(
-                    renderQueueIndex,
-                    app.project.file.fsName,
-                    outputFolder,
-                    outputFileName,
-                    isImageSeq,
-                    startFrame,
-                    endFrame,
-                    framesPerTask,
-                    multiFrameRendering,
-                    maxCpuUsagePercentage
-                ),
-                null,
-                4,
-            )
-        );
-    }
-
-    /**
-     * Generates job template json file
-     **/
-    function generateTemplate(bundlePath, isImageSeq) {
-        // Open the template depending on the output type
-        var path = bundlePath + "/video_template.json";
-        if (isImageSeq) {
-            path = bundlePath + "/image_template.json";
-        }
-        var templateContents = readFile(path);
-        // Parse the template string to a JSON object
-        var templateObject = JSON.parse(templateContents);
-        templateObject.name = File.decode(app.project.file.name) + " [" + compName + "]";
-        logger.debug("The template name is " + templateObject.name, submitBundleFile);
-        try {
-            if (templateObject.steps[0].name) {
-                templateObject.steps[0].name = compName;
-                logger.debug("The step name is " + templateObject.steps[0].name, submitBundleFile);
-            }
-        } catch (e) {
-            adcAlert("Error accessing the template's steps name. \nPlease check your template.json and make sure you have name under steps.", true);
-            logger.debug("Error accessing the template's steps name. " + error, submitBundleFile);
-        }
-        try {
-            if (templateObject.steps[0].script && templateObject.steps[0].script.actions) {
-                // Add timeout to the onRun action
-                if (templateObject.steps[0].script.actions.onRun) {
-                    templateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
-                    logger.debug("Added timeout of " + taskTimeoutSeconds + " seconds to onRun action", submitBundleFile);
-                }
-            }
-        } catch (e) {
-            adcAlert("Error accessing the template's actions. \nPlease check your template.json.", true);
-            logger.debug("Error accessing the template's actions: " + e.message, submitBundleFile);
         }
 
-        var aftereffectsCondaVersion = dcUtil.getAEVersion();
-        if (SUPPORTED_VERSIONS.indexOf(aftereffectsCondaVersion) === -1) {
-            aftereffectsCondaVersion = Math.floor(aftereffectsCondaVersion);
-        }
-        logger.debug("The compatible version of After Effects is " + aftereffectsCondaVersion, submitBundleFile);
+        var stepFramesPerTask = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).framesPerTask();
+        var stepMaxCpuUsagePercentage = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).maxCpuUsagePercentage();
+        var stepMultiFrameRendering = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).multiFrameRendering();
 
-        var paramDefCopy = templateObject.parameterDefinitions;
+        var outputModule = renderQueueItem.outputModule(1).file;
+        var outputPath = outputModule.fsName;
+        var outputFile = outputModule.name;
+        var outputFolder = outputModule.parent.fsName;
 
-        for (var i = paramDefCopy.length - 1; i >= 0; i--) {
-            if (paramDefCopy[i].name == "CondaPackages") {
-                paramDefCopy[i].default = "aftereffects=" + aftereffectsCondaVersion;
-            }
-        }
-        writeFile(bundlePath + "/template.json", JSON.stringify(templateObject, null, 4));
-        logger.debug("Wrote the template.json file to the bundle folder " + bundlePath, submitBundleFile);
-    }
+        logger.debug("OutputPath is: " + outputPath, submitBundleFile);
+        logger.debug("OutputFile is: " + outputFile, submitBundleFile);
+        logger.debug("OutputFolder is: " + outputFolder, submitBundleFile);
 
-    /**
-     * Generates the job bundle, including template.json, parameter_values.json
-     * and asset_references.json
-     **/
-    function generateBundle() {
-        // create the job bundle folder
-        var bundleRoot = new Folder(
-            dcUtil.getTempFolder() + "/DeadlineCloudAESubmission"
-        ); //forward slash works on all operating systems
-        recursiveDelete(bundleRoot);
-        bundleRoot.create();
-        var bundlePath = bundleRoot.fsName;
+        // Calculate frame range using the utility function
+        var frameRange = dcUtil.calculateFrameRange(renderQueueItem);
+        var startFrame = frameRange.startFrame;
+        var endFrame = frameRange.endFrame;
 
+        var dependencies = findJobAttachments(renderQueueItem.comp); // list of filenames
+        var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
 
-        const outputFileNameNoRegex = getFileNameNoRegex(outputFile);
-        const extension = getFileExtension(outputFileNameNoRegex);
+        var outputFileNameNoRegex = getFileNameNoRegex(outputFile);
+        var extension = getFileExtension(outputFileNameNoRegex);
         logger.debug("extension set to: " + extension, submitBundleFile);
-        const isImageSeq = isImageOutput(extension);
+        var isImageSeq = isImageOutput(extension);
 
         var sanitizedOutputFileName = dcUtil.removePercentageFromFileName(outputFileNameNoRegex);
         logger.debug("sanitizedOutputFileName is " + sanitizedOutputFileName, submitBundleFile);
 
-        generateAssetReferences(bundlePath, sanitizedOutputFolder);
-        generateParameterValues(bundlePath, sanitizedOutputFolder, sanitizedOutputFileName, isImageSeq);
-
-        var jobTemplateSourceFolder = new Folder(
-            scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate"
-        );
-        if (!jobTemplateSourceFolder.exists) {
-            adcAlert(
-                "Error: Missing job template at " + jobTemplateSourceFolder.fsName, true
-            );
-            return null;
+        // Push step asset references
+        for (var d = 0; d < dependencies.length; d++) {
+            jobAssetReferences.assetReferences.inputs.filenames.push(dependencies[d]);
         }
-        recursiveCopy(jobTemplateSourceFolder, bundleRoot);
+        jobAssetReferences.assetReferences.outputs.directories.push(sanitizedOutputFolder);
 
-        generateTemplate(bundlePath, isImageSeq);
-        return bundleRoot;
+        var parameterValues = generateParameterValues(
+            renderQueueIndex,
+            app.project.file.fsName,
+            sanitizedOutputFolder,
+            sanitizedOutputFileName,
+            isImageSeq,
+            startFrame,
+            endFrame,
+            stepFramesPerTask,
+            stepMultiFrameRendering,
+            stepMaxCpuUsagePercentage,
+            generateParameterName(renderQueueIndex, compName, "")
+        );
+        for (var p = 0; p < parameterValues.parameterValues.length; p++) {
+            if (jobParameterValues.parameterValues.indexOf(parameterValues.parameterValues[p]) === -1) {
+                jobParameterValues.parameterValues.push(parameterValues.parameterValues[p]);
+            }
+        }
+
+        stepOutputFolderParameters.push("{{Param." + generateParameterName(renderQueueIndex, compName, "OutputDir") + "}}");
+
+        // Generates template and parameters for the current render queue item, then pushes them to the main template
+        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, renderQueueIndex, compName, taskTimeoutSeconds);
+        for (var s = 0; s < stepTemplate.steps.length; s++) {
+            template.steps.push(stepTemplate.steps[s]);
+        }
+        var stepParameters = generateStepParameterFragment(bundle.fsName, isImageSeq, renderQueueIndex, compName);
+        for (var p = 0; p < stepParameters.parameterDefinitions.length; p++) {
+            var parameterExists = false;
+            for (var tpd = 0; tpd < template.parameterDefinitions.length; tpd++) {
+                var templateParameterDefinition = template.parameterDefinitions[tpd];
+                var stepParameterDefinition = stepParameters.parameterDefinitions[p];
+                if (templateParameterDefinition.name == stepParameterDefinition.name) {
+                    parameterExists = true;
+                    break;
+                }
+            }
+            if (parameterExists === false) {
+                template.parameterDefinitions.push(stepParameters.parameterDefinitions[p]);
+            }
+        }
     }
-    var bundle = generateBundle();
+
+    // Writes out final bundle files
+    const generatedJobEnvironment = generateJobEnvironmentFragment(bundle.fsName, stepOutputFolderParameters.join(","));
+    template.jobEnvironments = generatedJobEnvironment.jobEnvironments;
+
+    writeFile(bundle.fsName + "/asset_references.json", JSON.stringify(jobAssetReferences, null, 4));
+
+    writeFile(bundle.fsName + "/parameter_values.json", JSON.stringify(jobParameterValues, null, 4));
+
+    writeFile(bundle.fsName + "/template.json", JSON.stringify(template, null, 4));
+    logger.debug("Wrote the template.json file to the bundle folder " + bundle.fsName, submitBundleFile);
 
     // Runs a bat script that requires extra permissions but will not block the After Effects UI while submitting.
-    var logFile = new File(dcUtil.getTempFolder() + "/submitter_output.log");
+    const logFile = new File(dcUtil.getTempFolder() + "/submitter_output.log");
     logFile.open("w"); // Erase contents of active log file
     logFile.close();
     var submitScriptContents = "";
     var output = "";
     var cmd = "";
     if ($.os.toString().slice(0, 7) === "Windows") {
-        var tempBatFile = new File(
+        const tempBatFile = new File(
             dcUtil.getTempFolder() + "/DeadlineCloudAESubmission.bat"
         );
         cmd =
@@ -1821,7 +2296,7 @@ function SubmitSelection(selection, framesPerTask, multiFrameRendering, maxCpuUs
     } else {
         // Execute the command using a bash in the interactive mode so it loads the bash profile to set
         // the PATH correctly.
-        var shellPath = $.getenv("SHELL") || "/bin/bash";
+        const shellPath = $.getenv("SHELL") || "/bin/bash";
         cmd =
             'deadline bundle gui-submit \\\"' + bundle.fsName + '\\\" --output json --install-gui --submitter-name=\\\\\\\"After Effects\\\\\\\"';
         submitScriptContents = shellPath + " -i -c \\\"" + cmd + "\\\" && exit";
@@ -2420,33 +2895,45 @@ if (typeof JSON !== "object") {
  * Builds the Script UI for the Deadline Cloud Submitter
  **/
 function buildUI(thisObj) {
-    var submitterPanel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Submit to AWS Deadline Cloud", undefined, {
+    const submitterPanel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Submit to AWS Deadline Cloud", undefined, {
         resizable: true
     });
 
-    var root = submitterPanel.add("group");
+    const uiSettingsState = new UiSettingsState();
+
+    const root = submitterPanel.add("group");
     root.orientation = "column";
     root.alignment = ['fill', 'fill'];
-    root.alignChildren = ['fill', 'top']
-    var logoGroup = root.add("group");
+    root.alignChildren = ['fill', 'top'];
+    const logoGroup = root.add("group");
     logoGroup.alignment = 'left';
     logoGroup.add("image", undefined, logoData());
-    var logoText = logoGroup.add("statictext", undefined, "AWS Deadline Cloud");
-    var arialBold24Font = ScriptUI.newFont("Arial", ScriptUI.FontStyle.BOLD, 64);
+    const logoText = logoGroup.add("statictext", undefined, "AWS Deadline Cloud");
+    const arialBold24Font = ScriptUI.newFont("Arial", ScriptUI.FontStyle.BOLD, 64);
     logoText.graphics.font = arialBold24Font;
-    var headerButtonGroup = root.add("group");
-    var focusRenderQueueButton = headerButtonGroup.add("button", undefined, "Open Render Queue");
+    const headerButtonGroup = root.add("group");
+    const focusRenderQueueButton = headerButtonGroup.add("button", undefined, "Open Render Queue");
     focusRenderQueueButton.onClick = function() {
         // we quickly toggle the window to make sure it gains focus
         // sometimes this causes a flicker
         app.project.renderQueue.showWindow(false);
         app.project.renderQueue.showWindow(true);
     }
-    var refreshButton = headerButtonGroup.add("button", undefined, "Refresh");
-    var listGroup = root.add("panel", undefined, "");
-    listGroup.alignment = ['fill', 'fill'];
-    listGroup.alignChildren = ['fill', 'fill']
+    const refreshButton = headerButtonGroup.add("button", undefined, "Refresh");
+    const listGroup = root.add("panel", undefined, "");
+    listGroup.alignment = ['fill', 'top'];
+    listGroup.alignChildren = ['fill', 'top'];
+    listGroup.orientation = "column";
+    var multiCompLabel = listGroup.add("statictext", undefined, "Shift+Click, Command+Click (Mac), or Ctrl+Click (Windows) can be used to select multiple render queue items and group them together as a single job submission", {
+        multiline: true
+    });
+    // Label height needs to be set manually because ExtendScript does not accurately calculate the height of multiline text objects.
+    multiCompLabel.maximumSize.height = 30;
+    multiCompLabel.alignment = ['fill', 'top'];
+    // The list can't be populated until everything else is defined but we still need the variable set
+    // So it can be referenced by other UI elements
     var list = null;
+
     const controlsGroup = root.add("group", undefined, "");
     controlsGroup.orientation = 'column';
     controlsGroup.alignment = ['fill', 'bottom'];
@@ -2454,48 +2941,54 @@ function buildUI(thisObj) {
     const controlsPanel = controlsGroup.add("panel", undefined, "");
     controlsPanel.alignment = ['fill', 'top'];
 
-    // Container with all settings to modify job submission
-    const settingsGroup = controlsPanel.add("group", undefined, "");
-    settingsGroup.orientation = "column";
-    settingsGroup.alignment = ['fill', 'top'];
-    settingsGroup.alignChildren = ['left', 'top'];
+    // Container with settings to modify comp-specific settings
+    const perCompSettingsGroup = controlsPanel.add("panel", undefined, "Render Queue Item Settings");
+    perCompSettingsGroup.orientation = "column";
+    perCompSettingsGroup.alignment = ['fill', 'top'];
+    perCompSettingsGroup.alignChildren = ['left', 'top'];
 
     // Setting up frame per task GUI
-    const framesPerTaskGroup = settingsGroup.add("group", undefined, "");
+    const framesPerTaskGroup = perCompSettingsGroup.add("group", undefined, "");
     framesPerTaskGroup.orientation = "row";
     framesPerTaskGroup.alignment = ['fill', 'top'];
     framesPerTaskGroup.alignChildren = ['left', 'center'];
 
     const framesPerTaskLabel = framesPerTaskGroup.add("statictext", undefined, "Frames per task");
     framesPerTaskLabel.alignment = ['left', 'center'];
-    framesPerTaskLabel.helpTip = "The number of frames per task. Only affects image sequence output."
+    framesPerTaskLabel.helpTip = "The number of frames per task. Only affects image sequence output.";
 
     const framesPerTaskTextBox = framesPerTaskGroup.add("edittext", undefined, "");
     framesPerTaskTextBox.alignment = ['fill', 'top'];
     framesPerTaskTextBox.helpTip = framesPerTaskLabel.helpTip;
-    framesPerTaskTextBox.onChange = function() {
-        const newFramesPerTaskValue = Math.abs(parseInt(framesPerTaskTextBox.text));
-        if (isNaN(newFramesPerTaskValue)) {
-            framesPerTaskTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
-        } else if (newFramesPerTaskValue > 9999) {
-            framesPerTaskTextBox.text = "9999";
-        } else {
-            // Need to reassign in case input string is a number followed my random characters
-            // since parseInt parses the first number it finds in a provided string.
-            framesPerTaskTextBox.text = newFramesPerTaskValue;
+
+    function onFramesPerTaskChanged() {
+        if (list.selection == null) {
+            return;
         }
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, framesPerTaskTextBox.text);
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
+            var newFramesPerTaskValue = parseInt(framesPerTaskTextBox.text);
+            if (isNaN(newFramesPerTaskValue)) {
+                newFramesPerTaskValue = uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).framesPerTask();
+            }
+            if (newFramesPerTaskValue > 9999) {
+                newFramesPerTaskValue = 9999;
+            }
+            framesPerTaskTextBox.text = newFramesPerTaskValue.toString();
+            uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).setFramesPerTask(newFramesPerTaskValue);
+        }
     }
+    framesPerTaskTextBox.onChange = onFramesPerTaskChanged;
 
     // Multi-frame rendering (MFR) GUI
-    const mfrGroup = settingsGroup.add("group", undefined, "");
+    const mfrGroup = perCompSettingsGroup.add("group", undefined, "");
     mfrGroup.orientation = "column";
     mfrGroup.alignment = ['fill', 'top'];
     mfrGroup.alignChildren = ['left', 'center'];
     mfrGroup.margins = 5;
 
     const mfrCheckBox = mfrGroup.add("checkbox", undefined, "Enable Multi-Frame Rendering");
-    mfrCheckBox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING) === "true";
+    mfrCheckBox.value = DEFAULT_MULTI_FRAME_RENDERING;
 
     const maxCpuUsagePercentageGroup = mfrGroup.add("group", undefined, "");
     maxCpuUsagePercentageGroup.orientation = "row";
@@ -2510,147 +3003,160 @@ function buildUI(thisObj) {
     maxCpuUsagePercentageTextBox.alignment = ['fill', 'top'];
     maxCpuUsagePercentageTextBox.helpTip = maxCpuUsagePercentageLabel.helpTip;
     maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value;
-    maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageTextBox.enabled ? app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE) : "N/A";
-    maxCpuUsagePercentageTextBox.onChange = function() {
+    maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageTextBox.enabled ? DEFAULT_MAX_CPU_USAGE_PERCENTAGE : "N/A";
+
+    function onMaxCpuUsagePercentageChanged() {
         const maxCpuUsagePercentageValue = Math.abs(parseInt(maxCpuUsagePercentageTextBox.text));
         if (isNaN(maxCpuUsagePercentageValue) || maxCpuUsagePercentageValue > 100) {
-            maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
+            maxCpuUsagePercentageTextBox.text = DEFAULT_MAX_CPU_USAGE_PERCENTAGE;
         } else {
             // Need to reassign in case input string is a number followed my random characters
             // since parseInt parses the first number it finds in a provided string.
             maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageValue;
         }
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, maxCpuUsagePercentageTextBox.text);
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
+            uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
+        }
     }
+    maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
 
     // Disable max CPU percentage textbox when multi frame rendering is disabled
-    mfrCheckBox.onClick = function() {
+    function onMfrCheckBoxClicked() {
         const isMfrChecked = mfrCheckBox.value;
-        if (!isMfrChecked) {
-            maxCpuUsagePercentageTextBox.text = "N/A";
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-        } else {
-            maxCpuUsagePercentageTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE);
-            app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "true");
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
+            var RQIID = dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex);
+            if (!isMfrChecked) {
+                maxCpuUsagePercentageTextBox.text = "N/A";
+                uiSettingsState.get(RQIID).setMultiFrameRendering(false);
+            } else {
+                maxCpuUsagePercentageTextBox.text = uiSettingsState.get(RQIID).maxCpuUsagePercentage();
+                uiSettingsState.get(RQIID).setMultiFrameRendering(true);
+            }
         }
         maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
     }
+    mfrCheckBox.onClick = onMfrCheckBoxClicked;
 
-    // Add Timeouts settings group
-    const timeoutsPanel = settingsGroup.add("panel", undefined, "Timeouts");
-    timeoutsPanel.orientation = "column";
-    timeoutsPanel.alignment = ['fill', 'top'];
-    timeoutsPanel.alignChildren = ['left', 'center'];
-    timeoutsPanel.margins = 5;
-
-    // Task run timeout
-    const taskRunGroup = timeoutsPanel.add("group");
-    taskRunGroup.orientation = "row";
-    taskRunGroup.alignment = ['fill', 'top'];
-    taskRunGroup.alignChildren = ['left', 'center'];
-
-    const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
-    taskRunCheckbox.value = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED);
-
-    const taskRunDaysGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS));
-    taskRunDaysInput.characters = 3;
-    taskRunDaysGroup.add("statictext", undefined, "days");
-
-    const taskRunHoursGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS));
-    taskRunHoursInput.characters = 3;
-    taskRunHoursGroup.add("statictext", undefined, "hours");
-
-    const taskRunMinutesGroup = taskRunGroup.add("group", undefined, "");
-    const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES));
-    taskRunMinutesInput.characters = 3;
-    taskRunMinutesGroup.add("statictext", undefined, "minutes");
-
-    // Function to validate timeout values
-    function validateTimeoutValues() {
-        // Check if all values are zero when checkbox is checked
-        if (taskRunCheckbox.value) {
-            var days = parseInt(taskRunDaysInput.text) || 0;
-            var hours = parseInt(taskRunHoursInput.text) || 0;
-            var minutes = parseInt(taskRunMinutesInput.text) || 0;
-
-            if (days === 0 && hours === 0 && minutes === 0) {
-                adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
-                // Set days back to default value of 2
-                taskRunDaysInput.text = "2";
-                app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Add input validation and save values to settings
-    taskRunCheckbox.onClick = function() {
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, dcUtil.toBooleanString(this.value));
-        if (this.value) {
-            validateTimeoutValues();
-        }
-    };
-
-    taskRunDaysInput.onChange = function() {
-        this.text = this.text.replace(/[^0-9]/g, "");
-        if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, this.text);
-        validateTimeoutValues();
-    };
-
-    taskRunHoursInput.onChange = function() {
-        this.text = this.text.replace(/[^0-9]/g, "");
-        if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, this.text);
-        validateTimeoutValues();
-    };
-
-    taskRunMinutesInput.onChange = function() {
-        this.text = this.text.replace(/[^0-9]/g, "");
-        if (this.text === "") this.text = "0";
-        app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, this.text);
-        validateTimeoutValues();
-    };
-
-    // If an image sequence was selected, enable frames per task textbox. Otherwise disable it.
-    function isFramesPerTaskEnabled(selection) {
-        if (selection == null) {
-            return false;
-        }
-        const renderQueueIndex = selection.renderQueueIndex;
-        const rqi = app.project.renderQueue.item(renderQueueIndex);
-        // Currently we only support one output modele. We have sufficient error handling
-        // after submit button is clicked, so this is a sufficient for now
-        if (rqi.numOutputModules == 1) {
-            var outputModule = rqi.outputModule(1).file;
+    function isRenderQueueItemImageOutput(renderQueueItem) {
+        if (renderQueueItem.numOutputModules === 1) {
+            const outputModule = renderQueueItem.outputModule(1).file;
             if (outputModule != null) {
                 const outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
                 const extension = getFileExtension(outputFileNameNoRegex);
                 return isImageOutput(extension);
             }
         }
-        // Default to true so that we don't block any customers in case we can't
-        // sufficiently verify whether they're submitting an image sequence or not
-        return true;
+        return false;
     }
 
-    var submitButton = controlsGroup.add("button", undefined, "Submit");
+    const globalSettingsGroup = controlsPanel.add("panel", undefined, "Global Job Settings");
+    globalSettingsGroup.orientation = "column";
+    globalSettingsGroup.alignment = ['fill', 'top'];
+    globalSettingsGroup.alignChildren = ['left', 'top'];
+    // Add Timeouts settings group
+    const timeoutsPanel = globalSettingsGroup.add("panel", undefined, "Timeouts");
+    timeoutsPanel.orientation = "column";
+    timeoutsPanel.alignment = ['fill', 'top'];
+    timeoutsPanel.alignChildren = ['left', 'center'];
+    timeoutsPanel.margins = 10;
+
+    // Task run timeout
+    const taskRunGroup = timeoutsPanel.add("group");
+    taskRunGroup.orientation = "row";
+    taskRunGroup.alignment = ['fill', 'top'];
+    taskRunGroup.alignChildren = ['left', 'center'];
+    const taskRunCheckbox = taskRunGroup.add("checkbox", undefined, "Task run");
+    taskRunCheckbox.value = uiSettingsState.taskRunTimeoutEnabled();
+
+    const taskRunDaysGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunDaysInput = taskRunDaysGroup.add("edittext", undefined, uiSettingsState.taskRunDays());
+    taskRunDaysInput.characters = 3;
+    taskRunDaysGroup.add("statictext", undefined, "days");
+    taskRunDaysInput.text = uiSettingsState.taskRunDays();
+
+    const taskRunHoursGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunHoursInput = taskRunHoursGroup.add("edittext", undefined, uiSettingsState.taskRunHours());
+    taskRunHoursInput.characters = 3;
+    taskRunHoursGroup.add("statictext", undefined, "hours");
+    taskRunHoursInput.text = uiSettingsState.taskRunHours();
+
+    const taskRunMinutesGroup = taskRunGroup.add("group", undefined, "");
+    const taskRunMinutesInput = taskRunMinutesGroup.add("edittext", undefined, uiSettingsState.taskRunMinutes());
+    taskRunMinutesInput.characters = 3;
+    taskRunMinutesGroup.add("statictext", undefined, "minutes");
+    taskRunMinutesInput.text = uiSettingsState.taskRunMinutes();
+
+    function onTaskRunCheckboxClicked() {
+        if (taskRunCheckbox.value) {
+            if (!dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+                uiSettingsState.setTaskRunDays(DEFAULT_TASK_RUN_TIMEOUT_DAYS);
+                taskRunDaysInput.text = DEFAULT_TASK_RUN_TIMEOUT_DAYS;
+                uiSettingsState.setTaskRunHours(DEFAULT_TASK_RUN_TIMEOUT_HOURS);
+                taskRunHoursInput.text = DEFAULT_TASK_RUN_TIMEOUT_HOURS;
+                uiSettingsState.setTaskRunMinutes(DEFAULT_TASK_RUN_TIMEOUT_MINUTES);
+                taskRunMinutesInput.text = DEFAULT_TASK_RUN_TIMEOUT_MINUTES;
+            } else {
+                onTaskRunDaysChanged();
+                onTaskRunHoursChanged();
+                onTaskRunMinutesChanged();
+            }
+        }
+        taskRunDaysInput.enabled = taskRunCheckbox.value;
+        taskRunHoursInput.enabled = taskRunCheckbox.value;
+        taskRunMinutesInput.enabled = taskRunCheckbox.value;
+        uiSettingsState.setTaskRunTimeoutEnabled(taskRunCheckbox.value);
+    }
+    taskRunCheckbox.onClick = onTaskRunCheckboxClicked;
+    onTaskRunCheckboxClicked();
+
+    function onTaskRunDaysChanged() {
+        taskRunDaysInput.text = taskRunDaysInput.text.replace(/[^0-9]/g, "");
+        var newValue = parseInt(taskRunDaysInput.text);
+        if (taskRunDaysInput.text === "") newValue = 0;
+        if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (!isNaN(newValue)) {
+                uiSettingsState.setTaskRunDays(newValue);
+            }
+        }
+        taskRunDaysInput.text = uiSettingsState.taskRunDays();
+    }
+    taskRunDaysInput.onChange = onTaskRunDaysChanged;
+
+    function onTaskRunHoursChanged() {
+        taskRunHoursInput.text = taskRunHoursInput.text.replace(/[^0-9]/g, "");
+        var newValue = parseInt(taskRunHoursInput.text);
+        if (taskRunHoursInput.text === "") newValue = 0;
+        if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (!isNaN(newValue)) {
+                uiSettingsState.setTaskRunHours(newValue);
+            }
+        }
+        taskRunHoursInput.text = uiSettingsState.taskRunHours();
+    }
+    taskRunHoursInput.onChange = onTaskRunHoursChanged;
+
+    function onTaskRunMinutesChanged() {
+        taskRunMinutesInput.text = taskRunMinutesInput.text.replace(/[^0-9]/g, "");
+        var newValue = parseInt(taskRunMinutesInput.text);
+        if (taskRunMinutesInput.text === "") newValue = 0;
+        if (dcUtil.validateTimeoutValues(taskRunCheckbox.value, taskRunDaysInput.text, taskRunHoursInput.text, taskRunMinutesInput.text)) {
+            if (!isNaN(newValue)) {
+                uiSettingsState.setTaskRunMinutes(newValue);
+            }
+        }
+        taskRunMinutesInput.text = uiSettingsState.taskRunMinutes();
+    }
+    taskRunMinutesInput.onChange = onTaskRunMinutesChanged;
+
+    const submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function() {
         if (getPythonExecutable()) {
-            const multiFrameRendering = mfrCheckBox.value ? "ON" : "OFF";
-            var maxCpuUsagePercentage = undefined;
-            if (mfrCheckBox.value) {
-                maxCpuUsagePercentage = parseInt(maxCpuUsagePercentageTextBox.text)
+            if (list.selection === null) {
+                return;
             }
-            if (taskRunCheckbox.value) {
-                SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, parseInt(taskRunDaysInput.text), parseInt(taskRunHoursInput.text), parseInt(taskRunMinutesInput.text));
-            }
-            else {
-                SubmitSelection(list.selection, parseInt(framesPerTaskTextBox.text), multiFrameRendering, maxCpuUsagePercentage, 2, 0, 0);
-            }
+            SubmitSelection(list.selection, uiSettingsState);
             list.selection = null;
         }
     }
@@ -2658,15 +3164,25 @@ function buildUI(thisObj) {
     submitButton.enabled = false;
 
     function updateList() {
-        var bounds = list == null ? undefined : list.bounds;
-        var newList = listGroup.add("listbox", bounds, "", {
+        const bounds = list == null ? undefined : list.bounds;
+        const newList = listGroup.add("listbox", bounds, "", {
+            multiselect: true,
             numberOfColumns: 4,
             showHeaders: true,
             columnTitles: ['#', 'Name', 'Frames', 'Output Path'],
             columnWidths: [32, 160, 120, 240],
         });
-        newList.preferredSize.height = 400
-        newList.preferredSize.width = 500
+        newList.preferredSize.height = 200;
+        newList.preferredSize.width = 500;
+
+        // Disable all controls if the render queue is empty
+        // This forces the user to click "refresh" when a new project is opened and populate the list
+        controlsGroup.enabled = app.project.renderQueue.numItems > 0;
+        // Also populate timeout settings because the values could be stale if a new project has been opened since the last refresh
+        taskRunDaysInput.text = uiSettingsState.taskRunDays();
+        taskRunHoursInput.text = uiSettingsState.taskRunHours();
+        taskRunMinutesInput.text = uiSettingsState.taskRunMinutes();
+
         for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
             var rqi = app.project.renderQueue.item(i);
             if (rqi == null) {
@@ -2678,11 +3194,15 @@ function buildUI(thisObj) {
             var item = newList.add('item', i.toString());
             item.renderQueueIndex = i;
             item.compId = rqi.comp.id;
+            // Create a default entry for each comp as needed.
+            uiSettingsState.get(i);
             item.subItems[0].text = rqi.comp.name;
+
             // Calculate frame range using the utility function
             var frameRange = dcUtil.calculateFrameRange(rqi);
             var startFrame = frameRange.startFrame;
             var endFrame = frameRange.endFrame;
+
             item.subItems[1].text = startFrame == endFrame ? startFrame.toString() : startFrame + "-" + endFrame;
             if (rqi.numOutputModules <= 0) {
                 item.subItems[2].text = "<not set>";
@@ -2694,35 +3214,65 @@ function buildUI(thisObj) {
             }
         }
 
+        dcUtil.deleteUnusedMetadata(uiSettingsState.rqiXmpPath);
+
         if (list != null) {
             listGroup.remove(list);
         }
         list = newList;
-        list.onChange = function() {
-            framesPerTaskTextBox.enabled = isFramesPerTaskEnabled(list.selection);
-            // If no selection, update list and set text box blank. But if there's a selection
-            // and frames per task is disabled, fill textbox with default start-end frame to show that
-            // no image chunking will occur. But if there is a selection and frames per task is enabled,
-            // set it to their default value.
-            if (list.selection == null) {
-                updateList();
-                framesPerTaskTextBox.text = "";
-            } else if (!framesPerTaskTextBox.enabled) {
-                framesPerTaskTextBox.text = list.selection.subItems[1].text;
+
+        function onSelectionChange() {
+            const selection = list.selection;
+            perCompSettingsGroup.enabled = false;
+
+            framesPerTaskTextBox.text = "";
+            mfrCheckBox.value = false;
+            maxCpuUsagePercentageTextBox.text = "";
+
+            if (selection === null) {
+                submitButton.enabled = false;
             } else {
-                framesPerTaskTextBox.text = app.settings.getSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK);
+                submitButton.enabled = true;
             }
 
-            submitButton.enabled = list.selection != null;
-            submitButton.active = false;
-            submitButton.active = true;
-        };
+            if (selection === null || selection.length !== 1) {
+                return;
+            }
+            const selectionItem = selection[0];
+            perCompSettingsGroup.enabled = true;
+            logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
+
+            const settings = uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex));
+            if (settings === undefined) {
+                logger.warning("Could not find settings for : " + selectionItem.compId);
+                return;
+            }
+
+            const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex));
+            if (imageOutput) {
+                framesPerTaskTextBox.text = settings.framesPerTask();
+                framesPerTaskTextBox.enabled = true;
+                framesPerTaskTextBox.onChange();
+            } else {
+                framesPerTaskTextBox.text = "Selection is not image sequence";
+                framesPerTaskTextBox.enabled = false;
+            }
+            maxCpuUsagePercentageTextBox.text = settings.maxCpuUsagePercentage();
+            maxCpuUsagePercentageTextBox.onChange();
+            mfrCheckBox.value = settings.multiFrameRendering();
+            mfrCheckBox.onClick();
+        }
+        list.onChange = onSelectionChange;
         list.selection = null;
+        onSelectionChange();
     }
 
     updateList();
-    framesPerTaskTextBox.enabled = isFramesPerTaskEnabled(list.selection);
-
+    if (list.selection != null && list.selection.length === 1) {
+        const selectionItem = list.selection[0];
+        const renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex);
+        framesPerTaskTextBox.enabled = isRenderQueueItemImageOutput(renderQueueItem);
+    }
     refreshButton.onClick = function() {
         updateList();
     }
@@ -2733,7 +3283,7 @@ function buildUI(thisObj) {
         this.layout.resize();
     }
     if (!(thisObj instanceof Panel)) {
-        submitterPanel.center()
+        submitterPanel.center();
         submitterPanel.show();
         submitterPanel.update();
     }
@@ -2743,7 +3293,7 @@ function buildUI(thisObj) {
 
 
 function isSecurityPrefSet() {
-    var securitySetting = app.preferences.getPrefAsLong(
+    const securitySetting = app.preferences.getPrefAsLong(
         "Main Pref Section",
         "Pref_SCRIPTING_FILE_NETWORK_SECURITY"
     );
@@ -2754,7 +3304,7 @@ if (isSecurityPrefSet()) {
     buildUI(this);
 } else {
     //Print an error message and instructions for changing security preferences
-    var submitterPanel =
+    const submitterPanel =
         this instanceof Panel ?
         this :
         new Window(
@@ -2765,11 +3315,11 @@ if (isSecurityPrefSet()) {
                 closeButton: true,
             }
         );
-    var root = submitterPanel.add("group");
+    const root = submitterPanel.add("group");
     root.orientation = "column";
     root.alignment = ["fill", "fill"];
     root.alignChildren = ["fill", "top"];
-    var errorText = root.add("statictext", undefined, "", {
+    const errorText = root.add("statictext", undefined, "", {
         multiline: true,
     });
     errorText.graphics.foregroundColor = errorText.graphics.newPen(
@@ -2778,7 +3328,7 @@ if (isSecurityPrefSet()) {
         1
     );
     errorText.text = "Update Script Permissions";
-    var errorText2 = root.add("statictext", undefined, "", {
+    const errorText2 = root.add("statictext", undefined, "", {
         multiline: true,
     });
     errorText2.text = [
