@@ -2,7 +2,7 @@ var jobTemplateHelperFile = "JobTemplateHelper.json";
 /**
  * Generates the basic parameterValue file for the job template
  **/
-function parameterValues(
+function generateParameterValues(
     renderQueueIndex,
     projectFile,
     outputDir,
@@ -12,58 +12,39 @@ function parameterValues(
     endFrame,
     chunkSize,
     multiFrameRendering,
-    maxCpuUsagePercentage
+    maxCpuUsagePercentage,
+    prefix
 ) {
-    var parameterValuesList = [{
-            name: "deadline:targetTaskRunStatus",
-            value: "READY",
-        },
-        {
-            name: "deadline:maxFailedTasksCount",
-            value: 20,
-        },
-        {
-            name: "deadline:maxRetriesPerTask",
-            value: 5,
-        },
-        {
-            name: "deadline:priority",
-            value: 50,
-        },
-        {
-            name: "ProjectFile",
-            value: projectFile,
-        },
-        {
-            name: "RenderQueueIndex",
+    const parameterValuesList = [{
+            name: prefix + "_RenderQueueIndex",
             value: renderQueueIndex,
         },
         {
-            name: "OutputDir",
+            name: prefix + "_OutputDir",
             value: outputDir,
         },
         {
-            name: "OutputFileName",
+            name: prefix + "_OutputFileName",
             value: outputFileName,
         },
         {
-            name: "Frames",
+            name: prefix + "_Frames",
             value: startFrame.toString() + "-" + endFrame.toString(),
         },
         {
-            name: "MultiFrameRendering",
-            value: multiFrameRendering,
+            name: prefix + "_MultiFrameRendering",
+            value: multiFrameRendering === true ? "ON" : "OFF",
         },
     ];
     if (maxCpuUsagePercentage) {
         parameterValuesList.push({
-            name: "MaxCpuUsagePercentage",
+            name: prefix + "_MaxCpuUsagePercentage",
             value: maxCpuUsagePercentage,
-        })
+        });
     }
     if (isImageSeq) {
         parameterValuesList.push({
-            name: "ChunkSize",
+            name: prefix + "_ChunkSize",
             value: chunkSize,
         });
     }
@@ -99,11 +80,11 @@ function findJobAttachments(rootComp) {
     if (rootComp == null) {
         return [];
     }
-    var attachments = [];
-    var exploredItems = {}; // using this object as a set because AE doesn't support sets
+    const attachments = [];
+    const exploredItems = {}; // using this object as a set because AE doesn't support sets
     attachments.push(app.project.file.fsName);
     exploredItems[rootComp.id] = true;
-    var queue = [rootComp];
+    const queue = [rootComp];
     while (queue.length > 0) {
         var comp = queue.pop();
         var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
@@ -145,7 +126,7 @@ function findJobAttachments(rootComp) {
         }
     }
 
-    var fontsInProject = getFontsFromFile();
+    const fontsInProject = getFontsFromFile();
 
     if (fontsInProject.length > 0) {
         // Notify the user if any fonts are missing or are substituted during the session.
@@ -155,7 +136,7 @@ function findJobAttachments(rootComp) {
             adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString(), false);
         }
         // Formatting collected fonts
-        var fontReferences = generateFontReferences(fontsInProject);
+        const fontReferences = generateFontReferences(fontsInProject);
         for (var i = 0; i < fontReferences.length; i++) {
             attachments.push(fontReferences[i]);
         }
@@ -172,7 +153,7 @@ function getFontsFromFile() {
     var fontLocations = [];
     // app.project.usedFonts was introduced in 24.5. Fall back to scanning text layers if version is older
     if (dcUtil.getAEVersion() >= 24.5) {
-        var usedList = app.project.usedFonts;
+        const usedList = app.project.usedFonts;
         for (var i = 0; i < usedList.length; i++) {
             var font = usedList[i].font;
             var fontPostScriptName = font.postScriptName;
@@ -201,7 +182,7 @@ function getFontsFromFile() {
  * @return String with executable name corresponding to Python 3, or an empty string if not found
  **/
 function getPythonExecutable() {
-    var pythonExecutables = ["python3", "python", "py"];
+    const pythonExecutables = ["python3", "python", "py"];
 
     for (var i = 0; i < pythonExecutables.length; i++) {
         // Search for python executable
@@ -242,7 +223,7 @@ function getPythonExecutable() {
     }
 
     // If reaching here, this means python version was too low or executable was not found
-    var errorMessage =
+    const errorMessage =
         "Error: Couldn't find Python 3 or higher on your PATH.\n" +
         "\n" +
         "Please ensure that Python 3 or higher is installed correctly and added to your PATH.";
@@ -258,12 +239,12 @@ function getPythonExecutable() {
 function getFontPaths() {
     var errorMessage = "";
     // Ensure Python exists and is at least version 3
-    var pythonExecutable = getPythonExecutable();
+    const pythonExecutable = getPythonExecutable();
     if (!pythonExecutable) {
         return null;
     }
-    var scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
-    var scriptFile = new File(scriptPath);
+    const scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
+    const scriptFile = new File(scriptPath);
     if (!scriptFile.exists) {
         errorMessage =
             "Error: Missing font script at " + scriptFile.fsName + "\n" +
@@ -275,7 +256,7 @@ function getFontPaths() {
 
     var output = {};
     try {
-        var outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\"");
+        const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\"");
         output = JSON.parse(outputRaw);
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
@@ -305,7 +286,7 @@ function getLocationForFont(fontPostScriptName) {
     var fontPath = null;
     try {
         // Get user-installed fonts
-        var fontPaths = getFontPaths();
+        const fontPaths = getFontPaths();
         if (!fontPaths) {
             return null;
         }
@@ -328,16 +309,16 @@ function getLocationForFont(fontPostScriptName) {
  **/
 function createFontFilename(fontLocation, fontPostScriptName) {
     var fileExtension = "";
-    var lastDotIndex = fontLocation.lastIndexOf('.');
-    var extensionRegex = /\.[a-zA-Z]+$/;
+    const lastDotIndex = fontLocation.lastIndexOf('.');
+    const extensionRegex = /\.[a-zA-Z]+$/;
 
     var fontName = "";
 
     var validExtension = true;
-    var fontExtensions = [".otf", ".ttf"];
+    const fontExtensions = [".otf", ".ttf"];
 
     // Windows also supports .fon files
-    var os = $.os.toLowerCase();
+    const os = $.os.toLowerCase();
     if (os.indexOf("windows") !== -1) {
         fontExtensions.push(".fon");
     }
@@ -345,7 +326,7 @@ function createFontFilename(fontLocation, fontPostScriptName) {
     // Some Adobe Fonts files have a dot followed by numbers as its name with no extension (e.g. ".52741")
     if (extensionRegex.test(fontLocation)) {
         fileExtension = fontLocation.substring(lastDotIndex).toLowerCase();
-        var fontExtensionsAsString = fontExtensions.toString();
+        const fontExtensionsAsString = fontExtensions.toString();
         if (fontExtensionsAsString.indexOf(fileExtension) == -1) {
             adcAlert(
                 "font with an unsupported extension '" + fileExtension +
@@ -368,8 +349,8 @@ function createFontFilename(fontLocation, fontPostScriptName) {
  * @return an array of font metadata, each item containing the font's temp copy name and the actual location of that font file
  **/
 function getFontsFromFileLegacy() {
-    var fontLocations = [];
-    var items = app.project.items;
+    const fontLocations = [];
+    const items = app.project.items;
     for (var i = items.length; i >= 1; i--) {
         var item = app.project.item(i);
         // Only look at CompItems
@@ -445,9 +426,9 @@ function getFontsFromFileLegacy() {
  **/
 function generateFontReferences(fontPaths) {
     // Create a temp folder where all used fonts get gathered
-    var _tempFontsFolder = dcUtil.normPath(dcUtil.getTempFolder() + '/' + "tempFonts");
-    var formattedFontsPaths = [];
-    var tempFontPath = new Folder(_tempFontsFolder);
+    const _tempFontsFolder = dcUtil.normPath(dcUtil.getTempFolder() + '/' + "tempFonts");
+    const formattedFontsPaths = [];
+    const tempFontPath = new Folder(_tempFontsFolder);
     if (!tempFontPath.exists) {
         tempFontPath.create();
     }

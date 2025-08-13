@@ -1,16 +1,82 @@
+if (ExternalObject.AdobeXMPScript == undefined) {
+    ExternalObject.AdobeXMPScript = new ExternalObject("lib:AdobeXMPScript");
+}
+
 var scriptFolder = Folder.current.fsName;
 
+// Global constants, wrapped with if-blocks to ensure they are only defined once
+// to avoid errors due to redeclaration
+// Note that once these values have been set their values will persist until Aftereffects is relaunched,
+// So make sure to restart Aftereffects is you change them
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
+}
+if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
+    const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
+}
+if (typeof SUPPORTED_VERSIONS === "undefined") {
+    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
+}
+if (typeof DEADLINECLOUD_SETTINGS_ROOT === "undefined") {
+    const DEADLINECLOUD_SETTINGS_ROOT = "xmp:DeadlineCloudSubmitter";
+}
+if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
+    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
+}
+if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
+    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
+}
+if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
+    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
+}
+if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
+}
+if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+    const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_ENABLED = true;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_DAYS === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_DAYS = 2;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_HOURS === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_HOURS = 0;
+}
+if (typeof DEFAULT_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
+    const DEFAULT_TASK_RUN_TIMEOUT_MINUTES = 0;
+}
+if (typeof DEFAULT_FRAMESPERTASK === "undefined") {
+    const DEFAULT_FRAMESPERTASK = 10;
+}
+if (typeof DEFAULT_MULTI_FRAME_RENDERING === "undefined") {
+    const DEFAULT_MULTI_FRAME_RENDERING = false;
+}
+if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
+    const DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90;
+}
+
 function readFile(filePath) {
-    var f = new File(filePath);
+    const f = new File(filePath);
     f.encoding = "UTF-8";
     f.open("r");
-    var fileContents = f.read();
+    const fileContents = f.read();
     f.close();
     return fileContents;
 }
 
 function writeFile(filePath, fileContents) {
-    var f = new File(filePath);
+    const f = new File(filePath);
     f.encoding = "UTF-8";
     f.open("w");
     f.write(fileContents);
@@ -19,7 +85,7 @@ function writeFile(filePath, fileContents) {
 }
 
 function sanitizeOutputs(outputPaths) {
-    var sanitized = [];
+    const sanitized = [];
     var sanitizedPath = "";
     for (var i = 0; i < outputPaths.length; i++) {
         sanitizedPath = sanitizeFilePath(outputPaths[i]);
@@ -107,9 +173,16 @@ function adcAlert(message, errorIcon) {
     alert(message, "Deadline Cloud Submitter", errorIcon);
 }
 
+function validateType(item, itemType) {
+    var actualType = typeof item;
+    if (actualType !== itemType) {
+        throw new Error("Object has type " + actualType + " instead of desired type " + itemType);
+    }
+}
+
 function __generateUtil() {
 
-    var scriptFileUtilName = "Util.jsx";
+    const scriptFileUtilName = "Utils.jsx";
 
 
     function toBooleanString(value) {
@@ -137,6 +210,105 @@ function __generateUtil() {
         return false;
     }
 
+    /**
+     * Appends stem to existing XMP path
+     * @param {String} root
+     * @param {String} stem
+     * @returns {String}
+     */
+    function composeXMPPath(root, stem) {
+        return root + "/xmp:" + stem;
+    }
+
+    /**
+     * Saves item to project's XMP Metadata
+     * @param {String} key
+     * @param {*} value
+     * @param {String} [type] Optional data type for value. These are enumerated in XMPConst.
+     */
+    function saveToMetadata(key, value, type) {
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        metadata.setProperty(XMPConst.NS_XMP, key, value, type);
+        app.project.xmpPacket = metadata.serialize();
+    }
+
+    /**
+     * Checks if item with given key exists in project's XMPMetadata
+     * @param {String} key
+     * @returns {boolean}
+     */
+    function metadataKeyExists(key) {
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        return metadata.getProperty(XMPConst.NS_XMP, key) !== undefined;
+    }
+
+    /**
+     * Loads value from project's XMP metadata
+     * @param {String} key
+     * @param {*} [defaultValue] If value with given key doesn't exist in the XMPMetadata yet, a new one will be created with this value and the new value will be returned
+     * @param {String} [type] Optionally specify type of object being stored. These are enumerated in XMPConst
+     * @returns {XMPProperty} Returns property if it exists, or defaultValue if it doesn't, or throws an error if no defaultValue is defined and property doesn't exist.
+     */
+    function loadFromMetadata(key, defaultValue, type) {
+        if (!metadataKeyExists(key)) {
+            if (defaultValue !== undefined) {
+                saveToMetadata(key, defaultValue, type);
+            } else {
+                throw Error("Key '" + key + "' does not exist in project XMP Metadata, and no default value is set.")
+            }
+        }
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        return metadata.getProperty(XMPConst.NS_XMP, key, type).value;
+    }
+
+    function saveBoolMetadata(keyName, value) {
+        /**
+         * Sets boolean value in app settings
+         */
+        validateType(value, "boolean");
+        saveToMetadata(keyName, value, XMPConst.BOOLEAN);
+    }
+
+    function getBoolMetadata(keyName, defaultValue) {
+        /**
+         * Gets boolean value from app settings, or sets it to the default value if no setting exists.
+         * Set defaultValue to undefined to error on missing setting
+         */
+        return loadFromMetadata(keyName, defaultValue, XMPConst.BOOLEAN)
+    }
+
+    function saveNumberMetadata(keyName, value) {
+        /**
+         * Sets integer value in app settings
+         */
+        validateType(value, "number");
+        saveToMetadata(keyName, value, XMPConst.NUMBER);
+    }
+
+    function getNumberMetadata(keyName, defaultValue) {
+        /**
+         * Gets number value from app settings, or sets defaultValue if setting does not exist
+         * Set defaultValue to undefined to error on missing setting
+         */
+        return loadFromMetadata(keyName, defaultValue, XMPConst.NUMBER);
+    }
+
+    function saveStringMetadata(keyName, value) {
+        /**
+         * Sets string in app settings
+         */
+        validateType(value, "string");
+        saveToMetadata(keyName, defaultValue, XMPConst.STRING);
+    }
+
+    function getStringMetadata(keyName, defaultValue) {
+        /**
+         * Gets string value from app settings, or sets defaultValue if setting does not exist
+         * Set defaultValue to undefined to error on missing setting
+         */
+        return loadFromMetadata(keyName, defaultValue, XMPConst.STRING);
+    }
+
     function trimIllegalChars(stringToTrim) {
         /**
          * Trims certain characters out of a given string
@@ -155,8 +327,8 @@ function __generateUtil() {
          * @param {int} minValue - Minimum value that the slider/edittext can have.
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
-        textObj.onChange = function() {
-            var newValue = parseFloat(textObj.text);
+        textObj.onChange = function () {
+            const newValue = parseFloat(textObj.text);
             if (!isNaN(newValue) && newValue >= minValue && newValue <= maxValue) {
                 sliderObj.value = newValue;
                 logger.log("Changed editText(" + textObj.name + ") value to: " + newValue, scriptFileUtilName, LOG_LEVEL.DEBUG);
@@ -164,7 +336,7 @@ function __generateUtil() {
         }
 
 
-        sliderObj.onChange = function() {
+        sliderObj.onChange = function () {
             textObj.text = Math.round(this.value);
             logger.log("Changed sliderObject(" + sliderObj.name + ") value to: " + Math.round(this.value), scriptFileUtilName, LOG_LEVEL.DEBUG);
         }
@@ -178,7 +350,7 @@ function __generateUtil() {
          * @param {int} minValue - Minimum value that the slider/edittext can have.
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
-        var sliderValue = Math.round(sliderObj.value);
+        const sliderValue = Math.round(sliderObj.value);
         if (!isNaN(sliderValue) && sliderValue >= minValue && sliderValue <= maxValue) {
             textObj.text = sliderValue;
         }
@@ -194,7 +366,7 @@ function __generateUtil() {
          * @param {int} maxValue - Maximum value that the slider/edittext can have
          */
 
-        var newValue = parseFloat(textObj.text);
+        const newValue = parseFloat(textObj.text);
         if (newValue < minValue) {
             textObj.text = minValue;
             sliderObj.value = minValue;
@@ -228,7 +400,7 @@ function __generateUtil() {
          */
         maxValue.text = maxValue.text.replace(/[^\d]/g, '');
         if (parseInt(maxValue.text) < parseInt(minValue.text)) {
-            maxValue.text = minValue.text
+            maxValue.text = minValue.text;
         }
     }
 
@@ -251,7 +423,7 @@ function __generateUtil() {
          * @param {Object} listBox - Source object to retrieve data from.
          * Returns array with assets available in the scene.
          */
-        var _assetsList = []
+        const _assetsList = []
         for (var i = 0; i < listBox.items.length; i++) {
             _assetsList.push(listBox.items[i].text);
         }
@@ -300,7 +472,7 @@ function __generateUtil() {
          * Inverts a given JavaScript object.
          * Only inverts the first level, does not handle nested objects properly.
          */
-        var ret = {};
+        const ret = {};
         for (var key in jsObject) {
             ret[jsObject[key]] = key;
         }
@@ -311,8 +483,8 @@ function __generateUtil() {
         /**
          * Return File instance from temporary directory with the given name.
          */
-        var _tempFilePath = normalizePath(getTempFolder() + "/" + fileName);
-        var _tempFile = File(_tempFilePath);
+        const _tempFilePath = normalizePath(getTempFolder() + "/" + fileName);
+        const _tempFile = File(_tempFilePath);
         return _tempFile;
     }
 
@@ -358,7 +530,7 @@ function __generateUtil() {
             }
 
             // Create and write to a test file to make sure we have write permissions
-            const file = new File(folder.fsName + testFileSuffix);
+            var file = new File(folder.fsName + testFileSuffix);
             file.open("w");
             file.writeln("test");
             file.close();
@@ -399,17 +571,17 @@ function __generateUtil() {
 
     function _wrappedCallSystemWindows(cmd) {
 
-        var tempOutputFile = getTempFile("deadline_cloud_ae_pipe.txt");
-        var tempBootstrapBatFile = getTempFile("aeCallSystemBootstrap.bat");
-        var tempBatFile = getTempFile("aeCallSystem.bat");
+        const tempOutputFile = getTempFile("deadline_cloud_ae_pipe.txt");
+        const tempBootstrapBatFile = getTempFile("aeCallSystemBootstrap.bat");
+        const tempBatFile = getTempFile("aeCallSystem.bat");
         logger.debug("Command output path: " + tempOutputFile.fsName, scriptFileUtilName);
         _makeBootstrapBatFile(tempBootstrapBatFile, tempBatFile);
         // Wrapped command with error code output
         cmd = cmd + " > " + tempOutputFile.fsName;
-        cmd += "\nIF %ERRORLEVEL% NEQ 0 ("
-        cmd += "\n echo ERROR CODE: %ERRORLEVEL% >> " + tempOutputFile.fsName
-        cmd += "\n)"
-        cmd += "\nexit"
+        cmd += "\nIF %ERRORLEVEL% NEQ 0 (";
+        cmd += "\n echo ERROR CODE: %ERRORLEVEL% >> " + tempOutputFile.fsName;
+        cmd += "\n)";
+        cmd += "\nexit";
         tempBatFile.open("w");
         tempBatFile.writeln(cmd);
         tempBatFile.close();
@@ -420,12 +592,12 @@ function __generateUtil() {
         logger.debug(cmd, scriptFileUtilName);
         // Call bootstrap script and return result via intermediary file.
         system.callSystem(tempBootstrapBatFile.fsName);
-        var output = system.callSystem("cmd /c \"type " + tempOutputFile.fsName + "\"");
+        const output = system.callSystem("cmd /c \"type " + tempOutputFile.fsName + "\"");
         return output;
     }
 
     function _makeBootstrapBatFile(bootstrapFile, tempFile) {
-        var _cmd = "@echo off" + "\nstart /min /wait " + tempFile.fsName + "\nexit"
+        const _cmd = "@echo off" + "\nstart /min /wait " + tempFile.fsName + "\nexit";
         bootstrapFile.open("w");
         bootstrapFile.writeln(_cmd);
         bootstrapFile.close();
@@ -448,12 +620,12 @@ function __generateUtil() {
         var result = "";
         var message = "";
         var return_code = 0;
-        var errorIndex = output.indexOf("ERROR CODE:");
+        const errorIndex = output.indexOf("ERROR CODE:");
         if (errorIndex !== -1) {
             // Extract the word and everything behind it
             result = output.substring(errorIndex);
             message = cmd + " Failed. Error has occurred.";
-            var regex = /ERROR CODE:(.*)/;
+            const regex = /ERROR CODE:(.*)/;
             return_code = regex.exec(result);
             return {
                 "return_code": return_code,
@@ -462,7 +634,7 @@ function __generateUtil() {
             }
         }
         result = "";
-        message = cmd + " Successful."
+        message = cmd + " Successful.";
         return {
             "return_code": return_code,
             "message": message,
@@ -477,14 +649,14 @@ function __generateUtil() {
          * [MAJOR, MINOR, PATCH]
          */
         // Regular expression to match "version " followed by version number
-        var regex = /version\s+(\d+)\.(\d+)\.(\d+)/i;
+        const regex = /version\s+(\d+)\.(\d+)\.(\d+)/i;
 
         // Test if the inputString matches the pattern
-        var parsedVersionNumberOutput = output.match(regex);
+        const parsedVersionNumberOutput = output.match(regex);
 
         // Output the result
         if (parsedVersionNumberOutput) {
-            var versionNumbers = [
+            const versionNumbers = [
                 parseInt(parsedVersionNumberOutput[1]), // Major
                 parseInt(parsedVersionNumberOutput[2]), // Minor
                 parseInt(parsedVersionNumberOutput[3]) // Path
@@ -503,8 +675,8 @@ function __generateUtil() {
          * @param {string} fileName: Job name
          * Returns export directory
          */
-        var partialDir = getPartialExportDir(exportBundleDir);
-        var dir = getPath(partialDir, fileName, exportBundleDir);
+        const partialDir = getPartialExportDir(exportBundleDir);
+        const dir = getPath(partialDir, fileName, exportBundleDir);
         return dir.fsName;
     }
 
@@ -540,23 +712,23 @@ function __generateUtil() {
 
     function getPath(toCheckDir, fileName, rootDir) {
         // 1. Find highest sequence number used for today.
-        var splitDir = toCheckDir.split("//");
-        var toCheckFolderName = splitDir[splitDir.length - 1];
-        var parentDir = toCheckDir.replace(toCheckFolderName, "");
-        var mainDir = new Folder(parentDir);
-        var subFolders = mainDir.getFiles();
-        var regex = new RegExp(toCheckFolderName + "(\\d+)-.*");
+        const splitDir = toCheckDir.split("//");
+        const toCheckFolderName = splitDir[splitDir.length - 1];
+        const parentDir = toCheckDir.replace(toCheckFolderName, "");
+        const mainDir = new Folder(parentDir);
+        const subFolders = mainDir.getFiles();
+        const regex = new RegExp(toCheckFolderName + "(\\d+)-.*");
         var maxSeqNumber = 0;
         var folderName = "";
         for (var idx = 0; idx < subFolders.length; idx++) {
-            folderName = subFolders[idx].fullName
-            var match = folderName.match(regex)
+            folderName = subFolders[idx].fullName;
+            var match = folderName.match(regex);
             if (!match) {
                 continue;
             }
             var seqNr = parseInt(match[1]) // Convert first capture group to int
             if (seqNr > maxSeqNumber) {
-                maxSeqNumber = seqNr
+                maxSeqNumber = seqNr;
             }
         }
         // 2. Create new export directory with next sequence number
@@ -565,28 +737,28 @@ function __generateUtil() {
         if (nextSeqNumber < 10) {
             nextSeqNumber = "0" + nextSeqNumber;
         }
-        var folder = new Folder(toCheckDir + nextSeqNumber + "-AfterEffects-" + fileName);
+        const folder = new Folder(toCheckDir + nextSeqNumber + "-AfterEffects-" + fileName);
         if (!folder.exists) {
             folder.create();
         }
         return folder;
     }
 
-    function getPartialExportDir(job_history_dir) {
+    function getPartialExportDir(jobHistoryDir) {
         /**
          * Creates string with correct name and format to be used in job history directory creation.
-         * @param {string} job_history_dir: Directory where job bundles is written to on submission.
+         * @param {string} jobHistoryDir: Directory where job bundles is written to on submission.
          * Returns partial job history directory.
          */
-        var currentDate = new Date();
-        var year = currentDate.getFullYear();
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
         // Zero pad all integers to a length of 2
-        var month = ("0" + (currentDate.getMonth() + 1)).slice(-2); // Months are zero-based
-        var day = ("0" + currentDate.getDate()).slice(-2);
+        const month = ("0" + (currentDate.getMonth() + 1)).slice(-2); // Months are zero-based
+        const day = ("0" + currentDate.getDate()).slice(-2);
         // Create the formatted string
-        var formattedYearMonth = year + '-' + month;
-        var formattedDate = year + '-' + month + '-' + day;
-        var dir = job_history_dir + "//" + formattedYearMonth + "//" + formattedDate + "-";
+        const formattedYearMonth = year + '-' + month;
+        const formattedDate = year + '-' + month + '-' + day;
+        const dir = jobHistoryDir + "//" + formattedYearMonth + "//" + formattedDate + "-";
         return dir;
     }
 
@@ -658,7 +830,7 @@ function __generateUtil() {
         }
 
         if (obj instanceof Array) {
-            var copyArray = [];
+            const copyArray = [];
             for (var i = 0; i < obj.length; i++) {
                 copyArray[i] = deepCopy(obj[i]);
             }
@@ -666,7 +838,7 @@ function __generateUtil() {
         }
 
         if (obj instanceof Object) {
-            var copyObject = {};
+            const copyObject = {};
             for (var key in obj) {
                 if (obj.hasOwnProperty(key)) {
                     copyObject[key] = deepCopy(obj[key]);
@@ -685,7 +857,7 @@ function __generateUtil() {
         // If submit layers pressed -> itemName is not comp name and therefore comp will not be found with render command
         // Check if itemName is an available comp in the project, if not, it is a layer submission
         var comp = itemName;
-        var compList = [];
+        const compList = [];
         for (var i = 1; i <= app.project.rootFolder.items.length; i++) {
             var item = app.project.rootFolder.items[i];
 
@@ -700,7 +872,7 @@ function __generateUtil() {
     }
 
     function normalizePath(path) {
-        var _file = new File(path);
+        const _file = new File(path);
         if (system.osName == "MacOS") {
             _file.changePath(_file.fsName.replace(/\\/g, "/"));
             return _file.fsName;
@@ -715,7 +887,7 @@ function __generateUtil() {
     }
 
     function removeIllegalCharacters(inputString) {
-        var outputString = inputString.replace(/[.\-\s]/g, "_");
+        const outputString = inputString.replace(/[.\-\s]/g, "_");
 
         return outputString;
     }
@@ -724,14 +896,13 @@ function __generateUtil() {
      * Replace %20 percentage back to space from the file name for Windows os.
      */
     function removePercentageFromFileName(fileName) {
-        var fileName = fileName.replace(/%20/g, " ");
-        return fileName;
+        return fileName.replace(/%20/g, " ");
     }
 
     function getUserDirectory() {
         /* Return OS specific user home directory. */
         if (system.osName == "MacOS") {
-            return $.getenv("HOME")
+            return $.getenv("HOME");
         }
         // Windows:
         return $.getenv("USERPROFILE");
@@ -741,7 +912,7 @@ function __generateUtil() {
         /* Return After Effects version as float. */
         const versionAsString = app.version.substring(0, 4);
         const version = parseFloat(versionAsString);
-        return version
+        return version;
     }
 
     function calculateFrameRange(rqi) {
@@ -750,7 +921,7 @@ function __generateUtil() {
          * @param {RenderQueueItem} rqi - The render queue item to calculate frames for
          * @returns {Object} Object containing startFrame and endFrame
          */
-         // NOTE: we're not using displayStartFrame since it is rounded up
+        // NOTE: we're not using displayStartFrame since it is rounded up
         const startFrame = Number(Math.floor(rqi.comp.displayStartTime * rqi.comp.frameRate));
         const numFrames = Number(Math.floor(rqi.timeSpanDuration * rqi.comp.frameRate));
         const endFrame = startFrame + numFrames - 1; // end frame is inclusive
@@ -761,10 +932,81 @@ function __generateUtil() {
         };
     }
 
+    function validateTimeoutValues(enabled, daysInput, hoursInput, minutesInput) {
+        /**
+         * Parses in input strings for days, hours, and minutes in timeout, validates them, and alerts user if invalid
+         */
+        if (enabled) {
+            var days = parseInt(daysInput) || 0;
+            var hours = parseInt(hoursInput) || 0;
+            var minutes = parseInt(minutesInput) || 0;
+
+            if (days === 0 && hours === 0 && minutes === 0) {
+                adcAlert("Timeout cannot be set to zero. Please enter a value greater than zero for days, hours, or minutes.", true);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function getSelection(list) {
+        if (list.selection.length >= 1) {
+            return list.selection[0];
+        }
+    }
+
+    function getRenderQueueItemID(renderQueueIndex) {
+        /** Calculates an ID for the Render Queue Item with the given index in the render queue
+         * Not guaranteed to be unique if render queue items are reordered
+         */
+        return "_" + renderQueueIndex.toString() + "_" + app.project.renderQueue.item(renderQueueIndex).comp.id;
+    }
+
+    function getXMPPathLeaf(path) {
+        // The backslash is needed for this regex, so we need to skip SonarQube scan
+        const regex = /xmp:([^\/]+)$/;
+        return regex.exec(path)[1];
+    }
+
+    function deleteUnusedMetadata(renderMetadataRoot) {
+        var metadata = new XMPMeta(app.project.xmpPacket);
+        var paths = []
+        var iterator = metadata.iterator(XMPConst.ITERATOR_JUST_CHILDREN, XMPConst.NS_XMP, renderMetadataRoot);
+        var property;
+        while (property = iterator.next()) {
+            paths.push(property.path);
+        }
+        var ids = []
+        for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
+            ids.push(getRenderQueueItemID(i));
+        }
+        for (var i = 0; i < paths.length; i++) {
+            var presentInArray = false;
+            var currentPath = paths[i];
+            for (var j = 0; j < ids.length; j++) {
+                var renderQueueID = ids[j];
+                if (getXMPPathLeaf(currentPath) === renderQueueID) {
+                    presentInArray=true;
+                    break;
+                }
+            }
+            if (!presentInArray) {
+                metadata.deleteProperty(XMPConst.NS_XMP, currentPath);
+            }
+        }
+        app.project.xmpPacket = metadata.serialize();
+    }
+
     return {
         "invertObject": invertObject,
         "toBooleanString": toBooleanString,
         "parseBool": parseBool,
+        "saveBoolMetadata": saveBoolMetadata,
+        "getBoolMetadata": getBoolMetadata,
+        "saveNumberMetadata": saveNumberMetadata,
+        "getNumberMetadata": getNumberMetadata,
+        "saveStringMetadata": saveStringMetadata,
+        "getStringMetadata": getStringMetadata,
         "trimIllegalChars": trimIllegalChars,
         "sliderTextSync": sliderTextSync,
         "changeTextValue": changeTextValue,
@@ -795,75 +1037,20 @@ function __generateUtil() {
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
         "getTempFolder": getTempFolder,
-        "calculateFrameRange": calculateFrameRange
+        "calculateFrameRange": calculateFrameRange,
+        "validateTimeoutValues": validateTimeoutValues,
+        "getSelection": getSelection,
+        "getRenderQueueItemID": getRenderQueueItemID,
+        "composeXMPPath": composeXMPPath,
+        "saveToMetadata": saveToMetadata,
+        "loadFromMetadata": loadFromMetadata,
+        "metadataKeyExists": metadataKeyExists,
+        "deleteUnusedMetadata": deleteUnusedMetadata
     }
 }
 
-dcUtil = __generateUtil();
+var dcUtil = __generateUtil();
 
-
-// Global constants, wrapped with if-blocks to ensure they are only defined once
-// to avoid errors due to redeclaration
-if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING === "undefined") {
-    const DEADLINECLOUD_IGNORE_VERSION_WARNING = "ignoreVersionWarning";
-}
-if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
-    const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
-}
-if (typeof SUPPORTED_VERSIONS === "undefined") {
-    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
-}
-if (typeof DEADLINECLOUD_SUBMITTER_SETTINGS === "undefined") {
-    const DEADLINECLOUD_SUBMITTER_SETTINGS = "Deadline Cloud Submitter";
-}
-if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
-    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
-}
-if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
-    const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
-}
-if (typeof DEADLINECLOUD_MULTI_FRAME_RENDERING === "undefined") {
-    const DEADLINECLOUD_MULTI_FRAME_RENDERING = "multiFrameRendering";
-}
-if (typeof DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
-    const DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE = "maxCpuUsagePercentage";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED = "taskRunTimeoutEnabled";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS = "taskRunTimeoutDays";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS = "taskRunTimeoutHours";
-}
-if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
-    const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING, "false");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION, dcUtil.getAEVersion().toString());
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_FRAMESPERTASK, "10");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MULTI_FRAME_RENDERING, "false");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE, "90");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_ENABLED, "10");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_DAYS, "2");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS, "0");
-}
-if (!app.settings.haveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES)) {
-    app.settings.saveSetting(DEADLINECLOUD_SUBMITTER_SETTINGS, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES, "0");
-}
+// Getting a setting that doesn't already exist will set it to its default value
+dcUtil.getBoolMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING), false);
+dcUtil.getStringMetadata(dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION), dcUtil.getAEVersion().toString());

@@ -5,7 +5,7 @@
 #include "UI/SubmitterUI.jsx"
 
 function isSecurityPrefSet() {
-    var securitySetting = app.preferences.getPrefAsLong(
+    const securitySetting = app.preferences.getPrefAsLong(
         "Main Pref Section",
         "Pref_SCRIPTING_FILE_NETWORK_SECURITY"
     );
@@ -16,7 +16,7 @@ if (isSecurityPrefSet()) {
     buildUI(this);
 } else {
     //Print an error message and instructions for changing security preferences
-    var submitterPanel =
+    const submitterPanel =
         this instanceof Panel ?
         this :
         new Window(
@@ -27,11 +27,11 @@ if (isSecurityPrefSet()) {
                 closeButton: true,
             }
         );
-    var root = submitterPanel.add("group");
+    const root = submitterPanel.add("group");
     root.orientation = "column";
     root.alignment = ["fill", "fill"];
     root.alignChildren = ["fill", "top"];
-    var errorText = root.add("statictext", undefined, "", {
+    const errorText = root.add("statictext", undefined, "", {
         multiline: true,
     });
     errorText.graphics.foregroundColor = errorText.graphics.newPen(
@@ -40,7 +40,7 @@ if (isSecurityPrefSet()) {
         1
     );
     errorText.text = "Update Script Permissions";
-    var errorText2 = root.add("statictext", undefined, "", {
+    const errorText2 = root.add("statictext", undefined, "", {
         multiline: true,
     });
     errorText2.text = [

@@ -7,7 +7,7 @@ var LOG_LEVEL = {
     DEBUG: 4
 };
 
-var LOG_LEVEL_MAP = dcUtil.invertObject(LOG_LEVEL)
+var LOG_LEVEL_MAP = dcUtil.invertObject(LOG_LEVEL);
 
 // Global log level
 // Set the desired logging level
@@ -45,7 +45,7 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
         backupCount = backupCount || _DC_LOGGER_DEFAULT_BACKUP_COUNT;
         logDirectoryPath = logDirectoryPath || dcUtil.getUserDirectory() + "/.deadline/logs/submitters";
         logDirectoryPath = dcUtil.normPath(logDirectoryPath);
-        var folderObject = new Folder(logDirectoryPath);
+        const folderObject = new Folder(logDirectoryPath);
         if (!folderObject.exists) {
             folderObject.create();
         }
@@ -79,16 +79,16 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
         // Rollover older files first
         var rolloverFile;
         for (var i = backupCount - 1; i > 0; i--) { // Last file does not need rollover, it is allowed to get overwritten.
-            rolloverFile = new File(logDirectoryPath + logFileName + "." + i)
+            rolloverFile = new File(logDirectoryPath + logFileName + "." + i);
             if (!rolloverFile.exists) {
                 continue;
             }
             var j = i + 1;
-            var rolloverTargetPath = logDirectoryPath + logFileName + "." + j
+            var rolloverTargetPath = logDirectoryPath + logFileName + "." + j;
             rolloverFile.copy(rolloverTargetPath);
         }
         // Rollover active file
-        logFile.copy(logDirectoryPath + logFileName + "." + 1)
+        logFile.copy(logDirectoryPath + logFileName + "." + 1);
         logFile.open("w"); // Erase contents of active log file
         logFile.close();
     }
@@ -105,16 +105,16 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
 
             var levelName = LOG_LEVEL_MAP[level];
             // Check the length of the string
-            var currentLength = levelName.length;
+            const currentLength = levelName.length;
 
             // If the length is less than the target length, pad with spaces
             if (currentLength < 8) {
-                var spacesToAdd = 8 - currentLength;
+                const spacesToAdd = 8 - currentLength;
                 for (var i = 0; i < spacesToAdd; i++) {
                     levelName += " ";
                 }
             }
-            var logMessage = getCurrentTimeAsStr() + " - " + "[" + levelName + "] " + " " + src_module + ": " + msg;
+            const logMessage = getCurrentTimeAsStr() + " - " + "[" + levelName + "] " + " " + src_module + ": " + msg;
 
             logFile.open("a");
             logFile.writeln(logMessage);
@@ -152,18 +152,18 @@ function Logger(logFileName, logDirectoryPath, maxBytes, backupCount) {
 }
 
 function getCurrentTimeAsStr() {
-    var date = new Date();
-    var year = date.getFullYear();
+    const date = new Date();
+    const year = date.getFullYear();
     // Zero pad all integers to a length of 2
-    var month = ("0" + (date.getMonth() + 1)).slice(-2); // Months are zero-based
-    var day = ("0" + date.getDate()).slice(-2);
+    const month = ("0" + (date.getMonth() + 1)).slice(-2); // Months are zero-based
+    const day = ("0" + date.getDate()).slice(-2);
 
-    var currentDate = year + "-" + month + "-" + day;
-    var hours = ("0" + date.getHours()).slice(-2);
-    var minutes = ("0" + date.getMinutes()).slice(-2);
-    var seconds = ("0" + date.getSeconds()).slice(-2);
-    var currentTime = hours + ":" + minutes + ":" + seconds;
-    var logDateTime = currentDate + " " + currentTime;
+    const currentDate = year + "-" + month + "-" + day;
+    const hours = ("0" + date.getHours()).slice(-2);
+    const minutes = ("0" + date.getMinutes()).slice(-2);
+    const seconds = ("0" + date.getSeconds()).slice(-2);
+    const currentTime = hours + ":" + minutes + ":" + seconds;
+    const logDateTime = currentDate + " " + currentTime;
     return logDateTime;
 }
 
@@ -172,5 +172,5 @@ function getCurrentTimeAsStr() {
 var _scriptFileName = "OpenAeSubmitter.jsx";
 var logFileName = "aftereffects.log";
 var logDirectoryPath = dcUtil.getUserDirectory() + "/.deadline/logs/submitters/";
-var logNormDirectoryPath = dcUtil.normPath(logDirectoryPath)
+var logNormDirectoryPath = dcUtil.normPath(logDirectoryPath);
 var logger = Logger(logFileName, logNormDirectoryPath);
