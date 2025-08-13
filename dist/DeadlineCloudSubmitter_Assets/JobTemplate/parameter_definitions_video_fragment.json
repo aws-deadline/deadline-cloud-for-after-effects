@@ -1,0 +1,124 @@
+{
+  "parameterDefinitions": [
+    {
+      "name": "ProjectFile",
+      "type": "PATH",
+      "objectType": "FILE",
+      "dataFlow": "IN",
+      "userInterface": {
+        "control": "CHOOSE_INPUT_FILE",
+        "label": "Project file",
+        "groupLabel": "Source",
+        "fileFilters": [
+          {
+            "label": "After Effects project files",
+            "patterns": [
+              "*.aep",
+              "*.aepx"
+            ]
+          },
+          {
+            "label": "All Files",
+            "patterns": [
+              "*"
+            ]
+          }
+        ]
+      },
+      "description": "The After Effects project file to render."
+    },
+    {
+      "name": "RenderQueueIndex",
+      "type": "INT",
+      "userInterface": {
+        "control": "SPIN_BOX",
+        "label": "Render Queue Index",
+        "groupLabel": "Source"
+      },
+      "description": "The index of the item in the render queue to render.",
+      "default": 1
+    },
+    {
+      "name": "OutputDir",
+      "type": "PATH",
+      "objectType": "DIRECTORY",
+      "dataFlow": "OUT",
+      "userInterface": {
+        "control": "CHOOSE_DIRECTORY",
+        "label": "Output Directory",
+        "groupLabel": "Render Parameters"
+      },
+      "default": "./output",
+      "description": "Choose the render output directory."
+    },
+    {
+      "name": "OutputFileName",
+      "type": "STRING",
+      "userInterface": {
+        "control": "HIDDEN",
+        "label": "Output File Pattern",
+        "groupLabel": "Render Parameters"
+      },
+      "default": "output.mp4",
+      "description": "The file name used for aerender cmd. Not a changeable parameter."
+    },
+    {
+      "name": "Frames",
+      "type": "STRING",
+      "userInterface": {
+        "control": "LINE_EDIT",
+        "label": "Start Frame - End Frame",
+        "groupLabel": "Frame Range"
+      },
+      "default": "1-10"
+    },
+    {
+      "name": "MultiFrameRendering",
+      "type": "STRING",
+      "default": "OFF",
+      "allowedValues": [
+        "ON",
+        "OFF"
+      ],
+      "userInterface": {
+        "control": "DROPDOWN_LIST",
+        "label": "Enable or disable multi-frame rendering",
+        "groupLabel": "Multi-Frame Rendering"
+      },
+      "description": "Multi frame rendering settings"
+    },
+    {
+      "name": "MaxCpuUsagePercentage",
+      "type": "INT",
+      "userInterface": {
+        "control": "SPIN_BOX",
+        "label": "Max CPU Usage Percentage",
+        "groupLabel": "Multi-Frame Rendering"
+      },
+      "description": "Max Cpu Percentage to use with Multi-Frame Rendering, ignored if MFR is OFF",
+      "minValue": 1,
+      "maxValue": 100,
+      "default": 90
+    },
+    {
+      "name": "JobScriptDir",
+      "description": "Directory containing embedded scripts.",
+      "userInterface": {
+        "control": "HIDDEN"
+      },
+      "type": "PATH",
+      "objectType": "DIRECTORY",
+      "dataFlow": "IN",
+      "default": "scripts"
+    },
+    {
+      "name": "CondaPackages",
+      "type": "STRING",
+      "userInterface": {
+        "control": "HIDDEN"
+      },
+      "default": "aftereffects={{AE_VERSION}}",
+      "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
+    }
+  ]
+}

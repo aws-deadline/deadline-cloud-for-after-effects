@@ -1,0 +1,49 @@
+{
+  "steps": [
+    {
+      "name": "{{COMP_NAME}}",
+      "hostRequirements": {
+        "attributes": [
+          {
+            "name": "attr.worker.os.family",
+            "anyOf": [
+              "windows",
+              "macos"
+            ]
+          }
+        ]
+      },
+      "parameterSpace": {
+        "taskParameterDefinitions": [
+          {
+            "name": "Index",
+            "type": "INT",
+            "range": "{{Param.Frames}}:{{Param.ChunkSize}}"
+          }
+        ]
+      },
+      "script": {
+        "actions": {
+          "onRun": {
+            "command": "python",
+            "args": [
+              "{{Param.JobScriptDir}}/call_aerender.py",
+              "{{Param.ProjectFile}}",
+              "{{Param.RenderQueueIndex}}",
+              "{{Param.OutputDir}}/{{Param.OutputFileName}}",
+              "{{Param.Frames}}",
+              "--chunk-size",
+              "{{Param.ChunkSize}}",
+              "--index",
+              "{{Task.Param.Index}}",
+              "--multi-frame-rendering",
+              "{{Param.MultiFrameRendering}}",
+              "--max-cpu-usage-percentage",
+              "{{Param.MaxCpuUsagePercentage}}"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
