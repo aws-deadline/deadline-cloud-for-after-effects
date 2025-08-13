@@ -1,3 +1,12 @@
+## 0.4.0 (2025-08-13)
+
+
+### Features
+* Support multiple composition submissions in one job (#207) ([`1e31f89`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/1e31f895d48bead8ae9577c4ef7cf12e8e299643))
+
+### Bug Fixes
+* resolve security risk with regex (#235) ([`16a3420`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/16a3420ca80823bcfcfe78311acff07101350835))
+
 ## 0.3.1 (2025-07-29)
 
 
