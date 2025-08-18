@@ -608,7 +608,7 @@ function __generateUtil() {
             const frameCount = footageItem.duration / footageItem.frameDuration;
             const firstFrameName = new File(source.file.fsName).fsName;
             const firstFrameInfo = getImageSequenceInformation(firstFrameName);
-            const firstFrameNumber = firstFrameInfo.frame; 
+            const firstFrameNumber = firstFrameInfo.frame;
             const lastFrameNumber = firstFrameNumber + frameCount;
             logger.debug("Processing ImageSequence with range (" + firstFrameNumber + "-" + lastFrameNumber + ") and with name \"" + firstFrameName + "\"");
             var containingFolder = source.file.parent;
@@ -994,8 +994,8 @@ function __generateUtil() {
          * @returns {Object} Object containing startFrame and endFrame
          */
         // NOTE: we're not using displayStartFrame since it is rounded up
-        const startFrame = Number(Math.floor(rqi.comp.displayStartTime * rqi.comp.frameRate));
-        const numFrames = Number(Math.floor(rqi.timeSpanDuration * rqi.comp.frameRate));
+        const startFrame = Number(Math.floor((rqi.comp.displayStartTime + rqi.timeSpanStart) * rqi.comp.frameRate));
+        const numFrames = Number(Math.ceil(rqi.timeSpanDuration * rqi.comp.frameRate));
         const endFrame = startFrame + numFrames - 1; // end frame is inclusive
 
         return {
@@ -1003,6 +1003,7 @@ function __generateUtil() {
             endFrame: endFrame
         };
     }
+
 
     function validateTimeoutValues(enabled, daysInput, hoursInput, minutesInput) {
         /**
@@ -1108,6 +1109,7 @@ function __generateUtil() {
         "getTempFile": getTempFile,
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
+        "getTempFolder": getTempFolder,
         "calculateFrameRange": calculateFrameRange,
         "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
