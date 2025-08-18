@@ -1104,6 +1104,7 @@ function __generateUtil() {
         "getTempFile": getTempFile,
         "getUserDirectory": getUserDirectory,
         "getAEVersion": getAEVersion,
+        "getTempFolder": getTempFolder,
         "calculateFrameRange": calculateFrameRange,
         "validateTimeoutValues": validateTimeoutValues,
         "getSelection": getSelection,
