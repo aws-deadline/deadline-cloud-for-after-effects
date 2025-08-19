@@ -302,7 +302,7 @@ function __generateUtil() {
          * Sets string in app settings
          */
         validateType(value, "string");
-        saveToMetadata(keyName, defaultValue, XMPConst.STRING);
+        saveToMetadata(keyName, value, XMPConst.STRING);
     }
 
     function getStringMetadata(keyName, defaultValue) {
