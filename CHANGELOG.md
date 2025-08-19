@@ -1,3 +1,10 @@
+## 0.4.1 (2025-08-19)
+
+
+
+### Bug Fixes
+* resolves issue in saveStringMetadata function (#237) ([`a5581a7`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/a5581a79bc474bf1b988b4fcb4a8bb69673c6d28))
+
 ## 0.4.0 (2025-08-13)
 
 
