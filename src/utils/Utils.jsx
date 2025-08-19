@@ -583,7 +583,7 @@ function __generateUtil() {
     }
 
     /**
-     * Extracts image 
+     * Extracts frame number, prefix, and suffix for single frame in image sequence.
      * @param {string} fileName 
      * @returns Object containing prefix, name, and suffix 
      */
