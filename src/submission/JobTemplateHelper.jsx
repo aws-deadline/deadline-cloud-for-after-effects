@@ -119,7 +119,7 @@ function findJobAttachments(rootComp) {
                             shouldShowPopup = false;
                         }
                     } else {
-                        attachments = attachments.concat(dcUtil.filePathsFromFootageItem(src));
+                        attachments = attachments.concat(dcUtil.getFilePathsFromFootageItem(src));
                     }
                 }
             }

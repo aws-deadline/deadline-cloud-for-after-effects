@@ -601,7 +601,7 @@ function __generateUtil() {
         }
     }
 
-    function filePathsFromFootageItem(footageItem) {
+    function getFilePathsFromFootageItem(footageItem) {
         const paths = [];
         if (determineFootageType(footageItem) === FootageTypes.ImageSequence) {
             const source = footageItem.mainSource;
@@ -1120,7 +1120,7 @@ function __generateUtil() {
         "metadataKeyExists": metadataKeyExists,
         "deleteUnusedMetadata": deleteUnusedMetadata,
         "determineFootageType": determineFootageType,
-        "filePathsFromFootageItem": filePathsFromFootageItem
+        "getFilePathsFromFootageItem": getFilePathsFromFootageItem
     }
 }
 
@@ -1520,7 +1520,7 @@ function findJobAttachments(rootComp) {
                             shouldShowPopup = false;
                         }
                     } else {
-                        attachments = attachments.concat(dcUtil.filePathsFromFootageItem(src));
+                        attachments = attachments.concat(dcUtil.getFilePathsFromFootageItem(src));
                     }
                 }
             }

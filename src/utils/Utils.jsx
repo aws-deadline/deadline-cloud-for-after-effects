@@ -597,7 +597,7 @@ function __generateUtil() {
         }
     }
 
-    function filePathsFromFootageItem(footageItem) {
+    function getFilePathsFromFootageItem(footageItem) {
         const paths = [];
         if (determineFootageType(footageItem) === FootageTypes.ImageSequence) {
             const source = footageItem.mainSource;
@@ -1116,7 +1116,7 @@ function __generateUtil() {
         "metadataKeyExists": metadataKeyExists,
         "deleteUnusedMetadata": deleteUnusedMetadata,
         "determineFootageType": determineFootageType,
-        "filePathsFromFootageItem": filePathsFromFootageItem
+        "getFilePathsFromFootageItem": getFilePathsFromFootageItem
     }
 }
 
