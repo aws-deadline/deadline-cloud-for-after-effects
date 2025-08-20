@@ -1,3 +1,10 @@
+## 0.4.2 (2025-08-20)
+
+
+
+### Bug Fixes
+* fix regression of repeated popups due to unsupported AE version (#239) ([`480e904`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/480e9041811a528ff2f6a145838a3d5387d026a5))
+
 ## 0.4.1 (2025-08-19)
 
 
