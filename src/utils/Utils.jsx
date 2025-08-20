@@ -588,7 +588,7 @@ function __generateUtil() {
      * @returns Object containing prefix, name, and suffix 
      */
     function getImageSequenceInformation(fileName) {
-        var regex = /^(.*?)(\d*)(\D*?)$/;
+        var regex = /^(.*?)(\d*)(\D*)$/;
         var match = fileName.match(regex);
         return {
             prefix: match[1],
