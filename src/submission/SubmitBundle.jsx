@@ -293,74 +293,74 @@ function SubmitSelection(selection, selectionSettings) {
     };
     const jobParameterDefinitions = {
         "parameterDefinitions": [{
-                "name": "ProjectFile",
-                "type": "PATH",
-                "objectType": "FILE",
-                "dataFlow": "IN",
-                "userInterface": {
-                    "control": "CHOOSE_INPUT_FILE",
-                    "label": "Project file",
-                    "groupLabel": "Source",
-                    "fileFilters": [{
-                            "label": "After Effects project files",
-                            "patterns": [
-                                "*.aep",
-                                "*.aepx"
-                            ]
-                        },
-                        {
-                            "label": "All Files",
-                            "patterns": [
-                                "*"
-                            ]
-                        }
+            "name": "ProjectFile",
+            "type": "PATH",
+            "objectType": "FILE",
+            "dataFlow": "IN",
+            "userInterface": {
+                "control": "CHOOSE_INPUT_FILE",
+                "label": "Project file",
+                "groupLabel": "Source",
+                "fileFilters": [{
+                    "label": "After Effects project files",
+                    "patterns": [
+                        "*.aep",
+                        "*.aepx"
                     ]
                 },
-                "description": "The After Effects project file to render."
+                {
+                    "label": "All Files",
+                    "patterns": [
+                        "*"
+                    ]
+                }
+                ]
             },
-            {
-                "name": "JobScriptDir",
-                "description": "Directory containing embedded scripts.",
-                "userInterface": {
-                    "control": "HIDDEN"
-                },
-                "type": "PATH",
-                "objectType": "DIRECTORY",
-                "dataFlow": "IN",
-                "default": "scripts"
+            "description": "The After Effects project file to render."
+        },
+        {
+            "name": "JobScriptDir",
+            "description": "Directory containing embedded scripts.",
+            "userInterface": {
+                "control": "HIDDEN"
             },
-            {
-                "name": "CondaPackages",
-                "type": "STRING",
-                "userInterface": {
-                    "control": "HIDDEN"
-                },
-                "default": "aftereffects=" + aftereffectsCondaVersion,
-                "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
-            }
+            "type": "PATH",
+            "objectType": "DIRECTORY",
+            "dataFlow": "IN",
+            "default": "scripts"
+        },
+        {
+            "name": "CondaPackages",
+            "type": "STRING",
+            "userInterface": {
+                "control": "HIDDEN"
+            },
+            "default": "aftereffects=" + aftereffectsCondaVersion,
+            "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
+        }
         ]
     }
     const jobParameterValues = {
         parameterValues: [{
-                name: "deadline:targetTaskRunStatus",
-                value: "READY",
-            },
-            {
-                name: "deadline:maxFailedTasksCount",
-                value: 20,
-            },
-            {
-                name: "deadline:maxRetriesPerTask",
-                value: 5,
-            },
-            {
-                name: "deadline:priority",
-                value: 50,
-            },
-            {
-                name: "ProjectFile",
-                value: app.project.file.fsName,
-            },
+            name: "deadline:targetTaskRunStatus",
+            value: "READY",
+        },
+        {
+            name: "deadline:maxFailedTasksCount",
+            value: 20,
+        },
+        {
+            name: "deadline:maxRetriesPerTask",
+            value: 5,
+        },
+        {
+            name: "deadline:priority",
+            value: 50,
+        },
+        {
+            name: "ProjectFile",
+            value: app.project.file.fsName,
+        },
         ]
     }
 
@@ -403,7 +403,7 @@ function SubmitSelection(selection, selectionSettings) {
         var outputFileNameNoRegex = getFileNameNoRegex(outputFile);
         var extension = getFileExtension(outputFileNameNoRegex);
         logger.debug("extension set to: " + extension, submitBundleFile);
-        var isImageSeq = isImageOutput(extension);
+        var isImageSeq = dcUtil.isImage(extension);
 
         var sanitizedOutputFileName = dcUtil.removePercentageFromFileName(outputFileNameNoRegex);
         logger.debug("sanitizedOutputFileName is " + sanitizedOutputFileName, submitBundleFile);

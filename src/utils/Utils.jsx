@@ -73,7 +73,6 @@ var FootageTypes = {
     Audio: 3,
     Unknown: 4
 }
-var ImageExtensionRegex = /(ai|bmp|bw|cin|cr2|crw|dcr|dng|dib|dpx|eps|erf|exr|gif|hdr|icb|iff|jpe|jpeg|jpg|mos|mrw|nef|orf|pbm|pef|pct|pcx|pdf|pic|pict|png|ps|psd|pxr|raf|raw|rgb|rgbe|rla|rle|rpf|sgi|srf|tdi|tga|tif|tiff|vda|vst|x3f|xyze)/i;
 
 function readFile(filePath) {
     const f = new File(filePath);
@@ -564,6 +563,22 @@ function __generateUtil() {
         return _cachedTempFolder;
     }
 
+    // File extensions from supported AE file formats list at: https://helpx.adobe.com/after-effects/kb/supported-file-formats.html
+    function isVideo(extension) {
+        const videoExtensions = ["r3d", "crm", "mxf", "hevc", "3gp", "3g2", "amc", "swf", "flv", "f4v", "gif", "m2ts", "m4v", "mpg", "mpe", "mpa", "mod", "m2p", "m2v", "m2a", "m2t", "mp4", "omf", "mov", "avi", "wmv", "wma", "asf", "asx"];
+        return videoExtensions.indexOf(extension) >= 0;
+    }
+
+    function isAudio(extension) {
+        const audioExtensions = ["aac", "m4a", "aif", "aiff", "mp3", "mpeg", "mpg", "mpa", "mpe", "wav", "bwf"];
+        return audioExtensions.indexOf(extension) >= 0;
+    }
+
+    function isImage(extension) {
+        const frameExtensions = ["ai", "eps", "ps", "pdf", "psd", "bmp", "rle", "dlb", "tif", "crw", "nef", "raf", "orf", "mrw", "dcr", "mos", "raw", "pef", "srf", "dng", "x3f", "cr2", "erf", "sr2", "mfw", "mef", "arw", "cin", "dpx", "gif", "rla", "rpf", "img", "ei", "eps", "iff", "tdi", "jpg", "jpe", "heif", "ma", "exr", "sxr", "mxr", "pcx", "png", "hdr", "rgbe", "xyze", "sgi", "bw", "rgb", "pic", "tga", "vda", "icb", "vst", "tif", "jpeg"];
+        return frameExtensions.indexOf(extension) >= 0;
+    }
+
     // Return the `FootageTypes` value for the passed footageItem
     function determineFootageType(footageItem) {
         if (footageItem.hasVideo) {
@@ -571,7 +586,7 @@ function __generateUtil() {
             var extension = filePath.substr(filePath.lastIndexOf(".") + 1, filePath.length).toLowerCase();
             if (footageItem.mainSource.isStill) {
                 return FootageTypes.Image
-            } else if (extension.match(ImageExtensionRegex)) {
+            } else if (isImage(extension)) {
                 return FootageTypes.ImageSequence
             } else {
                 return FootageTypes.Video
@@ -1116,7 +1131,11 @@ function __generateUtil() {
         "metadataKeyExists": metadataKeyExists,
         "deleteUnusedMetadata": deleteUnusedMetadata,
         "determineFootageType": determineFootageType,
-        "getFilePathsFromFootageItem": getFilePathsFromFootageItem
+        "getFilePathsFromFootageItem": getFilePathsFromFootageItem,
+        "isVideo": isVideo,
+        "isAudio": isAudio,
+        "isImage": isImage
+
     }
 }
 

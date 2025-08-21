@@ -16,25 +16,25 @@ function generateParameterValues(
     prefix
 ) {
     const parameterValuesList = [{
-            name: prefix + "_RenderQueueIndex",
-            value: renderQueueIndex,
-        },
-        {
-            name: prefix + "_OutputDir",
-            value: outputDir,
-        },
-        {
-            name: prefix + "_OutputFileName",
-            value: outputFileName,
-        },
-        {
-            name: prefix + "_Frames",
-            value: startFrame.toString() + "-" + endFrame.toString(),
-        },
-        {
-            name: prefix + "_MultiFrameRendering",
-            value: multiFrameRendering === true ? "ON" : "OFF",
-        },
+        name: prefix + "_RenderQueueIndex",
+        value: renderQueueIndex,
+    },
+    {
+        name: prefix + "_OutputDir",
+        value: outputDir,
+    },
+    {
+        name: prefix + "_OutputFileName",
+        value: outputFileName,
+    },
+    {
+        name: prefix + "_Frames",
+        value: startFrame.toString() + "-" + endFrame.toString(),
+    },
+    {
+        name: prefix + "_MultiFrameRendering",
+        value: multiFrameRendering === true ? "ON" : "OFF",
+    },
     ];
     if (maxCpuUsagePercentage) {
         parameterValuesList.push({
@@ -447,20 +447,4 @@ function generateFontReferences(fontPaths) {
         }
     }
     return formattedFontsPaths;
-}
-
-
-function isVideoOutput(extension) {
-    const VideoOutputExtensions = ["avi", "mp4", "mov"];
-    return VideoOutputExtensions.indexOf(extension) >= 0;
-}
-
-function isAudioOutput(extension) {
-    const AudioOutputExtensions = ["aif", "mp3", "wav"];
-    return AudioOutputExtensions.indexOf(extension) >= 0;
-}
-
-function isImageOutput(extension) {
-    const FrameOutputExtensions = ["dpx", "iff", "jpg", "jpeg", "exr", "png", "psd", "hdr", "sgi", "tif", "tiff", "tga"];
-    return FrameOutputExtensions.indexOf(extension) >= 0;
 }
