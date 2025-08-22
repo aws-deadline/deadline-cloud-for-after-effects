@@ -123,7 +123,7 @@
         "label": "Ignore Missing Dependencies",
         "groupLabel": "Ignore Missing Dependencies"
       },
-      "description": "Missing dependencies rendering settings"
+      "description": "Allows render to continue without failing if referenced files are missing."
     },
     {
       "name": "JobScriptDir",
