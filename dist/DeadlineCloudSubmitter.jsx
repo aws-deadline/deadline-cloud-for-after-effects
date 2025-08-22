@@ -1577,7 +1577,7 @@ function findJobAttachments(rootComp, ignoreMissingDependencies) {
         // Notify the user if any fonts are missing or are substituted during the session.
         // A substituted font is a font that was already missing when the project is opened.
         // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
-        //  Again only only care if ignoreMissingDependencies is false
+        //  Again only care if ignoreMissingDependencies is false
         if (app.fonts.missingOrSubstitutedFonts != "" && !ignoreMissingDependencies) {
             adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString(), false);
         }
