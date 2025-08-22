@@ -39,82 +39,136 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 1. `DeadlineCloudSubmitter.jsx` is the After Effects script written by
    ExtendScript.
 
-### To install the submitter:
+## Installation Instructions
 
-**Prerequisites:**
-- Install Python 3.9+ and verify either `python --version` or `python3 --version` or `py --version` works in your Command Prompt or Powershell window.
+### Prerequisites
+
+- Install Python 3.9+ and verify either `python --version` or `python3 --version` or `py --version` works in your Command Prompt, Powershell window, or Terminal window.
 - Install Adobe After Effects 24 or 25.
 - Set up your Deadline Cloud monitor, farm, fleet, and queue details, following the documentation from [here for setup](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/monitor-onboarding.html) and its subsections.
-- If you're doing a manual install without using the submitter installer, you will need to install Deadline CLI by running the following commands in Terminal/Powershell:
-   ```
-   pip install deadline
-   pip install "deadline[gui]"
-   ```
-- Download the Deadline Cloud Monitor desktop application from the Downloads page on your AWS Deadline Cloud console and log into it, see documentation from here: https://docs.aws.amazon.com/deadline-cloud/latest/userguide/open-deadline-cloud-monitor.html
+- Download the Deadline Cloud Monitor desktop application from the Downloads page on your AWS Deadline Cloud console and log into it, see documentation from [here for setup](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/open-deadline-cloud-monitor.html).
 
-**Submitter Installation Instructions**
-1. This submitter requires the ability to write files and send communication over the network in order to function properly.
-   By default, After Effects scripts are not allowed to perform these actions. [Reference link](https://helpx.adobe.com/after-effects/using/scripts.html). To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
+### Submitter Installer Installation
 
-   - Windows: `Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
-   - macOS: `Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
+**Note: During the installer process, you will choose between User Install or System Install. Read only the section below that matches your selection:**
 
-   Additionally, to disable warnings every time you submit a job with the submitter, edit the following settings within After Effects:
+#### User Install
 
-   - Windows `Select Edit > Preferences > Scripting & Expressions > deselect Warn User When Executing Files`
-   - macOS: `Select After Effects > Settings > Scripting & Expressions > deselect Warn User When Executing Files`
-
-1. Next step is to install the After Effects submitter. We recommend choosing the submitter installer approach to receive both Deadline CLI and your selected integrated submitters. However, if you want to update your submitter with the latest code pushed to this repository, choose the manual installation approach, but ensure you have Deadline CLI already installed via pip or submitter installer beforehand (see instructions above under Prerequisites for info on this).
+1. Download the Deadline Cloud Submitter installer by following [Step 1: Install the Deadline Cloud Submitter](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#submitter-installation).
+2. Run the installer regularly (no admin required).
+3. Follow the prompts and select which submitters you would like to install. The submitter will be installed to:
+   - **Windows**: `C:\Users\<user>\DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
+   - **macOS**: `/Users/<user>/DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
+4. If you provide a custom install path, be sure to save that path for later reference.
 
 *NOTE: If you install the After Effects submitter as a user install, the submitter will be a standalone submitter window rather than a dockable panel.*
 
-   - **Submitter Installer Approach**
-      - First, download the Deadline Cloud Submitter installer by following [Step 1: Install the Deadline Cloud Submitter](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#submitter-installation).
-      - Next, if you are running a System Install on Windows, right-click the installer and choose `Run as Admin`. Otherwise, run the installer regularly for a User Install.
-      - Follow the prompts and select which submitters you would like to install. Here are the following OS-specific default submitters paths depending on your install approach:
-         - **Windows with System Installation**: `C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
-         - **Windows with User Installation**: `C:\Users\<user>\DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
-         - **macOS with User Installation**: `/Users/<user>/DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
-         - - **macOS with System Installation**: (not yet supported on submitter installer, but the theoretical path would be `/Applications/Adobe After Effects <version>/Scripts/ScriptUI Panels`)
-      - If choosing a User Install and you provide a custom install path, be sure to save that path for later reference.
+#### System Install
 
-   - **Manual Installation Approach**
-      - Scroll to the top of this repository's Github page, and click on the green Code button. In the drop-down, select `Download ZIP`.
-      - Unzip the .zip file and navigate to the `dist` folder in the downloaded repository. The submitter files are `DeadlineCloudSubmitter.jsx` and the `DeadlineCloudSubmitter_Assets` folder.
-      - For System Install that requires Admin permission, you need to move the submitter files to the ScriptUI Panels folder of After Effects. This will require Admin permission.
-         - **Windows**: Move them to `C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
-         - **macOS**: Move them to `/Applications/Adobe After Effects <version>/Scripts/ScriptUI Panels`
-      - For a User install that doesn't need Admin permission, copy the submitter files to a folder of your choice. If you've used the submitter installer before, you can put it under the DeadlineCloudSubmitter folder in the paths defined in the Submitter Installer Approach section for user installation. Save the path where you stored the JSX submitter script for easy access later.
+**Note: macOS system install is not yet supported by the submitter installer.**
 
-1. After installing the Deadline CLI manually or via submitter installer, ensure you log into your user profile by running `deadline auth login` in the Terminal/Powershell or logging in via the Deadline Cloud Monitor.
+1. Download the Deadline Cloud Submitter installer by following [Step 1: Install the Deadline Cloud Submitter](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#submitter-installation).
+2. **Windows only**: Right-click the installer and choose `Run as Admin`.
+3. Follow the prompts and select which submitters you would like to install. The submitter will be installed to:
+   - **Windows**: `C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
+   - **Mac**: Currently not supported, only supporting User Install.
 
-1. Next, to install the necessary dependencies used by the AE submitter, run the following in your local Terminal or Command Prompt.
+### After Effects Configuration
+
+This submitter requires the ability to write files and send communication over the network in order to function properly. By default, After Effects scripts are not allowed to perform these actions. [Reference link](https://helpx.adobe.com/after-effects/using/scripts.html). To allow scripts to write files or send communication over a network, edit the following settings within After Effects:
+
+- **Windows**: `Select Edit > Preferences > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
+- **macOS**: `Select After Effects > Settings > Scripting & Expressions > select Allow Scripts To Write Files And Access Network`
+
+Additionally, to disable warnings every time you submit a job with the submitter, edit the following settings within After Effects:
+
+- **Windows**: `Select Edit > Preferences > Scripting & Expressions > deselect Warn User When Executing Files`
+- **macOS**: `Select After Effects > Settings > Scripting & Expressions > deselect Warn User When Executing Files`
+
+### Final Setup Steps
+
+1. After installing via submitter installer, ensure you log into your user profile by running `deadline auth login` in the Terminal/Powershell or logging in via the Deadline Cloud Monitor.
+
+2. Next, to install the necessary dependencies used by the AE submitter, run the following in your local Terminal or Command Prompt.
    ```
    pip install fonttools
    ```
-1. Finally, restart After Effects if it was open.
+3. Finally, restart After Effects if it was open.
 
-### To use the submitter:
+## Usage Instructions
 
-1. Launch After Effects. If you did a system install of Deadline Cloud Submitter, run After Effects as Admin.
-1. Add a composition to your render queue and set up your render settings, output module, and output path.
-1. To open the Deadline Cloud Submitter Panel, there is a different approach depending on whether it's a User Install or a System Install.
-   - **System Install**: Open submitter by clicking **Window > DeadlineCloudSubmitter.jsx**.
-   - **User Install**: Open submitter by clicking **File > Scripts > Run Script File** and navigate to where the `DeadlineCloudSubmitter.jsx` file is located and select it to run the submitter. If the submitter is closed, reopen it easily by clicking **File > Scripts > Recent Script Files** and pick the `DeadlineCloudSubmitter.jsx` file that was previously run.
-1. Select your composition you want to render click `Submit` to submit a render job. Here are some settings you can set:
+**Note: Follow the instructions below that match the install type you selected during installation:**
+
+### User Install
+
+1. Launch After Effects (normal mode).
+2. Add a composition to your render queue and set up your render settings, output module, and output path.
+3. Open submitter by clicking **File > Scripts > Run Script File** and navigate to where the `DeadlineCloudSubmitter.jsx` file is located and select it to run the submitter. If the submitter is closed, reopen it easily by clicking **File > Scripts > Recent Script Files** and pick the `DeadlineCloudSubmitter.jsx` file that was previously run.
+4. Select your composition you want to render click `Submit` to submit a render job. Here are some settings you can set:
    1. (Optional) For image sequences output types you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the number and then Deadline Cloud will assign the tasks to available workers to delegate the load.
-   1. You can also specify multi-frame rendering with your job submission. If you do, you can also specify the max percentage of CPU usage you wish to allocate towards rendering in case you would like to limit it to allow other background applications or processes to run smoothly. For more information about multi-frame rendering, visit Adobe's website [here](https://helpx.adobe.com/after-effects/using/multi-frame-rendering.html).
-   1. You need to set up timeout days, hours and minutes to avoid the task gets stuck forever. The default timeout is 2 days.
-2. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
-3. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
-4. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
-5. If you're running the submitter and hitting error messages, scroll down to the Troubleshooting section for more guidance.
+   2. You can also specify multi-frame rendering with your job submission. If you do, you can also specify the max percentage of CPU usage you wish to allocate towards rendering in case you would like to limit it to allow other background applications or processes to run smoothly. For more information about multi-frame rendering, visit Adobe's website [here](https://helpx.adobe.com/after-effects/using/multi-frame-rendering.html).
+   3. You need to set up timeout days, hours and minutes to avoid the task gets stuck forever. The default timeout is 2 days.
+5. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
+6. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
+7. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
+8. If you're running the submitter and hitting error messages, scroll down to the Troubleshooting section for more guidance.
+
+### System Install
+
+1. Launch After Effects as Admin.
+2. Add a composition to your render queue and set up your render settings, output module, and output path.
+3. Open submitter by clicking **Window > DeadlineCloudSubmitter.jsx**.
+4. Select your composition you want to render click `Submit` to submit a render job. Here are some settings you can set:
+   1. (Optional) For image sequences output types you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the number and then Deadline Cloud will assign the tasks to available workers to delegate the load.
+   2. You can also specify multi-frame rendering with your job submission. If you do, you can also specify the max percentage of CPU usage you wish to allocate towards rendering in case you would like to limit it to allow other background applications or processes to run smoothly. For more information about multi-frame rendering, visit Adobe's website [here](https://helpx.adobe.com/after-effects/using/multi-frame-rendering.html).
+   3. You need to set up timeout days, hours and minutes to avoid the task gets stuck forever. The default timeout is 2 days.
+5. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
+6. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
+7. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
+8. If you're running the submitter and hitting error messages, scroll down to the Troubleshooting section for more guidance.
 
 **Note**: The After Effects submitter calls the Deadline GUI Submitter to complete job submission. If you hit any issues on the GUI submitter, please refer to [deadline-cloud](https://github.com/aws-deadline/deadline-cloud) library for help.
 
+## Font attachment system:
+
+The submitter detects fonts used in the submitted composition and automatically adds them as job attachments on submission. These get installed on the worker before the render starts and get removed again when the job ends.
+Currently supported font types include: OpenType (`.otf`), TrueType (`.ttf`), and [Adobe Fonts](https://fonts.adobe.com/).
+Windows bitmap fonts (`.fon`) are only supported on Windows machines.
+
+If fonts are missing at render time, first check that they're installed (on the system or your user), and then check they're being included in the job attachments tab in the submitter.
+
+Fonts distributed through Adobe Creative Cloud can be made available for all non-Adobe apps on your workstation, or only made available in Adobe apps. Cloud fonts need to be installed for all non-Adobe apps for use with Deadline Cloud.
+To install fonts for non-Adobe apps in Creative Cloud:
+
+1. Open Adobe Creative Cloud Desktop.
+1. Click "Adobe Fonts" on the account sidebar under "Your plan" to show the Adobe Fonts panel.
+1. Click "Added fonts" on the "Adobe Fonts" sidebar to show your added fonts.
+1. Click "Install family" next to the fonts you would like to make available for non-Adobe apps.
+
+## Setting up After Effects with your Deadline Cloud Farm
+
+After Effects 24.6, 25.1, and 25.2 conda packages are available in AWS Deadline Cloud Service Managed Fleet (See this [link](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/create-queue-environment.html) for more information). If you would like to build a conda channel that contains different After Effects conda package, please follow
+[these instructions](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html).
+You can also use After Effects conda recipe in
+[deadline-cloud-sample package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.0)
+as a reference when building the package.
+
+Jobs created by this submitter require `aerender` executable be available on the PATH of the user that will be running your jobs. Or you can set the `AERENDER_EXECUTABLE` to point to the aerender executable.
+
+## Viewing the Job Bundle that will be submitted
+
+To submit a job, the submitter first generates a [Job Bundle](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/build-job-bundle.html), and then uses functionality
+from the [Deadline](https://github.com/aws-deadline/deadline-cloud) package to submit the Job Bundle to your render farm to run.
+If you would like to see the job that will be submitted to your farm, then you can
+use the "Export Bundle" button in the submitter to export the Job Bundle
+in the job history directory (default: ~/.deadline/job_history).
+If you want to submit the job from the export, rather than through the submitter
+then you can use the [Deadline Cloud application](https://github.com/aws-deadline/deadline-cloud) to submit that bundle to your farm.
+
+
 ## Troubleshooting
 
-### Error: Couldn't find Python 3 or higher on your PATH. Please ensure that Python 3 or higher is installed correctly and added to your PATH.**
+### Error: Couldn't find Python 3 or higher on your PATH. Please ensure that Python 3 or higher is installed correctly and added to your PATH.
 
 **For macOS**
 1. Open your Terminal and run the following scripts in your command line: `where python` and `where python3`. If you're not getting any results, this means you need to install Python for your workstation.
@@ -147,6 +201,15 @@ user@7cf34df03377 ~ % where deadline
 1. Then follow the troubleshooting steps above for Python for your respective OS and verify that deadline is on your $PATH.
 1. If you have multiple Python installations and manage Deadline via Pip, verify that the Python on your $PATH is the Python that managed your Deadline installation. This can be done by running `python -m pip list` and `python3 -m pip list` to verify this.
 
+### Error: Missing job template at /Applications/Adobe After Effects 2025/Scripts/ScriptUI Panels/DeadlineCloudSubmitter_Assets/JobTemplate
+
+This error occurs when the `DeadlineCloudSubmitter_Assets` folder is missing or not located next to the `DeadlineCloudSubmitter.jsx` script file.
+
+1. Locate where your `DeadlineCloudSubmitter.jsx` script is installed or moved to.
+2. Ensure the `DeadlineCloudSubmitter_Assets` folder is in the same directory as the script.
+3. If the assets folder is missing, copy it from your original installation source to the same location as the JSX script.
+4. Restart After Effects and try running the submitter again.
+
 ### Warning: Unsupported After Effects Version Detected
 
 This means you are using an After Effects version that is not available in the deadline-cloud Conda channel, For example, if you're using After Effects 24.3, but the channel only supports 24.6.
@@ -158,49 +221,11 @@ To resolve this, you can either:
 2. Acknowledge the warning and proceed (at your own risk), or
 3. Create a custom Conda channel with your desired After Effects version
 
-
 ### After submission on Windows, a command prompt screen flashes open and close and submitter GUI doesn't pop open
 1. Go to the Windows Start menu and searching for "Manage app execution aliases". Then disable the `python3.exe` and `python.exe` aliases manually and retry submission.
 
-### Font with an unsupported extension <extension> was found**
-See **Font attachment system** below.
-
-## Font attachment system:
-
-The submitter detects fonts used in the submitted composition and automatically adds them as job attachments on submission. These get installed on the worker before the render starts and get removed again when the job ends.
-Currently supported font types include: OpenType (`.otf`), TrueType (`.ttf`), and [Adobe Fonts](https://fonts.adobe.com/).
-Windows bitmap fonts (`.fon`) are only supported on Windows machines.
-
-If fonts are missing at render time, first check that they're installed (on the system or your user), and then check they're being included in the job attachments tab in the submitter.
-
-Fonts distributed through Adobe Creative Cloud can be made available for all non-Adobe apps on your workstation, or only made available in Adobe apps. Cloud fonts need to be installed for all non-Adobe apps for use with Deadline Cloud.
-To install fonts for non-Adobe apps in Creative Cloud:
-
-1. Open Adobe Creative Cloud Desktop.
-1. Click "Adobe Fonts" on the account sidebar under "Your plan" to show the Adobe Fonts panel.
-1. Click "Added fonts" on the "Adobe Fonts" sidebar to show your added fonts.
-1. Click "Install family" next to the fonts you would like to make available for non-Adobe apps.
-
-## Setting up After Effects with your Deadline Cloud Farm
-
-After Effects 24.6, 25.1, and 25.2 conda packages are available in AWS Deadline Cloud Service Managed Fleet (See this [link](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/create-queue-environment.html) for more information). If you would like to build a conda channel that contains different After Effects conda package, please follow
-[the instruction](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html).
-You can also use After Effects conda recipe in
-[deadline-cloud-sample package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.0)
-as a reference when building the package.
-
-Jobs created by this submitter require `aerender` executable be available on the PATH of the user that will be running your jobs. Or you can set the `AERENDER_EXECUTABLE` to point to the aerender executable.
-
-## Viewing the Job Bundle that will be submitted
-
-To submit a job, the submitter first generates a [Job Bundle](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/build-job-bundle.html), and then uses functionality
-from the [Deadline](https://github.com/aws-deadline/deadline-cloud) package to submit the Job Bundle to your render farm to run.
-If you would like to see the job that will be submitted to your farm, then you can
-use the "Export Bundle" button in the submitter to export the Job Bundle
-in the job history directory (default: ~/.deadline/job_history).
-If you want to submit the job from the export, rather than through the submitter
-then you can use the [Deadline Cloud application](https://github.com/aws-deadline/deadline-cloud) to submit that bundle to your farm.
-
+### Font with an unsupported extension <extension> was found
+See **Font attachment system** above.
 
 ## Security
 
