@@ -76,7 +76,7 @@ var FootageTypes = {
     Video: 2,
     Audio: 3,
     Unknown: 4
-}
+};
 
 function readFile(filePath) {
     const f = new File(filePath);
