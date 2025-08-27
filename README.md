@@ -103,29 +103,31 @@ Additionally, to disable warnings every time you submit a job with the submitter
 
 1. Launch Adobe After Effects.
 2. Open submitter by clicking **File > Scripts > Run Script File** and navigate to where the `DeadlineCloudSubmitter.jsx` file is located and select it to run the submitter. If the submitter is closed, reopen it easily by clicking **File > Scripts > Recent Script Files** and pick the `DeadlineCloudSubmitter.jsx` file that was previously run.
-3. Add a composition to your render queue and set up your render settings, output module, and output path.
-4. Select your composition you want to render click `Submit` to submit a render job. Here are some settings you can set:
+3. Click "Open Render Queue" on the submitter. Add any composition to your render queue and set up your render settings, output module, and output path.
+4. Then click **Refresh** on the submitter to see your composition in the composition list.
+5. Select your composition you want to render click `Submit` to submit a render job. Here are some settings you can set:
    1. (Optional) For image sequences output types you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the chunk size of the frames and then Deadline Cloud will assign the tasks to available workers to delegate the load.
    2. You can also specify multi-frame rendering with your job submission. If you do, you can also specify the max percentage of CPU usage you wish to allocate towards rendering in case you would like to limit it to allow other background applications or processes to run smoothly. For more information about multi-frame rendering, visit Adobe's website [here](https://helpx.adobe.com/after-effects/using/multi-frame-rendering.html).
    3. You need to set up timeout days, hours and minutes to avoid the task gets stuck forever. The default timeout is 2 days.
-5. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
-6. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
-7. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
-8. If you're running the submitter and hitting error messages, scroll down to the Troubleshooting section for more guidance.
+6. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
+7. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
+8. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
+9. If you're running the submitter and hitting error messages, scroll down to the Troubleshooting section for more guidance.
 
 ### System Install
 
 1. Launch After Effects as Admin.
 2. Open submitter by clicking **Window > DeadlineCloudSubmitter.jsx**.
-3. Add a composition to your render queue and set up your render settings, output module, and output path.
-4. Select your composition you want to render click `Submit` to submit a render job. Here are some settings you can set:
+3. Click "Open Render Queue" on the submitter. Add any composition to your render queue and set up your render settings, output module, and output path.
+4. Then click **Refresh** on the submitter to see your composition in the composition list.
+5. Select your composition you want to render click `Submit` to submit a render job. Here are some settings you can set:
    1. (Optional) For image sequences output types you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the chunk size of the frames and then Deadline Cloud will assign the tasks to available workers to delegate the load.
    2. You can also specify multi-frame rendering with your job submission. If you do, you can also specify the max percentage of CPU usage you wish to allocate towards rendering in case you would like to limit it to allow other background applications or processes to run smoothly. For more information about multi-frame rendering, visit Adobe's website [here](https://helpx.adobe.com/after-effects/using/multi-frame-rendering.html).
    3. You need to set up timeout days, hours and minutes to avoid the task gets stuck forever. The default timeout is 2 days.
-5. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
-6. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
-7. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
-8. If you're running the submitter and hitting error messages, scroll down to the Troubleshooting section for more guidance.
+6. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
+7. Install any python libraries if prompted and press the Login button in the bottom left if you are not logged in.
+8. Set the farm and queue you are submitting to with the Settings button, and click **Submit**.
+9. If you're running the submitter and hitting error messages, scroll down to the Troubleshooting section for more guidance.
 
 **Note**: The After Effects submitter calls the Deadline GUI Submitter to complete job submission. If you hit any issues on the GUI submitter, please refer to [deadline-cloud](https://github.com/aws-deadline/deadline-cloud) library for help.
 
