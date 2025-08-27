@@ -50,26 +50,26 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 
 ### Submitter Installer Installation
 
-**Note: During the installer process, you will choose between User Install or System Install. Read only the section below that matches your selection:**
+**Note: During the installer process, you will choose between User Install or System Install. macOS users will default to User Install, since System Install is currently not supported on macOS. Read only the section below that matches your selection:**
 
 #### User Install
 
 1. Download the Deadline Cloud Submitter installer by following [Step 1: Install the Deadline Cloud Submitter](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#submitter-installation).
-2. Run the installer regularly (no admin required).
-3. Follow the prompts and select which submitters you would like to install. The submitter will be installed to:
+2. Run the installer (no admin required).
+3. Follow the prompts and select the After Effects submitter. The submitter will be installed to these locations by default:
    - **Windows**: `C:\Users\<user>\DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
    - **macOS**: `/Users/<user>/DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
-4. If you provide a custom install path, be sure to save that path for later reference.
+4. If you provide a custom install path, be sure to save that path for later reference. You can also find it later by searching for 'DeadlineCloudSubmitter.jsx' in your file system.
 
 *NOTE: If you install the After Effects submitter as a user install, the submitter will be a standalone submitter window rather than a dockable panel.*
 
 #### System Install
 
-**Note: macOS system install is not yet supported by the submitter installer.**
+**Note: macOS system install is not yet supported by the submitter installer. macOS users must do User Install.**
 
 1. Download the Deadline Cloud Submitter installer by following [Step 1: Install the Deadline Cloud Submitter](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#submitter-installation).
 2. **Windows only**: Right-click the installer and choose `Run as Admin`.
-3. Follow the prompts and select which submitters you would like to install. The submitter will be installed to:
+3. Follow the prompts and select the After Effects submitter. It will be installed to:
    - **Windows**: `C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
    - **Mac**: Currently not supported, only supporting User Install.
 
@@ -87,7 +87,7 @@ Additionally, to disable warnings every time you submit a job with the submitter
 
 ### Final Setup Steps
 
-1. After installing via submitter installer, ensure you log into your user profile by running `deadline auth login` in the Terminal/Powershell or logging in via the Deadline Cloud Monitor.
+1. After installing via submitter installer, ensure you log into your Deadline user profile by running `deadline auth login` in the Terminal/Powershell or logging in via the Deadline Cloud Monitor.
 
 2. Next, to install the necessary dependencies used by the AE submitter, run the following in your local Terminal or Command Prompt.
    ```
@@ -101,11 +101,11 @@ Additionally, to disable warnings every time you submit a job with the submitter
 
 ### User Install
 
-1. Launch After Effects (normal mode).
-2. Add a composition to your render queue and set up your render settings, output module, and output path.
-3. Open submitter by clicking **File > Scripts > Run Script File** and navigate to where the `DeadlineCloudSubmitter.jsx` file is located and select it to run the submitter. If the submitter is closed, reopen it easily by clicking **File > Scripts > Recent Script Files** and pick the `DeadlineCloudSubmitter.jsx` file that was previously run.
+1. Launch Adobe After Effects.
+2. Open submitter by clicking **File > Scripts > Run Script File** and navigate to where the `DeadlineCloudSubmitter.jsx` file is located and select it to run the submitter. If the submitter is closed, reopen it easily by clicking **File > Scripts > Recent Script Files** and pick the `DeadlineCloudSubmitter.jsx` file that was previously run.
+3. Add a composition to your render queue and set up your render settings, output module, and output path.
 4. Select your composition you want to render click `Submit` to submit a render job. Here are some settings you can set:
-   1. (Optional) For image sequences output types you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the number and then Deadline Cloud will assign the tasks to available workers to delegate the load.
+   1. (Optional) For image sequences output types you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the chunk size of the frames and then Deadline Cloud will assign the tasks to available workers to delegate the load.
    2. You can also specify multi-frame rendering with your job submission. If you do, you can also specify the max percentage of CPU usage you wish to allocate towards rendering in case you would like to limit it to allow other background applications or processes to run smoothly. For more information about multi-frame rendering, visit Adobe's website [here](https://helpx.adobe.com/after-effects/using/multi-frame-rendering.html).
    3. You need to set up timeout days, hours and minutes to avoid the task gets stuck forever. The default timeout is 2 days.
 5. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
@@ -116,10 +116,10 @@ Additionally, to disable warnings every time you submit a job with the submitter
 ### System Install
 
 1. Launch After Effects as Admin.
-2. Add a composition to your render queue and set up your render settings, output module, and output path.
-3. Open submitter by clicking **Window > DeadlineCloudSubmitter.jsx**.
+2. Open submitter by clicking **Window > DeadlineCloudSubmitter.jsx**.
+3. Add a composition to your render queue and set up your render settings, output module, and output path.
 4. Select your composition you want to render click `Submit` to submit a render job. Here are some settings you can set:
-   1. (Optional) For image sequences output types you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the number and then Deadline Cloud will assign the tasks to available workers to delegate the load.
+   1. (Optional) For image sequences output types you can specify the number of frames per task so that the job created by the After Effects submitter will create the tasks based on the chunk size of the frames and then Deadline Cloud will assign the tasks to available workers to delegate the load.
    2. You can also specify multi-frame rendering with your job submission. If you do, you can also specify the max percentage of CPU usage you wish to allocate towards rendering in case you would like to limit it to allow other background applications or processes to run smoothly. For more information about multi-frame rendering, visit Adobe's website [here](https://helpx.adobe.com/after-effects/using/multi-frame-rendering.html).
    3. You need to set up timeout days, hours and minutes to avoid the task gets stuck forever. The default timeout is 2 days.
 5. If you see a warning popup window with "You are about to run the script contained in file", you can suppress the warning by following the instruction in the popup or the instructions above to disable warnings when submitting jobs.
