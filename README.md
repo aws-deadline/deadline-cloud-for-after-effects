@@ -59,7 +59,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 3. Follow the prompts and select the After Effects submitter. The submitter will be installed to these locations by default:
    - **Windows**: `C:\Users\<user>\DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
    - **macOS**: `/Users/<user>/DeadlineCloudSubmitter\Submitters/AfterEffects\AE<version>`
-4. If you provide a custom install path, be sure to save that path for later reference. You can also find it later by searching for 'DeadlineCloudSubmitter.jsx' in your file system.
+4. If you provide a custom install path, be sure to save that path for later reference. You can also find it later by searching for 'DeadlineCloudSubmitter.jsx' in your file system. If you happen to lose it, search "DeadlineCloudSubmitter.jsx" in your Finder and select "This Mac" in the Search bar.
 
 *NOTE: If you install the After Effects submitter as a user install, the submitter will be a standalone submitter window rather than a dockable panel.*
 
