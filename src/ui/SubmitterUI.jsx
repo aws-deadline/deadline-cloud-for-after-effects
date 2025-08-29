@@ -20,7 +20,7 @@ function buildUI(thisObj) {
     logoText.graphics.font = arialBold24Font;
     const headerButtonGroup = root.add("group");
     const focusRenderQueueButton = headerButtonGroup.add("button", undefined, "Open Render Queue");
-    focusRenderQueueButton.onClick = function() {
+    focusRenderQueueButton.onClick = function () {
         // we quickly toggle the window to make sure it gains focus
         // sometimes this causes a flicker
         app.project.renderQueue.showWindow(false);
@@ -152,7 +152,7 @@ function buildUI(thisObj) {
             if (outputModule != null) {
                 const outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
                 const extension = getFileExtension(outputFileNameNoRegex);
-                return isImageOutput(extension);
+                return dcUtil.isImage(extension);
             }
         }
         return false;
@@ -258,7 +258,7 @@ function buildUI(thisObj) {
     taskRunMinutesInput.onChange = onTaskRunMinutesChanged;
 
     const submitButton = controlsGroup.add("button", undefined, "Submit");
-    submitButton.onClick = function() {
+    submitButton.onClick = function () {
         if (getPythonExecutable()) {
             if (list.selection === null) {
                 return;
@@ -380,13 +380,13 @@ function buildUI(thisObj) {
         const renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex);
         framesPerTaskTextBox.enabled = isRenderQueueItemImageOutput(renderQueueItem);
     }
-    refreshButton.onClick = function() {
+    refreshButton.onClick = function () {
         updateList();
     }
 
     submitterPanel.layout.layout(true);
 
-    submitterPanel.onResizing = function() {
+    submitterPanel.onResizing = function () {
         this.layout.resize();
     }
     if (!(thisObj instanceof Panel)) {

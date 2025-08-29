@@ -70,6 +70,14 @@ if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
     const DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90;
 }
 
+var FootageTypes = {
+    Image: 0,
+    ImageSequence: 1,
+    Video: 2,
+    Audio: 3,
+    Unknown: 4
+};
+
 function readFile(filePath) {
     const f = new File(filePath);
     f.encoding = "UTF-8";
@@ -559,6 +567,81 @@ function __generateUtil() {
         return _cachedTempFolder;
     }
 
+    // File extensions from supported AE file formats list at: https://helpx.adobe.com/after-effects/kb/supported-file-formats.html
+    function isVideo(extension) {
+        const videoExtensions = ["r3d", "crm", "mxf", "hevc", "3gp", "3g2", "amc", "swf", "flv", "f4v", "gif", "m2ts", "m4v", "mpg", "mpe", "mpa", "mod", "m2p", "m2v", "m2a", "m2t", "mp4", "omf", "mov", "avi", "wmv", "wma", "asf", "asx"];
+        return videoExtensions.indexOf(extension) >= 0;
+    }
+
+    function isAudio(extension) {
+        const audioExtensions = ["aac", "m4a", "aif", "aiff", "mp3", "mpeg", "mpg", "mpa", "mpe", "wav", "bwf"];
+        return audioExtensions.indexOf(extension) >= 0;
+    }
+
+    function isImage(extension) {
+        const frameExtensions = ["ai", "eps", "ps", "pdf", "psd", "bmp", "rle", "dlb", "tif", "crw", "nef", "raf", "orf", "mrw", "dcr", "mos", "raw", "pef", "srf", "dng", "x3f", "cr2", "erf", "sr2", "mfw", "mef", "arw", "cin", "dpx", "gif", "rla", "rpf", "img", "ei", "eps", "iff", "tdi", "jpg", "jpe", "heif", "ma", "exr", "sxr", "mxr", "pcx", "png", "hdr", "rgbe", "xyze", "sgi", "bw", "rgb", "pic", "tga", "vda", "icb", "vst", "tif", "jpeg"];
+        return frameExtensions.indexOf(extension) >= 0;
+    }
+
+    // Return the `FootageTypes` value for the passed footageItem
+    function determineFootageType(footageItem) {
+        if (footageItem.hasVideo) {
+            var filePath = File.decode(footageItem.mainSource.file);
+            var extension = filePath.substr(filePath.lastIndexOf(".") + 1, filePath.length).toLowerCase();
+            if (footageItem.mainSource.isStill) {
+                return FootageTypes.Image
+            } else if (isImage(extension)) {
+                return FootageTypes.ImageSequence
+            } else {
+                return FootageTypes.Video
+            }
+        } else if (footageItem.hasAudio) {
+            return FootageTypes.Audio
+        }
+        return FootageTypes.Unknown
+    }
+
+    /**
+     * Extracts frame number, prefix, and suffix for single frame in image sequence.
+     * @param {string} fileName 
+     * @returns Object containing prefix, name, and suffix 
+     */
+    function getImageSequenceInformation(fileName) {
+        var regex = /^(.*?)(\d*)(\D*)$/;
+        var match = fileName.match(regex);
+        return {
+            prefix: match[1],
+            frame: parseInt(match[2], 10),
+            suffix: match[3]
+        }
+    }
+
+    function getFilePathsFromFootageItem(footageItem) {
+        const paths = [];
+        if (determineFootageType(footageItem) === FootageTypes.ImageSequence) {
+            const source = footageItem.mainSource;
+            const frameCount = footageItem.duration / footageItem.frameDuration;
+            const firstFrameName = new File(source.file.fsName).fsName;
+            const firstFrameInfo = getImageSequenceInformation(firstFrameName);
+            const firstFrameNumber = firstFrameInfo.frame;
+            const lastFrameNumber = firstFrameNumber + frameCount;
+            logger.debug("Processing ImageSequence with range (" + firstFrameNumber + "-" + lastFrameNumber + ") and with name \"" + firstFrameName + "\"");
+            var containingFolder = source.file.parent;
+            var containingFiles = containingFolder.getFiles();
+            for (var i = 0; i < containingFiles.length; i++) {
+                var currentFrameFile = new File(containingFiles[i]).fsName;
+                var currentFrameInfo = getImageSequenceInformation(currentFrameFile);
+                if (currentFrameInfo.prefix === firstFrameInfo.prefix && currentFrameInfo.suffix === firstFrameInfo.suffix && currentFrameInfo.frame <= lastFrameNumber && currentFrameInfo.frame >= firstFrameNumber) {
+                    logger.debug("Adding frame " + currentFrameFile + "to paths");
+                    paths.push(currentFrameFile);
+                }
+            }
+        } else if (footageItem.mainSource instanceof FileSource) {
+            paths.push(footageItem.mainSource.file.fsName);
+        }
+        return paths;
+    }
+
     function wrappedCallSystem(cmd) {
         /**
          * Wraps system.callSystem command as required to get output from it.
@@ -926,8 +1009,8 @@ function __generateUtil() {
          * @returns {Object} Object containing startFrame and endFrame
          */
         // NOTE: we're not using displayStartFrame since it is rounded up
-        const startFrame = Number(Math.floor(rqi.comp.displayStartTime * rqi.comp.frameRate));
-        const numFrames = Number(Math.floor(rqi.timeSpanDuration * rqi.comp.frameRate));
+        const startFrame = Number(Math.floor((rqi.comp.displayStartTime + rqi.timeSpanStart) * rqi.comp.frameRate));
+        const numFrames = Number(Math.ceil(rqi.timeSpanDuration * rqi.comp.frameRate));
         const endFrame = startFrame + numFrames - 1; // end frame is inclusive
 
         return {
@@ -935,6 +1018,7 @@ function __generateUtil() {
             endFrame: endFrame
         };
     }
+
 
     function validateTimeoutValues(enabled, daysInput, hoursInput, minutesInput) {
         /**
@@ -990,7 +1074,7 @@ function __generateUtil() {
             for (var j = 0; j < ids.length; j++) {
                 var renderQueueID = ids[j];
                 if (getXMPPathLeaf(currentPath) === renderQueueID) {
-                    presentInArray=true;
+                    presentInArray = true;
                     break;
                 }
             }
@@ -1049,7 +1133,13 @@ function __generateUtil() {
         "saveToMetadata": saveToMetadata,
         "loadFromMetadata": loadFromMetadata,
         "metadataKeyExists": metadataKeyExists,
-        "deleteUnusedMetadata": deleteUnusedMetadata
+        "deleteUnusedMetadata": deleteUnusedMetadata,
+        "determineFootageType": determineFootageType,
+        "getFilePathsFromFootageItem": getFilePathsFromFootageItem,
+        "isVideo": isVideo,
+        "isAudio": isAudio,
+        "isImage": isImage
+
     }
 }
 
@@ -1346,25 +1436,25 @@ function generateParameterValues(
     prefix
 ) {
     const parameterValuesList = [{
-            name: prefix + "_RenderQueueIndex",
-            value: renderQueueIndex,
-        },
-        {
-            name: prefix + "_OutputDir",
-            value: outputDir,
-        },
-        {
-            name: prefix + "_OutputFileName",
-            value: outputFileName,
-        },
-        {
-            name: prefix + "_Frames",
-            value: startFrame.toString() + "-" + endFrame.toString(),
-        },
-        {
-            name: prefix + "_MultiFrameRendering",
-            value: multiFrameRendering === true ? "ON" : "OFF",
-        },
+        name: prefix + "_RenderQueueIndex",
+        value: renderQueueIndex,
+    },
+    {
+        name: prefix + "_OutputDir",
+        value: outputDir,
+    },
+    {
+        name: prefix + "_OutputFileName",
+        value: outputFileName,
+    },
+    {
+        name: prefix + "_Frames",
+        value: startFrame.toString() + "-" + endFrame.toString(),
+    },
+    {
+        name: prefix + "_MultiFrameRendering",
+        value: multiFrameRendering === true ? "ON" : "OFF",
+    },
     ];
     if (maxCpuUsagePercentage) {
         parameterValuesList.push({
@@ -1410,7 +1500,7 @@ function findJobAttachments(rootComp) {
     if (rootComp == null) {
         return [];
     }
-    const attachments = [];
+    var attachments = [];
     const exploredItems = {}; // using this object as a set because AE doesn't support sets
     attachments.push(app.project.file.fsName);
     exploredItems[rootComp.id] = true;
@@ -1449,7 +1539,7 @@ function findJobAttachments(rootComp) {
                             shouldShowPopup = false;
                         }
                     } else {
-                        attachments.push(src.file.fsName);
+                        attachments = attachments.concat(dcUtil.getFilePathsFromFootageItem(src));
                     }
                 }
             }
@@ -1780,22 +1870,6 @@ function generateFontReferences(fontPaths) {
 }
 
 
-function isVideoOutput(extension) {
-    const VideoOutputExtensions = ["avi", "mp4", "mov"];
-    return VideoOutputExtensions.indexOf(extension) >= 0;
-}
-
-function isAudioOutput(extension) {
-    const AudioOutputExtensions = ["aif", "mp3", "wav"];
-    return AudioOutputExtensions.indexOf(extension) >= 0;
-}
-
-function isImageOutput(extension) {
-    const FrameOutputExtensions = ["dpx", "iff", "jpg", "jpeg", "exr", "png", "psd", "hdr", "sgi", "tif", "tiff", "tga"];
-    return FrameOutputExtensions.indexOf(extension) >= 0;
-}
-
-
 var JobParams = [
     "JobScriptDir",
     "CondaPackages",
@@ -2091,74 +2165,74 @@ function SubmitSelection(selection, selectionSettings) {
     };
     const jobParameterDefinitions = {
         "parameterDefinitions": [{
-                "name": "ProjectFile",
-                "type": "PATH",
-                "objectType": "FILE",
-                "dataFlow": "IN",
-                "userInterface": {
-                    "control": "CHOOSE_INPUT_FILE",
-                    "label": "Project file",
-                    "groupLabel": "Source",
-                    "fileFilters": [{
-                            "label": "After Effects project files",
-                            "patterns": [
-                                "*.aep",
-                                "*.aepx"
-                            ]
-                        },
-                        {
-                            "label": "All Files",
-                            "patterns": [
-                                "*"
-                            ]
-                        }
+            "name": "ProjectFile",
+            "type": "PATH",
+            "objectType": "FILE",
+            "dataFlow": "IN",
+            "userInterface": {
+                "control": "CHOOSE_INPUT_FILE",
+                "label": "Project file",
+                "groupLabel": "Source",
+                "fileFilters": [{
+                    "label": "After Effects project files",
+                    "patterns": [
+                        "*.aep",
+                        "*.aepx"
                     ]
                 },
-                "description": "The After Effects project file to render."
+                {
+                    "label": "All Files",
+                    "patterns": [
+                        "*"
+                    ]
+                }
+                ]
             },
-            {
-                "name": "JobScriptDir",
-                "description": "Directory containing embedded scripts.",
-                "userInterface": {
-                    "control": "HIDDEN"
-                },
-                "type": "PATH",
-                "objectType": "DIRECTORY",
-                "dataFlow": "IN",
-                "default": "scripts"
+            "description": "The After Effects project file to render."
+        },
+        {
+            "name": "JobScriptDir",
+            "description": "Directory containing embedded scripts.",
+            "userInterface": {
+                "control": "HIDDEN"
             },
-            {
-                "name": "CondaPackages",
-                "type": "STRING",
-                "userInterface": {
-                    "control": "HIDDEN"
-                },
-                "default": "aftereffects=" + aftereffectsCondaVersion,
-                "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
-            }
+            "type": "PATH",
+            "objectType": "DIRECTORY",
+            "dataFlow": "IN",
+            "default": "scripts"
+        },
+        {
+            "name": "CondaPackages",
+            "type": "STRING",
+            "userInterface": {
+                "control": "HIDDEN"
+            },
+            "default": "aftereffects=" + aftereffectsCondaVersion,
+            "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
+        }
         ]
     }
     const jobParameterValues = {
         parameterValues: [{
-                name: "deadline:targetTaskRunStatus",
-                value: "READY",
-            },
-            {
-                name: "deadline:maxFailedTasksCount",
-                value: 20,
-            },
-            {
-                name: "deadline:maxRetriesPerTask",
-                value: 5,
-            },
-            {
-                name: "deadline:priority",
-                value: 50,
-            },
-            {
-                name: "ProjectFile",
-                value: app.project.file.fsName,
-            },
+            name: "deadline:targetTaskRunStatus",
+            value: "READY",
+        },
+        {
+            name: "deadline:maxFailedTasksCount",
+            value: 20,
+        },
+        {
+            name: "deadline:maxRetriesPerTask",
+            value: 5,
+        },
+        {
+            name: "deadline:priority",
+            value: 50,
+        },
+        {
+            name: "ProjectFile",
+            value: app.project.file.fsName,
+        },
         ]
     }
 
@@ -2201,7 +2275,7 @@ function SubmitSelection(selection, selectionSettings) {
         var outputFileNameNoRegex = getFileNameNoRegex(outputFile);
         var extension = getFileExtension(outputFileNameNoRegex);
         logger.debug("extension set to: " + extension, submitBundleFile);
-        var isImageSeq = isImageOutput(extension);
+        var isImageSeq = dcUtil.isImage(extension);
 
         var sanitizedOutputFileName = dcUtil.removePercentageFromFileName(outputFileNameNoRegex);
         logger.debug("sanitizedOutputFileName is " + sanitizedOutputFileName, submitBundleFile);
@@ -2914,7 +2988,7 @@ function buildUI(thisObj) {
     logoText.graphics.font = arialBold24Font;
     const headerButtonGroup = root.add("group");
     const focusRenderQueueButton = headerButtonGroup.add("button", undefined, "Open Render Queue");
-    focusRenderQueueButton.onClick = function() {
+    focusRenderQueueButton.onClick = function () {
         // we quickly toggle the window to make sure it gains focus
         // sometimes this causes a flicker
         app.project.renderQueue.showWindow(false);
@@ -3046,7 +3120,7 @@ function buildUI(thisObj) {
             if (outputModule != null) {
                 const outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
                 const extension = getFileExtension(outputFileNameNoRegex);
-                return isImageOutput(extension);
+                return dcUtil.isImage(extension);
             }
         }
         return false;
@@ -3152,7 +3226,7 @@ function buildUI(thisObj) {
     taskRunMinutesInput.onChange = onTaskRunMinutesChanged;
 
     const submitButton = controlsGroup.add("button", undefined, "Submit");
-    submitButton.onClick = function() {
+    submitButton.onClick = function () {
         if (getPythonExecutable()) {
             if (list.selection === null) {
                 return;
@@ -3274,13 +3348,13 @@ function buildUI(thisObj) {
         const renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex);
         framesPerTaskTextBox.enabled = isRenderQueueItemImageOutput(renderQueueItem);
     }
-    refreshButton.onClick = function() {
+    refreshButton.onClick = function () {
         updateList();
     }
 
     submitterPanel.layout.layout(true);
 
-    submitterPanel.onResizing = function() {
+    submitterPanel.onResizing = function () {
         this.layout.resize();
     }
     if (!(thisObj instanceof Panel)) {
