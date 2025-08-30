@@ -66,6 +66,14 @@ if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
     const DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90;
 }
 
+var FootageTypes = {
+    Image: 0,
+    ImageSequence: 1,
+    Video: 2,
+    Audio: 3,
+    Unknown: 4
+};
+
 function readFile(filePath) {
     const f = new File(filePath);
     f.encoding = "UTF-8";
@@ -555,6 +563,81 @@ function __generateUtil() {
         return _cachedTempFolder;
     }
 
+    // File extensions from supported AE file formats list at: https://helpx.adobe.com/after-effects/kb/supported-file-formats.html
+    function isVideo(extension) {
+        const videoExtensions = ["r3d", "crm", "mxf", "hevc", "3gp", "3g2", "amc", "swf", "flv", "f4v", "gif", "m2ts", "m4v", "mpg", "mpe", "mpa", "mod", "m2p", "m2v", "m2a", "m2t", "mp4", "omf", "mov", "avi", "wmv", "wma", "asf", "asx"];
+        return videoExtensions.indexOf(extension) >= 0;
+    }
+
+    function isAudio(extension) {
+        const audioExtensions = ["aac", "m4a", "aif", "aiff", "mp3", "mpeg", "mpg", "mpa", "mpe", "wav", "bwf"];
+        return audioExtensions.indexOf(extension) >= 0;
+    }
+
+    function isImage(extension) {
+        const frameExtensions = ["ai", "eps", "ps", "pdf", "psd", "bmp", "rle", "dlb", "tif", "crw", "nef", "raf", "orf", "mrw", "dcr", "mos", "raw", "pef", "srf", "dng", "x3f", "cr2", "erf", "sr2", "mfw", "mef", "arw", "cin", "dpx", "gif", "rla", "rpf", "img", "ei", "eps", "iff", "tdi", "jpg", "jpe", "heif", "ma", "exr", "sxr", "mxr", "pcx", "png", "hdr", "rgbe", "xyze", "sgi", "bw", "rgb", "pic", "tga", "vda", "icb", "vst", "tif", "jpeg"];
+        return frameExtensions.indexOf(extension) >= 0;
+    }
+
+    // Return the `FootageTypes` value for the passed footageItem
+    function determineFootageType(footageItem) {
+        if (footageItem.hasVideo) {
+            var filePath = File.decode(footageItem.mainSource.file);
+            var extension = filePath.substr(filePath.lastIndexOf(".") + 1, filePath.length).toLowerCase();
+            if (footageItem.mainSource.isStill) {
+                return FootageTypes.Image
+            } else if (isImage(extension)) {
+                return FootageTypes.ImageSequence
+            } else {
+                return FootageTypes.Video
+            }
+        } else if (footageItem.hasAudio) {
+            return FootageTypes.Audio
+        }
+        return FootageTypes.Unknown
+    }
+
+    /**
+     * Extracts frame number, prefix, and suffix for single frame in image sequence.
+     * @param {string} fileName 
+     * @returns Object containing prefix, name, and suffix 
+     */
+    function getImageSequenceInformation(fileName) {
+        var regex = /^(.*?)(\d*)(\D*)$/;
+        var match = fileName.match(regex);
+        return {
+            prefix: match[1],
+            frame: parseInt(match[2], 10),
+            suffix: match[3]
+        }
+    }
+
+    function getFilePathsFromFootageItem(footageItem) {
+        const paths = [];
+        if (determineFootageType(footageItem) === FootageTypes.ImageSequence) {
+            const source = footageItem.mainSource;
+            const frameCount = footageItem.duration / footageItem.frameDuration;
+            const firstFrameName = new File(source.file.fsName).fsName;
+            const firstFrameInfo = getImageSequenceInformation(firstFrameName);
+            const firstFrameNumber = firstFrameInfo.frame;
+            const lastFrameNumber = firstFrameNumber + frameCount;
+            logger.debug("Processing ImageSequence with range (" + firstFrameNumber + "-" + lastFrameNumber + ") and with name \"" + firstFrameName + "\"");
+            var containingFolder = source.file.parent;
+            var containingFiles = containingFolder.getFiles();
+            for (var i = 0; i < containingFiles.length; i++) {
+                var currentFrameFile = new File(containingFiles[i]).fsName;
+                var currentFrameInfo = getImageSequenceInformation(currentFrameFile);
+                if (currentFrameInfo.prefix === firstFrameInfo.prefix && currentFrameInfo.suffix === firstFrameInfo.suffix && currentFrameInfo.frame <= lastFrameNumber && currentFrameInfo.frame >= firstFrameNumber) {
+                    logger.debug("Adding frame " + currentFrameFile + "to paths");
+                    paths.push(currentFrameFile);
+                }
+            }
+        } else if (footageItem.mainSource instanceof FileSource) {
+            paths.push(footageItem.mainSource.file.fsName);
+        }
+        return paths;
+    }
+
     function wrappedCallSystem(cmd) {
         /**
          * Wraps system.callSystem command as required to get output from it.
@@ -922,8 +1005,8 @@ function __generateUtil() {
          * @returns {Object} Object containing startFrame and endFrame
          */
         // NOTE: we're not using displayStartFrame since it is rounded up
-        const startFrame = Number(Math.floor(rqi.comp.displayStartTime * rqi.comp.frameRate));
-        const numFrames = Number(Math.floor(rqi.timeSpanDuration * rqi.comp.frameRate));
+        const startFrame = Number(Math.floor((rqi.comp.displayStartTime + rqi.timeSpanStart) * rqi.comp.frameRate));
+        const numFrames = Number(Math.ceil(rqi.timeSpanDuration * rqi.comp.frameRate));
         const endFrame = startFrame + numFrames - 1; // end frame is inclusive
 
         return {
@@ -931,6 +1014,7 @@ function __generateUtil() {
             endFrame: endFrame
         };
     }
+
 
     function validateTimeoutValues(enabled, daysInput, hoursInput, minutesInput) {
         /**
@@ -986,7 +1070,7 @@ function __generateUtil() {
             for (var j = 0; j < ids.length; j++) {
                 var renderQueueID = ids[j];
                 if (getXMPPathLeaf(currentPath) === renderQueueID) {
-                    presentInArray=true;
+                    presentInArray = true;
                     break;
                 }
             }
@@ -1045,7 +1129,13 @@ function __generateUtil() {
         "saveToMetadata": saveToMetadata,
         "loadFromMetadata": loadFromMetadata,
         "metadataKeyExists": metadataKeyExists,
-        "deleteUnusedMetadata": deleteUnusedMetadata
+        "deleteUnusedMetadata": deleteUnusedMetadata,
+        "determineFootageType": determineFootageType,
+        "getFilePathsFromFootageItem": getFilePathsFromFootageItem,
+        "isVideo": isVideo,
+        "isAudio": isAudio,
+        "isImage": isImage
+
     }
 }
 
