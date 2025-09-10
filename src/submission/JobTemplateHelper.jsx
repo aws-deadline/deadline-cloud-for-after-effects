@@ -78,6 +78,13 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
     };
 }
 
+function singletonAdcPopup(shouldShowPopup, message) {
+    // We only care if the footage is missing when ignoreMissingDependencies is false
+    if (!ignoreMissingDependencies && shouldShowPopup) {
+        adcAlert(message, false);
+    }
+}
+
 /**
  * Breadth first sweep through the root composition to find all footage and font references
  * More efficient than just iterating through items in the project when
@@ -87,9 +94,7 @@ function findJobAttachments(rootComp, ignoreMissingDependencies) {
     if (rootComp == null) {
         return [];
     }
-    if (ignoreMissingDependencies === undefined) {
-        ignoreMissingDependencies = false;
-    }
+    ignoreMissingDependencies = ignoreMissingDependencies || false;
     const attachments = [];
     const exploredItems = {}; // using this object as a set because AE doesn't support sets
     attachments.push(app.project.file.fsName);
@@ -100,39 +105,34 @@ function findJobAttachments(rootComp, ignoreMissingDependencies) {
         var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
         for (var i = 1; i <= comp.numLayers; i++) {
             var layer = comp.layer(i);
-            if (
-                layer != null &&
-                layer instanceof AVLayer &&
-                layer.source != null
-            ) {
-                var src = layer.source;
-                if (src.id in exploredItems) {
-                    continue;
-                }
-                exploredItems[src.id] = true;
-                if (src instanceof CompItem) {
-                    queue.push(src);
-                } else if (
-                    src instanceof FootageItem &&
-                    src.mainSource instanceof FileSource
-                ) {
-                    // We only care if the footage is missing when ignoreMissingDependencies is false
-                    if (src.footageMissing && !ignoreMissingDependencies) {
-                        if (shouldShowPopup) {
-                            adcAlert(
-                                "Missing Footage: " +
-                                src.name +
-                                " (" +
-                                src.missingFootagePath +
-                                ")",
-                                false
-                            );
-                            shouldShowPopup = false;
-                        }
-                    } else {
-                        attachments = attachments.concat(dcUtil.getFilePathsFromFootageItem(src));
-                    }
-                }
+            var src = layer.source;
+            var isValidLayer = layer != null && layer instanceof AVLayer && src != null;
+            var shouldExploreLayer = isValidLayer && src.id in exploredItems;
+            if (!shouldExploreLayer) {
+                continue;
+            }
+            exploredItems[src.id] = true;
+            if (src instanceof CompItem) {
+                queue.push(src);
+                continue;
+            }
+            var isFootageItem = src instanceof FootageItem && src.mainSource instanceof FileSource;
+            if (!isFootageItem) {
+                continue
+            }
+            if (src.footageMissing) {
+                singletonAdcPopup(
+                        shouldShowPopup,
+                        ignoreMissingDependencies,
+                        "Missing Footage: " +
+                        src.name +
+                        " (" +
+                        src.missingFootagePath +
+                        ")",
+                        false);
+                shouldShowPopup = false;
+            } else {
+                attachments = attachments.concat(dcUtil.getFilePathsFromFootageItem(src));
             }
         }
     }
