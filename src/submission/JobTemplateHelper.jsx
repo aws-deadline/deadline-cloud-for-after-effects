@@ -90,7 +90,7 @@ function findJobAttachments(rootComp, ignoreMissingDependencies) {
     if (ignoreMissingDependencies === undefined) {
         ignoreMissingDependencies = false;
     }
-    const attachments = [];
+    var attachments = [];
     const exploredItems = {}; // using this object as a set because AE doesn't support sets
     attachments.push(app.project.file.fsName);
     exploredItems[rootComp.id] = true;
