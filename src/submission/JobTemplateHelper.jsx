@@ -78,11 +78,62 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
     };
 }
 
-function singletonAdcPopup(shouldShowPopup, message) {
+function singletonAdcPopup(shouldShowPopup, ignoreMissingDependencies, message) {
     // We only care if the footage is missing when ignoreMissingDependencies is false
     if (!ignoreMissingDependencies && shouldShowPopup) {
         adcAlert(message, false);
     }
+}
+
+function updateFontReferences(ignoreMissingDependencies, attachments) {
+    const fontsInProject = getFontsFromFile();
+
+    if (fontsInProject.length > 0) {
+        // Notify the user if any fonts are missing or are substituted during the session.
+        // A substituted font is a font that was already missing when the project is opened.
+        // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
+        //  Again only care if ignoreMissingDependencies is false
+        if (app.fonts.missingOrSubstitutedFonts != "") {
+            singletonAdcPopup(true, ignoreMissingDependencies, "Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString());
+        }
+        // Formatting collected fonts
+        const fontReferences = generateFontReferences(fontsInProject);
+        for (var i = 0; i < fontReferences.length; i++) {
+            attachments.push(fontReferences[i]);
+        }
+    }
+}
+
+
+function processCompInJobAttachments(comp, attachments, queue, exploredItems, ignoreMissingDependencies, shouldShowPopup) {
+    var layer = comp.layer(i);
+    var src = layer.source;
+    var shouldExploreLayer = layer != null && layer instanceof AVLayer && src != null && src.id in exploredItems;
+    if (!shouldExploreLayer) {
+        return;
+    }
+    exploredItems[src.id] = true;
+    if (src instanceof CompItem) {
+        queue.push(src);
+        return;
+    }
+    var isFootageItem = src instanceof FootageItem && src.mainSource instanceof FileSource;
+    if (!isFootageItem) {
+        return;
+    }
+    if (src.footageMissing) {
+        singletonAdcPopup(
+                shouldShowPopup,
+                ignoreMissingDependencies,
+                "Missing Footage: " +
+                src.name +
+                " (" +
+                src.missingFootagePath +
+                ")");
+        shouldShowPopup = false;
+        return;
+    }
+    attachments = attachments.concat(dcUtil.getFilePathsFromFootageItem(src));
 }
 
 /**
@@ -104,55 +155,12 @@ function findJobAttachments(rootComp, ignoreMissingDependencies) {
         var comp = queue.pop();
         var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
         for (var i = 1; i <= comp.numLayers; i++) {
-            var layer = comp.layer(i);
-            var src = layer.source;
-            var isValidLayer = layer != null && layer instanceof AVLayer && src != null;
-            var shouldExploreLayer = isValidLayer && src.id in exploredItems;
-            if (!shouldExploreLayer) {
-                continue;
-            }
-            exploredItems[src.id] = true;
-            if (src instanceof CompItem) {
-                queue.push(src);
-                continue;
-            }
-            var isFootageItem = src instanceof FootageItem && src.mainSource instanceof FileSource;
-            if (!isFootageItem) {
-                continue
-            }
-            if (src.footageMissing) {
-                singletonAdcPopup(
-                        shouldShowPopup,
-                        ignoreMissingDependencies,
-                        "Missing Footage: " +
-                        src.name +
-                        " (" +
-                        src.missingFootagePath +
-                        ")",
-                        false);
-                shouldShowPopup = false;
-            } else {
-                attachments = attachments.concat(dcUtil.getFilePathsFromFootageItem(src));
-            }
+            processCompInJobAttachments(comp, attachments, queue, exploredItems, ignoreMissingDependencies, shouldShowPopup);
+
         }
     }
 
-    const fontsInProject = getFontsFromFile();
-
-    if (fontsInProject.length > 0) {
-        // Notify the user if any fonts are missing or are substituted during the session.
-        // A substituted font is a font that was already missing when the project is opened.
-        // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
-        //  Again only care if ignoreMissingDependencies is false
-        if (app.fonts.missingOrSubstitutedFonts != "" && !ignoreMissingDependencies) {
-            adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString(), false);
-        }
-        // Formatting collected fonts
-        const fontReferences = generateFontReferences(fontsInProject);
-        for (var i = 0; i < fontReferences.length; i++) {
-            attachments.push(fontReferences[i]);
-        }
-    }
+    updateFontReferences(ignoreMissingDependencies, attachments);
 
     return attachments;
 }
