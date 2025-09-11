@@ -133,7 +133,7 @@ function processCompInJobAttachments(comp, attachments, queue, exploredItems, ig
         shouldShowPopup = false;
         return;
     }
-    attachments = attachments.concat(dcUtil.getFilePathsFromFootageItem(src));
+    return attachments.concat(dcUtil.getFilePathsFromFootageItem(src));
 }
 
 /**
@@ -155,7 +155,7 @@ function findJobAttachments(rootComp, ignoreMissingDependencies) {
         var comp = queue.pop();
         var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
         for (var i = 1; i <= comp.numLayers; i++) {
-            processCompInJobAttachments(comp, attachments, queue, exploredItems, ignoreMissingDependencies, shouldShowPopup);
+            attachments = processCompInJobAttachments(comp, attachments, queue, exploredItems, ignoreMissingDependencies, shouldShowPopup);
 
         }
     }
