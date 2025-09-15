@@ -78,7 +78,7 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
     };
 }
 
-function processAVLayer(queue, exploredItems, attachments, ignoreMissingDependencies, shouldShowPopup) {
+function processAVLayer(layer, queue, exploredItems, attachments, ignoreMissingDependencies, shouldShowPopup) {
     if (layer == null || !(layer instanceof AVLayer) || layer.source == null) {
         return {
             queue: queue,
@@ -130,7 +130,7 @@ function processJobAttachmentComp(queue, exploredItems, attachments, ignoreMissi
     var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
     for (var i = 1; i <= comp.numLayers; i++) {
         var layer = comp.layer(i);
-        var result = processAVLayer(queue, exploredItems, attachments, ignoreMissingDependencies, shouldShowPopup);
+        var result = processAVLayer(layer, queue, exploredItems, attachments, ignoreMissingDependencies, shouldShowPopup);
         queue = result.queue;
         exploredItems = result.exploredItems;
         attachments = result.attachments;
@@ -161,10 +161,10 @@ function findJobAttachments(rootComp, ignoreMissingDependencies) {
     exploredItems[rootComp.id] = true;
     var queue = [rootComp];
     while (queue.length > 0) {
-        var result = processJobAttachmentLayer(queue, exploredItems, attachments, ignoreMissingDependencies);
+        var result = processJobAttachmentComp(queue, exploredItems, attachments, ignoreMissingDependencies);
         queue = result.queue;
         exploredItems = result.exploredItems;
-        attachments = queue.attachments;
+        attachments = result.attachments;
     }
 
     const fontsInProject = getFontsFromFile();
