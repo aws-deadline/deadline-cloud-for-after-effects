@@ -1512,6 +1512,10 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
     };
 }
 
+/**
+ * Helper for recursive job attachment search in findJobAttachments.
+ * Updates the queue, exploredItems list, and attachments list after processing a single AV layer.
+ */
 function processAVLayer(layer, queue, exploredItems, attachments, ignoreMissingDependencies, shouldShowPopup) {
     if (layer == null || !(layer instanceof AVLayer) || layer.source == null) {
         return {
@@ -1559,6 +1563,10 @@ function processAVLayer(layer, queue, exploredItems, attachments, ignoreMissingD
     }
 }
 
+/**
+ * Helper for recursive job attachment search in findJobAttachments.
+ * Updates the queue, exploredItems list, and attachments list after recursively processing all layers in a comp.
+ */
 function processJobAttachmentComp(queue, exploredItems, attachments, ignoreMissingDependencies) {
     var comp = queue.pop();
     var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
