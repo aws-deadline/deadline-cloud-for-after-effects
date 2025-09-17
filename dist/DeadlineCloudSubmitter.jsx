@@ -48,6 +48,9 @@ if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_HOURS === "undefined") {
 if (typeof DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES === "undefined") {
     const DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES = "taskRunTimeoutMinutes";
 }
+if (typeof DEADLINECLOUD_IGNORE_MISSING_DEPENDENCIES === "undefined") {
+    const DEADLINECLOUD_IGNORE_MISSING_DEPENDENCIES = "ignoreMissingDependencies";
+}
 if (typeof DEFAULT_TASK_RUN_TIMEOUT_ENABLED === "undefined") {
     const DEFAULT_TASK_RUN_TIMEOUT_ENABLED = true;
 }
@@ -68,6 +71,9 @@ if (typeof DEFAULT_MULTI_FRAME_RENDERING === "undefined") {
 }
 if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
     const DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90;
+}
+if (typeof DEFAULT_IGNORE_MISSING_DEPENDENCIES === "undefined") {
+    const DEFAULT_IGNORE_MISSING_DEPENDENCIES = false;
 }
 
 var FootageTypes = {
@@ -1381,33 +1387,41 @@ function UiSettingsStore(xmpPathPrefix, name) {
     this.name = name;
     this.xmpPathPrefix = dcUtil.composeXMPPath(xmpPathPrefix, name);
 
-    this.framesPerTask = function() {
+    this.framesPerTask = function () {
         return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), DEFAULT_FRAMESPERTASK);
     }
-    this.setFramesPerTask = function(value) {
+    this.setFramesPerTask = function (value) {
         logger.warning("(" + this.name + ") Setting framesPerTask to " + value);
         dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), value);
     }
 
-    this.multiFrameRendering = function() {
+    this.multiFrameRendering = function () {
         return dcUtil.getBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), DEFAULT_MULTI_FRAME_RENDERING);
     }
-    this.setMultiFrameRendering = function(value) {
+    this.setMultiFrameRendering = function (value) {
         logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value);
         dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), value);
     }
 
-    this.maxCpuUsagePercentage = function() {
+    this.maxCpuUsagePercentage = function () {
         return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), DEFAULT_MAX_CPU_USAGE_PERCENTAGE);
 
     }
-    this.setMaxCpuUsagePercentage = function(value) {
+    this.setMaxCpuUsagePercentage = function (value) {
         logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value);
         dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), value);
     }
+
+    this.ignoreMissingDependencies = function () {
+        return dcUtil.getBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_IGNORE_MISSING_DEPENDENCIES), DEFAULT_IGNORE_MISSING_DEPENDENCIES);
+    }
+    this.setIgnoreMissingDependencies = function (value) {
+        logger.warning("(" + this.name + ") Setting ignoreMissingDependencies to " + value)
+        dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_IGNORE_MISSING_DEPENDENCIES), value);
+    }
 }
 
-UiSettingsState.prototype.get = function(RQIID) {
+UiSettingsState.prototype.get = function (RQIID) {
     /**
      * Gets UISettingsStore associated with given RQIID, or creates a new default one if it doesn't exit
      */
@@ -1433,6 +1447,7 @@ function generateParameterValues(
     chunkSize,
     multiFrameRendering,
     maxCpuUsagePercentage,
+    ignoreMissingDependencies,
     prefix
 ) {
     const parameterValuesList = [{
@@ -1468,6 +1483,12 @@ function generateParameterValues(
             value: chunkSize,
         });
     }
+    if (ignoreMissingDependencies) {
+        parameterValuesList.push({
+            name: prefix + "_IgnoreMissingDependencies",
+            value: ignoreMissingDependencies === true ? "ON" : "OFF",
+        })
+    }
     return {
         parameterValues: parameterValuesList
     };
@@ -1492,58 +1513,100 @@ function jobAttachmentsJson(inputFiles, outputFolder) {
 }
 
 /**
+ * Helper for recursive job attachment search in findJobAttachments.
+ * Updates the queue, exploredItems list, and attachments list after processing a single AV layer.
+ */
+function processAVLayer(layer, queue, exploredItems, attachments, ignoreMissingDependencies, shouldShowPopup) {
+    if (layer == null || !(layer instanceof AVLayer) || layer.source == null) {
+        return {
+            queue: queue,
+            exploredItems: exploredItems,
+            attachments: attachments,
+            shouldShowPopup: shouldShowPopup
+        }
+    }
+    var src = layer.source;
+    if (src.id in exploredItems) {
+        return {
+            queue: queue,
+            exploredItems: exploredItems,
+            attachments: attachments,
+            shouldShowPopup: shouldShowPopup
+        }
+    }
+    exploredItems[src.id] = true;
+    if (src instanceof CompItem) {
+        queue.push(src);
+    } else if (src instanceof FootageItem && src.mainSource instanceof FileSource) {
+        // We only care if the footage is missing when ignoreMissingDependencies is false
+        if (src.footageMissing && !ignoreMissingDependencies) {
+            if (shouldShowPopup) {
+                adcAlert(
+                    "Missing Footage: " +
+                    src.name +
+                    " (" +
+                    src.missingFootagePath +
+                    ")",
+                    false
+                );
+                shouldShowPopup = false;
+            }
+        } else {
+            attachments = attachments.concat(dcUtil.getFilePathsFromFootageItem(src));
+        }
+    }
+    return {
+        queue: queue,
+        exploredItems: exploredItems,
+        attachments: attachments,
+        shouldShowPopup: shouldShowPopup
+    }
+}
+
+/**
+ * Helper for recursive job attachment search in findJobAttachments.
+ * Updates the queue, exploredItems list, and attachments list after recursively processing all layers in a comp.
+ */
+function processJobAttachmentComp(queue, exploredItems, attachments, ignoreMissingDependencies) {
+    var comp = queue.pop();
+    var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
+    for (var i = 1; i <= comp.numLayers; i++) {
+        var layer = comp.layer(i);
+        var result = processAVLayer(layer, queue, exploredItems, attachments, ignoreMissingDependencies, shouldShowPopup);
+        queue = result.queue;
+        exploredItems = result.exploredItems;
+        attachments = result.attachments;
+        shouldShowPopup = result.shouldShowPopup;
+    }
+    return {
+        queue: queue,
+        exploredItems: exploredItems,
+        attachments: attachments,
+    }
+}
+
+/**
  * Breadth first sweep through the root composition to find all footage and font references
  * More efficient than just iterating through items in the project when
  * there is a lot of unused footage in the project
  **/
-function findJobAttachments(rootComp) {
+function findJobAttachments(rootComp, ignoreMissingDependencies) {
     if (rootComp == null) {
         return [];
     }
+    if (ignoreMissingDependencies === undefined) {
+        ignoreMissingDependencies = false;
+    }
     var attachments = [];
-    const exploredItems = {}; // using this object as a set because AE doesn't support sets
+    var exploredItems = {}; // using this object as a set because AE doesn't support sets
     attachments.push(app.project.file.fsName);
     exploredItems[rootComp.id] = true;
-    const queue = [rootComp];
+    var queue = [rootComp];
     while (queue.length > 0) {
-        var comp = queue.pop();
-        var shouldShowPopup = true; // only show the popup once per comp so the user doesn't get spammed if there's a lot of missing media
-        for (var i = 1; i <= comp.numLayers; i++) {
-            var layer = comp.layer(i);
-            if (
-                layer != null &&
-                layer instanceof AVLayer &&
-                layer.source != null
-            ) {
-                var src = layer.source;
-                if (src.id in exploredItems) {
-                    continue;
-                }
-                exploredItems[src.id] = true;
-                if (src instanceof CompItem) {
-                    queue.push(src);
-                } else if (
-                    src instanceof FootageItem &&
-                    src.mainSource instanceof FileSource
-                ) {
-                    if (src.footageMissing) {
-                        if (shouldShowPopup) {
-                            adcAlert(
-                                "Missing Footage: " +
-                                src.name +
-                                " (" +
-                                src.missingFootagePath +
-                                ")",
-                                false
-                            );
-                            shouldShowPopup = false;
-                        }
-                    } else {
-                        attachments = attachments.concat(dcUtil.getFilePathsFromFootageItem(src));
-                    }
-                }
-            }
-        }
+        var result = processJobAttachmentComp(queue, exploredItems, attachments, ignoreMissingDependencies);
+        queue = result.queue;
+        exploredItems = result.exploredItems;
+        attachments = result.attachments;
     }
 
     const fontsInProject = getFontsFromFile();
@@ -1552,7 +1615,8 @@ function findJobAttachments(rootComp) {
         // Notify the user if any fonts are missing or are substituted during the session.
         // A substituted font is a font that was already missing when the project is opened.
         // A missing font is a font that went missing (e.g. font was uninstalled) while the project was open.
-        if (app.fonts.missingOrSubstitutedFonts != "") {
+        //  Again only care if ignoreMissingDependencies is false
+        if (app.fonts.missingOrSubstitutedFonts != "" && !ignoreMissingDependencies) {
             adcAlert("Missing fonts in project: " + (app.fonts.missingOrSubstitutedFonts).toString(), false);
         }
         // Formatting collected fonts
@@ -2253,6 +2317,7 @@ function SubmitSelection(selection, selectionSettings) {
         var stepFramesPerTask = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).framesPerTask();
         var stepMaxCpuUsagePercentage = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).maxCpuUsagePercentage();
         var stepMultiFrameRendering = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).multiFrameRendering();
+        var stepIgnoreMissingDependencies = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).ignoreMissingDependencies();
 
         var outputModule = renderQueueItem.outputModule(1).file;
         var outputPath = outputModule.fsName;
@@ -2268,7 +2333,7 @@ function SubmitSelection(selection, selectionSettings) {
         var startFrame = frameRange.startFrame;
         var endFrame = frameRange.endFrame;
 
-        var dependencies = findJobAttachments(renderQueueItem.comp); // list of filenames
+        var dependencies = findJobAttachments(renderQueueItem.comp, stepIgnoreMissingDependencies); // list of filenames
         var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
 
@@ -2297,6 +2362,7 @@ function SubmitSelection(selection, selectionSettings) {
             stepFramesPerTask,
             stepMultiFrameRendering,
             stepMaxCpuUsagePercentage,
+            stepIgnoreMissingDependencies,
             generateParameterName(renderQueueIndex, compName, "")
         );
         for (var p = 0; p < parameterValues.parameterValues.length; p++) {
@@ -3114,6 +3180,27 @@ function buildUI(thisObj) {
     }
     mfrCheckBox.onClick = onMfrCheckBoxClicked;
 
+    // Ignore Missing Dependencies GUI
+    const ignoreMissingDepsGroup = perCompSettingsGroup.add("group", undefined, "");
+    ignoreMissingDepsGroup.orientation = "column";
+    ignoreMissingDepsGroup.alignment = ['fill', 'top'];
+    ignoreMissingDepsGroup.alignChildren = ['left', 'center'];
+
+    const ignoreMissingDepsCheckBox = ignoreMissingDepsGroup.add("checkbox", undefined, "Ignore Missing Dependencies");
+    ignoreMissingDepsGroup.orientation = "column";
+
+    // Ignore Missing Dependencies Checkbox
+    function onIgnoreMissingDepsCheckBoxClicked() {
+        if (list.selection == null) {
+            return;
+        }
+        const selectionItem = dcUtil.getSelection(list);
+        if (selectionItem) {
+            uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).setIgnoreMissingDependencies(ignoreMissingDepsCheckBox.value);
+        }
+    }
+    ignoreMissingDepsCheckBox.onClick = onIgnoreMissingDepsCheckBoxClicked;
+
     function isRenderQueueItemImageOutput(renderQueueItem) {
         if (renderQueueItem.numOutputModules === 1) {
             const outputModule = renderQueueItem.outputModule(1).file;
@@ -3303,6 +3390,7 @@ function buildUI(thisObj) {
             framesPerTaskTextBox.text = "";
             mfrCheckBox.value = false;
             maxCpuUsagePercentageTextBox.text = "";
+            ignoreMissingDepsCheckBox.value = false;
 
             if (selection === null) {
                 submitButton.enabled = false;
@@ -3336,6 +3424,8 @@ function buildUI(thisObj) {
             maxCpuUsagePercentageTextBox.onChange();
             mfrCheckBox.value = settings.multiFrameRendering();
             mfrCheckBox.onClick();
+            ignoreMissingDepsCheckBox.value = settings.ignoreMissingDependencies();
+            ignoreMissingDepsCheckBox.onClick();
         }
         list.onChange = onSelectionChange;
         list.selection = null;

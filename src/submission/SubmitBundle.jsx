@@ -381,6 +381,7 @@ function SubmitSelection(selection, selectionSettings) {
         var stepFramesPerTask = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).framesPerTask();
         var stepMaxCpuUsagePercentage = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).maxCpuUsagePercentage();
         var stepMultiFrameRendering = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).multiFrameRendering();
+        var stepIgnoreMissingDependencies = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).ignoreMissingDependencies();
 
         var outputModule = renderQueueItem.outputModule(1).file;
         var outputPath = outputModule.fsName;
@@ -396,7 +397,7 @@ function SubmitSelection(selection, selectionSettings) {
         var startFrame = frameRange.startFrame;
         var endFrame = frameRange.endFrame;
 
-        var dependencies = findJobAttachments(renderQueueItem.comp); // list of filenames
+        var dependencies = findJobAttachments(renderQueueItem.comp, stepIgnoreMissingDependencies); // list of filenames
         var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
 
@@ -425,6 +426,7 @@ function SubmitSelection(selection, selectionSettings) {
             stepFramesPerTask,
             stepMultiFrameRendering,
             stepMaxCpuUsagePercentage,
+            stepIgnoreMissingDependencies,
             generateParameterName(renderQueueIndex, compName, "")
         );
         for (var p = 0; p < parameterValues.parameterValues.length; p++) {
