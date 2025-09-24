@@ -12,12 +12,18 @@ import traceback
 try:
     from fontTools import ttLib
 except ModuleNotFoundError:
-    error_msg = "Error: The fonttools module was not found.\n"
-    error_msg += "Please install fonttools by running:\n\npip install fonttools"
-    print(json.dumps({
-        "error": error_msg
-    }))
-    sys.exit(1)
+    # Attempt to install fonttools automatically
+    try:
+        print("fonttools module not found. Attempting to install...")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "fonttools"])
+        print("fonttools installed successfully. Importing...")
+        from fontTools import ttLib
+    except Exception:
+        print(json.dumps({
+            "error": traceback.format_exc()
+        }))
+        sys.exit(1)
 except Exception as e:
     print(json.dumps({
         "error": traceback.format_exc()
@@ -79,11 +85,8 @@ def get_font(font_path):
 
     try:
         result[font_path] = {
-            "family_name": str(names_table[TTF_FAMILY_NAME]),
-            "style": str(names_table[TTF_STYLE]),
-            "full_name": str(names_table[TTF_FULL_NAME]),
-            "postscript_name": str(names_table[TTF_POSTSCRIPT_NAME]),
-            "raw": raw_table
+            "postscript_name": str(names_table[TTF_POSTSCRIPT_NAME])
+            # Removed other fields to minimize JSON size for Adobe After Effects
         }
     except Exception:
         if verbose:
