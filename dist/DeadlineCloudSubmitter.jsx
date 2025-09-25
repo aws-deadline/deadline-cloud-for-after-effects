@@ -1717,74 +1717,42 @@ function getPythonExecutable() {
 }
 
 /**
- * Scans user font paths for user-installed fonts and parses their name metadata.
- * @return Font metadata object, or null if there was an error
+ * Gets the path to a user-installed font whose PostScript name is fontPostScriptName.
+ * @return The path to that font file or null if the path was not found
  **/
-function getFontPaths() {
-    var errorMessage = "";
-    // Ensure Python exists and is at least version 3
-    const pythonExecutable = getPythonExecutable();
-    if (!pythonExecutable) {
-        return null;
-    }
-    const scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
-    const scriptFile = new File(scriptPath);
-    if (!scriptFile.exists) {
-        errorMessage =
-            "Error: Missing font script at " + scriptFile.fsName + "\n" +
-            "\n" +
-            "Please ensure that the Deadline Cloud Submitter is installed correctly.";
-        adcAlert(errorMessage, true);
-        return null;
-    }
-
-    var output = {};
+function getLocationForFont(fontPostScriptName) {
     try {
-        const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\"");
-        output = JSON.parse(outputRaw);
+        const pythonExecutable = getPythonExecutable();
+        if (!pythonExecutable) {
+            return null;
+        }
+        
+        const scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
+        const scriptFile = new File(scriptPath);
+        if (!scriptFile.exists) {
+            adcAlert(
+                "Error: Missing font script at " + scriptFile.fsName + "\n" +
+                "\n" +
+                "Please ensure that the Deadline Cloud Submitter is installed correctly.",
+                true
+            );
+            return null;
+        }
+        
+        const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\" \"" + fontPostScriptName + "\"");
+        // Clean the output by removing all whitespace characters
+        var cleanOutput = outputRaw ? outputRaw.replace(/\s+/g, '') : null;
+        return cleanOutput || null;
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
-        logger.debug("Command output: " + output, jobTemplateHelperFile);
         adcAlert(
             "Error when finding fonts:\n" +
             "\n" +
             e.message,
             true
         );
-    }
-    if ("error" in output) {
-        adcAlert(
-            output["error"],
-            true
-        );
         return null;
     }
-    return output;
-}
-
-/**
- * Gets the path to a user-installed font whose PostScript name is fontPostScriptName.
- * @return The path to that font file or null if the path was not found
- **/
-function getLocationForFont(fontPostScriptName) {
-    var fontPath = null;
-    try {
-        // Get user-installed fonts
-        const fontPaths = getFontPaths();
-        if (!fontPaths) {
-            return null;
-        }
-        for (var path in fontPaths) {
-            if (fontPaths[path]["postscript_name"] == fontPostScriptName) {
-                // Found path that matches the given font's name
-                fontPath = path;
-                break;
-            }
-        }
-    } catch (e) {
-        logger.error(e.message, jobTemplateHelperFile);
-    }
-    return fontPath;
 }
 
 /**
@@ -1922,9 +1890,18 @@ function generateFontReferences(fontPaths) {
         var fontName = fontPaths[i][0];
         var fontLocation = fontPaths[i][1];
 
-        var fontFile = File(fontLocation);
+        // Normalize the font path for ExtendScript compatibility
+        var normalizedFontLocation = fontLocation.replace(/\//g, File.fs == "Windows" ? "\\" : "/");
+        var fontFile = File(normalizedFontLocation);
         var _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
+        
+        // Debug information
+        adcAlert("Debug: original=" + fontLocation + ", normalized=" + normalizedFontLocation + ", exists=" + fontFile.exists);
+        
         var fontCopied = fontFile.copy(_tempFontPath);
+        
+        adcAlert("Debug: fontCopied=" + fontCopied + ", error=" + fontFile.error);
+        
         // Check if font file was actually copied.
         if (fontCopied) {
             formattedFontsPaths.push(_tempFontPath);
