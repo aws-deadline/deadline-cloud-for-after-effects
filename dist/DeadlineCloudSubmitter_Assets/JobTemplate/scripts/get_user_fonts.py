@@ -21,6 +21,7 @@ except ModuleNotFoundError:
         from fontTools import ttLib
     except Exception:
         print(json.dumps({
+            "message": "Unable to install fonttools module. Please install manually with 'pip install fonttools' and try again.",
             "error": traceback.format_exc()
         }))
         sys.exit(1)
