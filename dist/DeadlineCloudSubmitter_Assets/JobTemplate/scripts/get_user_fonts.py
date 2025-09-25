@@ -35,7 +35,8 @@ except Exception as e:
 SEARCH_PATHS = [
     "%APPDATA%/Adobe/CoreSync/plugins/livetype",
     "%APPDATA%/Adobe/User Owned Fonts",
-    "%LOCALAPPDATA%/Microsoft/Windows/Fonts"
+    "%LOCALAPPDATA%/Microsoft/Windows/Fonts",
+    "%WINDIR%/Fonts",
 ]
 
 if sys.platform == "darwin":
