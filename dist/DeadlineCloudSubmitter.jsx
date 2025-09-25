@@ -1895,12 +1895,7 @@ function generateFontReferences(fontPaths) {
         var fontFile = File(normalizedFontLocation);
         var _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
         
-        // Debug information
-        adcAlert("Debug: original=" + fontLocation + ", normalized=" + normalizedFontLocation + ", exists=" + fontFile.exists);
-        
         var fontCopied = fontFile.copy(_tempFontPath);
-        
-        adcAlert("Debug: fontCopied=" + fontCopied + ", error=" + fontFile.error);
         
         // Check if font file was actually copied.
         if (fontCopied) {
