@@ -32,22 +32,23 @@ TTF_POSTSCRIPT_NAME = 6
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
+        print("Missing font name argument")
         sys.exit(1)
-    
+
     target_postscript_name = sys.argv[1]
-    
+
     try:
         for search_path in SEARCH_PATHS:
             search_root = os.path.normpath(os.path.expandvars(os.path.expanduser(search_path)))
             if not os.path.exists(search_root):
                 continue
-                
+
             for path, dirs, files in os.walk(search_root):
                 for file in files:
                     _, ext = os.path.splitext(file)
                     if ext.lower() not in FONT_EXTENSIONS:
                         continue
-                    
+
                     font_path = os.path.join(path, file)
                     try:
                         t = ttLib.TTFont(font_path)
@@ -58,7 +59,9 @@ if __name__ == "__main__":
                             sys.exit(0)
                     except Exception:
                         continue
+        print(f"Font file {target_postscript_name} is missing")
         sys.exit(1)
-    except Exception:
+    except Exception as e:
+        print(f"An error occurred: {e}")
         sys.exit(1)
 
