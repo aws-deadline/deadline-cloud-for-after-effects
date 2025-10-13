@@ -2011,6 +2011,8 @@ function generateParameterName(index, compName, parameter) {
     }
     index = index.toString();
     compName = compName.substring(0, 15);
+    // replace non-alphanumeric characters to comply with OpenJD
+    compName = compName.replace(/[^a-zA-Z0-9]/g, '_');
     return "_" + index + "_" + compName + parameter;
 }
 
