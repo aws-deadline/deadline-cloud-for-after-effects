@@ -201,6 +201,8 @@ function findJobAttachments(rootComp, ignoreMissingDependencies) {
  **/
 function getFontsFromFile() {
     var fontLocations = [];
+    var unsupportedFonts = [];
+    var fontsWithoutLocation = [];
     // app.project.usedFonts was introduced in 24.5. Fall back to scanning text layers if version is older
     if (dcUtil.getAEVersion() >= 24.5) {
         const usedList = app.project.usedFonts;
@@ -209,19 +211,33 @@ function getFontsFromFile() {
             var fontPostScriptName = font.postScriptName;
             var fontLocation = font.location || getLocationForFont(fontPostScriptName);
             if (!fontLocation) {
-                adcAlert(
-                    "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
-                );
+                fontsWithoutLocation.push(fontPostScriptName);
                 continue;
             }
-            var fontName = createFontFilename(fontLocation, fontPostScriptName);
-            if (fontName) {
-                fontLocations.push([fontName, fontLocation]);
+            var fontDetails = getFontFilenameAndSupportStatus(fontLocation, fontPostScriptName);
+            if (fontDetails["isExtensionSupported"]) {
+                fontLocations.push([fontDetails.fontName, fontLocation]);
+            } else {
+                unsupportedFonts.push(fontDetails.fontName);
             }
         }
     } else {
         fontLocations = getFontsFromFileLegacy();
+    }
+    if (unsupportedFonts.length > 0) {
+        adcAlert(
+            "Font(s) detected with unsupported extension(s) \n"
+            + unsupportedFonts.join(", \n") +
+            "\n\nThese font(s) won't be added to the job.", false
+        );
+    }
+
+    if (fontsWithoutLocation.length > 0) {
+        adcAlert(
+            "The path to the below font(s) couldn't be identified. \n\n" + 
+            fontsWithoutLocation.join(", ") + "\n" +
+            "\nPlease install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
+        );
     }
 
     return fontLocations;
@@ -360,6 +376,47 @@ function createFontFilename(fontLocation, fontPostScriptName) {
     }
 
     return fontName;
+}
+
+
+/**
+ * Generates a font filename based on the font name and the extension of the font filename
+ * and whether the extension is supported
+ * @return an object with the font filename and extension validity
+ **/
+function getFontFilenameAndSupportStatus(fontLocation, fontPostScriptName) {
+    var fileExtension = "";
+    const lastDotIndex = fontLocation.lastIndexOf('.');
+    const extensionRegex = /\.[a-zA-Z]+$/;
+
+    var validExtension = true;
+    const fontExtensions = [".otf", ".ttf"];
+
+    // Windows also supports .fon files
+    const os = $.os.toLowerCase();
+    if (os.indexOf("windows") !== -1) {
+        fontExtensions.push(".fon");
+    }
+
+    // Some Adobe Fonts files have a dot followed by numbers as its name with no extension (e.g. ".52741")
+    if (extensionRegex.test(fontLocation)) {
+        fileExtension = fontLocation.substring(lastDotIndex).toLowerCase();
+        const fontExtensionsAsString = fontExtensions.toString();
+        if (fontExtensionsAsString.indexOf(fileExtension) == -1) {
+            validExtension = false;
+        }
+    }
+    if (validExtension) {
+        return {
+            "isExtensionSupported": true,
+            "fontName": fontPostScriptName + fileExtension            
+        };
+    } else {
+        return {
+            "isExtensionSupported": false,
+            "fontName": fontPostScriptName + fileExtension
+        };
+    }
 }
 
 /**
