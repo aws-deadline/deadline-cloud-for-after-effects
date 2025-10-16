@@ -1848,14 +1848,14 @@ function getFontFilenameAndSupportStatus(fontLocation, fontPostScriptName) {
     if (validExtension) {
         return {
             "isExtensionSupported": true,
-            "fontPostScriptName": fontPostScriptName,    
-            "fileExtension": fileExtension
+            "fileExtension": fileExtension,
+            "fontName": fontPostScriptName + fileExtension
         };
     } else {
         return {
             "isExtensionSupported": false,
-            "fontPostScriptName": fontPostScriptName,
-            "fileExtension": fileExtension
+            "fileExtension": fileExtension,
+            "fontName": fontPostScriptName + fileExtension
         };
     }
 }
