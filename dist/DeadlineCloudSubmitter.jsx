@@ -1673,7 +1673,7 @@ function getFontsFromFile() {
 
     if (fontsWithoutLocation.length > 0) {
         adcAlert(
-            "The path to the below font(s) couldn't be identified. \n\n" + 
+            "The path to the below font(s) couldn't be identified. \n\n" +
             fontsWithoutLocation.join(", ") + "\n" +
             "\nPlease install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
         );
@@ -1748,37 +1748,18 @@ function getLocationForFont(fontPostScriptName) {
             return null;
         }
         const scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
-        const scriptFile = new File(scriptPath);
-        if (!scriptFile.exists) {
-            adcAlert(
-                "Error: Missing font script at " + scriptFile.fsName + "\n" +
-                "\n" +
-                "Please ensure that the Deadline Cloud Submitter is installed correctly.",
-                true
-            );
-            return null;
-        }
-        const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\" \"" + fontPostScriptName + "\"");
+        const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptPath + "\" \"" + fontPostScriptName + "\"");
         // Clean the output by removing all whitespace characters
         var cleanOutput = outputRaw ? outputRaw.replace(/\s+/g, '') : null;
 
-        if (cleanOutput === "FONT_NOT_FOUND") {
-            adcAlert("Font '" + fontPostScriptName + "' could not be found on this system.", false);
-            return null;
-        } else if (cleanOutput === "FONT_ERROR") {
-            adcAlert("An error occurred while searching for font '" + fontPostScriptName + "'.", false);
+        if (cleanOutput === "FONT_NOT_FOUND" || cleanOutput === "FONT_ERROR") {
+            logger.error("Error when finding font, received code: " + cleanOutput + "\n", jobTemplateHelperFile);
             return null;
         }
 
         return cleanOutput || null;
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
-        adcAlert(
-            "Error when finding fonts:\n" +
-            "\n" +
-            e.message,
-            true
-        );
         return null;
     }
 }
@@ -2191,6 +2172,36 @@ function SubmitSelection(selection, selectionSettings) {
     if (taskTimeoutSeconds <= 0) {
         adcAlert("The following timeout value must be greater than 0: TaskRun", true);
         return;
+    }
+
+    // Check required files exist before proceeding
+    const assetsFolder = new Folder(scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate");
+    if (!assetsFolder.exists) {
+        adcAlert("Error: Missing DeadlineCloudSubmitter_Assets folder at " + assetsFolder.fsName, true);
+        return;
+    }
+
+    const requiredFiles = [
+        "scripts/get_user_fonts.py",
+        "scripts/font_manager.py",
+        "scripts/call_aerender.py",
+        "scripts/create_output_directory.py",
+        "template.json",
+        "image_template.json",
+        "video_template.json",
+        "job_environments_fragment.json",
+        "parameter_definitions_image_fragment.json",
+        "parameter_definitions_video_fragment.json",
+        "step_image_fragment.json",
+        "step_video_fragment.json"
+    ];
+
+    for (var f = 0; f < requiredFiles.length; f++) {
+        var jobTemplateFile = new File(assetsFolder.fsName + "/" + requiredFiles[f]);
+        if (!jobTemplateFile.exists) {
+            adcAlert("Error: Missing required file: " + requiredFiles[f], true);
+            return;
+        }
     }
 
     const renderQueueItems = [];
