@@ -2196,12 +2196,17 @@ function SubmitSelection(selection, selectionSettings) {
         "step_video_fragment.json"
     ];
 
+    var missingFiles = [];
     for (var f = 0; f < requiredFiles.length; f++) {
-        var jobTemplateFile = new File(assetsFolder.fsName + "/" + requiredFiles[f]);
-        if (!jobTemplateFile.exists) {
-            adcAlert("Error: Missing required file: " + requiredFiles[f], true);
-            return;
+        var requiredFile = new File(assetsFolder.fsName + "/" + requiredFiles[f]);
+        if (!requiredFile.exists) {
+            missingFiles.push(requiredFiles[f]);
         }
+    }
+    
+    if (missingFiles.length > 0) {
+        adcAlert("Error: Missing required files:\n" + missingFiles.join("\n"), true);
+        return;
     }
 
     const renderQueueItems = [];
