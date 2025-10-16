@@ -609,8 +609,8 @@ function __generateUtil() {
 
     /**
      * Extracts frame number, prefix, and suffix for single frame in image sequence.
-     * @param {string} fileName 
-     * @returns Object containing prefix, name, and suffix 
+     * @param {string} fileName
+     * @returns Object containing prefix, name, and suffix
      */
     function getImageSequenceInformation(fileName) {
         var regex = /^(.*?)(\d*)(\D*)$/;
@@ -1747,7 +1747,7 @@ function getLocationForFont(fontPostScriptName) {
         if (!pythonExecutable) {
             return null;
         }
-        
+
         const scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
         const scriptFile = new File(scriptPath);
         if (!scriptFile.exists) {
@@ -1759,10 +1759,19 @@ function getLocationForFont(fontPostScriptName) {
             );
             return null;
         }
-        
+
         const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\" \"" + fontPostScriptName + "\"");
         // Clean the output by removing all whitespace characters
         var cleanOutput = outputRaw ? outputRaw.replace(/\s+/g, '') : null;
+
+        if (cleanOutput === "FONT_NOT_FOUND") {
+            adcAlert("Font '" + fontPostScriptName + "' could not be found on this system.", false);
+            return null;
+        } else if (cleanOutput === "FONT_ERROR") {
+            adcAlert("An error occurred while searching for font '" + fontPostScriptName + "'.", false);
+            return null;
+        }
+
         return cleanOutput || null;
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
@@ -1958,9 +1967,9 @@ function generateFontReferences(fontPaths) {
         var normalizedFontLocation = fontLocation.replace(/\//g, File.fs == "Windows" ? "\\" : "/");
         var fontFile = File(normalizedFontLocation);
         var _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
-        
+
         var fontCopied = fontFile.copy(_tempFontPath);
-        
+
         // Check if font file was actually copied.
         if (fontCopied) {
             formattedFontsPaths.push(_tempFontPath);
