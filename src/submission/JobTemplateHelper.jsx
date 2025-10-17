@@ -239,7 +239,7 @@ function getFontsFromFile() {
 
     if (fontsWithoutLocation.length > 0) {
         adcAlert(
-            "The path to the below font(s) couldn't be identified. \n\n" + 
+            "The path to the below font(s) couldn't be identified. \n\n" +
             fontsWithoutLocation.join(", ") + "\n" +
             "\nPlease install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
         );
@@ -313,31 +313,19 @@ function getLocationForFont(fontPostScriptName) {
         if (!pythonExecutable) {
             return null;
         }
-        
         const scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
-        const scriptFile = new File(scriptPath);
-        if (!scriptFile.exists) {
-            adcAlert(
-                "Error: Missing font script at " + scriptFile.fsName + "\n" +
-                "\n" +
-                "Please ensure that the Deadline Cloud Submitter is installed correctly.",
-                true
-            );
-            return null;
-        }
-        
-        const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\" \"" + fontPostScriptName + "\"");
+        const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptPath + "\" \"" + fontPostScriptName + "\"");
         // Clean the output by removing all whitespace characters
         var cleanOutput = outputRaw ? outputRaw.replace(/\s+/g, '') : null;
+
+        if (cleanOutput === "FONT_NOT_FOUND" || cleanOutput === "FONT_ERROR") {
+            logger.error("Error when finding font, received code: " + cleanOutput + "\n", jobTemplateHelperFile);
+            return null;
+        }
+
         return cleanOutput || null;
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
-        adcAlert(
-            "Error when finding fonts:\n" +
-            "\n" +
-            e.message,
-            true
-        );
         return null;
     }
 }
@@ -524,9 +512,7 @@ function generateFontReferences(fontPaths) {
         var normalizedFontLocation = fontLocation.replace(/\//g, File.fs == "Windows" ? "\\" : "/");
         var fontFile = File(normalizedFontLocation);
         var _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
-        
         var fontCopied = fontFile.copy(_tempFontPath);
-        
         // Check if font file was actually copied.
         if (fontCopied) {
             formattedFontsPaths.push(_tempFontPath);

@@ -6,3 +6,4 @@ black == 25.*
 ruff == 0.14.*
 twine == 6.*
 types-pyyaml == 6.*
+fonttools == 4.*
