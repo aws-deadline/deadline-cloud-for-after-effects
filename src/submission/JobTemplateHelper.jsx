@@ -317,7 +317,7 @@ function getLocationForFont(fontPostScriptName) {
         const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptPath + "\" \"" + fontPostScriptName + "\"");
 
         // Clean the output by removing all leading and trailing whitespace and newline characters
-        var cleanOutput = outputRaw ? outputRaw.replace(/(^\s+)|(\s+$)/g, '') : null;
+        const cleanOutput = outputRaw ? outputRaw.replace(/(^\s+)|(\s+$)/g, '') : null;
 
         if (cleanOutput === "FONT_NOT_FOUND" || cleanOutput === "FONT_ERROR") {
             logger.error("Error when finding font, received code: " + cleanOutput + "\n", jobTemplateHelperFile);
