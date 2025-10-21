@@ -6,12 +6,10 @@
 
 ### Bug Fixes
 * fix fallback script regex to only strip leading and trailing whitespace instead of all whitespace (#261) ([`bc8787b`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/bc8787b0704b49d9dd20b38be820b15407fcbca2))
-* fix fallback script regex to only strip leading and trailing whitespace instead of all whitespace ([`bc8787b`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/bc8787b0704b49d9dd20b38be820b15407fcbca2))
 * improve get_user_fonts.py script and refactored file existence validation to minimize popups (#260) ([`01c66a9`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/01c66a99025b870bf94b1f844ab5a1cb59dc119e))
 * bug fix for valid fonts not being collected (#259) ([`3623190`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/36231906a3b457a31ba42f7157b70ab8c990fe4e))
 * aggregate font errors into single popup for submission (#257) ([`3f91674`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/3f91674345626a4385606c2273ea27f40cc804fe))
 * sanitize parameter names to comply with open-jd specification (#254) ([`cfb6a4a`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/cfb6a4a62b01c674692a18953a1e6ab2a635035d))
-* sanitize parameter names to comply with open-jd specification ([`cfb6a4a`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/cfb6a4a62b01c674692a18953a1e6ab2a635035d))
 * update generatePrettyName as well to be consistent to replace special characters ([`cfb6a4a`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/cfb6a4a62b01c674692a18953a1e6ab2a635035d))
 * moved font search logic to get_user_fonts.py to permanently prevent JSON size overflow issues that crashes After Effects (#252) ([`a259316`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/a25931609b8630fdcc355a2c531f36f95cb149d6))
 * Only the first frame from an image sequence gets included in Job Attachments (#214) ([`646e1e5`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/646e1e55c72f38c076f5f7ba63ee4ba9932cb4c4))
