@@ -33,7 +33,9 @@ def get_project_dict(project_path: Optional[Path] = None) -> dict[str, Any]:
 
         mode = "rb"
 
-    with open(str((project_path or get_git_root()) / "pyproject.toml"), mode) as pyproject_toml:
+    with open(
+        str((project_path or get_git_root()) / "pyproject.toml"), mode
+    ) as pyproject_toml:
         return toml.load(pyproject_toml)
 
 
@@ -52,7 +54,9 @@ class Dependency:
         return self.for_pip()
 
 
-def get_dependencies(pyproject_dict: dict[str, Any], exclude_adaptor_only=True) -> list[Dependency]:
+def get_dependencies(
+    pyproject_dict: dict[str, Any], exclude_adaptor_only=True
+) -> list[Dependency]:
     if "project" not in pyproject_dict:
         raise Exception("pyproject.toml is missing project section")
     if "dependencies" not in pyproject_dict["project"]:

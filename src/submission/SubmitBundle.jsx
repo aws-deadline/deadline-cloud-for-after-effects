@@ -216,6 +216,41 @@ function SubmitSelection(selection, selectionSettings) {
         return;
     }
 
+    // Check required files exist before proceeding
+    const assetsFolder = new Folder(scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate");
+    if (!assetsFolder.exists) {
+        adcAlert("Error: Missing DeadlineCloudSubmitter_Assets folder at " + assetsFolder.fsName, true);
+        return;
+    }
+
+    const requiredFiles = [
+        "scripts/get_user_fonts.py",
+        "scripts/font_manager.py",
+        "scripts/call_aerender.py",
+        "scripts/create_output_directory.py",
+        "template.json",
+        "image_template.json",
+        "video_template.json",
+        "job_environments_fragment.json",
+        "parameter_definitions_image_fragment.json",
+        "parameter_definitions_video_fragment.json",
+        "step_image_fragment.json",
+        "step_video_fragment.json"
+    ];
+
+    var missingFiles = [];
+    for (var f = 0; f < requiredFiles.length; f++) {
+        var requiredFile = new File(assetsFolder.fsName + "/" + requiredFiles[f]);
+        if (!requiredFile.exists) {
+            missingFiles.push(requiredFiles[f]);
+        }
+    }
+    
+    if (missingFiles.length > 0) {
+        adcAlert("Error: Missing required files:\n" + missingFiles.join("\n"), true);
+        return;
+    }
+
     const renderQueueItems = [];
 
     // Check to make sure that all of our selection indices are correct

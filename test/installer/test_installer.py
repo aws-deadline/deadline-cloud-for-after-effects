@@ -77,7 +77,7 @@ def _run_installer(installer_path, install_scope, installation_path) -> Path:
         "--after_effects_script_ui_directory_2024",
         ae2024,
         "--after_effects_script_ui_directory_2025",
-        ae2025
+        ae2025,
     ]
     subprocess.run(args, check=True, capture_output=True, text=True)
 
@@ -445,7 +445,9 @@ class TestUserInstall:
         assert not per_test_user_installation.exists()
 
 
-@pytest.mark.skipif(not _is_admin(), reason="System install tests requires admin privileges")
+@pytest.mark.skipif(
+    not _is_admin(), reason="System install tests requires admin privileges"
+)
 class TestSystemInstall:
     def test_install(self, system_installation: Path):
         # GIVEN / WHEN / THEN
