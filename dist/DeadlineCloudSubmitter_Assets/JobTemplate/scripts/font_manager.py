@@ -36,7 +36,7 @@ FONT_LOCATION_USER = os.path.join(os.environ.get("LocalAppData"), "Microsoft", "
 
 # Font extensions supported in gdi32.AddFontResourceW
 # OpenType fonts without an extension can also be installed (e.g. Adobe Fonts)
-FONT_EXTENSIONS = [".otf", ".ttf", ".fon", ""]
+FONT_EXTENSIONS = [".otf", ".ttf", ".ttc", ".fon", ""]
 
 logger = logging.getLogger(__name__)
 

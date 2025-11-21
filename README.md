@@ -136,7 +136,7 @@ Additionally, to disable warnings every time you submit a job with the submitter
 ## Font attachment system:
 
 The submitter detects fonts used in the submitted composition and automatically adds them as job attachments on submission. These get installed on the worker before the render starts and get removed again when the job ends.
-Currently supported font types include: OpenType (`.otf`), TrueType (`.ttf`), and [Adobe Fonts](https://fonts.adobe.com/).
+Currently supported font types include: OpenType (`.otf`), TrueType (`.ttf`), TrueTypeCollection (`.ttc`), and [Adobe Fonts](https://fonts.adobe.com/).
 Windows bitmap fonts (`.fon`) are only supported on Windows machines.
 
 If fonts are missing at render time, first check that they're installed (on the system or your user), and then check they're being included in the job attachments tab in the submitter.
