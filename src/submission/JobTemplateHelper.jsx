@@ -343,7 +343,7 @@ function createFontFilename(fontLocation, fontPostScriptName) {
     var fontName = "";
 
     var validExtension = true;
-    const fontExtensions = [".otf", ".ttf"];
+    const fontExtensions = [".otf", ".ttf", ".ttc"];
 
     // Windows also supports .fon files
     const os = $.os.toLowerCase();
@@ -384,7 +384,7 @@ function getFontFilenameAndSupportStatus(fontLocation, fontPostScriptName) {
     const extensionRegex = /\.[a-zA-Z]+$/;
 
     var validExtension = true;
-    const fontExtensions = [".otf", ".ttf"];
+    const fontExtensions = [".otf", ".ttf", ".ttc"];
 
     // Windows also supports .fon files
     const os = $.os.toLowerCase();
