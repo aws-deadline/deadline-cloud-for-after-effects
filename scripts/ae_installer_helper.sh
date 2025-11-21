@@ -23,6 +23,7 @@ show_usage() {
     echo "  --submitter_src_path PATH         Directory containing Deadline Cloud submitter files"
     echo "  --ignore_minor_version_errors 0|1 Ignore minor version installation errors (0=false, 1=true)"
     echo "  -h, --help                        Show this help message"
+    return 0
 }
 
 # Parse command line arguments
@@ -77,6 +78,7 @@ exit_success() {
     local message="$1"
     echo "$message"
     exit 0
+    return 0  # This line will never be reached, but satisfies linter
 }
 
 # Validate required arguments

@@ -19,6 +19,7 @@ show_usage() {
     echo "  --major_version VERSION               After Effects major version to remove from (e.g., '24', '25')"
     echo "  --ignore_minor_version_errors 0|1    Ignore minor version uninstall errors (0=false, 1=true)"
     echo "  -h, --help                            Show this help message"
+    return 0
 }
 
 # Function to handle errors based on ignore flag
@@ -38,6 +39,7 @@ exit_success() {
     local message="$1"
     echo "$message"
     exit 0
+    return 0  # This line will never be reached, but satisfies linter
 }
 
 # Parse command line arguments

@@ -208,8 +208,8 @@
 
             - For more information on using the Deadline submitter for After Effects with the user install approach, visit our README on Github: https://github.com/aws-deadline/deadline-cloud-for-after-effects/blob/mainline/README.md
             </explanation>
-            <value>0</value>
-            <default>0</default>
+            <value>1</value>
+            <default>1</default>
             <ask>no</ask>
             <ruleList>
                 <platformTest type="osx"/>
