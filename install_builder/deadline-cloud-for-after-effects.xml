@@ -27,16 +27,8 @@
                     </distributionFileList>
                     <actionList>
                         <!-- Make shell scripts executable on macOS -->
-                        <changePermissions permissions="0755" files="${installdir}/scripts/ae_installer_helper.sh">
-                            <ruleList>
-                                <platformTest type="osx"/>
-                            </ruleList>
-                        </changePermissions>
-                        <changePermissions permissions="0755" files="${installdir}/scripts/ae_uninstaller_helper.sh">
-                            <ruleList>
-                                <platformTest type="osx"/>
-                            </ruleList>
-                        </changePermissions>
+                        <changePermissions permissions="0755" files="${installdir}/scripts/ae_installer_helper.sh" />
+                        <changePermissions permissions="0755" files="${installdir}/scripts/ae_uninstaller_helper.sh" />
                     </actionList>
                 </folder>
             </folderList>
@@ -74,13 +66,20 @@
                                 </distributionDirectory>
                             </distributionFileList>
                             <actionList>
-                                <!-- Set macOS After Effects preferences path -->
-                                <setInstallerVariable name="ae_prefs_path" value="/Users/${system_username}/Library/Preferences/Adobe/After Effects" />
+                                <!-- Set platform-specific After Effects preferences path -->
+                                <!-- macOS: User Library/Preferences directory -->
+                                <setInstallerVariable name="ae_prefs_path" value="/Users/${system_username}/Library/Preferences/Adobe/After Effects">
+                                    <ruleList>
+                                        <platformTest type="osx"/>
+                                    </ruleList>
+                                </setInstallerVariable>
+                                <!-- Windows: Future implementation will set Windows-specific path here -->
+                                <!-- TODO: Add Windows path when Windows support is implemented -->
                                 
                                 <!-- Use shell script on macOS -->
                                 <setInstallerVariableFromScriptOutput>
                                     <exec>${installdir}/scripts/ae_installer_helper.sh</exec>
-                                    <execArgs>--installation_scope "user" --major_version "24" --submitter_src_path "${after_effects_script_ui_directory_2024}" --ae_path_for_user "${ae_prefs_path}" --ignore_minor_version_errors ${ignore_submitter_user_install_errors}</execArgs>
+                                    <execArgs>--major_version "24" --submitter_src_path "${after_effects_script_ui_directory_2024}" --ae_path_for_user "${ae_prefs_path}" --ignore_minor_version_errors ${ignore_submitter_user_install_errors}</execArgs>
                                     <name>output_variable_2024</name>
                                     <abortOnError>1</abortOnError>
                                     <showMessageOnError>1</showMessageOnError>
@@ -125,13 +124,20 @@
                                 </distributionDirectory>
                             </distributionFileList>
                             <actionList>
-                                <!-- Set macOS After Effects preferences path -->
-                                <setInstallerVariable name="ae_prefs_path_2025" value="/Users/${system_username}/Library/Preferences/Adobe/After Effects" />
+                                <!-- Set platform-specific After Effects preferences path -->
+                                <!-- macOS: User Library/Preferences directory -->
+                                <setInstallerVariable name="ae_prefs_path_2025" value="/Users/${system_username}/Library/Preferences/Adobe/After Effects">
+                                    <ruleList>
+                                        <platformTest type="osx"/>
+                                    </ruleList>
+                                </setInstallerVariable>
+                                <!-- Windows: Future implementation will set Windows-specific path here -->
+                                <!-- TODO: Add Windows path when Windows support is implemented -->
                                 
                                 <!-- Use shell script on macOS -->
                                 <setInstallerVariableFromScriptOutput>
                                     <exec>${installdir}/scripts/ae_installer_helper.sh</exec>
-                                    <execArgs>--installation_scope "user" --major_version "25" --submitter_src_path "${after_effects_script_ui_directory_2025}" --ae_path_for_user "${ae_prefs_path_2025}" --ignore_minor_version_errors ${ignore_submitter_user_install_errors}</execArgs>
+                                    <execArgs>--major_version "25" --submitter_src_path "${after_effects_script_ui_directory_2025}" --ae_path_for_user "${ae_prefs_path_2025}" --ignore_minor_version_errors ${ignore_submitter_user_install_errors}</execArgs>
                                     <name>script_output_message_2025</name>
                                     <abortOnError>1</abortOnError>
                                     <showMessageOnError>1</showMessageOnError>
@@ -165,6 +171,8 @@
             </elseActionList>
         </if>
 
+        <!-- Platform-specific documentation explanations -->
+        <!-- macOS: Automated installation with option to ignore failures -->
         <setInstallerVariable>
             <name>setup_documentation_explanation</name>
             <value>This installer installs the Deadline Cloud After Effects submitter in two locations: the "${installdir}/Submitters/AfterEffects/" directory and AE user preferences as "DeadlineCloudSubmitter(User).jsx".
@@ -175,6 +183,7 @@
             </value>
             <ruleList><platformTest type="osx"/></ruleList>
         </setInstallerVariable>
+        <!-- Windows: Manual installation required -->
         <setInstallerVariable>
             <name>setup_documentation_explanation</name>
             <value>This installer installs the Deadline Cloud After Effects submitter in the "${installdir}/Submitters/AfterEffects/" as DeadlineCloudSubmitter.jsx and DeadlineCloudSubmitter_Assets
