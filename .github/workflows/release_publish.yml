@@ -74,7 +74,7 @@ jobs:
       TAG: ${{ needs.TagRelease.outputs.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{env.TAG}}
           fetch-depth: 0
