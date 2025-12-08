@@ -2,11 +2,8 @@
 
 
 ### Features
-* script based ae submitter installation for macOS to user preferences directory (#271) ([`e61c6a6`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/e61c6a68dd3a0c34fa9bac814c2f4325b7b98cab))
-* script based ae submitter installation for macOS ([`e61c6a6`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/e61c6a68dd3a0c34fa9bac814c2f4325b7b98cab))
-* backward compatibility for script user pref installation ([`e61c6a6`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/e61c6a68dd3a0c34fa9bac814c2f4325b7b98cab))
-* implemented PR comments ([`e61c6a6`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/e61c6a68dd3a0c34fa9bac814c2f4325b7b98cab))
-* support ttc font type in job submission and rendering (#273) ([`1f55eda`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/1f55edaf108e5f7c6775b29855264910fd4e39e3))
+* Script based ae submitter installation for macOS to user preferences directory (#271) ([`e61c6a6`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/e61c6a68dd3a0c34fa9bac814c2f4325b7b98cab))
+* Support ttc font type in job submission and rendering (#273) ([`1f55eda`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/1f55edaf108e5f7c6775b29855264910fd4e39e3))
 
 
 
