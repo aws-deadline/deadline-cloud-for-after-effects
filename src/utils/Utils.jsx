@@ -1010,8 +1010,7 @@ function __generateUtil() {
          * @param {RenderQueueItem} rqi - The render queue item to calculate frames for
          * @returns {Object} Object containing startFrame and endFrame
          */
-        // NOTE: we're not using displayStartFrame since it is rounded up
-        const startFrame = Number(Math.floor((rqi.comp.displayStartTime + rqi.timeSpanStart) * rqi.comp.frameRate));
+        const startFrame = Number(Math.floor((rqi.comp.displayStartTime + rqi.timeSpanStart) * rqi.comp.frameRate)) + app.project.displayStartFrame;
         const numFrames = Number(Math.ceil(rqi.timeSpanDuration * rqi.comp.frameRate));
         const endFrame = startFrame + numFrames - 1; // end frame is inclusive
 
