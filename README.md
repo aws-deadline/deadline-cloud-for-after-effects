@@ -154,7 +154,7 @@ To install fonts for non-Adobe apps in Creative Cloud:
 After Effects 24.6, 25.1, and 25.2 conda packages are available in AWS Deadline Cloud Service Managed Fleet (See this [link](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/create-queue-environment.html) for more information). If you would like to build a conda channel that contains different After Effects conda package, please follow
 [these instructions](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html).
 You can also use After Effects conda recipe in
-[deadline-cloud-sample package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.0)
+[deadline-cloud-sample package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.1)
 as a reference when building the package.
 
 Jobs created by this submitter require `aerender` executable be available on the PATH of the user that will be running your jobs. Or you can set the `AERENDER_EXECUTABLE` to point to the aerender executable.
