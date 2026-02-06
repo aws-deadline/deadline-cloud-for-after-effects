@@ -78,7 +78,7 @@ If you prefer to install manually, you can copy the submitter files directly:
 
 After Effects conda packages are available in AWS Deadline Cloud Service Managed Fleet. For the list of supported versions, see the [Deadline Cloud User Guide](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/create-queue-environment.html). If you would like to build a conda channel that contains a different After Effects conda package, please follow [these instructions](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html).
 
-You can also use the After Effects conda recipe in [deadline-cloud-samples package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.0) as a reference when building the package.
+You can also use the After Effects conda recipe in [deadline-cloud-samples package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.1) as a reference when building the package.
 
 Jobs created by this submitter require the `aerender` executable to be available on the PATH of the user that will be running your jobs. Alternatively, you can set the `AERENDER_EXECUTABLE` environment variable to point to the aerender executable.
 
