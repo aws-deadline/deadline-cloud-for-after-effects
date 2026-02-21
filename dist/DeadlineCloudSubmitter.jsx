@@ -3100,11 +3100,14 @@ function buildUI(thisObj) {
     const submitterPanel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Submit to AWS Deadline Cloud", undefined, {
         resizable: true
     });
+    submitterPanel.orientation = "row";
+    submitterPanel.spacing = submitterPanel.margins.right;
 
     const uiSettingsState = new UiSettingsState();
 
     const root = submitterPanel.add("group");
     root.orientation = "column";
+    root.margins.bottom = 10;
     root.alignment = ['fill', 'fill'];
     root.alignChildren = ['fill', 'top'];
     const logoGroup = root.add("group");
@@ -3503,11 +3506,53 @@ function buildUI(thisObj) {
         updateList();
     }
 
+    //For some reason the color of the scrollbar and the color of the defautl panel background are the same so the scrollbar is almost invisible unless you draw an outline around it
+    const scrollbarOutline = submitterPanel.add('group');
+    scrollbarOutline.alignment = ['left', 'top'];
+    const scrollbar = scrollbarOutline.add('scrollbar', undefined, {stepdelta: 20});
+    scrollbar.alignment = ['left', 'fill'];
+    scrollbar.minvalue = 0;
+    scrollbar.preferredSize.width = 16;
+    scrollbarOutline.margins = 1;
+    scrollbarOutline.graphics.backgroundColor = scrollbarOutline.graphics.newBrush(
+        scrollbarOutline.graphics.BrushType.SOLID_COLOR,
+        [0.3, 0.3, 0.3],
+        1
+    );
     submitterPanel.layout.layout(true);
+    root.minimumSize.height = root.size.height;
 
     submitterPanel.onResizing = function () {
+        //has to happen before resize
+        var panelHeight = submitterPanel.size.height - submitterPanel.margins.top - submitterPanel.margins.bottom;
+        var panelWidth = submitterPanel.size.width - submitterPanel.margins.left - submitterPanel.margins.right - submitterPanel.spacing;
+        if(panelHeight >= root.minimumSize.height){
+            //nothing is cut off, so we don't need a scrollbar. Hide it.
+            scrollbar.hide();
+            scrollbarOutline.size.width = 0;
+            scrollbarOutline.size.height = submitterPanel.size.height;
+            root.size.width = panelWidth;
+            root.location.y = 0;
+            scrollbar.value = 0;
+        } else {
+            scrollbar.show();
+            scrollbarOutline.size.width = scrollbar.size.width + 1;
+            scrollbarOutline.size.height = panelHeight;
+            root.size.width = panelWidth - scrollbarOutline.size.width;
+
+            scrollbar.maxvalue = root.minimumSize.height - panelHeight;
+            root.location.y = -scrollbar.value;
+        }
         this.layout.resize();
+
+        //has to happen after resize
+        root.location.y = -scrollbar.value;
     }
+
+    scrollbar.onChanging = function() {
+        root.location.y = -this.value;
+    }
+
     if (!(thisObj instanceof Panel)) {
         submitterPanel.center();
         submitterPanel.show();
@@ -3516,6 +3561,7 @@ function buildUI(thisObj) {
 
     return submitterPanel;
 }
+
 
 
 function isSecurityPrefSet() {
