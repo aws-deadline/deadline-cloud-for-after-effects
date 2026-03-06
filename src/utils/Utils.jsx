@@ -15,7 +15,7 @@ if (typeof DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION === "undefined") {
     const DEADLINECLOUD_IGNORE_VERSION_WARNING_VERSION = "ignoreVersionWarningVersion";
 }
 if (typeof SUPPORTED_VERSIONS === "undefined") {
-    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2];
+    const SUPPORTED_VERSIONS = [24.6, 25.1, 25.2, 25.6, 26.0];
 }
 if (typeof DEADLINECLOUD_SETTINGS_ROOT === "undefined") {
     const DEADLINECLOUD_SETTINGS_ROOT = "xmp:DeadlineCloudSubmitter";

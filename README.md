@@ -1,12 +1,12 @@
 # AWS Deadline Cloud for After Effects
 
-### [User guide](https://aws-deadline.github.io/) | [Service documentation](https://docs.aws.amazon.com/deadline-cloud/) | [Deadline Cloud on GitHub](https://github.com/aws-deadline/) 
+### [User guide](https://aws-deadline.github.io/) | [Service documentation](https://docs.aws.amazon.com/deadline-cloud/) | [Deadline Cloud on GitHub](https://github.com/aws-deadline/)
 
 AWS Deadline Cloud for After Effects is a package that supports creating and running Adobe After Effects jobs within AWS Deadline Cloud. It provides the implementation of an After Effects plug-in for your workstation that helps you offload the computation for your rendering workloads to AWS Deadline Cloud to free up your workstation's compute for other tasks. The job bundles it creates utilizes the `aerender` executable that comes with Adobe After Effects.
 
 ## Compatibility
 
-1. After Effects 2024 - 2025,
+1. After Effects 2024 - 2026,
 1. Python 3.9 or higher; and
 1. Windows or macOS operating system.
 
@@ -46,7 +46,7 @@ The submitter includes a folder `DeadlineCloudSubmitter_Assets` and a file `Dead
 ### Prerequisites
 
 - Install Python 3.9+ and verify either `python --version` or `python3 --version` or `py --version` works in your Command Prompt, Powershell window, or Terminal window.
-- Install Adobe After Effects 24 or 25.
+- Install Adobe After Effects.
 - Set up your Deadline Cloud monitor, farm, fleet, and queue details, following the documentation from [here for setup](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/monitor-onboarding.html) and its subsections.
 - Download the Deadline Cloud Monitor desktop application from the Downloads page on your AWS Deadline Cloud console and log into it, see documentation from [here for setup](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/open-deadline-cloud-monitor.html).
 
