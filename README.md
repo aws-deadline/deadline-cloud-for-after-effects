@@ -6,7 +6,7 @@ AWS Deadline Cloud for After Effects is a package that supports creating and run
 
 ## Compatibility
 
-1. After Effects 2024 - 2026,
+1. After Effects 2024 - 2025,
 1. Python 3.9 or higher; and
 1. Windows or macOS operating system.
 
