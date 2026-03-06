@@ -149,6 +149,56 @@
                         </folder>
                     </folderList>
                 </component>
+                <component>
+                    <name>ae_2026</name>
+                    <description>After Effects 2026</description>
+                    <selected>0</selected>
+                    <parameterList>
+                        <directoryParameter value="">
+                            <name>after_effects_script_ui_directory_2026</name>
+                            <description>After Effects 2026 Script UI Directory</description>
+                            <explanation>Path to the script UI directory in After Effects 2026 resources.</explanation>
+                            <allowEmptyValue>1</allowEmptyValue>
+                            <ask>yes</ask>
+                            <ruleList>
+                                <platformTest type="osx"/>
+                            </ruleList>
+                        </directoryParameter>
+                    </parameterList>
+                    <folderList>
+                        <folder>
+                            <description>After Effects 2026 Script UI Folder</description>
+                            <destination>${after_effects_script_ui_directory_2026}</destination>
+                            <name>aftereffects2026scriptuifolder</name>
+                            <platforms>all</platforms>
+                            <distributionFileList>
+                                <distributionFile>
+                                    <origin>../dist/DeadlineCloudSubmitter.jsx</origin>
+                                </distributionFile>
+                                <distributionDirectory>
+                                    <origin>../dist/DeadlineCloudSubmitter_Assets</origin>
+                                </distributionDirectory>
+                            </distributionFileList>
+                            <actionList>
+                                <setInstallerVariable name="ae_prefs_path_2026" value="/Users/${system_username}/Library/Preferences/Adobe/After Effects">
+                                    <ruleList>
+                                        <platformTest type="osx"/>
+                                    </ruleList>
+                                </setInstallerVariable>
+                                <setInstallerVariableFromScriptOutput>
+                                    <exec>${installdir}/scripts/ae_installer_helper.sh</exec>
+                                    <execArgs>--major_version "26" --submitter_src_path "${after_effects_script_ui_directory_2026}" --ae_path_for_user "${ae_prefs_path_2026}" --ignore_minor_version_errors ${ignore_submitter_user_install_errors}</execArgs>
+                                    <name>script_output_message_2026</name>
+                                    <abortOnError>1</abortOnError>
+                                    <showMessageOnError>1</showMessageOnError>
+                                    <ruleList>
+                                        <platformTest type="osx"/>
+                                    </ruleList>
+                                </setInstallerVariableFromScriptOutput>
+                            </actionList>
+                        </folder>
+                    </folderList>
+                </component>
             </componentList>
         </componentGroup>
     </componentList>
@@ -197,8 +247,8 @@
     </initializationActionList>
     <parameterList>
         <stringParameter name="deadline_cloud_for_after_effects_summary" ask="0" cliOptionShow="0">
-            <value>Deadline Cloud for After Effects 2024-2025
-- Compatible with Adobe After Effects 2024-2025
+            <value>Deadline Cloud for After Effects 2024-2026
+- Compatible with Adobe After Effects 2024-2026
 - Registers the plug-in with After Effects by moving the script to the After Effects ScriptUI Panel directory.</value>
         </stringParameter>
         <linkParameter>
@@ -243,6 +293,16 @@
             <ruleList>
                 <platformTest type="osx"/>
                 <componentTest name="ae_2025" logic="selected"/>
+            </ruleList>
+        </runProgram>
+        
+        <!-- Remove After Effects 2026 files using shell script on macOS -->
+        <runProgram>
+            <program>${installdir}/scripts/ae_uninstaller_helper.sh</program>
+            <programArguments>--ae_path_for_user "/Users/${system_username}/Library/Preferences/Adobe/After Effects" --major_version "26" --ignore_minor_version_errors ${ignore_submitter_user_install_errors}</programArguments>
+            <ruleList>
+                <platformTest type="osx"/>
+                <componentTest name="ae_2026" logic="selected"/>
             </ruleList>
         </runProgram>
     </preUninstallationActionList>
