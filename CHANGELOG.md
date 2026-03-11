@@ -1,3 +1,15 @@
+## 0.4.5 (2026-03-10)
+
+
+### Features
+* add AE 2026 support to installer and submitter (#291) ([`276826d`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/276826d724eefcf227cbf2e4067c556c94e06a45))
+
+### Bug Fixes
+* fix the broken link (#288) ([`755c504`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/755c5041bc2b5783669203712269e4cb15e646b0))
+* add project displayStartFrame to frame range calculation (#283) ([`324318b`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/324318b7b37e8592b841c86d6cc4f58605700863))
+* add project displayStartFrame to frame range calculation ([`324318b`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/324318b7b37e8592b841c86d6cc4f58605700863))
+
+
 ## 0.4.4 (2025-12-08)
 
 
