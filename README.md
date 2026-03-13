@@ -6,7 +6,7 @@ AWS Deadline Cloud for After Effects is a package that supports creating and run
 
 ## Compatibility
 
-1. After Effects 2024 - 2025,
+1. After Effects 2024 - 2026,
 1. Python 3.9 or higher; and
 1. Windows or macOS operating system.
 
@@ -151,7 +151,7 @@ To install fonts for non-Adobe apps in Creative Cloud:
 
 ## Setting up After Effects with your Deadline Cloud Farm
 
-After Effects 24.6, 25.1, and 25.2 conda packages are available in AWS Deadline Cloud Service Managed Fleet (See this [link](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/create-queue-environment.html) for more information). If you would like to build a conda channel that contains different After Effects conda package, please follow
+After Effects 24.6, 25.1, 25.2, 25.6, and 26.0 conda packages are available in AWS Deadline Cloud Service Managed Fleet (See this [link](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/create-queue-environment.html) for more information). If you would like to build a conda channel that contains different After Effects conda package, please follow
 [these instructions](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html).
 You can also use After Effects conda recipe in
 [deadline-cloud-sample package](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.1)
