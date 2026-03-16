@@ -3,7 +3,7 @@
 To install AWS Deadline Cloud submitter for After Effects, please prepare the following environment:
 
 - Windows or macOS workstation
-- Adobe After Effects 24 or 25 installation
+- Adobe After Effects 24, 25, or 26 installation
 - Python 3.9 or higher
 - Access to an AWS Deadline Cloud farm with either
     - a service-managed fleet with After Effects available (via custom Conda package)
@@ -32,7 +32,7 @@ The After Effects submitter extension allows you to submit jobs to Deadline Clou
 
 1. Download the Deadline Cloud Submitter installer by following [Step 1: Install the Deadline Cloud Submitter](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#submitter-installation).
 2. Run the installer (no admin required).
-3. Follow the prompts and select the After Effects submitter and choose the major version (e.g., 24 or 25).
+3. Follow the prompts and select the After Effects submitter and choose the major version (e.g., 24, 25, or 26).
 4. The submitter will be installed based on your operating system:
    - **macOS**: The installer automatically places `DeadlineCloudSubmitter(User).jsx` and `DeadlineCloudSubmitter_Assets` into your After Effects user preferences directory for all minor versions of the selected major version:
      ```
