@@ -44,14 +44,21 @@ jobs:
   IsCondaReady:
     needs: BuildInstaller
     runs-on: ubuntu-latest
-    environment: release
+    environment: release-gate
     name: “Is the Conda Package available in all ProdWaves and have you ran any required manual tests?”
     steps:
       - run: |
          :
 
+  ManualTestGate:
+    needs: [TagRelease, BuildInstaller]
+    runs-on: ubuntu-latest
+    environment: release-gate
+    steps:
+      - run: echo "Manual testing approved for ${{ needs.TagRelease.outputs.tag }}"
+
   ReleaseInstaller:
-    needs: [TagRelease, IsCondaReady]
+    needs: [TagRelease, IsCondaReady, ManualTestGate]
     uses: aws-deadline/.github/.github/workflows/reusable_release_installers.yml@mainline
     secrets: inherit
     permissions:
@@ -63,7 +70,7 @@ jobs:
       project_name: ${{ github.event.repository.name }}
           
   Release:
-    needs: [TagRelease, ReleaseInstaller]
+    needs: [TagRelease, ManualTestGate]
     runs-on: ubuntu-latest
     name: Release
     permissions:
