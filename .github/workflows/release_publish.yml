@@ -70,7 +70,7 @@ jobs:
       project_name: ${{ github.event.repository.name }}
           
   Release:
-    needs: [TagRelease, ManualTestGate]
+    needs: [TagRelease, ReleaseInstaller]
     runs-on: ubuntu-latest
     name: Release
     permissions:
