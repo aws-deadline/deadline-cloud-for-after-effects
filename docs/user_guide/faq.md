@@ -4,18 +4,19 @@
 
 **Q: Can I run custom ExtendScript (.jsx) scripts on Deadline Cloud workers?**
 
-A: Yes. The After Effects conda package on Service Managed Fleets includes the full After Effects application, not a stripped-down version. You can run custom `.jsx` scripts on workers.
-
-Common pitfalls when running scripts on workers:
-- **UI dialogs cause timeouts:** Scripts that call `alert()`, `confirm()`, or other UI functions will hang indefinitely in headless mode since there is no display to interact with. This results in a `subprocess.TimeoutExpired` error. Remove all UI calls from scripts intended for farm execution.
-- **PermissionDenied errors during session cleanup:** If After Effects hangs (e.g., due to a UI dialog), the process may still hold locks on Adobe DLLs (`AdobeXMP.dll`, `dvacore.dll`, `dynamiclink.dll`, etc.) when the worker attempts session cleanup. This produces `Access to the path '<file>' is denied` errors. The root cause is the hung After Effects process — fixing the script to avoid UI calls resolves both the timeout and the cleanup errors.
-- **Finding the executable:** On SMF workers with conda enabled, After Effects executables are located under the conda `$PREFIX/aftereffects` folder.
-
-For more details on how After Effects is packaged for conda, see the [sample conda recipe](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-25.1).
-
-**Troubleshooting tip:** If your script fails on a worker, try running the same script on a Windows workstation with the After Effects UI to eliminate any non-Deadline-specific issues.
+A: Yes. The After Effects conda package on Service Managed Fleets includes the full After Effects application, not a stripped-down version. You can run custom `.jsx` scripts on workers using host configurations.
 
 ## Troubleshooting
+
+**Q: My After Effects job is timing out or I'm seeing PermissionDenied errors during session cleanup. What's going on?**
+
+A: This is typically caused by After Effects hanging due to a UI dialog (e.g., `alert()`, `confirm()`) that cannot be dismissed in headless mode. The symptoms are:
+- **Timeout errors:** The process hangs waiting for user interaction that will never come, resulting in a `subprocess.TimeoutExpired` error.
+- **PermissionDenied errors during session cleanup:** The hung After Effects process holds locks on Adobe DLLs (`AdobeXMP.dll`, `dvacore.dll`, `dynamiclink.dll`, etc.). When the worker attempts session cleanup, it produces `Access to the path '<file>' is denied` errors.
+
+Fixing the root cause (the hung process) resolves both the timeout and the cleanup errors. Remove all UI calls from scripts intended for farm execution.
+
+**Troubleshooting tip:** Try running the same workflow on a Windows workstation with the After Effects UI to eliminate any non-Deadline-specific issues.
 
 **Q: I'm getting "aerender Error: Could not read from source" when my job runs. What's wrong?**
 
