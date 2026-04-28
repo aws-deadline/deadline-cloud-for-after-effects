@@ -57,10 +57,6 @@ ls -d /Applications/Adobe\ After\ Effects* 2>/dev/null | sort -rV
 
 **If not found:** Prompt user to install After Effects (2024, 2025, or 2026) or enter a custom path.
 
-Determine the ScriptUI Panels path:
-- **Windows:** `C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\Script UI Panels`
-- **macOS:** `/Applications/Adobe After Effects <version>/Scripts/Script UI Panels`
-
 ## Step 3: Install Hatch
 
 **Action:** Check if hatch is installed.
