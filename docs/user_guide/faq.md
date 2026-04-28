@@ -4,7 +4,7 @@
 
 **Q: Can I run custom ExtendScript (.jsx) scripts on Deadline Cloud workers?**
 
-A: Yes. The After Effects conda package on Service Managed Fleets includes the full After Effects application, not a stripped-down version. You can run custom `.jsx` scripts on workers using host configurations.
+A: Yes, with limitations. The After Effects conda package on Service Managed Fleets includes the full After Effects application, not a stripped-down version. You can run custom `.jsx` scripts on workers using host configurations. However, scripts that make networking calls will not work on workers, because the "Allow Scripts To Write Files And Access Network" preference is a local user setting that cannot be configured on workers since After Effects is not fully installed — only the renderer and its dependencies are packaged.
 
 ## Troubleshooting
 
@@ -22,9 +22,9 @@ Fixing the root cause (the hung process) resolves both the timeout and the clean
 
 A: This error typically means the output path was not set in your composition's render queue before submitting the job. The After Effects submitter requires that you add your composition to the render queue and set up your render settings, output module, and output path before submission. See [Using the After Effects Submitter](using-submitter.md) for the full submission workflow.
 
-**Q: My job fails at "Install Fonts to Worker" with `AddFontResource failed to load` on a `.ttc` font. What do I do?**
+**Q: My job fails at "Install Fonts to Worker" with `AddFontResource failed to load`. What do I do?**
 
-A: Not all TrueTypeCollection (`.ttc`) fonts are installable on Windows. When the font manager attempts to install an unsupported `.ttc` font on a worker, it fails with an error like:
+A: Some fonts are not installable on certain operating systems due to OS-specific limitations. When the font manager attempts to install an unsupported font on a worker, it fails with an error like:
 ```
 OSError: AddFontResource failed to load "...\tempFonts\HelveticaNeue-CondensedBlack.ttc"
 ```
@@ -32,7 +32,7 @@ OSError: AddFontResource failed to load "...\tempFonts\HelveticaNeue-CondensedBl
 To resolve this:
 1. Check whether the font is actually used in your composition — it may have been uploaded by mistake.
 2. If it is not needed, remove it from the job attachments in the submitter before resubmitting.
-3. If it is needed, try substituting a different font that is compatible with Windows.
+3. If it is needed, try substituting a different font that is compatible with Windows (Deadline Cloud only runs After Effects on Windows workers).
 4. If neither option works, [create an issue](https://github.com/aws-deadline/deadline-cloud-for-after-effects/issues) and we will look into it and prioritize as needed.
 
-**Tip:** You can check if a `.ttc` font is installable on Windows by double-clicking the font file on a Windows machine. If it opens and shows an "Install" option, the font is supported.
+**Tip:** You can check if a font is installable on Windows by double-clicking the font file on a Windows machine. If it opens and shows an "Install" option, the font is supported.
