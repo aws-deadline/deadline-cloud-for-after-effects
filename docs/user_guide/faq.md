@@ -33,6 +33,7 @@ To resolve this:
 1. Check whether the font is actually used in your composition — it may have been uploaded by mistake.
 2. If it is not needed, remove it from the job attachments in the submitter before resubmitting.
 3. If it is needed, try substituting a different font that is compatible with Windows (Deadline Cloud only runs After Effects on Windows workers).
-4. If neither option works, [create an issue](https://github.com/aws-deadline/deadline-cloud-for-after-effects/issues) and we will look into it and prioritize as needed.
+4. As a workaround, you can convert text layers to shapes in After Effects using [Create Shapes from Text](https://helpx.adobe.com/after-effects/using/creating-shapes-masks.html), which removes the font dependency entirely. Note that this is a one-way conversion — you will no longer be able to edit the text or use text-specific features.
+5. If none of the above options work, [create an issue](https://github.com/aws-deadline/deadline-cloud-for-after-effects/issues) and we will look into it and prioritize as needed.
 
 **Tip:** You can check if a font is installable on Windows by double-clicking the font file on a Windows machine. If it opens and shows an "Install" option, the font is supported.
