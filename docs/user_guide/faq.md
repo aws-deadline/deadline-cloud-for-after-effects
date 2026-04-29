@@ -4,7 +4,7 @@
 
 **Q: Can I run custom ExtendScript (.jsx) scripts on Deadline Cloud workers?**
 
-A: Yes, with limitations. The After Effects conda package on Service Managed Fleets includes the full After Effects application, not a stripped-down version. You can run custom `.jsx` scripts on workers using host configurations. However, scripts that make networking calls will not work on workers, because the "Allow Scripts To Write Files And Access Network" preference is a local user setting that cannot be configured on workers since After Effects is not fully installed — only the renderer and its dependencies are packaged.
+A: Yes, with limitations. The After Effects conda package on Service Managed Fleets packages the renderer and its dependencies, not a full After Effects installation. You can run custom `.jsx` scripts on workers using host configurations. However, scripts that make networking calls will not work on workers, because the "Allow Scripts To Write Files And Access Network" preference is a local user setting that cannot be configured without a full installation.
 
 ## Troubleshooting
 
