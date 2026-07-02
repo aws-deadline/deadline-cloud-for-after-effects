@@ -1,144 +1,46 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
 name = "deadline-cloud-for-after-effects"
-description = "AWS Deadline Cloud for After Effects"
-authors = [
-  {name = "Amazon Web Services"},
-]
-dynamic = ["version"]
+version = "0.99.0"
+description = "DEPRECATED PyPI package. AWS Deadline Cloud for After Effects is now delivered by the shared Deadline Cloud submitter installer; no separate adaptor package is needed."
 readme = "README.md"
-license = "Apache-2.0"
 requires-python = ">=3.9"
-# https://pypi.org/classifiers/
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Amazon Web Services" }]
+keywords = ["deadline-cloud", "deprecated"]
 classifiers = [
-  "Development Status :: 5 - Production/Stable",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Operating System :: POSIX :: Linux",
-  "Operating System :: Microsoft :: Windows",
-  "Operating System :: MacOS",
-  "License :: OSI Approved :: Apache Software License",
-  "Intended Audience :: Developers",
-  "Intended Audience :: End Users/Desktop"
-]
-
-dependencies = [
-    "deadline >= 0.49,< 0.60",
+    "Development Status :: 7 - Inactive",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 [project.urls]
-Homepage = "https://github.com/aws-deadline/deadline-cloud-for-after-effects"
-Source = "https://github.com/aws-deadline/deadline-cloud-for-after-effects"
+Documentation = "https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html"
 
 [project.scripts]
+afterfx-openjd = "deadline.ae_adaptor._cli:main"
 
-[tool.hatch.build]
-artifacts = [
-  "*_version.py",
-]
-
-[tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.version.raw-options]
-version_scheme = "post-release"
-
-[tool.hatch.build.hooks.vcs]
-version-file = "_version.py"
-
-[tool.hatch.build.hooks.custom]
-path = "hatch_custom_hook.py"
-
-[tool.hatch.build.hooks.custom.copy_version_py]
-destinations = [
-  "src/"
-]
+[tool.hatch.build.targets.wheel]
+packages = ["src/deadline"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "src/*",
-    "hatch_version_hook.py",
-]
-
-[tool.semantic_release]
-# Can be removed or set to true once we are v1
-major_on_zero = false
-tag_format = "{version}"
-allow_zero_version = true
-
-[tool.semantic_release.commit_parser_options]
-allowed_tags = [
-    "build",
-    "chore",
-    "ci",
-    "docs",
-    "feat",
-    "fix",
-    "perf",
-    "style",
-    "refactor",
-    "test",
-]
-minor_tags = []
-patch_tags = [
-  "chore",
-  "feat",
-  "fix",
-  "refactor",
-  "perf",
-]
-
-[tool.semantic_release.publish]
-upload_to_vcs_release = false
-
-[tool.semantic_release.changelog]
-template_dir = ".semantic_release"
-
-[tool.semantic_release.changelog.environment]
-trim_blocks = true
-lstrip_blocks = true
-
-[tool.semantic_release.branches.release]
-match = "(mainline|release|patch_.*)"
-
-# --- PYTEST ---
-
-[tool.pytest.ini_options]
-xfail_strict = true
-addopts = [
-  "--durations=5",
-  "--color=yes",
-  "--cov-report=html:build/coverage",
-  "--cov-report=xml:build/coverage/coverage.xml",
-  "--cov-report=term-missing",
-  "--numprocesses=auto",
-]
-testpaths = ["test"]
-looponfailroots = ["src", "test"]
-# looponfailroots is deprecated, this removes the deprecation from the test output
-filterwarnings = [
-    "ignore::DeprecationWarning",
-    "ignore:.*\\(rm_rf\\) unknown function.*:Warning"
-]
-markers = [
-    "submitter: mark a test as using the submitter.",
-    "adaptor: mark test as using the adaptor.",
-    "scene_files: used to mark which scene files a test uses.",
-]
-
-# --- COVERAGE ---
-
-[tool.coverage.run]
-branch = true
-parallel = true
-omit = [
-  "**/__main__.py",
-  "**/_version.py",
+    "src/deadline",
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "pyproject.toml",
 ]

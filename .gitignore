@@ -1,44 +1,5 @@
-# AE
-..ae submitter test projectReport.txt
-Adobe After Effects Auto-Save/
-# Ignore Logs from test projects
-test_projects/*/*Logs/*
-
-# build artifacts
+dist/
 build/
-var/
-/dependency_bundle/
-/dist/deadline_cloud*
-
-### Python
-# Hatch version temp file
-*_version.py
-
 *.egg-info/
 __pycache__/
-*.py[cod]
-.coverage
-.tox
-.pytest_cache
-
-# For unit test file creation spot
-tmp
-
-# virtualenv
-.venv
-venv/
-
-### JavaScript
-node_modules
-
-# IDE
-.idea
-*.code-workspace
-.vscode
-jsconfig.json
-
-# macOS
-.DS_Store
-
-# Dev installer
-DeadlineCloudForAfterEffectsSubmitter-*/
+*.pyc

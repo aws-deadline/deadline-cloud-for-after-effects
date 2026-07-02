@@ -1,9 +1,0 @@
-coverage[toml] == 7.*
-pytest == 9.*
-pytest-cov == 7.*
-pytest-xdist == 3.*
-black == 26.*
-ruff == 0.15.*
-twine == 6.*
-types-pyyaml == 6.*
-fonttools == 4.*
