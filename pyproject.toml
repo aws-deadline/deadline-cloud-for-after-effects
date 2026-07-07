@@ -30,7 +30,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "deadline >= 0.49,< 0.60",
+    "deadline >= 0.60.0,< 0.61",
 ]
 
 [project.urls]
