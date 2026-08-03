@@ -2070,16 +2070,18 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, renderQueueItemInd
     }
 
     stepTemplateObject.steps[0].name = generateParameterName(renderQueueItemIndex, compName, "");
+    const renderQueueIndexToken = "{{Param." + generateParameterName(renderQueueItemIndex, compName, "RenderQueueIndex") + "}}";
+    const outputFileNameToken = "{{Param." + generateParameterName(renderQueueItemIndex, compName, "OutputFileName") + "}}";
     // Replace any parameter names in onRun script
     const scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args;
     const replacedArgs = []
     for (var i = 0; i < scriptArgs.length; i++) {
-        // Substitute the inlined values first so that the parameter renaming below does not see them
-        var scriptArg = scriptArgs[i]
-            .replace("{{Param.RenderQueueIndex}}", renderQueueItemIndex.toString())
-            .replace("{{Param.OutputFileName}}", outputFileName);
+        // Rename first, so the regex never sees the output file name, which may contain "Param."
         // JobParams
-        replacedArgs.push(scriptArg.replace(paramPatternRegex, "Param." + generateParameterName(renderQueueItemIndex, compName, "") + "_"));
+        var scriptArg = scriptArgs[i].replace(paramPatternRegex, "Param." + generateParameterName(renderQueueItemIndex, compName, "") + "_");
+        // split/join keeps a $ in the output file name literal
+        scriptArg = scriptArg.split(renderQueueIndexToken).join(renderQueueItemIndex.toString());
+        replacedArgs.push(scriptArg.split(outputFileNameToken).join(outputFileName));
     }
     stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs;
     stepTemplateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
@@ -2462,12 +2464,12 @@ function SubmitSelection(selection, selectionSettings) {
         logger.debug("sanitizedOutputFileName is " + sanitizedOutputFileName, submitBundleFile);
 
         // The file name is written into the step's command rather than passed as a parameter, so it
-        // ends up inside an Open Job Description format string. "{{" there would be read as the start
-        // of a parameter reference instead of as part of the file name.
-        if (sanitizedOutputFileName.indexOf("{{") !== -1) {
+        // ends up inside an Open Job Description format string. "{{" or "}}" there would be read as
+        // parameter reference delimiters instead of as part of the file name.
+        if (sanitizedOutputFileName.indexOf("{{") !== -1 || sanitizedOutputFileName.indexOf("}}") !== -1) {
             adcAlert(
-                "Error: The output file name for " + renderQueueItem.comp.name + " contains \"{{\", which is not " +
-                "supported.\n\nPlease rename the output file in the render queue and try again.", true
+                "Error: The output file name for " + renderQueueItem.comp.name + " contains \"{{\" or \"}}\", which " +
+                "is not supported.\n\nPlease rename the output file in the render queue and try again.", true
             );
             return;
         }
