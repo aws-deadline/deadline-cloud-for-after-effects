@@ -1,7 +1,15 @@
+// Parameters that are declared once for the whole job instead of once per render queue item.
+// Listing a name here has two effects: generateStepParameterFragment skips emitting a per-item
+// definition for it, and generateStepTemplateFragment leaves "{{Param.<name>}}" references in the
+// step fragments unprefixed so that every step resolves them to the single job-level parameter.
 var JobParams = [
     "JobScriptDir",
     "CondaPackages",
-    "ProjectFile"
+    "ProjectFile",
+    "ChunkSize",
+    "MultiFrameRendering",
+    "MaxCpuUsagePercentage",
+    "IgnoreMissingDependencies"
 ]
 
 var paramPattern = "Param\\.";
@@ -154,7 +162,7 @@ function generateStepParameterFragment(bundlePath, isImageSeq, renderQueueIndex,
 
 // Generates the step chunk of the template for each step by loading the `step_<>_fragment.json`
 //      Replacing the parameters to be pointing to our per-renderQueueItem parameters and updating any parameters in the onRun
-function generateStepTemplateFragment(bundlePath, isImageSeq, renderQueueItemIndex, compName, taskTimeoutSeconds) {
+function generateStepTemplateFragment(bundlePath, isImageSeq, renderQueueItemIndex, compName, taskTimeoutSeconds, outputFileName) {
     var path = bundlePath + "/step_video_fragment.json";
     if (isImageSeq) {
         path = bundlePath + "/step_image_fragment.json";
@@ -176,8 +184,12 @@ function generateStepTemplateFragment(bundlePath, isImageSeq, renderQueueItemInd
     const scriptArgs = stepTemplateObject.steps[0].script.actions.onRun.args;
     const replacedArgs = []
     for (var i = 0; i < scriptArgs.length; i++) {
+        // Substitute the inlined values first so that the parameter renaming below does not see them
+        var scriptArg = scriptArgs[i]
+            .replace("{{Param.RenderQueueIndex}}", renderQueueItemIndex.toString())
+            .replace("{{Param.OutputFileName}}", outputFileName);
         // JobParams
-        replacedArgs.push(scriptArgs[i].replace(paramPatternRegex, "Param." + generateParameterName(renderQueueItemIndex, compName, "") + "_"));
+        replacedArgs.push(scriptArg.replace(paramPatternRegex, "Param." + generateParameterName(renderQueueItemIndex, compName, "") + "_"));
     }
     stepTemplateObject.steps[0].script.actions.onRun.args = replacedArgs;
     stepTemplateObject.steps[0].script.actions.onRun["timeout"] = taskTimeoutSeconds;
@@ -208,6 +220,13 @@ function generateJobEnvironmentFragment(bundlePath, outputFoldersStr) {
  * Submit the selected render queue item
  **/
 function SubmitSelection(selection, selectionSettings) {
+    // The Submit button stays enabled at all times, so this is the only thing standing between an
+    // empty selection and a job template with no steps in it.
+    if (selection === null || selection.length === 0) {
+        adcAlert("Error: Select at least one render queue item to submit.", true);
+        return;
+    }
+
     // Calculate task run timeout in seconds
     var taskTimeoutSeconds = (selectionSettings.taskRunDays() * 24 * 60 * 60) + (selectionSettings.taskRunHours() * 60 * 60) + (selectionSettings.taskRunMinutes() * 60);
     // Validate timeout values during job submission
@@ -248,6 +267,21 @@ function SubmitSelection(selection, selectionSettings) {
     
     if (missingFiles.length > 0) {
         adcAlert("Error: Missing required files:\n" + missingFiles.join("\n"), true);
+        return;
+    }
+
+    // Checked before the project is saved and before any dependency scanning, so an oversized
+    // selection is refused immediately rather than after a wait.
+    if (selection.length > MAX_RENDER_QUEUE_ITEMS_PER_JOB) {
+        adcAlert(
+            "Error: " + selection.length + " render queue items are selected, but a single job supports at most " +
+            MAX_RENDER_QUEUE_ITEMS_PER_JOB + ".\n\n" +
+            "Each render queue item adds parameters to the job template that this submitter generates, and the " +
+            "Open Job Description specification allows a job template at most " + MAX_JOB_PARAMETERS + " parameters, " +
+            "shared with the parameters declared by the queue's environments.\n\n" +
+            "Please select " + MAX_RENDER_QUEUE_ITEMS_PER_JOB +
+            " or fewer render queue items and submit the rest as a separate job.", true
+        );
         return;
     }
 
@@ -376,9 +410,83 @@ function SubmitSelection(selection, selectionSettings) {
             },
             "default": "aftereffects=" + aftereffectsCondaVersion,
             "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
+        },
+        {
+            "name": "MultiFrameRendering",
+            "type": "STRING",
+            "default": "OFF",
+            "allowedValues": [
+                "ON",
+                "OFF"
+            ],
+            "userInterface": {
+                "control": "DROPDOWN_LIST",
+                "label": "Enable or disable multi-frame rendering",
+                "groupLabel": "Multi-Frame Rendering"
+            },
+            "description": "Multi frame rendering settings"
+        },
+        {
+            "name": "MaxCpuUsagePercentage",
+            "type": "INT",
+            "userInterface": {
+                "control": "SPIN_BOX",
+                "label": "Max CPU Usage Percentage",
+                "groupLabel": "Multi-Frame Rendering"
+            },
+            "description": "Max Cpu Percentage to use with Multi-Frame Rendering, ignored if MFR is OFF",
+            "minValue": 1,
+            "maxValue": 100,
+            "default": 90
+        },
+        {
+            "name": "IgnoreMissingDependencies",
+            "type": "STRING",
+            "default": "OFF",
+            "allowedValues": [
+                "ON",
+                "OFF"
+            ],
+            "userInterface": {
+                "control": "DROPDOWN_LIST",
+                "label": "Ignore Missing Dependencies",
+                "groupLabel": "Ignore Missing Dependencies"
+            },
+            "description": "Allows render to continue without failing if referenced files are missing."
         }
         ]
     }
+
+    // ChunkSize only drives the image step's task parameter space, so it is left out entirely when
+    // nothing in the selection renders an image sequence.
+    var selectionHasImageSequence = false;
+    for (var i = 0; i < renderQueueItems.length; i++) {
+        if (dcUtil.isRenderQueueItemImageOutput(renderQueueItems[i][0])) {
+            selectionHasImageSequence = true;
+            break;
+        }
+    }
+    if (selectionHasImageSequence) {
+        jobParameterDefinitions.parameterDefinitions.push({
+            "name": "ChunkSize",
+            "type": "INT",
+            "userInterface": {
+                "control": "SPIN_BOX",
+                "label": "Frames Per Task",
+                "groupLabel": "Frame Range"
+            },
+            "description": "The chunk size of frames per task to render",
+            "minValue": 1,
+            "default": DEFAULT_FRAMESPERTASK
+        });
+    }
+    // These four settings apply to the whole job, so they are read once here rather than per
+    // render queue item, and contribute one parameter value each instead of one per step.
+    const jobFramesPerTask = selectionSettings.framesPerTask();
+    const jobMaxCpuUsagePercentage = selectionSettings.maxCpuUsagePercentage();
+    const jobMultiFrameRendering = selectionSettings.multiFrameRendering();
+    const jobIgnoreMissingDependencies = selectionSettings.ignoreMissingDependencies();
+
     const jobParameterValues = {
         parameterValues: [{
             name: "deadline:targetTaskRunStatus",
@@ -400,7 +508,25 @@ function SubmitSelection(selection, selectionSettings) {
             name: "ProjectFile",
             value: app.project.file.fsName,
         },
+        {
+            name: "MultiFrameRendering",
+            value: jobMultiFrameRendering === true ? "ON" : "OFF",
+        },
+        {
+            name: "MaxCpuUsagePercentage",
+            value: jobMaxCpuUsagePercentage,
+        },
+        {
+            name: "IgnoreMissingDependencies",
+            value: jobIgnoreMissingDependencies === true ? "ON" : "OFF",
+        },
         ]
+    }
+    if (selectionHasImageSequence) {
+        jobParameterValues.parameterValues.push({
+            name: "ChunkSize",
+            value: jobFramesPerTask,
+        });
     }
 
     const template = loadDefaultJobTemplate(bundle.fsName, submitBundleFile);
@@ -417,11 +543,6 @@ function SubmitSelection(selection, selectionSettings) {
             return;
         }
 
-        var stepFramesPerTask = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).framesPerTask();
-        var stepMaxCpuUsagePercentage = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).maxCpuUsagePercentage();
-        var stepMultiFrameRendering = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).multiFrameRendering();
-        var stepIgnoreMissingDependencies = selectionSettings.get(dcUtil.getRenderQueueItemID(renderQueueIndex)).ignoreMissingDependencies();
-
         var outputModule = renderQueueItem.outputModule(1).file;
         var outputPath = outputModule.fsName;
         var outputFile = outputModule.name;
@@ -436,17 +557,30 @@ function SubmitSelection(selection, selectionSettings) {
         var startFrame = frameRange.startFrame;
         var endFrame = frameRange.endFrame;
 
-        var dependencies = findJobAttachments(renderQueueItem.comp, stepIgnoreMissingDependencies); // list of filenames
+        var dependencies = findJobAttachments(renderQueueItem.comp, jobIgnoreMissingDependencies); // list of filenames
         var compName = dcUtil.removeIllegalCharacters(renderQueueItem.comp.name);
         var sanitizedOutputFolder = sanitizeFilePath(outputFolder);
 
         var outputFileNameNoRegex = getFileNameNoRegex(outputFile);
         var extension = getFileExtension(outputFileNameNoRegex);
         logger.debug("extension set to: " + extension, submitBundleFile);
-        var isImageSeq = dcUtil.isImage(extension);
+        // Uses the same check as selectionHasImageSequence above. The two must agree: that flag
+        // decides whether ChunkSize is declared, and this decides whether a step references it.
+        var isImageSeq = dcUtil.isRenderQueueItemImageOutput(renderQueueItem);
 
         var sanitizedOutputFileName = dcUtil.removePercentageFromFileName(outputFileNameNoRegex);
         logger.debug("sanitizedOutputFileName is " + sanitizedOutputFileName, submitBundleFile);
+
+        // The file name is written into the step's command rather than passed as a parameter, so it
+        // ends up inside an Open Job Description format string. "{{" there would be read as the start
+        // of a parameter reference instead of as part of the file name.
+        if (sanitizedOutputFileName.indexOf("{{") !== -1) {
+            adcAlert(
+                "Error: The output file name for " + renderQueueItem.comp.name + " contains \"{{\", which is not " +
+                "supported.\n\nPlease rename the output file in the render queue and try again.", true
+            );
+            return;
+        }
 
         // Push step asset references
         for (var d = 0; d < dependencies.length; d++) {
@@ -455,17 +589,9 @@ function SubmitSelection(selection, selectionSettings) {
         jobAssetReferences.assetReferences.outputs.directories.push(sanitizedOutputFolder);
 
         var parameterValues = generateParameterValues(
-            renderQueueIndex,
-            app.project.file.fsName,
             sanitizedOutputFolder,
-            sanitizedOutputFileName,
-            isImageSeq,
             startFrame,
             endFrame,
-            stepFramesPerTask,
-            stepMultiFrameRendering,
-            stepMaxCpuUsagePercentage,
-            stepIgnoreMissingDependencies,
             generateParameterName(renderQueueIndex, compName, "")
         );
         for (var p = 0; p < parameterValues.parameterValues.length; p++) {
@@ -477,7 +603,7 @@ function SubmitSelection(selection, selectionSettings) {
         stepOutputFolderParameters.push("{{Param." + generateParameterName(renderQueueIndex, compName, "OutputDir") + "}}");
 
         // Generates template and parameters for the current render queue item, then pushes them to the main template
-        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, renderQueueIndex, compName, taskTimeoutSeconds);
+        var stepTemplate = generateStepTemplateFragment(bundle.fsName, isImageSeq, renderQueueIndex, compName, taskTimeoutSeconds, sanitizedOutputFileName);
         for (var s = 0; s < stepTemplate.steps.length; s++) {
             template.steps.push(stepTemplate.steps[s]);
         }
@@ -496,6 +622,24 @@ function SubmitSelection(selection, selectionSettings) {
                 template.parameterDefinitions.push(stepParameters.parameterDefinitions[p]);
             }
         }
+    }
+
+    // Backstop for MAX_RENDER_QUEUE_ITEMS_PER_JOB, which is calculated by hand. Firing means that
+    // number is now too high, and that the artist waited through dependency scanning for nothing.
+    if (template.parameterDefinitions.length > MAX_JOB_PARAMETERS) {
+        adcAlert(
+            "Error: The generated job template declares " + template.parameterDefinitions.length +
+            " parameters, more than the " + MAX_JOB_PARAMETERS + " an Open Job Description job template allows.\n\n" +
+            "Please select fewer render queue items and submit the rest as a separate job.", true
+        );
+        logger.error(
+            "Job template declared " + template.parameterDefinitions.length + " parameterDefinitions for " +
+            renderQueueItems.length + " render queue items, which exceeds the Open Job Description limit of " +
+            MAX_JOB_PARAMETERS + ". The selection was within MAX_RENDER_QUEUE_ITEMS_PER_JOB (" +
+            MAX_RENDER_QUEUE_ITEMS_PER_JOB + "), so that value is too high for the parameters this template " +
+            "now declares and needs recalculating.", submitBundleFile
+        );
+        return;
     }
 
     // Writes out final bundle files

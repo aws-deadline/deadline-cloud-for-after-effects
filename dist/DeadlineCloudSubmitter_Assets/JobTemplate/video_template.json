@@ -101,6 +101,18 @@
             "default": 90
         },
         {
+            "name": "IgnoreMissingDependencies",
+            "type": "STRING",
+            "default": "OFF",
+            "allowedValues": ["ON", "OFF"],
+            "userInterface": {
+                "control": "DROPDOWN_LIST",
+                "label": "Ignore Missing Dependencies",
+                "groupLabel": "Ignore Missing Dependencies"
+            },
+            "description": "Allows render to continue without failing if referenced files are missing."
+        },
+        {
             "name": "JobScriptDir",
             "description": "Directory containing embedded scripts.",
             "userInterface": {
@@ -189,7 +201,9 @@
                             "--multi-frame-rendering",
                             "{{Param.MultiFrameRendering}}",
                             "--max-cpu-usage-percentage",
-                            "{{Param.MaxCpuUsagePercentage}}"
+                            "{{Param.MaxCpuUsagePercentage}}",
+                            "--ignore-missing-dependencies",
+                            "{{Param.IgnoreMissingDependencies}}"
                         ]
                     }
                 }
