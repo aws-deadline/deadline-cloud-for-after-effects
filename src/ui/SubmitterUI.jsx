@@ -51,54 +51,62 @@ function buildUI(thisObj) {
     const controlsPanel = controlsGroup.add("panel", undefined, "");
     controlsPanel.alignment = ['fill', 'top'];
 
-    // Container with settings to modify comp-specific settings
-    const perCompSettingsGroup = controlsPanel.add("panel", undefined, "Render Queue Item Settings");
-    perCompSettingsGroup.orientation = "column";
-    perCompSettingsGroup.alignment = ['fill', 'top'];
-    perCompSettingsGroup.alignChildren = ['left', 'top'];
+    // These settings apply to the whole submission, not to individual render queue items. Not named
+    // "Render Settings" because After Effects already uses that for a per-item concept.
+    const jobRenderOptionsPanel = controlsPanel.add("panel", undefined, "Job Render Options");
+    jobRenderOptionsPanel.orientation = "column";
+    jobRenderOptionsPanel.alignment = ['fill', 'top'];
+    jobRenderOptionsPanel.alignChildren = ['left', 'top'];
 
     // Setting up frame per task GUI
-    const framesPerTaskGroup = perCompSettingsGroup.add("group", undefined, "");
+    const framesPerTaskGroup = jobRenderOptionsPanel.add("group", undefined, "");
     framesPerTaskGroup.orientation = "row";
     framesPerTaskGroup.alignment = ['fill', 'top'];
     framesPerTaskGroup.alignChildren = ['left', 'center'];
 
-    const framesPerTaskLabel = framesPerTaskGroup.add("statictext", undefined, "Frames per task");
+    // Always enabled, because this is a project level setting rather than a per composition one.
+    // The label says which outputs it affects so video-only artists do not expect an effect.
+    const framesPerTaskLabel = framesPerTaskGroup.add("statictext", undefined, "Frames per task (img seq only)");
     framesPerTaskLabel.alignment = ['left', 'center'];
-    framesPerTaskLabel.helpTip = "The number of frames per task. Only affects image sequence output.";
+    framesPerTaskLabel.helpTip = "The number of frames per task, applied to every image sequence in the submission. Has no effect on video output.";
 
     const framesPerTaskTextBox = framesPerTaskGroup.add("edittext", undefined, "");
     framesPerTaskTextBox.alignment = ['fill', 'top'];
     framesPerTaskTextBox.helpTip = framesPerTaskLabel.helpTip;
+    framesPerTaskTextBox.text = uiSettingsState.framesPerTask();
 
     function onFramesPerTaskChanged() {
-        if (list.selection == null) {
-            return;
+        // Frames per task is submitted as the ChunkSize job parameter, which the job template
+        // declares with a minimum of 1, and is used as the stride of the step's frame range.
+        // Strip non-digits so a stray minus sign or trailing text can't reach the template, then
+        // floor the result so an explicit "0" can't produce an invalid range such as "1-100:0".
+        const minFramesPerTask = 1;
+        const maxFramesPerTask = 9999;
+        framesPerTaskTextBox.text = framesPerTaskTextBox.text.replace(/[^0-9]/g, "");
+        var newFramesPerTaskValue = parseInt(framesPerTaskTextBox.text);
+        if (isNaN(newFramesPerTaskValue)) {
+            newFramesPerTaskValue = uiSettingsState.framesPerTask();
         }
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            var newFramesPerTaskValue = parseInt(framesPerTaskTextBox.text);
-            if (isNaN(newFramesPerTaskValue)) {
-                newFramesPerTaskValue = uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).framesPerTask();
-            }
-            if (newFramesPerTaskValue > 9999) {
-                newFramesPerTaskValue = 9999;
-            }
-            framesPerTaskTextBox.text = newFramesPerTaskValue.toString();
-            uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).setFramesPerTask(newFramesPerTaskValue);
+        if (newFramesPerTaskValue < minFramesPerTask) {
+            newFramesPerTaskValue = minFramesPerTask;
         }
+        if (newFramesPerTaskValue > maxFramesPerTask) {
+            newFramesPerTaskValue = maxFramesPerTask;
+        }
+        framesPerTaskTextBox.text = newFramesPerTaskValue.toString();
+        uiSettingsState.setFramesPerTask(newFramesPerTaskValue);
     }
     framesPerTaskTextBox.onChange = onFramesPerTaskChanged;
 
     // Multi-frame rendering (MFR) GUI
-    const mfrGroup = perCompSettingsGroup.add("group", undefined, "");
+    const mfrGroup = jobRenderOptionsPanel.add("group", undefined, "");
     mfrGroup.orientation = "column";
     mfrGroup.alignment = ['fill', 'top'];
     mfrGroup.alignChildren = ['left', 'center'];
     mfrGroup.margins = 5;
 
     const mfrCheckBox = mfrGroup.add("checkbox", undefined, "Enable Multi-Frame Rendering");
-    mfrCheckBox.value = DEFAULT_MULTI_FRAME_RENDERING;
+    mfrCheckBox.value = uiSettingsState.multiFrameRendering();
 
     const maxCpuUsagePercentageGroup = mfrGroup.add("group", undefined, "");
     maxCpuUsagePercentageGroup.orientation = "row";
@@ -112,82 +120,68 @@ function buildUI(thisObj) {
     const maxCpuUsagePercentageTextBox = maxCpuUsagePercentageGroup.add("edittext", undefined, "N/A");
     maxCpuUsagePercentageTextBox.alignment = ['fill', 'top'];
     maxCpuUsagePercentageTextBox.helpTip = maxCpuUsagePercentageLabel.helpTip;
-    maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value;
-    maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageTextBox.enabled ? DEFAULT_MAX_CPU_USAGE_PERCENTAGE : "N/A";
+
+    // Max CPU usage is only meaningful while MFR is on, so the control follows the checkbox. This
+    // only reads the stored percentage, so toggling MFR off and back on does not disturb it.
+    function refreshMaxCpuUsagePercentageControl() {
+        maxCpuUsagePercentageTextBox.enabled = mfrCheckBox.value;
+        maxCpuUsagePercentageTextBox.text = mfrCheckBox.value ?
+            uiSettingsState.maxCpuUsagePercentage().toString() :
+            "N/A";
+    }
+    refreshMaxCpuUsagePercentageControl();
 
     function onMaxCpuUsagePercentageChanged() {
+        // The job template declares MaxCpuUsagePercentage with a minimum of 1, so reject 0 along
+        // with non-numeric and out-of-range input rather than persisting a value the template rejects.
+        const minMaxCpuUsagePercentage = 1;
         const maxCpuUsagePercentageValue = Math.abs(parseInt(maxCpuUsagePercentageTextBox.text));
-        if (isNaN(maxCpuUsagePercentageValue) || maxCpuUsagePercentageValue > 100) {
+        if (isNaN(maxCpuUsagePercentageValue) || maxCpuUsagePercentageValue < minMaxCpuUsagePercentage || maxCpuUsagePercentageValue > 100) {
             maxCpuUsagePercentageTextBox.text = DEFAULT_MAX_CPU_USAGE_PERCENTAGE;
         } else {
             // Need to reassign in case input string is a number followed my random characters
             // since parseInt parses the first number it finds in a provided string.
             maxCpuUsagePercentageTextBox.text = maxCpuUsagePercentageValue;
         }
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
-        }
+        uiSettingsState.setMaxCpuUsagePercentage(parseInt(maxCpuUsagePercentageTextBox.text));
     }
     maxCpuUsagePercentageTextBox.onChange = onMaxCpuUsagePercentageChanged;
 
     // Disable max CPU percentage textbox when multi frame rendering is disabled
     function onMfrCheckBoxClicked() {
-        const isMfrChecked = mfrCheckBox.value;
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            var RQIID = dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex);
-            if (!isMfrChecked) {
-                maxCpuUsagePercentageTextBox.text = "N/A";
-                uiSettingsState.get(RQIID).setMultiFrameRendering(false);
-            } else {
-                maxCpuUsagePercentageTextBox.text = uiSettingsState.get(RQIID).maxCpuUsagePercentage();
-                uiSettingsState.get(RQIID).setMultiFrameRendering(true);
-            }
-        }
-        maxCpuUsagePercentageTextBox.enabled = isMfrChecked;
+        uiSettingsState.setMultiFrameRendering(mfrCheckBox.value);
+        refreshMaxCpuUsagePercentageControl();
     }
     mfrCheckBox.onClick = onMfrCheckBoxClicked;
 
     // Ignore Missing Dependencies GUI
-    const ignoreMissingDepsGroup = perCompSettingsGroup.add("group", undefined, "");
+    const ignoreMissingDepsGroup = jobRenderOptionsPanel.add("group", undefined, "");
     ignoreMissingDepsGroup.orientation = "column";
     ignoreMissingDepsGroup.alignment = ['fill', 'top'];
     ignoreMissingDepsGroup.alignChildren = ['left', 'center'];
 
     const ignoreMissingDepsCheckBox = ignoreMissingDepsGroup.add("checkbox", undefined, "Ignore Missing Dependencies");
     ignoreMissingDepsGroup.orientation = "column";
+    ignoreMissingDepsCheckBox.value = uiSettingsState.ignoreMissingDependencies();
 
     // Ignore Missing Dependencies Checkbox
     function onIgnoreMissingDepsCheckBoxClicked() {
-        if (list.selection == null) {
-            return;
-        }
-        const selectionItem = dcUtil.getSelection(list);
-        if (selectionItem) {
-            uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex)).setIgnoreMissingDependencies(ignoreMissingDepsCheckBox.value);
-        }
+        uiSettingsState.setIgnoreMissingDependencies(ignoreMissingDepsCheckBox.value);
     }
     ignoreMissingDepsCheckBox.onClick = onIgnoreMissingDepsCheckBoxClicked;
 
-    function isRenderQueueItemImageOutput(renderQueueItem) {
-        if (renderQueueItem.numOutputModules === 1) {
-            const outputModule = renderQueueItem.outputModule(1).file;
-            if (outputModule != null) {
-                const outputFileNameNoRegex = getFileNameNoRegex(outputModule.name);
-                const extension = getFileExtension(outputFileNameNoRegex);
-                return dcUtil.isImage(extension);
-            }
-        }
-        return false;
+    // Re-reads the render options from the project, which is needed because they go stale when a
+    // different project is opened. Reading a setting the project never stored seeds it with its
+    // default, which marks the project dirty.
+    function refreshRenderSettingControls() {
+        framesPerTaskTextBox.text = uiSettingsState.framesPerTask();
+        mfrCheckBox.value = uiSettingsState.multiFrameRendering();
+        ignoreMissingDepsCheckBox.value = uiSettingsState.ignoreMissingDependencies();
+        refreshMaxCpuUsagePercentageControl();
     }
 
-    const globalSettingsGroup = controlsPanel.add("panel", undefined, "Global Job Settings");
-    globalSettingsGroup.orientation = "column";
-    globalSettingsGroup.alignment = ['fill', 'top'];
-    globalSettingsGroup.alignChildren = ['left', 'top'];
     // Add Timeouts settings group
-    const timeoutsPanel = globalSettingsGroup.add("panel", undefined, "Timeouts");
+    const timeoutsPanel = controlsPanel.add("panel", undefined, "Timeouts");
     timeoutsPanel.orientation = "column";
     timeoutsPanel.alignment = ['fill', 'top'];
     timeoutsPanel.alignChildren = ['left', 'center'];
@@ -284,15 +278,13 @@ function buildUI(thisObj) {
     const submitButton = controlsGroup.add("button", undefined, "Submit");
     submitButton.onClick = function () {
         if (getPythonExecutable()) {
-            if (list.selection === null) {
-                return;
-            }
+            // The button is deliberately always enabled; SubmitSelection reports what is wrong, so
+            // an unexpected UI state cannot leave the artist with a button that does nothing.
             SubmitSelection(list.selection, uiSettingsState);
             list.selection = null;
         }
     }
     submitButton.alignment = 'right';
-    submitButton.enabled = false;
 
     function updateList() {
         const bounds = list == null ? undefined : list.bounds;
@@ -306,10 +298,11 @@ function buildUI(thisObj) {
         newList.preferredSize.height = 200;
         newList.preferredSize.width = 500;
 
-        // Disable all controls if the render queue is empty
-        // This forces the user to click "refresh" when a new project is opened and populate the list
-        controlsGroup.enabled = app.project.renderQueue.numItems > 0;
-        // Also populate timeout settings because the values could be stale if a new project has been opened since the last refresh
+        // The settings apply to the job rather than to individual render queue items, and they
+        // persist across submissions, so they stay editable even while the render queue is empty.
+        // Repopulate them here because they are stored in the project and a different project may
+        // have been opened since the last refresh.
+        refreshRenderSettingControls();
         taskRunDaysInput.text = uiSettingsState.taskRunDays();
         taskRunHoursInput.text = uiSettingsState.taskRunHours();
         taskRunMinutesInput.text = uiSettingsState.taskRunMinutes();
@@ -325,8 +318,6 @@ function buildUI(thisObj) {
             var item = newList.add('item', i.toString());
             item.renderQueueIndex = i;
             item.compId = rqi.comp.id;
-            // Create a default entry for each comp as needed.
-            uiSettingsState.get(i);
             item.subItems[0].text = rqi.comp.name;
 
             // Calculate frame range using the utility function
@@ -345,68 +336,16 @@ function buildUI(thisObj) {
             }
         }
 
-        dcUtil.deleteUnusedMetadata(uiSettingsState.rqiXmpPath);
-
         if (list != null) {
             listGroup.remove(list);
         }
         list = newList;
 
-        function onSelectionChange() {
-            const selection = list.selection;
-            perCompSettingsGroup.enabled = false;
-
-            framesPerTaskTextBox.text = "";
-            mfrCheckBox.value = false;
-            maxCpuUsagePercentageTextBox.text = "";
-            ignoreMissingDepsCheckBox.value = false;
-
-            if (selection === null) {
-                submitButton.enabled = false;
-            } else {
-                submitButton.enabled = true;
-            }
-
-            if (selection === null || selection.length !== 1) {
-                return;
-            }
-            const selectionItem = selection[0];
-            perCompSettingsGroup.enabled = true;
-            logger.warning("Selected Comp is: " + app.project.renderQueue.item(selectionItem.renderQueueIndex).comp.name);
-
-            const settings = uiSettingsState.get(dcUtil.getRenderQueueItemID(selectionItem.renderQueueIndex));
-            if (settings === undefined) {
-                logger.warning("Could not find settings for : " + selectionItem.compId);
-                return;
-            }
-
-            const imageOutput = isRenderQueueItemImageOutput(app.project.renderQueue.item(selectionItem.renderQueueIndex));
-            if (imageOutput) {
-                framesPerTaskTextBox.text = settings.framesPerTask();
-                framesPerTaskTextBox.enabled = true;
-                framesPerTaskTextBox.onChange();
-            } else {
-                framesPerTaskTextBox.text = "Selection is not image sequence";
-                framesPerTaskTextBox.enabled = false;
-            }
-            maxCpuUsagePercentageTextBox.text = settings.maxCpuUsagePercentage();
-            maxCpuUsagePercentageTextBox.onChange();
-            mfrCheckBox.value = settings.multiFrameRendering();
-            mfrCheckBox.onClick();
-            ignoreMissingDepsCheckBox.value = settings.ignoreMissingDependencies();
-            ignoreMissingDepsCheckBox.onClick();
-        }
-        list.onChange = onSelectionChange;
+        // No onChange handler needed: nothing in the panel depends on which items are selected.
         list.selection = null;
-        onSelectionChange();
     }
 
     updateList();
-    if (list.selection != null && list.selection.length === 1) {
-        const selectionItem = list.selection[0];
-        const renderQueueItem = app.project.renderQueue.item(selectionItem.renderQueueIndex);
-        framesPerTaskTextBox.enabled = isRenderQueueItemImageOutput(renderQueueItem);
-    }
     refreshButton.onClick = function () {
         updateList();
     }

@@ -28,17 +28,6 @@
       "description": "The After Effects project file to render."
     },
     {
-      "name": "RenderQueueIndex",
-      "type": "INT",
-      "userInterface": {
-        "control": "SPIN_BOX",
-        "label": "Render Queue Index",
-        "groupLabel": "Source"
-      },
-      "description": "The index of the item in the render queue to render.",
-      "default": 1
-    },
-    {
       "name": "OutputDir",
       "type": "PATH",
       "objectType": "DIRECTORY",
@@ -52,17 +41,6 @@
       "description": "Choose the render output directory."
     },
     {
-      "name": "OutputFileName",
-      "type": "STRING",
-      "userInterface": {
-        "control": "HIDDEN",
-        "label": "Output File Pattern",
-        "groupLabel": "Render Parameters"
-      },
-      "default": "output.mp4",
-      "description": "The file name used for aerender cmd. Not a changeable parameter."
-    },
-    {
       "name": "Frames",
       "type": "STRING",
       "userInterface": {
@@ -71,49 +49,6 @@
         "groupLabel": "Frame Range"
       },
       "default": "1-10"
-    },
-    {
-      "name": "MultiFrameRendering",
-      "type": "STRING",
-      "default": "OFF",
-      "allowedValues": [
-        "ON",
-        "OFF"
-      ],
-      "userInterface": {
-        "control": "DROPDOWN_LIST",
-        "label": "Enable or disable multi-frame rendering",
-        "groupLabel": "Multi-Frame Rendering"
-      },
-      "description": "Multi frame rendering settings"
-    },
-    {
-      "name": "MaxCpuUsagePercentage",
-      "type": "INT",
-      "userInterface": {
-        "control": "SPIN_BOX",
-        "label": "Max CPU Usage Percentage",
-        "groupLabel": "Multi-Frame Rendering"
-      },
-      "description": "Max Cpu Percentage to use with Multi-Frame Rendering, ignored if MFR is OFF",
-      "minValue": 1,
-      "maxValue": 100,
-      "default": 90
-    },
-    {
-      "name": "IgnoreMissingDependencies",
-      "type": "STRING",
-      "default": "OFF",
-      "allowedValues": [
-        "ON",
-        "OFF"
-      ],
-      "userInterface": {
-        "control": "DROPDOWN_LIST",
-        "label": "Ignore Missing Dependencies",
-        "groupLabel": "Ignore Missing Dependencies"
-      },
-      "description": "Allows render to continue without failing if referenced files are missing."
     },
     {
       "name": "JobScriptDir",

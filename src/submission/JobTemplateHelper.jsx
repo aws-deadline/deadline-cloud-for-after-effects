@@ -1,60 +1,27 @@
 var jobTemplateHelperFile = "JobTemplateHelper.json";
 /**
- * Generates the basic parameterValue file for the job template
+ * Generates the per-render-queue-item parameterValue entries for the job template.
+ * Settings that apply to the whole job, such as multi-frame rendering and frames per task, are
+ * added once by SubmitSelection rather than repeated for every render queue item. The render queue
+ * index and output file name are written straight into the step's command by
+ * generateStepTemplateFragment instead of being parameters, since neither is worth an artist's time
+ * to change in the Deadline submitter and every parameter counts against the job template's limit.
  **/
 function generateParameterValues(
-    renderQueueIndex,
-    projectFile,
     outputDir,
-    outputFileName,
-    isImageSeq,
     startFrame,
     endFrame,
-    chunkSize,
-    multiFrameRendering,
-    maxCpuUsagePercentage,
-    ignoreMissingDependencies,
     prefix
 ) {
     const parameterValuesList = [{
-        name: prefix + "_RenderQueueIndex",
-        value: renderQueueIndex,
-    },
-    {
         name: prefix + "_OutputDir",
         value: outputDir,
-    },
-    {
-        name: prefix + "_OutputFileName",
-        value: outputFileName,
     },
     {
         name: prefix + "_Frames",
         value: startFrame.toString() + "-" + endFrame.toString(),
     },
-    {
-        name: prefix + "_MultiFrameRendering",
-        value: multiFrameRendering === true ? "ON" : "OFF",
-    },
     ];
-    if (maxCpuUsagePercentage) {
-        parameterValuesList.push({
-            name: prefix + "_MaxCpuUsagePercentage",
-            value: maxCpuUsagePercentage,
-        });
-    }
-    if (isImageSeq) {
-        parameterValuesList.push({
-            name: prefix + "_ChunkSize",
-            value: chunkSize,
-        });
-    }
-    if (ignoreMissingDependencies) {
-        parameterValuesList.push({
-            name: prefix + "_IgnoreMissingDependencies",
-            value: ignoreMissingDependencies === true ? "ON" : "OFF",
-        })
-    }
     return {
         parameterValues: parameterValuesList
     };

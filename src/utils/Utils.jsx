@@ -20,9 +20,6 @@ if (typeof SUPPORTED_VERSIONS === "undefined") {
 if (typeof DEADLINECLOUD_SETTINGS_ROOT === "undefined") {
     const DEADLINECLOUD_SETTINGS_ROOT = "xmp:DeadlineCloudSubmitter";
 }
-if (typeof DEADLINECLOUD_SEPARATEFRAMESINTOTASKS === "undefined") {
-    const DEADLINECLOUD_SEPARATEFRAMESINTOTASKS = "separateFramesIntoTasks";
-}
 if (typeof DEADLINECLOUD_FRAMESPERTASK === "undefined") {
     const DEADLINECLOUD_FRAMESPERTASK = "framePerTask";
 }
@@ -70,6 +67,28 @@ if (typeof DEFAULT_MAX_CPU_USAGE_PERCENTAGE === "undefined") {
 }
 if (typeof DEFAULT_IGNORE_MISSING_DEPENDENCIES === "undefined") {
     const DEFAULT_IGNORE_MISSING_DEPENDENCIES = false;
+}
+// The most parameter definitions the Open Job Description specification allows a job template to
+// declare. The service checks this against the job template's parameters merged with those of the
+// queue's environments, so the two share this budget.
+if (typeof MAX_JOB_PARAMETERS === "undefined") {
+    const MAX_JOB_PARAMETERS = 50;
+}
+// The most render queue items this submitter puts into a single job, calculated from
+// MAX_JOB_PARAMETERS because the template grows by a fixed number of parameters per item:
+//   7 per job: the JobParams names in SubmitBundle.jsx. ChunkSize is only declared when the
+//     submission contains an image sequence; counting it always keeps this one number valid for any
+//     mix of output types, at the cost of one item for video only submissions.
+//   2 per item: OutputDir and Frames. The render queue index and output file name are written into
+//     the step's command instead, see generateStepTemplateFragment.
+// The remaining budget belongs to the queue's environments, and the submitter cannot know which
+// queue the artist will pick. 15 items leaves 50 - 7 - (2 * 15) = 13 parameters for them, where the
+// Conda queue environments the Deadline Cloud console creates need 1 to 2. Submitting to a queue
+// whose environments declare more than that reserve fails in CreateJob rather than here.
+// Recalculate if either count changes. README.md and docs/user_guide/using-submitter.md also state
+// this limit.
+if (typeof MAX_RENDER_QUEUE_ITEMS_PER_JOB === "undefined") {
+    const MAX_RENDER_QUEUE_ITEMS_PER_JOB = 15;
 }
 
 var FootageTypes = {
@@ -605,8 +624,8 @@ function __generateUtil() {
 
     /**
      * Extracts frame number, prefix, and suffix for single frame in image sequence.
-     * @param {string} fileName 
-     * @returns Object containing prefix, name, and suffix 
+     * @param {string} fileName
+     * @returns Object containing prefix, name, and suffix
      */
     function getImageSequenceInformation(fileName) {
         var regex = /^(.*?)(\d*)(\D*)$/;
@@ -1038,52 +1057,21 @@ function __generateUtil() {
         return true;
     }
 
-    function getSelection(list) {
-        if (list.selection.length >= 1) {
-            return list.selection[0];
+    /**
+     * Reports whether the given render queue item renders to an image sequence.
+     * Items with no output module, or more than one, are not treated as image sequences.
+     * @param {Object} renderQueueItem
+     * @returns {boolean}
+     */
+    function isRenderQueueItemImageOutput(renderQueueItem) {
+        if (renderQueueItem == null || renderQueueItem.numOutputModules !== 1) {
+            return false;
         }
-    }
-
-    function getRenderQueueItemID(renderQueueIndex) {
-        /** Calculates an ID for the Render Queue Item with the given index in the render queue
-         * Not guaranteed to be unique if render queue items are reordered
-         */
-        return "_" + renderQueueIndex.toString() + "_" + app.project.renderQueue.item(renderQueueIndex).comp.id;
-    }
-
-    function getXMPPathLeaf(path) {
-        // The backslash is needed for this regex, so we need to skip SonarQube scan
-        const regex = /xmp:([^\/]+)$/;
-        return regex.exec(path)[1];
-    }
-
-    function deleteUnusedMetadata(renderMetadataRoot) {
-        var metadata = new XMPMeta(app.project.xmpPacket);
-        var paths = []
-        var iterator = metadata.iterator(XMPConst.ITERATOR_JUST_CHILDREN, XMPConst.NS_XMP, renderMetadataRoot);
-        var property;
-        while (property = iterator.next()) {
-            paths.push(property.path);
+        const outputModule = renderQueueItem.outputModule(1).file;
+        if (outputModule == null) {
+            return false;
         }
-        var ids = []
-        for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
-            ids.push(getRenderQueueItemID(i));
-        }
-        for (var i = 0; i < paths.length; i++) {
-            var presentInArray = false;
-            var currentPath = paths[i];
-            for (var j = 0; j < ids.length; j++) {
-                var renderQueueID = ids[j];
-                if (getXMPPathLeaf(currentPath) === renderQueueID) {
-                    presentInArray = true;
-                    break;
-                }
-            }
-            if (!presentInArray) {
-                metadata.deleteProperty(XMPConst.NS_XMP, currentPath);
-            }
-        }
-        app.project.xmpPacket = metadata.serialize();
+        return isImage(getFileExtension(getFileNameNoRegex(outputModule.name)));
     }
 
     return {
@@ -1128,13 +1116,11 @@ function __generateUtil() {
         "getTempFolder": getTempFolder,
         "calculateFrameRange": calculateFrameRange,
         "validateTimeoutValues": validateTimeoutValues,
-        "getSelection": getSelection,
-        "getRenderQueueItemID": getRenderQueueItemID,
+        "isRenderQueueItemImageOutput": isRenderQueueItemImageOutput,
         "composeXMPPath": composeXMPPath,
         "saveToMetadata": saveToMetadata,
         "loadFromMetadata": loadFromMetadata,
         "metadataKeyExists": metadataKeyExists,
-        "deleteUnusedMetadata": deleteUnusedMetadata,
         "determineFootageType": determineFootageType,
         "getFilePathsFromFootageItem": getFilePathsFromFootageItem,
         "isVideo": isVideo,
