@@ -600,7 +600,7 @@ function __generateUtil() {
     }
 
     function isImage(extension) {
-        const frameExtensions = ["ai", "eps", "ps", "pdf", "psd", "bmp", "rle", "dlb", "tif", "crw", "nef", "raf", "orf", "mrw", "dcr", "mos", "raw", "pef", "srf", "dng", "x3f", "cr2", "erf", "sr2", "mfw", "mef", "arw", "cin", "dpx", "gif", "rla", "rpf", "img", "ei", "eps", "iff", "tdi", "jpg", "jpe", "heif", "ma", "exr", "sxr", "mxr", "pcx", "png", "hdr", "rgbe", "xyze", "sgi", "bw", "rgb", "pic", "tga", "vda", "icb", "vst", "tif", "jpeg"];
+        const frameExtensions = ["ai", "eps", "ps", "pdf", "psd", "bmp", "rle", "dlb", "tif", "crw", "nef", "raf", "orf", "mrw", "dcr", "mos", "raw", "pef", "srf", "dng", "x3f", "cr2", "erf", "sr2", "mfw", "mef", "arw", "cin", "dpx", "rla", "rpf", "img", "ei", "eps", "iff", "tdi", "jpg", "jpe", "heif", "ma", "exr", "sxr", "mxr", "pcx", "png", "hdr", "rgbe", "xyze", "sgi", "bw", "rgb", "pic", "tga", "vda", "icb", "vst", "tif", "jpeg"];
         return frameExtensions.indexOf(extension) >= 0;
     }
 
