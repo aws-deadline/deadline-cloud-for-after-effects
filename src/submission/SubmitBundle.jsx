@@ -219,6 +219,29 @@ function generateJobEnvironmentFragment(bundlePath, outputFoldersStr) {
 }
 
 /**
+ * Launches the Deadline Cloud GUI submitter on macOS without using Terminal.
+ *
+ * After Effects inherits a minimal launchd PATH from Finder that does not
+ * include the deadline CLI. Routing through Terminal.app to source the user's
+ * shell profile created a race: on a cold start the shell may not be ready
+ * before `do script` fires, silently dropping the command.
+ *
+ * Instead, system python3 (/usr/bin/python3) — which is always on the launchd
+ * PATH — runs launch_deadline.py, which locates the deadline binary by its
+ * well-known installer path and launches gui-submit as a detached process.
+ *
+ * @param {String} bundlePath         path to the job bundle directory
+ * @param {String} pythonExecutable   python3 executable found by getPythonExecutable()
+ **/
+function launchDeadlineGUI(bundlePath, pythonExecutable) {
+    const launcherScript = scriptFolder +
+        "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/launch_deadline.py";
+    const cmd = pythonExecutable + " \"" + launcherScript + "\" \"" + bundlePath + "\"";
+    logger.debug("Launching Deadline GUI via Python launcher: " + cmd, submitBundleFile);
+    system.callSystem(cmd);
+}
+
+/**
  * Submit the selected render queue item
  **/
 function SubmitSelection(selection, selectionSettings) {
@@ -249,6 +272,7 @@ function SubmitSelection(selection, selectionSettings) {
         "scripts/font_manager.py",
         "scripts/call_aerender.py",
         "scripts/create_output_directory.py",
+        "scripts/launch_deadline.py",
         "template.json",
         "image_template.json",
         "video_template.json",
@@ -683,19 +707,13 @@ function SubmitSelection(selection, selectionSettings) {
             output = logFile.read();
             logFile.close();
         }
+        if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
+            adcAlert(
+                "ERROR:" + output, true
+            );
+            logger.error("Error when launching Deadline GUI submitter: " + output, "Utils.jsx");
+        }
     } else {
-        // Execute the command using a bash in the interactive mode so it loads the bash profile to set
-        // the PATH correctly.
-        const shellPath = $.getenv("SHELL") || "/bin/bash";
-        cmd =
-            'deadline bundle gui-submit \\\"' + bundle.fsName + '\\\" --output json --install-gui --submitter-name=\\\\\\\"After Effects\\\\\\\"';
-        submitScriptContents = shellPath + " -i -c \\\"" + cmd + "\\\" && exit";
-        output = system.callSystem('osascript -e \'tell application "Terminal"\' -e \'do script "' + submitScriptContents + '\"\'' + ' -e \'end tell\' > /dev/null');
-    }
-    if (output.indexOf("\nERROR CODE: ", 0) >= 0) {
-        adcAlert(
-            "ERROR:" + output, true
-        );
-        logger.error("Error when launching Deadline GUI submitter: " + output, "Utils.jsx");
+        launchDeadlineGUI(bundle.fsName, getPythonExecutable());
     }
 }
