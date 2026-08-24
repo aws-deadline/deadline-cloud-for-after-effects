@@ -7,9 +7,99 @@ the script will have extra arguments: chunk-size and index passed in.
 """
 
 import argparse
+import json
 import subprocess
 import sys
 import os
+
+
+# Names a pathmapping-1.0 compatible file mapping each assetroot directory to its junction.
+JUNCTIONS_ENV_VAR = "DEADLINE_JUNCTIONS"
+
+
+class JunctionPathmapFormatException(Exception):
+    """Raised when DEADLINE_JUNCTIONS does not name a pathmapping-1.0 compatible file."""
+
+
+def load_junction_rules(rules_path):
+    """Read the assetroot -> junction pairs from an OpenJD pathmapping-1.0 compatible file."""
+    try:
+        with open(rules_path, encoding="utf-8") as handle:
+            document = json.load(handle)
+
+        # pathmapping-1.0 allows the empty object when there are no rules.
+        if document == {}:
+            print(
+                f"[{JUNCTIONS_ENV_VAR}] Warning: the path mapping file {rules_path} is "
+                "empty. Rendering with the original long paths.",
+                file=sys.stderr,
+                flush=True,
+            )
+            return []
+
+        rules = []
+        for rule in document["path_mapping_rules"]:
+            source_path = rule["source_path"]
+            destination_path = rule["destination_path"]
+            if not isinstance(source_path, str) or not isinstance(destination_path, str):
+                raise TypeError(
+                    "source_path and destination_path have to be strings, got "
+                    f"{source_path!r} and {destination_path!r}"
+                )
+            rules.append((source_path, destination_path))
+
+        return rules
+    except Exception as error:
+        raise JunctionPathmapFormatException(
+            f"{JUNCTIONS_ENV_VAR} ({rules_path}) has to name a readable JSON file that is "
+            "compatible with the OpenJD pathmapping-1.0 format, described at "
+            "https://github.com/OpenJobDescription/openjd-specifications/wiki/"
+            "How-Jobs-Are-Run#path-mapping. Reading it raised "
+            f"{type(error).__name__}: {error}"
+        ) from error
+
+
+def filter_invalid_junctions(rules):
+    """Drop rules whose junction is missing so that a stale rules file cannot
+    rewrite a path to somewhere that does not exist."""
+    valid = []
+    for assetroot, junction in rules:
+        if os.path.isdir(junction):
+            valid.append((assetroot, junction))
+        else:
+            print(
+                f"[{JUNCTIONS_ENV_VAR}] Warning: ignoring the rule for {assetroot} because "
+                f"its junction {junction} does not exist.",
+                file=sys.stderr,
+                flush=True,
+            )
+
+    return valid
+
+
+def _to_windows_path(path):
+    """Square up separators so paths compare the way the Windows filesystem does."""
+    return path.replace("/", "\\")
+
+
+def apply_junction_rules(path, rules):
+    """Rewrite path to go through its assetroot's junction.
+
+    Paths outside every assetroot, such as shared storage, are returned
+    unchanged.
+    """
+    windows_path = _to_windows_path(path)
+    # Only ever compared, never sliced. Lower casing can change a string's
+    # length, so slicing by the length of a lower cased root would cut the
+    # wrong number of characters off the path.
+    normalized = windows_path.rstrip("\\").lower()
+
+    for assetroot, junction in rules:
+        root = _to_windows_path(assetroot).rstrip("\\")
+        if normalized == root.lower() or normalized.startswith(root.lower() + "\\"):
+            return junction.rstrip("\\/") + windows_path[len(root):]
+
+    return path
 
 
 def main():
@@ -41,6 +131,33 @@ def main():
 
     args = parser.parse_args()
     print(f"Args: {args}", flush=True)
+
+    # Send the paths through the junctions to stay under the Windows 260 char
+    # path limit. Something else, such as a queue environment, has to create the
+    # junctions and set the environment variable. See
+    # https://github.com/aws-deadline/deadline-cloud-samples/blob/mainline/queue_environments/README.md#short-path-mapping-junctions
+    junctions_file = os.environ.get(JUNCTIONS_ENV_VAR)
+    if sys.platform == "win32" and junctions_file:
+        print(
+            f"[{JUNCTIONS_ENV_VAR}] Detected junction path mapping file {JUNCTIONS_ENV_VAR}={junctions_file}.",
+            flush=True,
+        )
+        junction_rules = filter_invalid_junctions(load_junction_rules(junctions_file))
+        args.project = apply_junction_rules(args.project, junction_rules)
+        # A multi output module comp arrives as a comma separated list of paths.
+        args.outputpath = ",".join(
+            apply_junction_rules(output, junction_rules)
+            for output in args.outputpath.split(",")
+        )
+        print(
+            f"[{JUNCTIONS_ENV_VAR}] Path mapped Project: {args.project}",
+            flush=True,
+        )
+        print(
+            f"[{JUNCTIONS_ENV_VAR}] Path mapped Output: {args.outputpath}",
+            flush=True,
+        )
+
     # Determine if second parameter is a Python script or a range
     range_value = args.frames
     range_list = range_value.split("-")
