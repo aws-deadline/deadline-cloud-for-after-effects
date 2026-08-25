@@ -1,1 +1,6 @@
 python-semantic-release == 10.6.*
+# GitPython 3.1.60's ReDoS-hardening removed Actor.name_email_regex, which
+# python-semantic-release 10.6.1 still references (crashes the release "Bump"
+# job with: type object 'Actor' has no attribute 'name_email_regex'). Pin below
+# 3.1.60 until a PSR release stops using the removed attribute, then drop this.
+gitpython < 3.1.60
