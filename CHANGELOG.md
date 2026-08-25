@@ -1,3 +1,12 @@
+## 0.5.0 (2026-08-25)
+
+### BREAKING CHANGES
+* Render options (frames per task, multi-frame rendering, max CPU usage, ignore missing dependencies) are now set once per job instead of per composition. This raises the maximum compositions per job from 5 to 15. If you relied on per-composition render settings, you will now need to submit separate jobs for compositions requiring different render options. (#322)
+
+### Features
+* Task progress and failure status now surface in Deadline Cloud Monitor via OpenJD progress reporting. Progress is count-based (distinct frames rendered / frames owned) and works regardless of aerender's frame-numbering mode. (#327)
+* When a queue environment sets the DEADLINE_JUNCTIONS environment variable pointing to a pathmapping-1.0 file, project and output paths are automatically rerouted through Windows junctions to stay under the 260-character path limit. (#324)
+* The submitter UI now shows vertical scrollbars automatically when part of the window content is cut off. (#290)
 ## 0.4.5 (2026-03-10)
 
 
