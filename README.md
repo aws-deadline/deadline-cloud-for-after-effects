@@ -170,6 +170,18 @@ If you want to submit the job from the export, rather than through the submitter
 then you can use the [Deadline Cloud application](https://github.com/aws-deadline/deadline-cloud) to submit that bundle to your farm.
 
 
+## Submission Hooks
+
+The After Effects submitter shells out to the `deadline` CLI (`deadline bundle gui-submit`, see `src/submission/SubmitBundle.jsx`), so it supports Deadline Cloud's **pre-GUI, pre-submission, and post-submission hooks** with no submitter-side code. Hooks are sourced from `DEADLINE_HOOKS_DIR` (enable with `deadline config set settings.allow_environment_hooks true`). See **[deadline-cloud `docs/submission-hooks.md`](https://github.com/aws-deadline/deadline-cloud/blob/mainline/docs/submission-hooks.md)** for full documentation — `hooks.yaml` format, hook examples, the confirmation prompts, and troubleshooting.
+
+A few After Effects specifics the base doc doesn't cover:
+
+- **Use environment hooks (`DEADLINE_HOOKS_DIR`).** The submitter regenerates its job bundle on every submit (`generateBundle()` deletes and recreates the temp bundle dir), so a `hooks.yaml` hand-placed in the generated bundle is discarded before `deadline` reads it — point hooks at `DEADLINE_HOOKS_DIR` instead.
+- **Version floor:** the `deadline` on your `PATH` must meet this package's pin, **`deadline >= 0.60.3, < 0.61`** (`pyproject.toml`), for a pre-GUI hook to set `name`/`description`. Applying **`deadline:` job-property overrides** (e.g. `deadline:priority`) additionally requires **`deadline >= 0.60.4`** ([deadline-cloud#1322](https://github.com/aws-deadline/deadline-cloud/pull/1322)); on older clients they are silently ignored.
+- **Which parameters a hook may set:** the render options — `ChunkSize`, `MultiFrameRendering`, `MaxCpuUsagePercentage`, `IgnoreMissingDependencies` — are job-level and free-standing. `ProjectFile` is also job-level, but only safe to repoint at the *same* project content (a different `.aep` desyncs it from the open project's asset references and per-item parameters). Don't set the `HIDDEN` submitter internals `JobScriptDir`/`CondaPackages` (setting them breaks the render or silently changes the AE version), and don't target the per-render-queue-item names (`_<index>_<comp>_<param>`) — they're generated at submit time, change on reorder/rename, and unmatched names are silently dropped.
+- **Where to set `DEADLINE_HOOKS_DIR`:** on **Windows** the submitter runs `deadline` as a child of After Effects, so set it as a user/machine environment variable and relaunch After Effects; on **macOS** the submitter runs `deadline` in a Terminal.app interactive shell, so export it in your shell startup file (`~/.zshrc` / `~/.bashrc`).
+
+
 ## Troubleshooting
 
 ### Error: Couldn't find Python 3 or higher on your PATH. Please ensure that Python 3 or higher is installed correctly and added to your PATH.
