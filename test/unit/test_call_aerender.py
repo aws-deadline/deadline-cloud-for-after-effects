@@ -746,3 +746,53 @@ class TestDiagnosticPrintsAreSanitized:
 
         out = capsys.readouterr().out.splitlines()
         assert not any(ln.startswith("openjd_fail:") for ln in out)
+
+
+# ----------------------------------------------------------------------------
+# aerender launched with KMP_DUPLICATE_LIB_OK=TRUE
+# ----------------------------------------------------------------------------
+class TestRenderEnv:
+    def test_kmp_true_injected_when_absent(self):
+        assert (
+            call_aerender.build_render_env(base_env={})["KMP_DUPLICATE_LIB_OK"]
+            == "TRUE"
+        )
+
+    @pytest.mark.parametrize("value", ["FALSE", ""])
+    def test_operator_value_is_honored_not_forced(self, value):
+        env = call_aerender.build_render_env(base_env={"KMP_DUPLICATE_LIB_OK": value})
+        assert env["KMP_DUPLICATE_LIB_OK"] == value
+
+    def test_base_env_carried_through_and_not_mutated(self):
+        base = {"PATH": "/usr/bin"}
+        env = call_aerender.build_render_env(base_env=base)
+        assert env["PATH"] == "/usr/bin"
+        assert "KMP_DUPLICATE_LIB_OK" not in base
+
+    def test_aerender_child_receives_kmp_true(self, monkeypatch):
+        # Behavioral: spy on Popen and assert the env actually handed to the
+        # aerender child sets KMP_DUPLICATE_LIB_OK, rather than matching source text.
+        captured = {}
+        real_popen = call_aerender.subprocess.Popen
+
+        def spy(cmd, **kwargs):
+            captured.update(kwargs)
+            return real_popen(cmd, **kwargs)
+
+        monkeypatch.setattr(call_aerender.subprocess, "Popen", spy)
+        monkeypatch.delenv(
+            "KMP_DUPLICATE_LIB_OK", raising=False
+        )  # not preset -> fix must set it
+        monkeypatch.setenv("AERENDER_EXECUTABLE", sys.executable)
+        monkeypatch.setenv("FAKE_AE_MODE", "seq")
+        monkeypatch.setenv("FAKE_AE_EXIT", "0")
+        orig = call_aerender.build_render_args
+        monkeypatch.setattr(
+            call_aerender,
+            "build_render_args",
+            lambda a, s, e: [_FAKE_AERENDER] + orig(a, s, e),
+        )
+
+        call_aerender.run(["p.aep", "0", "/out/f_[####].png", "0-2"])
+
+        assert captured.get("env", {}).get("KMP_DUPLICATE_LIB_OK") == "TRUE"
