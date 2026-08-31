@@ -288,6 +288,26 @@ def is_strong_error(line):
     return any(p.search(line) for p in STRONG_ERROR_PATTERNS)
 
 
+def build_render_env(base_env=None):
+    """Set KMP_DUPLICATE_LIB_OK=TRUE so AE + duplicate-OpenMP plugins don't abort."""
+    env = dict(os.environ if base_env is None else base_env)
+    env.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+    # Always announce the effective value so a maintainer can confirm whether the
+    # OpenMP workaround was active on the task.
+    if env["KMP_DUPLICATE_LIB_OK"].strip().upper() == "TRUE":
+        print(
+            "[DEBUG] KMP_DUPLICATE_LIB_OK=TRUE (duplicate-OpenMP workaround active).",
+            flush=True,
+        )
+    else:
+        print(
+            f"[WARN] KMP_DUPLICATE_LIB_OK={env['KMP_DUPLICATE_LIB_OK']!r} (not TRUE); "
+            "render may fail if multiple OpenMP runtimes load.",
+            flush=True,
+        )
+    return env
+
+
 # How long to wait for the aerender child to exit before giving up, so a wedged
 # process can't hang cleanup indefinitely (the OpenJD session would then have to
 # force-terminate this script, losing the rest of the cleanup).
@@ -428,6 +448,7 @@ def run(argv):
             encoding=locale.getpreferredencoding(False),
             errors="replace",
             bufsize=1,
+            env=build_render_env(),
         )
 
         for line in iter(process.stdout.readline, ""):
