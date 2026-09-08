@@ -159,6 +159,41 @@ as a reference when building the package.
 
 Jobs created by this submitter require `aerender` executable be available on the PATH of the user that will be running your jobs. Or you can set the `AERENDER_EXECUTABLE` to point to the aerender executable.
 
+## Using your own plugins
+
+Your renders may depend on third-party After Effects plugins (effects such as Saber) or startup scripts that are not part of a stock After Effects install. To make these available to `aerender` on your render workers, choose one of the approaches below.
+
+Service Managed Fleet renders on Windows, so upload Windows builds of your plugins. After Effects effect plugins use the `.aex` extension on Windows (macOS uses `.plugin`).
+
+### Approach 1: Deliver plugins from S3 at render time (Plugin Sync)
+
+The After Effects conda packages in Service Managed Fleet download plugin files from your farm's job-attachment S3 bucket into the worker's After Effects install before each render, and remove them afterward. You upload the files to S3 once, and every job picks them up — no conda packaging required. Use this when you want to manage plugins as files in a bucket.
+
+Upload to your queue's job-attachment bucket, under this layout:
+
+| S3 location (under the job-attachment root prefix) | Delivered to | Use for |
+|---|---|---|
+| `plugins/windows/aftereffects/<version>/` | `Support Files/Plug-ins/deadline-plugin-sync/` | Effects (`.aex`) and folder-based plugins |
+| `plugins/windows/aftereffects/<version>/startup/` | `Support Files/Scripts/Startup/` | Startup scripts (`.jsx`) that run headlessly |
+| `plugins/generic/` | Session working directory only | Shared, job-referenced files (not loaded by After Effects) |
+
+`<version>` matches your job's After Effects version, as either `major.minor` (e.g. `26.0`) or the full version (e.g. `26.0.0`); the `major.minor` folder is checked first. After Effects auto-discovers plugins under `Support Files/Plug-ins` and auto-runs scripts in `Support Files/Scripts/Startup`, so nothing else is needed on the job.
+
+Example — make the Saber effect available to After Effects `26.0` jobs:
+
+```
+aws s3 cp Saber.aex s3://<job-attachment-bucket>/<root-prefix>/plugins/windows/aftereffects/26.0/Saber.aex
+```
+
+If a plugin is missing at render time, confirm the version folder matches your job's After Effects version and that the objects are under the correct root prefix for your queue's bucket.
+
+### Approach 2: Bundle plugins into a custom conda channel
+
+Build a conda package that includes your plugins and serve it from your own conda channel, then reference that channel in the `CondaChannels` job parameter. Use this when you want plugins versioned and installed together with the After Effects package. See the [instructions for configuring an S3 conda channel](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html), and these reference recipes as a starting point:
+
+- [aftereffects-saber](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-saber) — a single-plugin example.
+- [aftereffects-plugin-bundle](https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/conda_recipes/aftereffects-plugin-bundle) — bundling multiple plugins.
+
 ## Viewing the Job Bundle that will be submitted
 
 To submit a job, the submitter first generates a [Job Bundle](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/build-job-bundle.html), and then uses functionality
