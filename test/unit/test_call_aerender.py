@@ -11,11 +11,13 @@ Layers:
     exactly as Deadline Cloud's worker would parse them.
 """
 
+import ctypes
 import importlib.util
 import json
 import locale
 import logging
 import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -112,6 +114,225 @@ class TestStrongError:
         # Both case spellings still match (proving the dedupe kept coverage).
         assert call_aerender.is_strong_error("aerender ERROR: boom") is True
         assert call_aerender.is_strong_error("aerender Error: boom") is True
+
+
+class TestWorkerHasNvidiaGpu:
+    def _fake_completed(self, returncode, stdout):
+        class _R:
+            pass
+
+        r = _R()
+        r.returncode = returncode
+        r.stdout = stdout
+        return r
+
+    def _resolves(self, monkeypatch):
+        """Pretend nvidia-smi resolves so the subprocess branch is reached."""
+        monkeypatch.setattr(
+            call_aerender,
+            "_resolve_nvidia_smi",
+            lambda: r"C:\Windows\System32\nvidia-smi.exe",
+        )
+
+    def test_true_when_nvidia_smi_lists_a_gpu(self, monkeypatch):
+        self._resolves(monkeypatch)
+        monkeypatch.setattr(
+            call_aerender.subprocess,
+            "run",
+            lambda *a, **k: self._fake_completed(0, b"GPU 0: Tesla T4 (UUID: GPU-x)\n"),
+        )
+        assert call_aerender.worker_has_nvidia_gpu() is True
+
+    def test_false_when_no_gpu_listed(self, monkeypatch):
+        self._resolves(monkeypatch)
+        monkeypatch.setattr(
+            call_aerender.subprocess,
+            "run",
+            lambda *a, **k: self._fake_completed(0, b""),
+        )
+        assert call_aerender.worker_has_nvidia_gpu() is False
+
+    def test_false_when_unresolved(self, monkeypatch):
+        # nvidia-smi not found -> "no GPU", and we must not run anything.
+        monkeypatch.setattr(call_aerender, "_resolve_nvidia_smi", lambda: None)
+
+        def boom(*a, **k):
+            raise AssertionError("nvidia-smi must not be launched when unresolved")
+
+        monkeypatch.setattr(call_aerender.subprocess, "run", boom)
+        assert call_aerender.worker_has_nvidia_gpu() is False
+
+    def test_false_when_launch_fails(self, monkeypatch):
+        self._resolves(monkeypatch)
+
+        def boom(*a, **k):
+            raise FileNotFoundError("nvidia-smi vanished after resolution")
+
+        monkeypatch.setattr(call_aerender.subprocess, "run", boom)
+        assert call_aerender.worker_has_nvidia_gpu() is False
+
+    def test_false_when_nvidia_smi_times_out(self, monkeypatch):
+        self._resolves(monkeypatch)
+
+        def timeout(*a, **k):
+            raise call_aerender.subprocess.TimeoutExpired(cmd="nvidia-smi", timeout=5)
+
+        monkeypatch.setattr(call_aerender.subprocess, "run", timeout)
+        assert call_aerender.worker_has_nvidia_gpu() is False
+
+    def test_false_on_nonzero_exit(self, monkeypatch):
+        self._resolves(monkeypatch)
+        monkeypatch.setattr(
+            call_aerender.subprocess,
+            "run",
+            lambda *a, **k: self._fake_completed(9, b"some driver error"),
+        )
+        assert call_aerender.worker_has_nvidia_gpu() is False
+
+    def test_probe_runs_from_resolved_dir_not_session_cwd(self, monkeypatch, tmp_path):
+        # Windows' new-process DLL search order includes the current directory, and a
+        # job controls the session cwd, so the probe must launch from the resolved
+        # (system) dir -- never the cwd -- to avoid loading job-supplied DLLs. Build the
+        # path with os.path.join so dirname is meaningful under posix ntpath alike.
+        resolved = str(tmp_path / "nvidia-smi.exe")
+        monkeypatch.setattr(call_aerender, "_resolve_nvidia_smi", lambda: resolved)
+        captured = {}
+
+        def capture(*a, **k):
+            captured["cwd"] = k.get("cwd")
+            return self._fake_completed(0, b"GPU 0: Tesla T4\n")
+
+        monkeypatch.setattr(call_aerender.subprocess, "run", capture)
+        assert call_aerender.worker_has_nvidia_gpu() is True
+        assert captured["cwd"] == str(tmp_path)
+
+
+class TestResolveNvidiaSmi:
+    def test_none_off_windows(self, monkeypatch):
+        # The probe is Windows-only; every other platform resolves to nothing.
+        monkeypatch.setattr(call_aerender.sys, "platform", "darwin")
+        assert call_aerender._resolve_nvidia_smi() is None
+
+    def test_windows_uses_os_system_dir_not_cwd(self, monkeypatch, tmp_path):
+        # The system directory comes from the OS (GetSystemDirectoryW), never PATH,
+        # %SystemRoot%, or the cwd where job attachments land. A nvidia-smi.exe in the
+        # cwd must never be resolved; only the OS-reported system dir counts.
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+
+        sysdir = tmp_path / "System32"
+        sysdir.mkdir()
+
+        def fake_get_system_directory(buf, _size):
+            buf.value = str(sysdir)
+            return len(str(sysdir))
+
+        fake_windll = types.SimpleNamespace(
+            kernel32=types.SimpleNamespace(
+                GetSystemDirectoryW=fake_get_system_directory
+            )
+        )
+        # ctypes.windll only exists on Windows, so inject it (raising=False).
+        monkeypatch.setattr(ctypes, "windll", fake_windll, raising=False)
+
+        session_cwd = tmp_path / "session"
+        session_cwd.mkdir()
+        (session_cwd / "nvidia-smi.exe").write_text("attacker")
+        monkeypatch.chdir(session_cwd)
+
+        # Absent from the system dir -> None, never the cwd copy.
+        assert call_aerender._resolve_nvidia_smi() is None
+
+        # Present in the system dir -> that absolute path.
+        real = sysdir / "nvidia-smi.exe"
+        real.write_text("driver tool")
+        assert call_aerender._resolve_nvidia_smi() == str(real)
+
+    def test_windows_returns_none_on_truncation(self, monkeypatch, tmp_path):
+        # GetSystemDirectoryW returns the *required* size (>= buffer) and leaves the
+        # buffer unfilled when the path is too long; that must be rejected, not treated
+        # as an empty (relative, cwd-resolved) path.
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+
+        def truncating_get_system_directory(_buf, size):
+            return size + 1  # required length exceeds the buffer; buffer untouched
+
+        fake_windll = types.SimpleNamespace(
+            kernel32=types.SimpleNamespace(
+                GetSystemDirectoryW=truncating_get_system_directory
+            )
+        )
+        monkeypatch.setattr(ctypes, "windll", fake_windll, raising=False)
+
+        session_cwd = tmp_path / "session"
+        session_cwd.mkdir()
+        (session_cwd / "nvidia-smi.exe").write_text("attacker")
+        monkeypatch.chdir(session_cwd)
+
+        assert call_aerender._resolve_nvidia_smi() is None
+
+    def test_windows_returns_none_when_probe_raises(self, monkeypatch):
+        # A raising GetSystemDirectoryW (embedded/frozen interpreter, odd ctypes
+        # state) must resolve to None, not escape -- decode_failure_hint runs before
+        # emit_fail and outside the render try/finally, so a raise would swallow the
+        # openjd_fail line this feature exists to emit.
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+
+        def raising_get_system_directory(_buf, _size):
+            raise OSError("boom")
+
+        fake_windll = types.SimpleNamespace(
+            kernel32=types.SimpleNamespace(
+                GetSystemDirectoryW=raising_get_system_directory
+            )
+        )
+        monkeypatch.setattr(ctypes, "windll", fake_windll, raising=False)
+
+        assert call_aerender._resolve_nvidia_smi() is None
+
+
+class TestDecodeFailureHint:
+    SOURCE_ADVICE = "confirm every source file"
+
+    def test_hint_on_windows_without_gpu(self, monkeypatch):
+        # Windows + no NVIDIA GPU: source-path advice AND the HEVC/GPU-fleet clause.
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+        monkeypatch.setattr(call_aerender, "worker_has_nvidia_gpu", lambda: False)
+        hint = call_aerender.decode_failure_hint(True)
+        assert self.SOURCE_ADVICE in hint
+        assert "HEVC" in hint and "GPU-enabled fleet" in hint and "H.264" in hint
+
+    def test_source_advice_but_no_codec_clause_when_gpu_present(self, monkeypatch):
+        # GPU present but source still unreadable -> the HEVC-decode theory doesn't
+        # hold, so keep the universal source-path advice but drop the GPU-fleet clause.
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+        monkeypatch.setattr(call_aerender, "worker_has_nvidia_gpu", lambda: True)
+        hint = call_aerender.decode_failure_hint(True)
+        assert self.SOURCE_ADVICE in hint
+        assert "HEVC" not in hint
+
+    def test_no_hint_when_no_read_source_error(self, monkeypatch):
+        # No source-read failure was seen -> no hint, and no GPU probe.
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+        probed = []
+        monkeypatch.setattr(
+            call_aerender, "worker_has_nvidia_gpu", lambda: probed.append(True)
+        )
+        assert call_aerender.decode_failure_hint(False) == ""
+        assert probed == []  # short-circuited before the GPU probe
+
+    def test_source_advice_off_windows_without_probe(self, monkeypatch):
+        # macOS/Linux: the source-path advice still applies (a missing/unresolvable
+        # path is platform-independent), but the NVIDIA-decoder theory does not, so we
+        # emit no codec clause and never probe.
+        monkeypatch.setattr(call_aerender.sys, "platform", "darwin")
+        probed = []
+        monkeypatch.setattr(
+            call_aerender, "worker_has_nvidia_gpu", lambda: probed.append(True)
+        )
+        hint = call_aerender.decode_failure_hint(True)
+        assert self.SOURCE_ADVICE in hint
+        assert "HEVC" not in hint
+        assert probed == []
 
 
 class TestProgressFramePattern:
@@ -342,6 +563,128 @@ class TestEndToEnd:
         assert rc == 1
         assert 100 not in progress
         assert any("error" in f.lower() for f in fail)
+
+    def test_read_source_error_adds_gpu_hint_when_no_gpu(self, run_render, monkeypatch):
+        # "Could not read from source" on a GPU-less Windows worker must fail AND
+        # enrich the failure message with the HEVC/GPU-fleet remediation.
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+        monkeypatch.setattr(call_aerender, "worker_has_nvidia_gpu", lambda: False)
+        rc, progress, status, fail, _ = run_render(
+            frames="0-9", mode="read_source_error", exit_code=0
+        )
+        assert rc == 1
+        assert 100 not in progress
+        assert fail and any(
+            "HEVC" in f and "GPU-enabled fleet" in f for f in fail
+        ), fail
+
+    def test_read_source_error_gpu_present_keeps_source_advice_only(
+        self, run_render, monkeypatch
+    ):
+        # Same error on a GPU worker: still fails and still gets the universal
+        # source-path advice, but no misleading GPU-fleet/HEVC clause.
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+        monkeypatch.setattr(call_aerender, "worker_has_nvidia_gpu", lambda: True)
+        rc, progress, status, fail, _ = run_render(
+            frames="0-9", mode="read_source_error", exit_code=0
+        )
+        assert rc == 1
+        assert fail and any("confirm every source file" in f for f in fail), fail
+        assert not any("HEVC" in f for f in fail), fail
+
+    def test_hint_latches_when_read_source_error_not_first(
+        self, run_render, monkeypatch
+    ):
+        # An unrelated AE error precedes the source-read line. The hint must still
+        # attach, because detection latches on ANY matching line (not just the first
+        # captured error).
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+        monkeypatch.setattr(call_aerender, "worker_has_nvidia_gpu", lambda: False)
+        rc, progress, status, fail, _ = run_render(
+            frames="0-9", mode="error_then_read_source", exit_code=0
+        )
+        assert rc == 1
+        assert fail and any("HEVC" in f for f in fail), fail
+        # The hint's advice must stay tied to the source-read line that justifies it,
+        # even though the reported error is the unrelated strong error preceding it.
+        assert any(
+            "Also saw" in f and "Could not read from source" in f for f in fail
+        ), fail
+
+    def test_hint_latches_when_read_source_error_not_first_nonzero_exit(
+        self, run_render, monkeypatch
+    ):
+        # Nonzero-exit twin of the case above: an unrelated strong error is the
+        # reported reason, but the source-read line still justifies the hint and must
+        # be surfaced -- and the exit code must be kept, not replaced by the log line.
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+        monkeypatch.setattr(call_aerender, "worker_has_nvidia_gpu", lambda: False)
+        rc, progress, status, fail, _ = run_render(
+            frames="0-9", mode="error_then_read_source", exit_code=1
+        )
+        assert rc == 1
+        assert fail and any("HEVC" in f for f in fail), fail
+        assert any(
+            "Also saw" in f and "Could not read from source" in f for f in fail
+        ), fail
+        assert any("exited with code 1" in f for f in fail), fail
+
+    def test_bare_read_source_error_fails_on_exit_0(self, run_render, monkeypatch):
+        # AE logs "Could not read from source" WITHOUT an AE-/aerender- prefix and
+        # exits 0. STRONG_ERROR_PATTERNS misses it, so only the source-read latch can
+        # fail it -- otherwise silent bad output (missing/black frames marked success).
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+        monkeypatch.setattr(call_aerender, "worker_has_nvidia_gpu", lambda: False)
+        rc, progress, status, fail, _ = run_render(
+            frames="0-9", mode="bare_read_source_error", exit_code=0
+        )
+        assert rc == 1
+        assert fail and any(
+            "confirm every source file" in f and "HEVC" in f for f in fail
+        ), fail
+
+    def test_bare_read_source_error_nonzero_exit_uses_source_line(
+        self, run_render, monkeypatch
+    ):
+        # Nonzero exit + only the bare spelling (no strong-error prefix): the failure
+        # reason must be the actual source-read line (incl. its AE error code), not the
+        # generic "aerender exited with code N".
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+        monkeypatch.setattr(call_aerender, "worker_has_nvidia_gpu", lambda: False)
+        rc, progress, status, fail, _ = run_render(
+            frames="0-9", mode="bare_read_source_error", exit_code=1
+        )
+        assert rc == 1
+        assert fail and any("Could not read from source" in f for f in fail), fail
+        # Keep the authoritative exit code alongside the source line (retry vs resubmit).
+        assert any("exited with code 1" in f for f in fail), fail
+
+    def test_full_render_then_read_source_still_fails(self, run_render, monkeypatch):
+        # AE renders every frame (progress reaches 100%) and only afterwards logs the bare
+        # source-read failure. Progress is emitted before the verdict is known, so 100% is
+        # reported -- but the task must still FAIL, which is what stops black frames from
+        # shipping as success. Pins the real ordering, not a stub that emits no frames.
+        monkeypatch.setattr(call_aerender.sys, "platform", "win32")
+        monkeypatch.setattr(call_aerender, "worker_has_nvidia_gpu", lambda: False)
+        rc, progress, status, fail, _ = run_render(
+            frames="0-9", mode="full_render_then_read_source", exit_code=0
+        )
+        assert rc == 1
+        assert progress[-1] == 100  # 100% is reported...
+        assert fail and any(
+            "Could not read from source" in f for f in fail
+        ), fail  # ...yet the task fails
+
+    def test_benign_source_read_name_does_not_fail(self, run_render):
+        # A footage name literally containing "could not read from source" -- no AE prefix,
+        # no error code -- must not fail a healthy render (mirrors the benign_error test).
+        # The bare phrase alone is not enough to trip the verdict.
+        rc, progress, status, fail, _ = run_render(
+            frames="0-9", mode="benign_source_read_name", exit_code=0
+        )
+        assert rc == 0
+        assert fail == []
+        assert progress[-1] == 100
 
     def test_benign_error_lines_do_not_fail(self, run_render):
         rc, progress, status, fail, _ = run_render(

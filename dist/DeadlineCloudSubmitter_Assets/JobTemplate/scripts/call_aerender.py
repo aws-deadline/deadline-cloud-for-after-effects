@@ -227,6 +227,119 @@ STRONG_ERROR_PATTERNS = [
 # "error" lines); AE_STRICT_ERROR_SCAN=1 restores the original fail-on-any behavior.
 BARE_ERROR_PATTERN = re.compile(r"error", re.IGNORECASE)
 
+# Fails the task even on exit 0: AE can log this bare (no STRONG_ERROR prefix) and
+# still exit 0, which would otherwise ship black frames as success. Also drives the hint.
+# Too loose to fail on alone -- pair it with is_source_read_failure().
+COULD_NOT_READ_SOURCE_PATTERN = re.compile(r"could not read from source", re.IGNORECASE)
+
+# AE stamps a genuine decode failure with its error-code suffix, e.g. "( 86 :: 2 )".
+AE_ERROR_CODE_PATTERN = re.compile(r"\(\s*\d+\s*::\s*\d+\s*\)")
+
+# Cap the GPU probe so a missing/wedged nvidia-smi can't stall failure reporting.
+_GPU_PROBE_TIMEOUT_SECONDS = 5
+
+
+def _resolve_nvidia_smi():
+    """Windows-only path to nvidia-smi.exe under the OS system dir, or None."""
+    # System dir via the OS, never PATH/%SystemRoot%/cwd -- all job-controllable.
+    if sys.platform != "win32":
+        return None
+    try:
+        import ctypes
+
+        buffer = ctypes.create_unicode_buffer(260)  # MAX_PATH
+        length = ctypes.windll.kernel32.GetSystemDirectoryW(buffer, len(buffer))
+        # 0 means failure; >= buffer size means truncation (buffer left unfilled).
+        if not length or length >= len(buffer):
+            return None
+        candidate = os.path.join(buffer.value, "nvidia-smi.exe")
+        return candidate if os.path.isfile(candidate) else None
+    except Exception:  # noqa: BLE001 - any resolution failure means "no GPU"
+        # Keeps decode_failure_hint total: it runs before emit_fail and outside the
+        # render try/finally, so a raising probe would swallow the openjd_fail line.
+        return None
+
+
+def worker_has_nvidia_gpu():
+    # Necessary, not sufficient, for HEVC decode: AE can also use an Intel iGPU, so
+    # callers word the hint loosely. Any probe failure counts as "no NVIDIA GPU".
+    nvidia_smi = _resolve_nvidia_smi()
+    if not nvidia_smi:
+        return False
+    try:
+        result = subprocess.run(
+            [nvidia_smi, "-L"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=_GPU_PROBE_TIMEOUT_SECONDS,
+            check=False,
+            # Run from the resolved (system) dir, never the session cwd: Windows'
+            # new-process DLL search order includes the current directory, and a job
+            # drops attachments into the session cwd, so a delay-loaded dependency
+            # nvidia-smi.exe needs but System32 lacks could otherwise load job content.
+            cwd=os.path.dirname(nvidia_smi),
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return result.returncode == 0 and b"GPU" in (result.stdout or b"")
+
+
+def decode_failure_hint(saw_read_source_error):
+    if not saw_read_source_error:
+        return ""
+    # A bad path is the common cause, so source-path advice always leads; the HEVC/GPU
+    # clause is Windows-only and probes for a GPU only when it might apply.
+    hint = (
+        "aerender could not read a source clip. First confirm every source file "
+        "exists and its path resolves on this worker."
+    )
+    if sys.platform == "win32" and not worker_has_nvidia_gpu():
+        hint += (
+            " If the sources are fine, a likely cause is a codec that needs a GPU "
+            "hardware decoder -- e.g. HEVC/H.265 -- since no NVIDIA GPU was detected "
+            "on this worker; render on a GPU-enabled fleet or transcode the "
+            "source(s) to H.264 before submitting."
+        )
+    return hint
+
+
+def _source_read_hint_anchored(reported_line, read_source_line):
+    hint = decode_failure_hint(bool(read_source_line))
+    # When an unrelated error is the headline, prefix the source-read line so the advice
+    # stays tied to what justifies it (else the message reads as self-contradictory).
+    if hint and read_source_line and read_source_line != reported_line:
+        hint = f"Also saw: {read_source_line} {hint}"
+    return hint
+
+
+def build_failure_message(returncode, strong_error_line, read_source_line):
+    """The (openjd_fail, log) message pair for a failed render, or None on success.
+
+    Lines are "" when unseen. On exit 0 a strong error or a source-read line still fails
+    -- the bare source-read spelling would otherwise ship black frames as success.
+    """
+    # Report the most specific evidence: a strong error, else the source-read line.
+    reported_line = strong_error_line or read_source_line
+    if returncode == 0 and not reported_line:
+        return None
+
+    hint = _source_read_hint_anchored(reported_line, read_source_line)
+    suffix = f" {hint}" if hint else ""
+
+    if returncode != 0:
+        # Keep the exit code alongside the line: 137/-1073741819 (worker killed AE)
+        # warrants a retry, not a resubmit, so it must not be replaced by the line.
+        if reported_line:
+            reason = f"{reported_line} (aerender exited with code {returncode}){suffix}"
+        else:
+            reason = f"aerender exited with code {returncode}{suffix}"
+        return reason, reason
+
+    return (
+        f"aerender reported an error: {reported_line}{suffix}",
+        f"aerender exited 0 but reported an error: {reported_line}{suffix}",
+    )
+
 
 def parse_frame_range(frames):
     """Parse "start-end" into (start, end). Raises ValueError on bad input."""
@@ -286,6 +399,16 @@ def build_render_args(args, start_frame, end_frame):
 
 def is_strong_error(line):
     return any(p.search(line) for p in STRONG_ERROR_PATTERNS)
+
+
+def is_source_read_failure(line):
+    # The bare phrase alone would fail a healthy render whose footage/output name merely
+    # contains it (aerender echoes user-controlled names verbatim -- see is_strong_error).
+    # Require AE's own signal too: a strong-error prefix or its error-code suffix, both of
+    # which every real decode failure carries.
+    return bool(COULD_NOT_READ_SOURCE_PATTERN.search(line)) and (
+        is_strong_error(line) or bool(AE_ERROR_CODE_PATTERN.search(line))
+    )
 
 
 def build_render_env(base_env=None):
@@ -429,7 +552,9 @@ def run(argv):
 
     frames_seen = set()
     last_reported_progress = 0
-    strong_error_line = None
+    # First matching line of each kind, or "" if unseen.
+    strong_error_line = ""
+    read_source_line = ""
     process = None
 
     try:
@@ -458,14 +583,17 @@ def run(argv):
             if is_strong_error(line):
                 # Real, well-formed AE/aerender error. Remember the first one so
                 # we can report it, and fail the task regardless of exit code.
-                if strong_error_line is None:
+                if not strong_error_line:
                     strong_error_line = line
                 print(f"[ERROR DETECTED] {line}", file=sys.stderr, flush=True)
             elif strict_error_scan and BARE_ERROR_PATTERN.search(line):
                 # Opt-in aggressive behavior: any "error" substring fails.
-                if strong_error_line is None:
+                if not strong_error_line:
                     strong_error_line = line
                 print(f"[ERROR DETECTED strict] {line}", file=sys.stderr, flush=True)
+
+            if not read_source_line and is_source_read_failure(line):
+                read_source_line = line
 
             # --- progress counting -------------------------------------------
             match = PROGRESS_FRAME_PATTERN.search(line)
@@ -506,26 +634,13 @@ def run(argv):
             reap_process(process)
 
     # --- final verdict ---------------------------------------------------
-    # Exit code is authoritative; a strong error line fails even on exit 0.
-    if returncode != 0:
-        reason = (
-            strong_error_line
-            if strong_error_line is not None
-            else f"aerender exited with code {returncode}"
-        )
-        emit_fail(reason)
-        print(f"[ERROR] {reason}", file=sys.stderr, flush=True)
-        # Collapse to 1, not the raw code: main() does sys.exit(code & 0xFF), so a
-        # non-zero multiple of 256 would exit 0 and mark a failed render successful.
-        return 1
-
-    if strong_error_line is not None:
-        emit_fail(f"aerender reported an error: {strong_error_line}")
-        print(
-            f"[ERROR] aerender exited 0 but reported an error: {strong_error_line}",
-            file=sys.stderr,
-            flush=True,
-        )
+    failure = build_failure_message(returncode, strong_error_line, read_source_line)
+    if failure is not None:
+        openjd_message, log_message = failure
+        emit_fail(openjd_message)
+        print(f"[ERROR] {log_message}", file=sys.stderr, flush=True)
+        # Collapse to 1: main() does sys.exit(code & 0xFF), so a multiple of 256 would
+        # exit 0 and mark a failed render successful.
         return 1
 
     if not frames_seen:
