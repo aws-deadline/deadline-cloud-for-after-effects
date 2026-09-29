@@ -8,7 +8,7 @@ It reads -s/-e from argv and env vars to decide what to emit, then replays
 canned stdout lines shaped like real "-v ERRORS_AND_PROGRESS" output.
 
 Env controls:
-    FAKE_AE_MODE   seq (default) | mfr | movie | strong_error | benign_error | partial | bad_bytes
+    FAKE_AE_MODE   seq (default) | mfr | movie | strong_error | read_source_error | bare_read_source_error | error_then_read_source | full_render_then_read_source | benign_source_read_name | benign_error | partial | bad_bytes
     FAKE_AE_EXIT   integer exit code to return (default "0")
 """
 
@@ -71,6 +71,50 @@ def main():
             print(frame_line(f), flush=True)
         # Well-formed AE error line.
         print("After Effects error: Unable to open project file.", flush=True)
+    elif mode == "read_source_error":
+        # The HEVC-on-CPU symptom: aerender prints the AE error and (as observed
+        # on real workers) still exits 0, so STRONG_ERROR_PATTERNS is what fails it.
+        print(
+            "aerender Error: After Effects error: Could not read from source. "
+            "Please check the settings and try again.",
+            flush=True,
+        )
+    elif mode == "bare_read_source_error":
+        # AE also logs the source-read failure BARE -- no "After Effects error:" or
+        # "aerender ERROR:" prefix -- and still exits 0. STRONG_ERROR_PATTERNS misses
+        # this spelling, so only COULD_NOT_READ_SOURCE_PATTERN can fail it.
+        print(
+            "Could not read from source. Please check the settings and try again. "
+            "( 86 :: 2 )",
+            flush=True,
+        )
+    elif mode == "error_then_read_source":
+        # An unrelated AE error appears BEFORE the source-read one, so the first
+        # captured error line is not the source-read line.
+        print("After Effects error: Unable to open project file.", flush=True)
+        print(
+            "aerender Error: After Effects error: Could not read from source. "
+            "Please check the settings and try again.",
+            flush=True,
+        )
+    elif mode == "full_render_then_read_source":
+        # AE renders EVERY frame (progress reaches 100%) and only THEN logs the bare
+        # source-read failure -- the "ships black frames as success" case. Exercises the
+        # real ordering: progress is emitted before the verdict, so 100% is reported and
+        # the task must still fail afterwards.
+        for f in frames:
+            print(frame_line(f), flush=True)
+        print(
+            "Could not read from source. Please check the settings and try again. "
+            "( 86 :: 2 )",
+            flush=True,
+        )
+    elif mode == "benign_source_read_name":
+        # A footage name that merely CONTAINS the phrase, with no AE prefix and no error
+        # code -- must NOT fail an otherwise healthy render.
+        print("Loading footage: could not read from source_FIX.mov", flush=True)
+        for f in frames:
+            print(frame_line(f), flush=True)
     elif mode == "benign_error":
         # Lines that contain "error" but are NOT failures.
         print("Loading footage: error_analysis_final.mov", flush=True)
