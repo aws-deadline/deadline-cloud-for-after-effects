@@ -14,4 +14,4 @@ fonttools == 4.*
 # passes against it. Pinned to a minor because that filter lives in the private
 # openjd.sessions._action_filter module (see the note in that test) and could
 # move across minor releases.
-openjd-sessions == 0.11.*
+openjd-sessions == 0.12.*
