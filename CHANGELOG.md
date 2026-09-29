@@ -1,3 +1,10 @@
+## 0.5.1 (2026-09-29)
+
+### Features
+* When a render fails with "Could not read from source" on a worker without an NVIDIA GPU, a helpful hint is now displayed suggesting the source likely uses a codec (such as HEVC/H.265) that requires a GPU hardware decoder, and recommending running on a GPU fleet or transcoding to H.264. (#339)
+
+### Bug Fixes
+* Fixed renders crashing with "OMP: Error #15" when After Effects plugins (e.g., Trapcode, Element 3D) bundle their own Intel OpenMP runtime. The aerender subprocess now sets `KMP_DUPLICATE_LIB_OK=TRUE` to prevent the duplicate library abort. (#330)
 ## 0.5.0 (2026-08-25)
 
 ### BREAKING CHANGES
