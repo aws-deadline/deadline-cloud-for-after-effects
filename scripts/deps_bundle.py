@@ -24,7 +24,9 @@ def _get_package_version_regex(package: str) -> re.Pattern:
 def _get_package_version(package: str, install_path: Path) -> str:
     version_regex = _get_package_version_regex(package)
     pip_args = ["pip", "list", "--path", str(install_path)]
-    output = subprocess.run(pip_args, check=True, capture_output=True).stdout.decode("utf-8")
+    output = subprocess.run(pip_args, check=True, capture_output=True).stdout.decode(
+        "utf-8"
+    )
     for line in output.split("\n"):
         match = version_regex.match(line)
         if match:
@@ -32,7 +34,9 @@ def _get_package_version(package: str, install_path: Path) -> str:
     raise Exception(f"Could not find version for package {package}")
 
 
-def _build_base_environment(working_directory: Path, dependencies: list[Dependency]) -> Path:
+def _build_base_environment(
+    working_directory: Path, dependencies: list[Dependency]
+) -> Path:
     (working_directory / "base_env").mkdir()
     base_env_path = working_directory / "base_env"
     dependencies_for_pip = [d.for_pip() for d in dependencies]
@@ -48,14 +52,18 @@ def _build_base_environment(working_directory: Path, dependencies: list[Dependen
     return base_env_path
 
 
-def _download_native_dependencies(working_directory: Path, base_env: Path) -> list[Path]:
+def _download_native_dependencies(
+    working_directory: Path, base_env: Path
+) -> list[Path]:
     versioned_native_dependencies = [
         f"{package_name}=={_get_package_version(package_name, base_env)}"
         for package_name in NATIVE_DEPENDENCIES
     ]
     native_dependency_paths = []
     for version in SUPPORTED_PYTHON_VERSIONS:
-        native_dependency_path = working_directory / "native" / f"{version.replace('.', '_')}"
+        native_dependency_path = (
+            working_directory / "native" / f"{version.replace('.', '_')}"
+        )
         native_dependency_paths.append(native_dependency_path)
         native_dependency_path.mkdir(parents=True)
         native_dependency_pip_args = [
@@ -72,7 +80,9 @@ def _download_native_dependencies(working_directory: Path, base_env: Path) -> li
     return native_dependency_paths
 
 
-def _copy_native_to_base_env(base_env: Path, native_dependency_paths: list[Path]) -> None:
+def _copy_native_to_base_env(
+    base_env: Path, native_dependency_paths: list[Path]
+) -> None:
     for native_dependency_path in native_dependency_paths:
         for file in native_dependency_path.rglob("*"):
             if file.is_file():
@@ -118,7 +128,9 @@ def build_deps_bundle() -> None:
             lambda dep: not dep.name.startswith("openjd"), dependencies
         )
         base_env = _build_base_environment(working_directory, deps_noopenjd)
-        native_dependency_paths = _download_native_dependencies(working_directory, base_env)
+        native_dependency_paths = _download_native_dependencies(
+            working_directory, base_env
+        )
         _copy_native_to_base_env(base_env, native_dependency_paths)
         zip_path = _get_zip_path(working_directory, project_dict)
         _zip_bundle(base_env, zip_path)

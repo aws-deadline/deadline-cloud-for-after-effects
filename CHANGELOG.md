@@ -1,3 +1,56 @@
+## 0.5.1 (2026-09-29)
+
+### Features
+* When a render fails with "Could not read from source" on a worker without an NVIDIA GPU, a helpful hint is now displayed suggesting the source likely uses a codec (such as HEVC/H.265) that requires a GPU hardware decoder, and recommending running on a GPU fleet or transcoding to H.264. (#339)
+
+### Bug Fixes
+* Fixed renders crashing with "OMP: Error #15" when After Effects plugins (e.g., Trapcode, Element 3D) bundle their own Intel OpenMP runtime. The aerender subprocess now sets `KMP_DUPLICATE_LIB_OK=TRUE` to prevent the duplicate library abort. (#330)
+## 0.5.0 (2026-08-25)
+
+### BREAKING CHANGES
+* Render options (frames per task, multi-frame rendering, max CPU usage, ignore missing dependencies) are now set once per job instead of per composition. This raises the maximum compositions per job from 5 to 15. If you relied on per-composition render settings, you will now need to submit separate jobs for compositions requiring different render options. (#322)
+
+### Features
+* Task progress and failure status now surface in Deadline Cloud Monitor via OpenJD progress reporting. Progress is count-based (distinct frames rendered / frames owned) and works regardless of aerender's frame-numbering mode. (#327)
+* When a queue environment sets the DEADLINE_JUNCTIONS environment variable pointing to a pathmapping-1.0 file, project and output paths are automatically rerouted through Windows junctions to stay under the 260-character path limit. (#324)
+* The submitter UI now shows vertical scrollbars automatically when part of the window content is cut off. (#290)
+## 0.4.5 (2026-03-10)
+
+
+### Features
+* add AE 2026 support to installer and submitter (#291) ([`276826d`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/276826d724eefcf227cbf2e4067c556c94e06a45))
+
+### Bug Fixes
+* fix the broken link (#288) ([`755c504`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/755c5041bc2b5783669203712269e4cb15e646b0))
+* add project displayStartFrame to frame range calculation (#283) ([`324318b`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/324318b7b37e8592b841c86d6cc4f58605700863))
+* add project displayStartFrame to frame range calculation ([`324318b`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/324318b7b37e8592b841c86d6cc4f58605700863))
+
+
+## 0.4.4 (2025-12-08)
+
+
+### Features
+* Script based ae submitter installation for macOS to user preferences directory (#271) ([`e61c6a6`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/e61c6a68dd3a0c34fa9bac814c2f4325b7b98cab))
+* Support ttc font type in job submission and rendering (#273) ([`1f55eda`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/1f55edaf108e5f7c6775b29855264910fd4e39e3))
+
+
+
+## 0.4.3 (2025-10-21)
+
+
+### Features
+* Ignore Missing Dependencies (#212) ([`844fd24`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/844fd248a4f4c2a548bcd7cb55f1da6d378a1cd4))
+
+### Bug Fixes
+* fix fallback script regex to only strip leading and trailing whitespace instead of all whitespace (#261) ([`bc8787b`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/bc8787b0704b49d9dd20b38be820b15407fcbca2))
+* improve get_user_fonts.py script and refactored file existence validation to minimize popups (#260) ([`01c66a9`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/01c66a99025b870bf94b1f844ab5a1cb59dc119e))
+* bug fix for valid fonts not being collected (#259) ([`3623190`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/36231906a3b457a31ba42f7157b70ab8c990fe4e))
+* aggregate font errors into single popup for submission (#257) ([`3f91674`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/3f91674345626a4385606c2273ea27f40cc804fe))
+* sanitize parameter names to comply with open-jd specification (#254) ([`cfb6a4a`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/cfb6a4a62b01c674692a18953a1e6ab2a635035d))
+* update generatePrettyName as well to be consistent to replace special characters ([`cfb6a4a`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/cfb6a4a62b01c674692a18953a1e6ab2a635035d))
+* moved font search logic to get_user_fonts.py to permanently prevent JSON size overflow issues that crashes After Effects (#252) ([`a259316`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/a25931609b8630fdcc355a2c531f36f95cb149d6))
+* Only the first frame from an image sequence gets included in Job Attachments (#214) ([`646e1e5`](https://github.com/aws-deadline/deadline-cloud-for-after-effects/commit/646e1e55c72f38c076f5f7ba63ee4ba9932cb4c4))
+
 ## 0.4.2 (2025-08-20)
 
 

@@ -48,9 +48,15 @@ class InstallBuilderSelection:
             dest.parent.mkdir(parents=True, exist_ok=True)
             expected_bucket_owner = os.getenv("IB_SOURCE_BUCKET_OWNER")
             if not expected_bucket_owner:
-                raise ValueError("IB_SOURCE_BUCKET_OWNER environment variable is required")
-            if not (expected_bucket_owner.isdigit() and len(expected_bucket_owner) == 12):
-                raise ValueError("IB_SOURCE_BUCKET_OWNER must be a 12-digit AWS Account ID")
+                raise ValueError(
+                    "IB_SOURCE_BUCKET_OWNER environment variable is required"
+                )
+            if not (
+                expected_bucket_owner.isdigit() and len(expected_bucket_owner) == 12
+            ):
+                raise ValueError(
+                    "IB_SOURCE_BUCKET_OWNER must be a 12-digit AWS Account ID"
+                )
 
             s3.download_file(
                 self.selection.bucket,

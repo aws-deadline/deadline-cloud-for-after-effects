@@ -1,60 +1,27 @@
 var jobTemplateHelperFile = "JobTemplateHelper.json";
 /**
- * Generates the basic parameterValue file for the job template
+ * Generates the per-render-queue-item parameterValue entries for the job template.
+ * Settings that apply to the whole job, such as multi-frame rendering and frames per task, are
+ * added once by SubmitSelection rather than repeated for every render queue item. The render queue
+ * index and output file name are written straight into the step's command by
+ * generateStepTemplateFragment instead of being parameters, since neither is worth an artist's time
+ * to change in the Deadline submitter and every parameter counts against the job template's limit.
  **/
 function generateParameterValues(
-    renderQueueIndex,
-    projectFile,
     outputDir,
-    outputFileName,
-    isImageSeq,
     startFrame,
     endFrame,
-    chunkSize,
-    multiFrameRendering,
-    maxCpuUsagePercentage,
-    ignoreMissingDependencies,
     prefix
 ) {
     const parameterValuesList = [{
-        name: prefix + "_RenderQueueIndex",
-        value: renderQueueIndex,
-    },
-    {
         name: prefix + "_OutputDir",
         value: outputDir,
-    },
-    {
-        name: prefix + "_OutputFileName",
-        value: outputFileName,
     },
     {
         name: prefix + "_Frames",
         value: startFrame.toString() + "-" + endFrame.toString(),
     },
-    {
-        name: prefix + "_MultiFrameRendering",
-        value: multiFrameRendering === true ? "ON" : "OFF",
-    },
     ];
-    if (maxCpuUsagePercentage) {
-        parameterValuesList.push({
-            name: prefix + "_MaxCpuUsagePercentage",
-            value: maxCpuUsagePercentage,
-        });
-    }
-    if (isImageSeq) {
-        parameterValuesList.push({
-            name: prefix + "_ChunkSize",
-            value: chunkSize,
-        });
-    }
-    if (ignoreMissingDependencies) {
-        parameterValuesList.push({
-            name: prefix + "_IgnoreMissingDependencies",
-            value: ignoreMissingDependencies === true ? "ON" : "OFF",
-        })
-    }
     return {
         parameterValues: parameterValuesList
     };
@@ -201,6 +168,9 @@ function findJobAttachments(rootComp, ignoreMissingDependencies) {
  **/
 function getFontsFromFile() {
     var fontLocations = [];
+    var unsupportedFonts = {}; // using this object as a set because AE doesn't support sets
+    var unsupportedFontList = [];
+    var fontsWithoutLocation = [];
     // app.project.usedFonts was introduced in 24.5. Fall back to scanning text layers if version is older
     if (dcUtil.getAEVersion() >= 24.5) {
         const usedList = app.project.usedFonts;
@@ -209,19 +179,37 @@ function getFontsFromFile() {
             var fontPostScriptName = font.postScriptName;
             var fontLocation = font.location || getLocationForFont(fontPostScriptName);
             if (!fontLocation) {
-                adcAlert(
-                    "The path to the font " + fontPostScriptName + " couldn't be identified.\n" +
-                    "Please install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
-                );
+                fontsWithoutLocation.push(fontPostScriptName);
                 continue;
             }
-            var fontName = createFontFilename(fontLocation, fontPostScriptName);
-            if (fontName) {
-                fontLocations.push([fontName, fontLocation]);
+            var fontDetails = getFontFilenameAndSupportStatus(fontLocation, fontPostScriptName);
+            if (fontDetails["isExtensionSupported"]) {
+                fontLocations.push([fontDetails.fontName, fontLocation]);
+            } else {
+                unsupportedFonts[font.familyName + fontDetails.fileExtension] = true;
             }
         }
     } else {
         fontLocations = getFontsFromFileLegacy();
+    }
+
+    for (var key in unsupportedFonts) {
+        unsupportedFontList.push(key);
+    }
+    if (unsupportedFontList.length > 0) {
+        adcAlert(
+            "Font(s) detected with unsupported extension(s) \n"
+            + unsupportedFontList.join(", \n") +
+            "\n\nThese font(s) won't be added to the job.", false
+        );
+    }
+
+    if (fontsWithoutLocation.length > 0) {
+        adcAlert(
+            "The path to the below font(s) couldn't be identified. \n\n" +
+            fontsWithoutLocation.join(", ") + "\n" +
+            "\nPlease install the font for non-Adobe apps in Creative Cloud Desktop before submitting this project.", false
+        );
     }
 
     return fontLocations;
@@ -292,31 +280,20 @@ function getLocationForFont(fontPostScriptName) {
         if (!pythonExecutable) {
             return null;
         }
-        
         const scriptPath = scriptFolder + "/DeadlineCloudSubmitter_Assets/JobTemplate/scripts/get_user_fonts.py";
-        const scriptFile = new File(scriptPath);
-        if (!scriptFile.exists) {
-            adcAlert(
-                "Error: Missing font script at " + scriptFile.fsName + "\n" +
-                "\n" +
-                "Please ensure that the Deadline Cloud Submitter is installed correctly.",
-                true
-            );
+        const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptPath + "\" \"" + fontPostScriptName + "\"");
+
+        // Clean the output by removing all leading and trailing whitespace and newline characters
+        const cleanOutput = outputRaw ? outputRaw.replace(/(^\s+)|(\s+$)/g, '') : null;
+
+        if (cleanOutput === "FONT_NOT_FOUND" || cleanOutput === "FONT_ERROR") {
+            logger.error("Error when finding font, received code: " + cleanOutput + "\n", jobTemplateHelperFile);
             return null;
         }
-        
-        const outputRaw = system.callSystem(pythonExecutable + " \"" + scriptFile.fsName + "\" \"" + fontPostScriptName + "\"");
-        // Clean the output by removing all whitespace characters
-        var cleanOutput = outputRaw ? outputRaw.replace(/\s+/g, '') : null;
+
         return cleanOutput || null;
     } catch (e) {
         logger.error(e.message, jobTemplateHelperFile);
-        adcAlert(
-            "Error when finding fonts:\n" +
-            "\n" +
-            e.message,
-            true
-        );
         return null;
     }
 }
@@ -333,7 +310,7 @@ function createFontFilename(fontLocation, fontPostScriptName) {
     var fontName = "";
 
     var validExtension = true;
-    const fontExtensions = [".otf", ".ttf"];
+    const fontExtensions = [".otf", ".ttf", ".ttc"];
 
     // Windows also supports .fon files
     const os = $.os.toLowerCase();
@@ -360,6 +337,49 @@ function createFontFilename(fontLocation, fontPostScriptName) {
     }
 
     return fontName;
+}
+
+
+/**
+ * Generates a font filename based on the font name and the extension of the font filename
+ * and whether the extension is supported
+ * @return an object with the font filename and extension validity
+ **/
+function getFontFilenameAndSupportStatus(fontLocation, fontPostScriptName) {
+    var fileExtension = "";
+    const lastDotIndex = fontLocation.lastIndexOf('.');
+    const extensionRegex = /\.[a-zA-Z]+$/;
+
+    var validExtension = true;
+    const fontExtensions = [".otf", ".ttf", ".ttc"];
+
+    // Windows also supports .fon files
+    const os = $.os.toLowerCase();
+    if (os.indexOf("windows") !== -1) {
+        fontExtensions.push(".fon");
+    }
+
+    // Some Adobe Fonts files have a dot followed by numbers as its name with no extension (e.g. ".52741")
+    if (extensionRegex.test(fontLocation)) {
+        fileExtension = fontLocation.substring(lastDotIndex).toLowerCase();
+        const fontExtensionsAsString = fontExtensions.toString();
+        if (fontExtensionsAsString.indexOf(fileExtension) == -1) {
+            validExtension = false;
+        }
+    }
+    if (validExtension) {
+        return {
+            "isExtensionSupported": true,
+            "fileExtension": fileExtension,
+            "fontName": fontPostScriptName + fileExtension
+        };
+    } else {
+        return {
+            "isExtensionSupported": false,
+            "fileExtension": fileExtension,
+            "fontName": fontPostScriptName + fileExtension
+        };
+    }
 }
 
 /**
@@ -460,9 +480,7 @@ function generateFontReferences(fontPaths) {
         var normalizedFontLocation = fontLocation.replace(/\//g, File.fs == "Windows" ? "\\" : "/");
         var fontFile = File(normalizedFontLocation);
         var _tempFontPath = dcUtil.normPath(_tempFontsFolder + "/" + fontName);
-        
         var fontCopied = fontFile.copy(_tempFontPath);
-        
         // Check if font file was actually copied.
         if (fontCopied) {
             formattedFontsPaths.push(_tempFontPath);

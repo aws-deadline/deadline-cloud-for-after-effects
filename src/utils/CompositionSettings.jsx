@@ -1,13 +1,11 @@
 function UiSettingsState() {
     /**
-     * Container that stores all of the configurable properties in the submitter UI
+     * Container that stores all of the configurable properties in the submitter UI.
+     * Every setting here applies to the job as a whole rather than to an individual
+     * render queue item.
      */
 
-    // Contains UiSettingsStore objects that store comp-specific settings
-    this.settings = {}
-
     this.xmpPath = dcUtil.composeXMPPath(DEADLINECLOUD_SETTINGS_ROOT, "UiSettingsState");
-    this.rqiXmpPath = dcUtil.composeXMPPath(this.xmpPath, "rqiSpecificSettings");
 
     // () -> bool
     this.taskRunTimeoutEnabled = function() {
@@ -42,55 +40,35 @@ function UiSettingsState() {
         dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_TASK_RUN_TIMEOUT_MINUTES), value);
     }
 
-}
-
-function UiSettingsStore(xmpPathPrefix, name) {
-    /**
-     * Stores comp-specific settings for the comp with given name.
-     */
-    this.name = name;
-    this.xmpPathPrefix = dcUtil.composeXMPPath(xmpPathPrefix, name);
-
     this.framesPerTask = function () {
-        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), DEFAULT_FRAMESPERTASK);
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_FRAMESPERTASK), DEFAULT_FRAMESPERTASK);
     }
     this.setFramesPerTask = function (value) {
-        logger.warning("(" + this.name + ") Setting framesPerTask to " + value);
-        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_FRAMESPERTASK), value);
+        logger.warning("Setting framesPerTask to " + value);
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_FRAMESPERTASK), value);
     }
 
     this.multiFrameRendering = function () {
-        return dcUtil.getBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), DEFAULT_MULTI_FRAME_RENDERING);
+        return dcUtil.getBoolMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_MULTI_FRAME_RENDERING), DEFAULT_MULTI_FRAME_RENDERING);
     }
     this.setMultiFrameRendering = function (value) {
-        logger.warning("(" + this.name + ") Setting multiFrameRendering to " + value);
-        dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MULTI_FRAME_RENDERING), value);
+        logger.warning("Setting multiFrameRendering to " + value);
+        dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_MULTI_FRAME_RENDERING), value);
     }
 
     this.maxCpuUsagePercentage = function () {
-        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), DEFAULT_MAX_CPU_USAGE_PERCENTAGE);
-
+        return dcUtil.getNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), DEFAULT_MAX_CPU_USAGE_PERCENTAGE);
     }
     this.setMaxCpuUsagePercentage = function (value) {
-        logger.warning("(" + this.name + ") Setting maxCpuUsagePercentage to " + value);
-        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), value);
+        logger.warning("Setting maxCpuUsagePercentage to " + value);
+        dcUtil.saveNumberMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_MAX_CPU_USAGE_PERCENTAGE), value);
     }
 
     this.ignoreMissingDependencies = function () {
-        return dcUtil.getBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_IGNORE_MISSING_DEPENDENCIES), DEFAULT_IGNORE_MISSING_DEPENDENCIES);
+        return dcUtil.getBoolMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_IGNORE_MISSING_DEPENDENCIES), DEFAULT_IGNORE_MISSING_DEPENDENCIES);
     }
     this.setIgnoreMissingDependencies = function (value) {
-        logger.warning("(" + this.name + ") Setting ignoreMissingDependencies to " + value)
-        dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(this.xmpPathPrefix, DEADLINECLOUD_IGNORE_MISSING_DEPENDENCIES), value);
+        logger.warning("Setting ignoreMissingDependencies to " + value);
+        dcUtil.saveBoolMetadata(dcUtil.composeXMPPath(this.xmpPath, DEADLINECLOUD_IGNORE_MISSING_DEPENDENCIES), value);
     }
-}
-
-UiSettingsState.prototype.get = function (RQIID) {
-    /**
-     * Gets UISettingsStore associated with given RQIID, or creates a new default one if it doesn't exit
-     */
-    if (!this.settings[RQIID]) {
-        this.settings[RQIID] = new UiSettingsStore(this.rqiXmpPath, RQIID);
-    }
-    return this.settings[RQIID]
 }
