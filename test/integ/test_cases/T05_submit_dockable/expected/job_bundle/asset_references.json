@@ -1,0 +1,18 @@
+{
+  "assetReferences": {
+    "inputs": {
+      "directories": [],
+      "filenames": [
+        "<ASSETS>/projects/ae<YEAR>/T05_submit_dockable_ae<YEAR>_v1.0.0.aep",
+        "<ASSETS>/source_assets/images/still_ref_1080p_v1.0.0.png",
+        "<TEMP>/tempFonts/AmazonEmber-Regular.ttf"
+      ]
+    },
+    "outputs": {
+      "directories": [
+        "<HOME>/Desktop/aep_mac_test_assets/renders/ae<YEAR>/T05"
+      ]
+    },
+    "referencedPaths": []
+  }
+}

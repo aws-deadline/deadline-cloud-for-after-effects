@@ -1,0 +1,95 @@
+name: "Integ Tests - macOS"
+
+# Reusable: drive the After Effects submitter and run the Deadline Cloud integration
+# tests on a self-hosted macOS runner (AE installed + signed in to Adobe Creative
+# Cloud). Called per AE release year by integration_tests.yml.
+
+on:
+  workflow_call:
+    inputs:
+      ae_version:
+        description: 'AE release year, e.g. 2025 or 2026'
+        required: true
+        type: string
+    secrets:
+      AWS_OIDC_ROLE_ARN:
+        required: true
+      AWS_REGION:
+        required: true
+
+jobs:
+  IntegMacOS:
+    # The caller decides when to run (mainline pushes, manual dispatch); this only
+    # keeps forks from trying to use self-hosted runners.
+    if: github.repository == 'aws-deadline/deadline-cloud-for-after-effects'
+    # Self-hosted: After Effects and the Adobe Creative Cloud license live on the
+    # runner, not on GitHub-hosted images.
+    runs-on: [self-hosted, macOS, after-effects]
+    timeout-minutes: 90
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AE_VERSION: ${{ inputs.ae_version }}
+      # Unset by default: the harness then uses the in-repo assets.
+      AE_TEST_ASSETS: ${{ vars.AE_TEST_ASSETS }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+
+      - name: Install hatch
+        run: pip install "hatch==1.15.1"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # The harness dismisses AE's crash dialog through System Events, which needs
+      # Accessibility permission. That lives in the SIP-protected system TCC database,
+      # so it cannot be granted from a job: provision it on the runner once. This step
+      # fails fast if it is missing, instead of letting every drive time out.
+      - name: Check macOS Accessibility permission
+        run: |
+          enabled="$(osascript -e 'tell application "System Events" to get UI elements enabled' 2>&1 || true)"
+          [ "$enabled" = "true" ] \
+            || { echo "::error::Runner lacks Accessibility permission (UI elements enabled = $enabled)"; exit 1; }
+
+      - name: Verify After Effects + submitter are installed
+        run: |
+          test -d "/Applications/Adobe After Effects ${AE_VERSION}/Adobe After Effects ${AE_VERSION}.app" \
+            || { echo "::error::After Effects ${AE_VERSION} not installed on runner"; exit 1; }
+
+      # Adobe Creative Cloud license: the runner is expected to be signed in to Adobe
+      # CC (persistent per-machine sign-in). If your fleet provisions the license
+      # differently (e.g. a named-user token dropped at runtime), add that step here.
+      - name: Confirm Adobe license present
+        run: echo "Assuming this self-hosted runner is signed in to Adobe Creative Cloud."
+
+      - name: Run integration tests (bundle generation + render)
+        # --strict-environment: a missing AE, submitter or asset fails instead of skipping.
+        run: hatch run integ:test-render test/integ --strict-environment
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: integ-artifacts-macos-ae${{ inputs.ae_version }}
+          path: build/integ-artifacts/
+          if-no-files-found: ignore
+
+      - name: Upload JUnit results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: integ-results-macos-ae${{ inputs.ae_version }}
+          path: build/integ/results.xml
+          if-no-files-found: ignore

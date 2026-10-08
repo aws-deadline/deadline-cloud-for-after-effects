@@ -1,0 +1,55 @@
+{
+  "name": "After Effects SMF Test Artifact Superset",
+  "asset_version": "1.0.0",
+  "source": "After Effects SMF Test Coverage matrix",
+  "purpose": "Deadline Cloud After Effects submitter E2E: submit from mac workstation to Windows SMF workers.",
+  "ae_versions": ["ae2025", "ae2026"],
+  "ae_version_notes": "AE 2024 (v24) intentionally not produced (not installed; skipped per request). AE 2025 = v25.6.6, AE 2026 = v26.3.",
+  "conventions": {
+    "resolution": "1920x1080",
+    "fps": 30,
+    "determinism": "No random or time-of-day values; frame-reproducible for output diffing.",
+    "burned_in_text": "Every comp burns in: test id + name, asset version, AE version, 'mac -> Windows SMF'.",
+    "project_path": "projects/<ae_version>/<TESTID>_<slug>_<ae_version>_v<asset_version>.aep",
+    "render_output_path": "renders/<ae_version>/<TESTID>/"
+  },
+  "output_module_note": "An output module's format can only be set by applying one of AE's built-in templates: getSettings()'s Format key is read-only, so setSettings({Format: ...}) fails. AE ships no JPEG Sequence, PNG Sequence or MP3 template, so the formats the coverage matrix names for T07 / T08 / T19-emit are unreachable from script. The builder uses the nearest available built-ins instead -- TIFF Sequence with Alpha for image sequences (lossless and per-frame, better for output diffing than JPEG) and AIFF 48kHz for audio-only -- and hard-fails if the applied template does not yield the intended format, rather than silently falling back to H.264 as it did before 2026-10-01. Setting a [#####] output path on a sequence template preserves the sequence numbering.",
+  "fonts": {
+    "amazon_ember": {"postscript": "AmazonEmber-Regular", "path": "/Library/Fonts/AmazonEmber_Rg.ttf", "expected": "supported"},
+    "creative_cloud": {"postscript": "Komet-Regular", "source": "Adobe CC activated", "expected": "supported"},
+    "ttc": {"postscript": "AmericanTypewriter", "path": "/System/Library/Fonts/Supplemental/AmericanTypewriter.ttc", "expected": "not used: fails on the Windows fleet (RENDER_FINDINGS #3)"},
+    "missing": {"postscript": "NotInstalledFont-Regular", "expected": "submitter should flag missing font"}
+  },
+  "source_assets": {
+    "video": "source_assets/video/plate_motion_1080p30_v1.0.0.mp4",
+    "audio_wav": "source_assets/audio/tone_48k_stereo_v1.0.0.wav",
+    "audio_aiff": "source_assets/audio/tone_48k_stereo_v1.0.0.aiff",
+    "audio_mp3": "source_assets/audio/tone_48k_stereo_v1.0.0.mp3",
+    "still": "source_assets/images/still_ref_1080p_v1.0.0.png",
+    "image_sequence": "source_assets/image_sequences/seq_1080p_v1.0.0/ (60 PNG frames)",
+    "special_char_still": "source_assets/special_characters/plate_ñ=+-_v1.0.0.png"
+  },
+  "tests": [
+    {"id": "T05", "name": "Basic submit (single comp, default settings)", "aep_slug": "submit_dockable", "comps": 1, "output_module": "H.264", "assets": ["still"]},
+    {"id": "T06", "name": "Video Rendering + Custom Fonts", "aep_slug": "video_custom_fonts", "comps": 1, "output_module": "H.264", "assets": ["video"], "fonts": ["amazon_ember", "creative_cloud", "missing"]},
+    {"id": "T07", "name": "Audio Rendering", "aep_slug": "audio_render", "comps": 1, "output_module": "AIFF 48kHz (audio only)", "assets": ["audio_mp3"]},
+    {"id": "T08", "name": "Image Chunking", "aep_slug": "image_chunking_300f", "comps": 1, "frames": 300, "output_module": "TIFF Sequence", "frames_per_task_to_test": [1, 100, 299, 300]},
+    {"id": "T09", "name": "Deadline CLI Error Handling", "aep_slug": "cli_error_handling", "comps": 1, "output_module": "H.264", "note": "remove deadline from PATH before submit"},
+    {"id": "T10", "name": "Naming / Special Characters", "aep_slug": "special_characters", "comps": 2, "output_module": "H.264", "assets": ["special_char_still"], "chars": "ñ = + - _", "note": "colon omitted; a colon breaks job attachments"},
+    {"id": "T11", "name": "Multi-frame Rendering (MFR)", "aep_slug": "multi_frame_rendering", "comps": 1, "output_module": "H.264", "note": "enable MFR + %usage in submitter; verify aerender flags in logs"},
+    {"id": "T12", "name": "Timeout", "aep_slug": "timeout", "comps": 1, "output_module": "H.264", "note": "long/heavy comp (120s, fractal+blur) so a 1-min timeout always cuts it"},
+    {"id": "T13", "name": "AE Env Variable Used Correctly", "aep_slug": "env_variable", "comps": 1, "output_module": "H.264"},
+    {"id": "T15", "name": "Conda Testing in Gamma", "aep_slug": "conda_version", "comps": 1, "output_module": "H.264"},
+    {"id": "T16", "name": "Incompatible Version Warning", "aep_slug": "incompatible_version_warning", "comps": 1, "output_module": "H.264"},
+    {"id": "T17", "name": "Multi-comp Submit", "aep_slug": "multicomp", "comps": 3, "output_module": "H.264"},
+    {"id": "T18", "name": "Comp-level Sticky Settings", "aep_slug": "sticky_settings", "comps": 3, "output_module": "H.264"},
+    {"id": "T19", "name": "Image Sequence Import", "aep_slug": "image_sequence_import", "comps": 2, "output_module": "emit=TIFF Sequence, import=H.264", "assets": ["image_sequence"]},
+    {"id": "T20", "name": "Missing Dependencies", "aep_slug": "missing_dependencies", "comps": 1, "output_module": "H.264", "assets": ["still", "audio_wav"], "note": "rename/delete a referenced asset, set continue-on-missing=true"},
+    {"id": "T21", "name": "Get User Fonts Python Fallback", "aep_slug": "get_user_fonts", "comps": 1, "output_module": "H.264", "fonts": ["amazon_ember", "creative_cloud"]}
+  ],
+  "tests_without_artifacts": [
+    {"id": "T03", "name": "JSX bundler check", "reason": "code-level; no AEP"},
+    {"id": "T04", "name": "Run unit tests", "reason": "code-level; no AEP"},
+    {"id": "T14", "name": "Installer testing", "reason": "installer/unit; no AEP"}
+  ]
+}

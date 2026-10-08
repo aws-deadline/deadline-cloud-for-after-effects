@@ -1,0 +1,16 @@
+{
+  "id": "T12",
+  "name": "Timeout",
+  "aep_slug": "timeout",
+  "settings": {
+    "taskRunTimeoutDays": 0,
+    "taskRunTimeoutHours": 0,
+    "taskRunTimeoutMinutes": 1
+  },
+  "expect": "FAILED",
+  "render": true,
+  "max_retries": 0,
+  "ae_run_timeout": 300,
+  "notes": "Negative test, and the suite's only non-SUCCEEDED expectation: a deliberately short (1 min) task timeout on a heavy comp cuts the task short so the job ends FAILED. test_job_settings asserts the 60s timeout lands on every step of the as-built bundle. render was previously false pending live validation of the timeout->terminal-status mapping, which made expect=FAILED unreachable (test_render skips unconditionally when render is false). Two things made it safe to enable: the harness no longer overwrites a case's own taskRunTimeout with its blanket JOB_TASK_TIMEOUT_S, and max_retries is pinned to 0 so the job settles on the first timed-out attempt instead of burning the wait budget across retries. The mapping is now validated live: job-3d05386efe314995b4ad6c2268f6d299 ended FAILED (not CANCELED) with one failed task, 490s elapsed -- nearly all of it queue plus conda environment setup, since the task itself is killed at 60s. Note that 490s against the 600s JOB_WAIT_TIMEOUT_S leaves little headroom; if this case starts reporting TIMEOUT, raise AE_JOB_WAIT_TIMEOUT rather than assuming a regression. The comp is 120s (was 20s): on 2026-10-05 a fast worker rendered the 20s comp in 59s, inside the 60s timeout, and the job SUCCEEDED.",
+  "expect_failure_message": "TIMEOUT"
+}

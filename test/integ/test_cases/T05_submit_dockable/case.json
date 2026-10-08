@@ -1,0 +1,10 @@
+{
+  "id": "T05",
+  "name": "Basic submit (single comp, default settings)",
+  "aep_slug": "submit_dockable",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Baseline: one comp, no case settings, so the submitter's defaults must hold, and the job must SUCCEED. Formerly named 'Submit button + dockable panel'; the harness strips the submitter UI, so the Submit button and docking are NOT tested. GUI coverage awaits the xa11y feasibility spike. The asset's slug and burned-in text keep the old name."
+}

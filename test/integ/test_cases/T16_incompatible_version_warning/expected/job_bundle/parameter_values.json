@@ -1,0 +1,44 @@
+{
+  "parameterValues": [
+    {
+      "name": "deadline:targetTaskRunStatus",
+      "value": "READY"
+    },
+    {
+      "name": "deadline:maxFailedTasksCount",
+      "value": 20
+    },
+    {
+      "name": "deadline:maxRetriesPerTask",
+      "value": 5
+    },
+    {
+      "name": "deadline:priority",
+      "value": 50
+    },
+    {
+      "name": "ProjectFile",
+      "value": "<ASSETS>/projects/ae<YEAR>/T16_incompatible_version_warning_ae<YEAR>_v1.0.0.aep"
+    },
+    {
+      "name": "MultiFrameRendering",
+      "value": "OFF"
+    },
+    {
+      "name": "MaxCpuUsagePercentage",
+      "value": 90
+    },
+    {
+      "name": "IgnoreMissingDependencies",
+      "value": "OFF"
+    },
+    {
+      "name": "_1_T16_incompatibl_OutputDir",
+      "value": "<HOME>/Desktop/aep_mac_test_assets/renders/ae<YEAR>/T16"
+    },
+    {
+      "name": "_1_T16_incompatibl_Frames",
+      "value": "0-149"
+    }
+  ]
+}

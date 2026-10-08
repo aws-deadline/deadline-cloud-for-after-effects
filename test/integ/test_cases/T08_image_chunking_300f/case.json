@@ -1,0 +1,12 @@
+{
+  "id": "T08",
+  "name": "Image chunking (300 frames)",
+  "aep_slug": "image_chunking_300f",
+  "settings": {
+    "framesPerTask": 100
+  },
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 600,
+  "notes": "Image-sequence output -> ChunkSize == framesPerTask, and test_job_settings also asserts the step's task range references {{Param.ChunkSize}} so the step really fans out (300 frames / 100 = 3 tasks) rather than merely declaring the parameter. This case was inert until 2026-10-01: the .aep's output module was H.264 because the asset builder matched output-module templates by keyword and silently fell back to the default when nothing matched, and the submitter emits ChunkSize for image sequences only -- so framesPerTask was write-only and the suite covered no chunking at all (RENDER_FINDINGS.md #9, #11). The comp now renders a TIFF sequence; TIFF rather than the matrix's JPEG because AE ships no JPEG Sequence output-module template and a module's format cannot be set by script. Plan calls for framesPerTask in {1,100,299,300}; 100 is the representative default. Parametrising the chunk value is a future harness enhancement."
+}

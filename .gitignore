@@ -3,6 +3,12 @@
 Adobe After Effects Auto-Save/
 # Ignore Logs from test projects
 test_projects/*/*Logs/*
+# AE writes "<project>.aep Logs/" next to the integ test assets on every render
+*.aep Logs/
+# Render output, local and downloaded from the farm. Never committed: a single
+# 60-frame TIFF sequence is ~476 MB (frames are uncompressed), so T08's 300 would
+# be ~2.4 GB.
+test/integ/aep_test_assets/renders/
 
 # build artifacts
 build/
@@ -42,3 +48,6 @@ jsconfig.json
 
 # Dev installer
 DeadlineCloudForAfterEffectsSubmitter-*/
+
+# Asset-builder logs embed local absolute paths.
+test/integ/aep_test_assets/scripts/build_log_*.txt

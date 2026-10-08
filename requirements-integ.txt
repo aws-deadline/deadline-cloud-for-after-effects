@@ -1,0 +1,23 @@
+# Dependencies used *only* by the integration harness under test/integ.
+#
+# Deliberately not in requirements-testing.txt: that file is installed by the
+# `default` hatch env as well, which is what runs the unit tests and lint in CI, and
+# nothing there decodes an image. Keeping these here means only `hatch run integ:*`
+# pays for them. Neither file reaches the shipped submitter — the installer bundles
+# its own runtime deps — so this is a developer/CI cost only.
+
+# Decodes the TIFF frames the render layer samples back off the farm
+# (test_render_outputs). AE's TIFF output module writes uncompressed RGBA and its
+# compression setting is not scriptable, so frames are large but trivially readable.
+#
+# Video (H.264) outputs are deliberately NOT decoded. Doing so needs a bundled FFmpeg
+# (PyAV or imageio-ffmpeg, ~35 MB) because ffmpeg is a binary rather than a pip
+# package, and no system ffmpeg may be assumed on a test host. The 17 video steps are
+# therefore checked for existence and plausible size only; add `av` here if pixel or
+# duration assertions on video are ever wanted.
+Pillow == 12.*
+
+# Shared Deadline Cloud DCC test helpers: `openjd check` bundle validation and
+# normalized golden-bundle comparison (job_bundle.compare). The same pin family
+# the Nuke and Cinema 4D suites use. Pulls in openjd-cli for `openjd check`.
+deadline-cloud-test-fixtures >= 0.18.20, < 0.19

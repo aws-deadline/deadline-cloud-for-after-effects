@@ -1,0 +1,10 @@
+{
+  "id": "T21",
+  "name": "get_user_fonts python fallback",
+  "aep_slug": "get_user_fonts",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Exercises the get_user_fonts Python fallback path in JobTemplateHelper.jsx; detected fonts appear in the font environment / references and resolve on the worker. Rebuilt 2026-10-06 without the .ttc font (RENDER_FINDINGS #13)."
+}

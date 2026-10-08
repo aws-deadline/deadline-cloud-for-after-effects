@@ -1,0 +1,48 @@
+{
+  "parameterValues": [
+    {
+      "name": "deadline:targetTaskRunStatus",
+      "value": "READY"
+    },
+    {
+      "name": "deadline:maxFailedTasksCount",
+      "value": 20
+    },
+    {
+      "name": "deadline:maxRetriesPerTask",
+      "value": 5
+    },
+    {
+      "name": "deadline:priority",
+      "value": 50
+    },
+    {
+      "name": "ProjectFile",
+      "value": "<ASSETS>/projects/ae<YEAR>/T08_image_chunking_300f_ae<YEAR>_v1.0.0.aep"
+    },
+    {
+      "name": "MultiFrameRendering",
+      "value": "OFF"
+    },
+    {
+      "name": "MaxCpuUsagePercentage",
+      "value": 90
+    },
+    {
+      "name": "IgnoreMissingDependencies",
+      "value": "OFF"
+    },
+    {
+      "name": "ChunkSize",
+      "value": 100
+    },
+    {
+      "name": "_1_T08_image_chunk_OutputDir",
+      "value": "<ASSETS>/renders/ae<YEAR>/T08"
+    },
+    {
+      "name": "_1_T08_image_chunk_Frames",
+      "value": "0-299"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "T13",
+  "name": "AE env variable used correctly",
+  "aep_slug": "env_variable",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": false,
+  "ae_run_timeout": 300,
+  "notes": "Verifies the step invokes call_aerender.py (which reads AERENDER_EXECUTABLE). The live-render assertion (task logs show the expected aerender path) depends on the worker's AERENDER_EXECUTABLE being set to a known value; render is disabled until that host/worker env is pinned. Bundle generation still confirms call_aerender.py is used."
+}

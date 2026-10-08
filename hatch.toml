@@ -27,3 +27,34 @@ test = "pytest --cov-config pyproject.toml {args:test/unit}"
 
 [envs.installer.scripts]
 build-installer = "python {root}/scripts/build_installer_cli.py --installer-source-path {root}/installer/DeadlineCloudForAfterEffectsSubmitter.xml {args:}"
+
+# Integration tests: re-drive the real submitter against After Effects, then submit
+# the produced bundle to Deadline Cloud and poll to a terminal state.
+#   hatch run integ:test              # bundle generation only (build bundle, assert offline)
+#   hatch run integ:test-render       # bundle generation + render (live submit + poll; needs AE + farm)
+[envs.integ]
+python = "3.11"
+# requirements-integ.txt holds the harness-only deps (image decoding for the output
+# layer). Kept out of requirements-testing.txt so the `default` env — unit tests and
+# lint in CI — does not install them.
+pre-install-commands = [
+  "pip install -r requirements-testing.txt",
+  "pip install -r requirements-integ.txt"
+]
+
+[envs.integ.env-vars]
+PYTHONIOENCODING = "utf-8"
+
+[envs.integ.scripts]
+test = "pytest --no-cov {args:test/integ} -vvv --numprocesses=1 --junit-xml=build/integ/results.xml"
+test-render = "pytest --no-cov {args:test/integ} -vvv --numprocesses=1 --render --junit-xml=build/integ/results.xml"
+# Lint scoped to test/integ, with a pinned black target-version, so the harness
+# gate does not depend on findings elsewhere in the repo.
+lint = [
+  "black --target-version py311 {args:test/integ}",
+  "ruff check --fix {args:test/integ}",
+]
+lint-check = [
+  "black --check --diff --target-version py311 {args:test/integ}",
+  "ruff check {args:test/integ}",
+]

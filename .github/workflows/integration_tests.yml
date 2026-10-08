@@ -1,0 +1,90 @@
+name: "Integration Tests"
+
+# Re-drive the real After Effects submitter to build an OpenJD bundle
+# (bundle-generation layer), then submit that bundle to Deadline Cloud and poll the
+# job to a terminal state (render layer).
+#
+# Runs on self-hosted runners that have After Effects installed and are signed in to
+# Adobe Creative Cloud (the AE license), plus the Deadline Cloud CLI configured with a
+# default test farm/queue. Fans out per AE release year.
+
+on:
+  push:
+    branches:
+      - mainline
+  workflow_dispatch:
+    inputs:
+      ae_versions:
+        description: 'JSON array of AE release years to test'
+        required: false
+        default: '["2025", "2026"]'
+        type: string
+
+# Every job declares its own permissions.
+permissions: {}
+
+jobs:
+  # Lint the harness itself. Not gated on the repository and not on a self-hosted
+  # runner: it needs no After Effects, Adobe licence or AWS credentials. It runs on
+  # this workflow's triggers (mainline pushes, manual dispatch).
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+
+      - name: Install hatch
+        run: pip install "hatch==1.15.1"
+
+      - name: Lint harness (black + ruff, scoped to test/integ)
+        run: hatch run integ:lint-check
+
+  # The AE jobs need self-hosted runners. Each is opt-in through a repository
+  # variable, so a repo without such a runner does not queue jobs for a day.
+  macos:
+    needs: lint
+    if: >-
+      github.repository == 'aws-deadline/deadline-cloud-for-after-effects' &&
+      vars.INTEG_MACOS_RUNNER == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        ae_version: ${{ fromJSON(github.event.inputs.ae_versions || '["2025", "2026"]') }}
+    uses: ./.github/workflows/integ_macos.yml
+    permissions:
+      id-token: write
+      contents: read
+    with:
+      ae_version: ${{ matrix.ae_version }}
+    secrets:
+      AWS_OIDC_ROLE_ARN: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
+  windows:
+    needs: lint
+    if: >-
+      github.repository == 'aws-deadline/deadline-cloud-for-after-effects' &&
+      vars.INTEG_WINDOWS_RUNNER == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        ae_version: ${{ fromJSON(github.event.inputs.ae_versions || '["2025", "2026"]') }}
+    uses: ./.github/workflows/integ_windows.yml
+    permissions:
+      id-token: write
+      contents: read
+    with:
+      ae_version: ${{ matrix.ae_version }}
+    secrets:
+      AWS_OIDC_ROLE_ARN: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}

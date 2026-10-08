@@ -1,0 +1,10 @@
+{
+  "id": "T19",
+  "name": "Image sequence import",
+  "aep_slug": "image_sequence_import",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Bundle asserts the whole PNG sequence appears in asset_references inputs (not just frame 1) and the emit step is an image output. render confirms the sequence uploads and the import comp output lands. The emit comp writes a TIFF sequence (AE ships no PNG Sequence output-module template -- RENDER_FINDINGS.md #11); the *imported* footage is still PNG, since that is pre-generated source material and unaffected. Until 2026-10-01 the emit comp rendered H.264 to a .png filename, so the emit half produced no sequence at all."
+}

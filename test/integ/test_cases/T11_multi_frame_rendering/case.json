@@ -1,0 +1,13 @@
+{
+  "id": "T11",
+  "name": "Multi-frame rendering (MFR)",
+  "aep_slug": "multi_frame_rendering",
+  "settings": {
+    "multiFrameRendering": true,
+    "maxCpuUsagePercentage": 50
+  },
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "maxCpuUsagePercentage is deliberately 50, not the submitter's default of 90: at 90 the asserted value is indistinguishable from the default, so the case proved nothing about the setting propagating. test_job_settings now checks MultiFrameRendering=ON and MaxCpuUsagePercentage=50 in the bundle."
+}

@@ -1,0 +1,10 @@
+{
+  "id": "T17",
+  "name": "Multi-comp submit",
+  "aep_slug": "multicomp",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "All 3 comps auto-selected. Bundle asserts 3 steps with per-comp parameter names (no collisions) under the OpenJD parameter max."
+}

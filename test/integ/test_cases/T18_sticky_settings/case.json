@@ -1,0 +1,10 @@
+{
+  "id": "T18",
+  "name": "Comp-level sticky settings",
+  "aep_slug": "sticky_settings",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Three comps, settings left empty so the driver does not override per-comp values. Currently asserts only the multi-comp bundle shape (as T17). Per-comp sticky settings are not asserted: render options are job-wide since #322."
+}

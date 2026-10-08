@@ -1,0 +1,19 @@
+{
+  "assetReferences": {
+    "inputs": {
+      "directories": [],
+      "filenames": [
+        "<ASSETS>/projects/ae<YEAR>/T20_missing_dependencies_ae<YEAR>_v1.0.0.aep",
+        "<ASSETS>/source_assets/audio/tone_48k_stereo_v1.0.0.wav",
+        "<ASSETS>/source_assets/images/still_ref_1080p_v1.0.0.png",
+        "<TEMP>/tempFonts/AmazonEmber-Regular.ttf"
+      ]
+    },
+    "outputs": {
+      "directories": [
+        "<HOME>/Desktop/aep_mac_test_assets/renders/ae<YEAR>/T20"
+      ]
+    },
+    "referencedPaths": []
+  }
+}

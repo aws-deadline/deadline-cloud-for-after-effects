@@ -1,0 +1,10 @@
+{
+  "id": "T09",
+  "name": "Deadline CLI error handling",
+  "aep_slug": "cli_error_handling",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": false,
+  "ae_run_timeout": 300,
+  "notes": "Negative test: the submit step must fail cleanly when the 'deadline' CLI is absent from PATH. That requires the harness to run the submit with a stripped PATH for this case only (not yet supported), so render is disabled for now; bundle generation still verifies the bundle builds despite the CLI absence."
+}

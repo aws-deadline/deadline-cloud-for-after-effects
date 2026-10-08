@@ -1,0 +1,10 @@
+{
+  "id": "T10",
+  "name": "Naming / special characters",
+  "aep_slug": "special_characters",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Both comps auto-selected (all QUEUED render queue items). Asserts the submitter's illegal-char sanitisation on step/output names."
+}

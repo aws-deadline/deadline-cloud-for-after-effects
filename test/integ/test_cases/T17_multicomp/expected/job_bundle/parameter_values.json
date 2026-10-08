@@ -1,0 +1,60 @@
+{
+  "parameterValues": [
+    {
+      "name": "deadline:targetTaskRunStatus",
+      "value": "READY"
+    },
+    {
+      "name": "deadline:maxFailedTasksCount",
+      "value": 20
+    },
+    {
+      "name": "deadline:maxRetriesPerTask",
+      "value": 5
+    },
+    {
+      "name": "deadline:priority",
+      "value": 50
+    },
+    {
+      "name": "ProjectFile",
+      "value": "<ASSETS>/projects/ae<YEAR>/T17_multicomp_ae<YEAR>_v1.0.0.aep"
+    },
+    {
+      "name": "MultiFrameRendering",
+      "value": "OFF"
+    },
+    {
+      "name": "MaxCpuUsagePercentage",
+      "value": 90
+    },
+    {
+      "name": "IgnoreMissingDependencies",
+      "value": "OFF"
+    },
+    {
+      "name": "_1_T17_comp_1_OutputDir",
+      "value": "<HOME>/Desktop/aep_mac_test_assets/renders/ae<YEAR>/T17"
+    },
+    {
+      "name": "_1_T17_comp_1_Frames",
+      "value": "0-119"
+    },
+    {
+      "name": "_2_T17_comp_2_OutputDir",
+      "value": "<HOME>/Desktop/aep_mac_test_assets/renders/ae<YEAR>/T17"
+    },
+    {
+      "name": "_2_T17_comp_2_Frames",
+      "value": "0-119"
+    },
+    {
+      "name": "_3_T17_comp_3_OutputDir",
+      "value": "<HOME>/Desktop/aep_mac_test_assets/renders/ae<YEAR>/T17"
+    },
+    {
+      "name": "_3_T17_comp_3_Frames",
+      "value": "0-119"
+    }
+  ]
+}

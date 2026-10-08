@@ -1,0 +1,19 @@
+{
+  "assetReferences": {
+    "inputs": {
+      "directories": [],
+      "filenames": [
+        "<ASSETS>/projects/ae<YEAR>/T21_get_user_fonts_ae<YEAR>_v1.0.0.aep",
+        "<ASSETS>/source_assets/video/plate_motion_1080p30_v1.0.0.mp4",
+        "<TEMP>/tempFonts/AmazonEmber-Regular.ttf",
+        "<TEMP>/tempFonts/Komet-Regular"
+      ]
+    },
+    "outputs": {
+      "directories": [
+        "<ASSETS>/renders/ae<YEAR>/T21"
+      ]
+    },
+    "referencedPaths": []
+  }
+}

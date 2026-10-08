@@ -1,0 +1,44 @@
+{
+  "parameterValues": [
+    {
+      "name": "deadline:targetTaskRunStatus",
+      "value": "READY"
+    },
+    {
+      "name": "deadline:maxFailedTasksCount",
+      "value": 20
+    },
+    {
+      "name": "deadline:maxRetriesPerTask",
+      "value": 5
+    },
+    {
+      "name": "deadline:priority",
+      "value": 50
+    },
+    {
+      "name": "ProjectFile",
+      "value": "<ASSETS>/projects/ae<YEAR>/T11_multi_frame_rendering_ae<YEAR>_v1.0.0.aep"
+    },
+    {
+      "name": "MultiFrameRendering",
+      "value": "ON"
+    },
+    {
+      "name": "MaxCpuUsagePercentage",
+      "value": 50
+    },
+    {
+      "name": "IgnoreMissingDependencies",
+      "value": "OFF"
+    },
+    {
+      "name": "_1_T11_multi_frame_OutputDir",
+      "value": "<HOME>/Desktop/aep_mac_test_assets/renders/ae<YEAR>/T11"
+    },
+    {
+      "name": "_1_T11_multi_frame_Frames",
+      "value": "0-149"
+    }
+  ]
+}

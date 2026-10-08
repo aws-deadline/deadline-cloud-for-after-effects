@@ -1,0 +1,10 @@
+{
+  "id": "T16",
+  "name": "Incompatible version warning",
+  "aep_slug": "incompatible_version_warning",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": false,
+  "ae_run_timeout": 300,
+  "notes": "Verifies the submitter shows the incompatible-version popup on first submit only, then falls back to the AE major conda version. Simulating an unsupported AE build isn't expressible in case.json yet (needs a driver hook to spoof app.version), so render is disabled; bundle generation confirms the fallback CondaPackages value."
+}

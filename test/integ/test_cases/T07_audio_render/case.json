@@ -1,0 +1,10 @@
+{
+  "id": "T07",
+  "name": "Audio rendering",
+  "aep_slug": "audio_render",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Audio-only output module. AIFF rather than the matrix's MP3: AE ships no MP3 output-module template and getSettings()'s Format key is read-only, so a script cannot select MP3 (RENDER_FINDINGS.md #11). AIFF exercises the same path the case is about -- Video Output off, Output Audio on. Until 2026-10-01 this comp actually rendered H.264 video to a file named .mp3, so no audio-only render was covered."
+}

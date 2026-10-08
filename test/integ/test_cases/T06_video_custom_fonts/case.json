@@ -1,0 +1,12 @@
+{
+  "id": "T06",
+  "name": "Video rendering + custom fonts",
+  "aep_slug": "video_custom_fonts",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "expect_alerts": [
+    "Missing fonts"
+  ]
+}

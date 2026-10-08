@@ -146,3 +146,12 @@ On Windows, either run the following command in a regular Powershell window for 
 ```bash
 hatch run test-installer
 ```
+### Integration tests
+
+These drive the installed submitter in a real After Effects. They need a licensed AE.
+```bash
+hatch run integ:test        # offline: bundle generation + settings
+hatch run integ:test-render # also renders on the default farm and checks outputs
+hatch run integ:lint-check  # harness lint
+```
+See [test/integ/README.md](test/integ/README.md).
