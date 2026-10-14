@@ -1,0 +1,8 @@
+# Dependencies used *only* by the integration tests under test/integ.
+#
+# Kept out of requirements-testing.txt, which the `default` hatch env (unit tests and
+# lint in CI) also installs. Neither file reaches the shipped submitter.
+
+# Shared Deadline Cloud DCC test helpers: `openjd check` bundle validation. The same
+# pin family the Nuke and Cinema 4D suites use. Pulls in openjd-cli.
+deadline-cloud-test-fixtures >= 0.18.20, < 0.19

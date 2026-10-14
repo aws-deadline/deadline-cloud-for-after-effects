@@ -27,3 +27,44 @@ test = "pytest --cov-config pyproject.toml {args:test/unit}"
 
 [envs.installer.scripts]
 build-installer = "python {root}/scripts/build_installer_cli.py --installer-source-path {root}/installer/DeadlineCloudForAfterEffectsSubmitter.xml {args:}"
+
+# Integration tests: re-drive the real submitter against After Effects, then submit
+# the produced bundle to Deadline Cloud and poll to a terminal state.
+#   hatch run integ:test              # bundle generation only (build bundle, assert offline)
+#   hatch run integ:test-render       # bundle generation + render (live submit + poll; needs AE + farm)
+[envs.integ]
+python = "3.11"
+# requirements-integ.txt holds the harness-only deps (openjd validation). Kept out of
+# requirements-testing.txt so the `default` env does not install them.
+pre-install-commands = [
+  "pip install -r requirements-testing.txt",
+  "pip install -r requirements-integ.txt"
+]
+
+[envs.integ.env-vars]
+PYTHONIOENCODING = "utf-8"
+
+[envs.integ.scripts]
+test = "pytest --no-cov {args:test/integ} -vvv --numprocesses=1 --junit-xml=build/integ/results.xml"
+test-render = "pytest --no-cov {args:test/integ} -vvv --numprocesses=1 --render --junit-xml=build/integ/results.xml"
+
+# Lint for the integration harness and its unit test, scoped so it does not depend on
+# findings elsewhere in the repo. Its own env, installing only black and ruff, so the
+# PR check in .github/workflows/integ_lint.yml needs no AE or farm dependencies.
+[envs.integ-lint]
+detached = true
+# Same pins as requirements-testing.txt.
+dependencies = [
+  "black == 26.*",
+  "ruff == 0.16.*",
+]
+
+[envs.integ-lint.scripts]
+lint = [
+  "black --target-version py311 {args:test/integ test/unit/test_integ_asset_hygiene.py}",
+  "ruff check --fix {args:test/integ test/unit/test_integ_asset_hygiene.py}",
+]
+lint-check = [
+  "black --check --diff --target-version py311 {args:test/integ test/unit/test_integ_asset_hygiene.py}",
+  "ruff check {args:test/integ test/unit/test_integ_asset_hygiene.py}",
+]
