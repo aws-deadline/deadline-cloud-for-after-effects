@@ -1,0 +1,10 @@
+{
+  "id": "T09",
+  "name": "Deadline CLI error handling",
+  "aep_slug": "cli_error_handling",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": false,
+  "ae_run_timeout": 300,
+  "notes": "Bundle only. Rendering with the deadline CLI absent from PATH needs harness support that does not exist yet."
+}

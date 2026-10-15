@@ -2,7 +2,7 @@
 """The committed integration-test projects must not carry machine identity.
 
 After Effects records the saving machine's name and home-directory paths (with the
-username) in each .aep, and these files are public. Harness drives scrub both
+username) in each .aep, and these files are public. The asset builder scrubs both
 (test/integ/harness/aep.py); this guard catches a project committed without that step.
 """
 

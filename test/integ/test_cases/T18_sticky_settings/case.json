@@ -1,0 +1,10 @@
+{
+  "id": "T18",
+  "name": "Comp-level sticky settings",
+  "aep_slug": "sticky_settings",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Three comps with settings left empty. Render options are job-wide since #322, so only the multi-comp shape is asserted."
+}

@@ -1,0 +1,10 @@
+{
+  "id": "T15",
+  "name": "Conda testing on the test farm",
+  "aep_slug": "conda_version",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "CondaPackages must be aftereffects=<major>; the render proves that conda environment installs and renders."
+}

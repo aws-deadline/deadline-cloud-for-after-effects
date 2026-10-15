@@ -1,0 +1,10 @@
+{
+  "id": "T19",
+  "name": "Image sequence import",
+  "aep_slug": "image_sequence_import",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Imports a PNG sequence (every frame must be an input) and emits a TIFF sequence."
+}

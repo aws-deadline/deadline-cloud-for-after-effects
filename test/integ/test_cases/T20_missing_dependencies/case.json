@@ -1,0 +1,12 @@
+{
+  "id": "T20",
+  "name": "Missing dependencies",
+  "aep_slug": "missing_dependencies",
+  "settings": {
+    "ignoreMissingDependencies": true
+  },
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "ignoreMissingDependencies on: the submitter records the missing file and the render continues."
+}
