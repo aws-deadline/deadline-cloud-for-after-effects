@@ -4,8 +4,8 @@
 The driver JSX (``scripts/DeadlineCloudAutoSubmit.jsx``) is installed into AE's
 ``Scripts/Startup`` folder. On launch it reads ``headless_submit_config.json``,
 ``eval``s the real submitter (UI stripped), overrides ``system.callSystem`` to block
-the GUI shell-out, calls ``SubmitSelection`` and writes a result JSON. We run in
-*bundle-only* mode (``submitAfterBundle: false``) — Python owns submission + polling.
+the GUI shell-out, calls ``SubmitSelection`` and writes a result JSON. The drive only
+builds the bundle; Python owns submission and polling.
 """
 
 from __future__ import annotations
@@ -86,8 +86,6 @@ def _write_config(project_file: Path, settings: dict[str, Any]) -> None:
         # Resolve the exact installed submitter here so the JSX doesn't have to
         # guess between DeadlineCloudSubmitter.jsx and DeadlineCloudSubmitter(User).jsx.
         "submitterPath": str(config.get_submitter_path()),
-        # Bundle-only: the JSX builds the bundle and stops. Python submits + polls.
-        "submitAfterBundle": False,
         "quitAfterSubmit": True,
         **settings,
     }

@@ -1,0 +1,23 @@
+{
+  "assetReferences": {
+    "inputs": {
+      "directories": [],
+      "filenames": [
+        "<ASSETS>/projects/ae<YEAR>/T17_multicomp_ae<YEAR>_v1.0.0.aep",
+        "<TEMP>/tempFonts/Lato-Regular.ttf",
+        "<ASSETS>/projects/ae<YEAR>/T17_multicomp_ae<YEAR>_v1.0.0.aep",
+        "<TEMP>/tempFonts/Lato-Regular.ttf",
+        "<ASSETS>/projects/ae<YEAR>/T17_multicomp_ae<YEAR>_v1.0.0.aep",
+        "<TEMP>/tempFonts/Lato-Regular.ttf"
+      ]
+    },
+    "outputs": {
+      "directories": [
+        "<RENDERS>/ae<YEAR>/T17",
+        "<RENDERS>/ae<YEAR>/T17",
+        "<RENDERS>/ae<YEAR>/T17"
+      ]
+    },
+    "referencedPaths": []
+  }
+}

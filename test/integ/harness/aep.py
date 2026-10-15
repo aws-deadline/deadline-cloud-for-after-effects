@@ -7,8 +7,9 @@ AE records two things about the saving machine in each project:
 * absolute paths, e.g. an output folder ``"fullpath":"/Users/<user>/..."``, which
   carry the local username.
 
-The projects are committed to a public repository and are re-saved by every harness
-drive, so both would leak on any careless commit. :func:`scrub_project` replaces the
+The projects are committed to a public repository and are saved by the asset
+builder (``aep_test_assets/scripts/run_build.py``), which scrubs them. Harness drives
+open a copy under ``build/``, never the committed files. :func:`scrub_project` replaces the
 host name and the username segment of home-directory paths with placeholders of the
 same length — the project is a RIFX file whose chunk sizes must not change.
 
@@ -35,6 +36,11 @@ _HOME_PATH_RE = re.compile(
     + rb"(?:Users|home)"
     + _SEP
     + rb')([^"/\\]+)'
+)
+# The same paths stored raw (unescaped) in binary fields, e.g. AE's project-log
+# folder "C:\Users\<u>\Documents\...". Group 2 is the username.
+_RAW_HOME_PATH_RE = re.compile(
+    rb"((?:[A-Za-z]:)?[\\/](?:Users|home)[\\/])([^\"/\\\x00-\x1f]+)"
 )
 
 
@@ -66,6 +72,9 @@ def scrub_project(path: Path) -> bool:
         lambda m: m.group(1) + m.group(2) + _fill(USER_PLACEHOLDER, len(m.group(3))),
         scrubbed,
     )
+    scrubbed = _RAW_HOME_PATH_RE.sub(
+        lambda m: m.group(1) + _fill(USER_PLACEHOLDER, len(m.group(2))), scrubbed
+    )
     if scrubbed == data:
         return False
     path.write_bytes(scrubbed)
@@ -84,4 +93,7 @@ def server_names(path: Path) -> list[bytes]:
 
 def home_usernames(path: Path) -> list[bytes]:
     """The username segment of every home-directory path recorded in one .aep."""
-    return [m.group(3) for m in _HOME_PATH_RE.finditer(path.read_bytes())]
+    data = path.read_bytes()
+    return [m.group(3) for m in _HOME_PATH_RE.finditer(data)] + [
+        m.group(2) for m in _RAW_HOME_PATH_RE.finditer(data)
+    ]

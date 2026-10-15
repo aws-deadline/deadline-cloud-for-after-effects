@@ -25,6 +25,53 @@ _OUTPUT_ARG_RE = re.compile(
 # The run length is the zero-padding width.
 _SEQUENCE_RE = re.compile(r"\[(#+)\]")
 
+# The submitter's own defaults, from src/utils/Utils.jsx. A case that leaves a
+# setting unset must produce these, so the same contract checks both directions:
+# a setting that was applied, and one that was left alone.
+DEFAULT_TASK_RUN_TIMEOUT_DAYS = 2
+DEFAULT_TASK_RUN_TIMEOUT_HOURS = 0
+DEFAULT_TASK_RUN_TIMEOUT_MINUTES = 0
+DEFAULT_FRAMES_PER_TASK = 10
+DEFAULT_MULTI_FRAME_RENDERING = False
+DEFAULT_MAX_CPU_USAGE_PERCENTAGE = 90
+DEFAULT_IGNORE_MISSING_DEPENDENCIES = False
+
+
+def expected_job_parameters(settings: dict[str, Any]) -> dict[str, Any]:
+    """The job parameter values a case's ``settings`` must produce in the bundle.
+
+    Mirrors ``SubmitBundle.jsx``: these three settings are job-wide (since the
+    render-options move in #322) and contribute one parameter value each rather
+    than one per step. Booleans become the strings ``"ON"``/``"OFF"``.
+
+    ``ChunkSize`` is deliberately absent: the submitter only declares it when the
+    selection contains an image sequence, so it is asserted separately against
+    :meth:`Bundle.has_chunking` rather than unconditionally expected here.
+    """
+    mfr = settings.get("multiFrameRendering", DEFAULT_MULTI_FRAME_RENDERING)
+    imd = settings.get("ignoreMissingDependencies", DEFAULT_IGNORE_MISSING_DEPENDENCIES)
+    return {
+        "MultiFrameRendering": "ON" if mfr is True else "OFF",
+        "MaxCpuUsagePercentage": settings.get(
+            "maxCpuUsagePercentage", DEFAULT_MAX_CPU_USAGE_PERCENTAGE
+        ),
+        "IgnoreMissingDependencies": "ON" if imd is True else "OFF",
+    }
+
+
+def expected_task_timeout_s(settings: dict[str, Any]) -> int:
+    """Seconds every step's ``onRun.timeout`` must carry for these settings.
+
+    The submitter composes the timeout from three separate day/hour/minute fields,
+    each defaulting independently — so a case that sets only ``taskRunTimeoutMinutes``
+    still inherits the 2-day default for days unless it overrides that too. Spelling
+    the arithmetic out here is what makes a partially-specified case assertable.
+    """
+    days = settings.get("taskRunTimeoutDays", DEFAULT_TASK_RUN_TIMEOUT_DAYS)
+    hours = settings.get("taskRunTimeoutHours", DEFAULT_TASK_RUN_TIMEOUT_HOURS)
+    minutes = settings.get("taskRunTimeoutMinutes", DEFAULT_TASK_RUN_TIMEOUT_MINUTES)
+    return int(days) * 86400 + int(hours) * 3600 + int(minutes) * 60
+
 
 def specifies_task_timeout(settings: dict[str, Any]) -> bool:
     """True if the case pins any component of the task-run timeout."""
@@ -93,6 +140,22 @@ class StepOutput:
             + str(frame).zfill(len(m.group(1)))
             + self.leaf[m.end() :]
         )
+
+    def expected_filenames(self) -> list[str]:
+        """Every leaf this step should have written, in frame order.
+
+        A single file for a movie output; one per frame in the range for a sequence.
+        This is the completeness oracle the output layer checks the farm's listing
+        against — it is derived from the bundle, so it stays correct when a case's
+        frame range or output module changes.
+        """
+        if not self.is_sequence:
+            return [self.leaf]
+        rng = self.frame_range()
+        if rng is None:
+            return []
+        first, last = rng
+        return [self.frame_filename(f) for f in range(first, last + 1)]
 
 
 def _load(bundle_dir: Path, stem: str) -> Any | None:
@@ -168,6 +231,11 @@ class Bundle:
         inputs = self._refs().get("inputs") or {}
         return [f for f in (inputs.get("filenames") or []) if f]
 
+    def output_directories(self) -> list[str]:
+        """Output directory references (where the render is written)."""
+        outputs = self._refs().get("outputs") or {}
+        return [d for d in (outputs.get("directories") or []) if d]
+
     def step_run_actions(self) -> list[dict[str, Any]]:
         """The ``script.actions.onRun`` mapping of every step (empty dict if absent)."""
         actions = []
@@ -175,6 +243,69 @@ class Bundle:
             on_run = ((step.get("script") or {}).get("actions") or {}).get("onRun")
             actions.append(on_run if isinstance(on_run, dict) else {})
         return actions
+
+    def step_run_timeouts(self) -> list[int | None]:
+        """``script.actions.onRun.timeout`` (seconds) per step.
+
+        This is where the submitter lands the UI's task-run timeout, so it is the
+        only observable proof that a case's ``taskRunTimeout*`` settings took
+        effect. Note the harness's own :func:`deadline_client.apply_job_metadata`
+        *overwrites* this before submitting — so assert it before that patch runs.
+        """
+        return [a.get("timeout") for a in self.step_run_actions()]
+
+    def parameter_definition_names(self) -> set[str]:
+        """Names of the job parameters the template *declares*.
+
+        Distinct from :meth:`param`, which reads the supplied *values*. Some
+        parameters are declared conditionally — ``ChunkSize`` only when the
+        selection contains an image sequence — so the declaration itself carries
+        information about what the submitter decided the submission was.
+        """
+        defs = self.template.get("parameterDefinitions") or []
+        return {d.get("name") for d in defs if isinstance(d, dict) and d.get("name")}
+
+    def has_chunking(self) -> bool:
+        """True if the submitter emitted image-sequence frame chunking.
+
+        ``ChunkSize`` (definition *and* value) is only produced when the selection
+        contains an image-sequence output module. Video outputs must render in a
+        single task, so ``framesPerTask`` is silently inert for them — the
+        submitter's own UI says "img seq only ... Has no effect on video output".
+        """
+        return "ChunkSize" in self.parameter_definition_names()
+
+    def step_task_ranges(self) -> list[str]:
+        """Every step's task-parameter ``range`` expression.
+
+        For a chunked step this is ``"{{Param.<step>_Frames}}:{{Param.ChunkSize}}"``
+        — the frame range split by the chunk size, which is what actually fans the
+        step out into multiple tasks. Asserting ``ChunkSize``'s *value* alone is not
+        enough: a submitter that declared the parameter but left it out of the range
+        would emit one task for the whole range and still satisfy that check.
+        """
+        ranges = []
+        for step in self.steps:
+            space = step.get("parameterSpace") or {}
+            for td in space.get("taskParameterDefinitions") or []:
+                rng = td.get("range")
+                if isinstance(rng, str):
+                    ranges.append(rng)
+        return ranges
+
+    def output_filenames(self) -> list[str]:
+        """Rendered output paths as the template's step args name them.
+
+        Each step's ``onRun.args`` carries the output path for its comp, built from
+        a ``{{Param.<step>_OutputDir}}`` reference plus the filename the render
+        queue item writes.
+        """
+        outs = []
+        for on_run in self.step_run_actions():
+            for arg in on_run.get("args") or []:
+                if "_OutputDir}}" in str(arg):
+                    outs.append(str(arg))
+        return outs
 
     def step_outputs(self) -> list[StepOutput]:
         """Each step's output resolved against this bundle's parameter values.
@@ -208,3 +339,10 @@ class Bundle:
                     )
                 )
         return resolved
+
+    def as_text(self) -> str:
+        """All three bundle docs concatenated — for substring assertions."""
+        return "\n".join(
+            json.dumps(d, indent=2, default=str)
+            for d in (self.template, self.parameter_values, self.asset_references)
+        )

@@ -30,12 +30,13 @@ build-installer = "python {root}/scripts/build_installer_cli.py --installer-sour
 
 # Integration tests: re-drive the real submitter against After Effects, then submit
 # the produced bundle to Deadline Cloud and poll to a terminal state.
-#   hatch run integ:test              # bundle generation only (build bundle, assert offline)
-#   hatch run integ:test-render       # bundle generation + render (live submit + poll; needs AE + farm)
+#   hatch run integ:test              # offline layers: bundle, golden, settings
+#   hatch run integ:test-render       # also render + outputs (live submit + poll; needs AE + farm)
 [envs.integ]
 python = "3.11"
-# requirements-integ.txt holds the harness-only deps (openjd validation). Kept out of
-# requirements-testing.txt so the `default` env does not install them.
+# requirements-integ.txt holds the harness-only deps (openjd validation, image
+# decoding). Kept out of requirements-testing.txt so the `default` env does not
+# install them.
 pre-install-commands = [
   "pip install -r requirements-testing.txt",
   "pip install -r requirements-integ.txt"

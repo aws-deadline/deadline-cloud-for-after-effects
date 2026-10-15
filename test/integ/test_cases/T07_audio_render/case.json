@@ -1,0 +1,10 @@
+{
+  "id": "T07",
+  "name": "Audio rendering",
+  "aep_slug": "audio_render",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Audio-only output (AIFF). AE ships no MP3 output-module template and a script cannot set the format (KNOWN_ISSUES.md #5)."
+}
