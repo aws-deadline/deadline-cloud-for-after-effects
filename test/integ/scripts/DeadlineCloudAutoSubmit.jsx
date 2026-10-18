@@ -304,8 +304,14 @@
 
         var frameInfo = "";
         try {
-            var startFrame = Number(Math.floor((rqi.comp.displayStartTime + rqi.timeSpanStart) * rqi.comp.frameRate)) + app.project.displayStartFrame;
-            var numFrames = Number(Math.ceil(rqi.timeSpanDuration * rqi.comp.frameRate));
+            // Same formula as the submitter's calculateFrameRange, including its snap to
+            // the nearest whole frame within floating-point error.
+            var rawStart = (rqi.comp.displayStartTime + rqi.timeSpanStart) * rqi.comp.frameRate;
+            var rawCount = rqi.timeSpanDuration * rqi.comp.frameRate;
+            if (Math.abs(rawStart - Math.round(rawStart)) < 1e-6) rawStart = Math.round(rawStart);
+            if (Math.abs(rawCount - Math.round(rawCount)) < 1e-6) rawCount = Math.round(rawCount);
+            var startFrame = Number(Math.floor(rawStart)) + app.project.displayStartFrame;
+            var numFrames = Number(Math.ceil(rawCount));
             var endFrame = startFrame + numFrames - 1;
             frameInfo = startFrame + "-" + endFrame;
         } catch (e) {
