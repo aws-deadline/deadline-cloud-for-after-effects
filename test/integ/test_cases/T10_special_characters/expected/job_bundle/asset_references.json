@@ -4,11 +4,11 @@
       "directories": [],
       "filenames": [
         "<ASSETS>/projects/ae<YEAR>/T10_special_characters_ae<YEAR>_v1.0.0.aep",
-        "<ASSETS>/source_assets/special_characters/plate_ñ=+-_v1.0.0.png",
-        "<TEMP>/tempFonts/Lato-Regular.ttf",
         "<ASSETS>/projects/ae<YEAR>/T10_special_characters_ae<YEAR>_v1.0.0.aep",
         "<ASSETS>/source_assets/special_characters/plate_ñ=+-_v1.0.0.png",
-        "<TEMP>/tempFonts/Lato-Regular.ttf"
+        "<ASSETS>/source_assets/special_characters/plate_ñ=+-_v1.0.0.png",
+        "<TEMP>/tempFonts/Lato-Regular",
+        "<TEMP>/tempFonts/Lato-Regular"
       ]
     },
     "outputs": {

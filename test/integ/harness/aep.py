@@ -38,10 +38,12 @@ _HOME_PATH_RE = re.compile(
     + rb')([^"/\\]+)'
 )
 # The same paths stored raw (unescaped) in binary fields, e.g. AE's project-log
-# folder "C:\Users\<u>\Documents\...". Group 2 is the username.
-_RAW_HOME_PATH_RE = re.compile(
-    rb"((?:[A-Za-z]:)?[\\/](?:Users|home)[\\/])([^\"/\\\x00-\x1f]+)"
-)
+# folder "C:\Users\<u>\Documents\...". Raw fields have no closing quote, so the
+# username's end is only known when the path continues with a separator, NUL or
+# quote. Used to *detect* leftovers; scrubbing raw paths replaces known usernames
+# only (see _scrub_raw_usernames), so it can never run into the next RIFX chunk.
+_RAW_HOME_PREFIX = rb"((?:[A-Za-z]:)?[\\/](?:[Uu]sers|home)[\\/])"
+_RAW_HOME_PATH_RE = re.compile(_RAW_HOME_PREFIX + rb'([^"/\\\x00-\x1f]+)(?=[\\/\x00"])')
 
 
 def _fill(placeholder: str, length: int) -> bytes:
@@ -72,13 +74,32 @@ def scrub_project(path: Path) -> bool:
         lambda m: m.group(1) + m.group(2) + _fill(USER_PLACEHOLDER, len(m.group(3))),
         scrubbed,
     )
-    scrubbed = _RAW_HOME_PATH_RE.sub(
-        lambda m: m.group(1) + _fill(USER_PLACEHOLDER, len(m.group(2))), scrubbed
-    )
+    scrubbed = _scrub_raw_usernames(scrubbed, _known_usernames(data))
     if scrubbed == data:
         return False
     path.write_bytes(scrubbed)
     return True
+
+
+def _known_usernames(data: bytes) -> set[bytes]:
+    """This machine's user plus every username the project's JSON paths name."""
+    import getpass
+
+    names = {m.group(3) for m in _HOME_PATH_RE.finditer(data)}
+    try:
+        names.add(getpass.getuser().encode("utf-8"))
+    except (OSError, KeyError):
+        pass
+    return {n for n in names if n and not is_user_placeholder(n)}
+
+
+def _scrub_raw_usernames(data: bytes, usernames: set[bytes]) -> bytes:
+    """Replace ``usernames`` after a raw home-directory prefix, byte for byte."""
+    for name in sorted(usernames, key=len, reverse=True):
+        pattern = re.compile(_RAW_HOME_PREFIX + re.escape(name))
+        placeholder = _fill(USER_PLACEHOLDER, len(name))
+        data = pattern.sub(lambda m, p=placeholder: m.group(1) + p, data)
+    return data
 
 
 def scrub_tree(root: Path) -> int:

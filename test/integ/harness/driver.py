@@ -37,6 +37,10 @@ class SubmitterRun:
     timed_out: bool = False
     elapsed_s: float = 0.0
     raw: dict[str, Any] = field(default_factory=dict)
+    # The submitter's own temp folder (dcUtil.getTempFolder()). It differs per OS
+    # (%TEMP% on Windows, ~/.deadline/DeadlineCloudAETemp on macOS), and the bundle
+    # and collected fonts live under it.
+    temp_folder: Path | None = None
 
     @property
     def ok(self) -> bool:
@@ -266,6 +270,7 @@ def _drive_once(
         timed_out=not completed,
         elapsed_s=round(elapsed, 1),
         raw=raw,
+        temp_folder=Path(raw["tempFolder"]) if raw.get("tempFolder") else None,
     )
 
 

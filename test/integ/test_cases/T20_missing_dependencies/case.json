@@ -8,5 +8,5 @@
   "expect": "SUCCEEDED",
   "render": true,
   "ae_run_timeout": 300,
-  "notes": "ignoreMissingDependencies on: the submitter records the missing file and the render continues."
+  "notes": "Partial: checks that ignoreMissingDependencies reaches the bundle. Nothing is missing yet; removing a file from the run copy before the drive is a follow-up."
 }

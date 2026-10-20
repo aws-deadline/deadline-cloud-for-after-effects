@@ -26,10 +26,16 @@ try {
     if (rootEnv) { ROOT = String(rootEnv).replace(/\\/g, "/").replace(/\/+$/, ""); }
 } catch (e) {}
 // run_build.py also writes its settings to a file, because on macOS AE is started
-// with `open -a`, which does not pass the caller's environment through.
+// with `open -a`, which does not pass the caller's environment through. It lives in
+// ~/.deadline, beside the harness driver's config: Folder.temp and Python's temp dir
+// are different folders on macOS. The config names the completion marker's path.
 var BUILD_CFG = {};
+var BUILD_CFG_PATH = "~/.deadline/ae_build_projects.config.json";
+if ($.os.indexOf("Windows") !== -1) {
+    BUILD_CFG_PATH = $.getenv("USERPROFILE") + "\\.deadline\\ae_build_projects.config.json";
+}
 try {
-    var cfgFile = new File(Folder.temp.fsName + "/ae_build_projects.config.json");
+    var cfgFile = new File(BUILD_CFG_PATH);
     if (cfgFile.exists) {
         cfgFile.open("r");
         BUILD_CFG = eval("(" + cfgFile.read() + ")") || {};
@@ -418,7 +424,7 @@ function buildTimeout() {
     LOG.push("OK  " + f);
 }
 
-// Multiple comps in one project (T17 multicomp, T18 sticky settings).
+// Multiple comps in one project (T17).
 function buildMultiComp(testId, slug, testName, descLines) {
     startProject();
     var colors = [[0.10,0.14,0.28],[0.14,0.10,0.24],[0.10,0.20,0.18]];
@@ -537,25 +543,31 @@ function buildFrameNumbers() {
     LOG.push("OK  " + f);
 }
 
-// Output names (T23): output file names AE accepts but that are not plain ASCII
-// with five-digit padding. The bundle must name the same files AE would write.
-function buildOutputNames() {
-    var testId = "T23";
+// One comp queued to one output file name, for the output-name cases.
+function buildSingleOutput(testId, slug, compName, spec, leaf, testName) {
     startProject();
-    var specs = [
-        ["T23 padding_4", OM_SEQUENCE, testId + "_padding_" + AEV + "_[####].tif"],
-        ["T23 braces", OM_H264, testId + "_{{braces}}_" + AEV + ".mp4"]
-    ];
-    for (var i = 0; i < specs.length; i++) {
-        var comp = app.project.items.addComp(specs[i][0], W, H, PAR, 1, FPS);
-        addBackground(comp, [0.14, 0.08, 0.08]);
-        addInfoText(comp, bannerLines(testId, "Output Names", ["output: " + specs[i][2]]),
-            FONT_INSTALLED, 50, [1,1,1], 120, 300);
-        comp.openInViewer();
-        queueRender(comp, testId, specs[i][1], specs[i][2]);
-    }
-    var f = saveProject(testId + "_output_names_" + AEV + "_v" + ASSET_VERSION + ".aep");
+    var comp = app.project.items.addComp(compName, W, H, PAR, 1, FPS);
+    addBackground(comp, [0.14, 0.08, 0.08]);
+    addInfoText(comp, bannerLines(testId, testName, ["output: " + leaf]),
+        FONT_INSTALLED, 50, [1,1,1], 120, 300);
+    comp.openInViewer();
+    queueRender(comp, testId, spec, leaf);
+    var f = saveProject(testId + "_" + slug + "_" + AEV + "_v" + ASSET_VERSION + ".aep");
     LOG.push("OK  " + f);
+}
+
+// Output names (T23): a sequence with four-digit padding. The bundle must name the
+// files AE would write.
+function buildOutputNames() {
+    buildSingleOutput("T23", "output_names", "T23 padding_4", OM_SEQUENCE,
+        "T23_padding_" + AEV + "_[####].tif", "Output Names");
+}
+
+// Output braces (T24): "{{" in the output name. The submitter must refuse it, after
+// it has started writing the bundle, so the drive must report a partial bundle.
+function buildOutputBraces() {
+    buildSingleOutput("T24", "output_braces", "T24 braces", OM_H264,
+        "T24_{{braces}}_" + AEV + ".mp4", "Output Name With Braces");
 }
 
 // ---------------------------------------------------------------------------
@@ -578,21 +590,16 @@ var BUILDS = [
     ["T10", buildSpecialChars],
     ["T11", buildMFR],
     ["T12", buildTimeout],
-    ["T13", function () { buildBasic("T13", "env_variable", "AE Env Variable Used Correctly",
-        ["host config points AE env var to custom location"]); }],
-    ["T15", function () { buildBasic("T15", "conda_version", "Conda Version",
-        ["submit to conda AE version; verify version in task logs"]); }],
     ["T16", function () { buildBasic("T16", "incompatible_version_warning", "Incompatible Version Warning",
         ["unsupported AE build -> popup on first submit only"]); }],
     ["T17", function () { buildMultiComp("T17", "multicomp", "Multi-Comp Submit",
         ["shift/ctrl-select multiple comps and submit together"]); }],
-    ["T18", function () { buildMultiComp("T18", "sticky_settings", "Comp-level Sticky Settings",
-        ["set per-comp MFR/frames-per-task; switch comps; verify persistence"]); }],
     ["T19", buildImageSequenceImport],
     ["T20", buildMissingDeps],
     ["T21", function () { buildFonts("T21", "get_user_fonts", "Get User Fonts Python Fallback", false); }],
     ["T22", buildFrameNumbers],
-    ["T23", buildOutputNames]
+    ["T23", buildOutputNames],
+    ["T24", buildOutputBraces]
 ];
 
 var only = null;
@@ -645,7 +652,7 @@ logFile.close();
 
 // Completion marker, so a headless runner can tell "finished" from "still
 // starting up" without watching the log file (see scripts/run_build.py).
-var doneFile = new File(Folder.temp.fsName + "/ae_build_projects.done");
+var doneFile = new File(BUILD_CFG.done || (Folder.temp.fsName + "/ae_build_projects.done"));
 doneFile.open("w"); doneFile.write(LOG.join("\n")); doneFile.close();
 
 }

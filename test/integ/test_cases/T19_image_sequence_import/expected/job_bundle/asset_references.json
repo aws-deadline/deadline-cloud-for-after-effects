@@ -4,7 +4,6 @@
       "directories": [],
       "filenames": [
         "<ASSETS>/projects/ae<YEAR>/T19_image_sequence_import_ae<YEAR>_v1.0.0.aep",
-        "<TEMP>/tempFonts/Lato-Regular.ttf",
         "<ASSETS>/projects/ae<YEAR>/T19_image_sequence_import_ae<YEAR>_v1.0.0.aep",
         "<ASSETS>/source_assets/image_sequences/seq_1080p_v1.0.0/seq_v1.0.0_0001.png",
         "<ASSETS>/source_assets/image_sequences/seq_1080p_v1.0.0/seq_v1.0.0_0002.png",
@@ -66,7 +65,8 @@
         "<ASSETS>/source_assets/image_sequences/seq_1080p_v1.0.0/seq_v1.0.0_0058.png",
         "<ASSETS>/source_assets/image_sequences/seq_1080p_v1.0.0/seq_v1.0.0_0059.png",
         "<ASSETS>/source_assets/image_sequences/seq_1080p_v1.0.0/seq_v1.0.0_0060.png",
-        "<TEMP>/tempFonts/Lato-Regular.ttf"
+        "<TEMP>/tempFonts/Lato-Regular",
+        "<TEMP>/tempFonts/Lato-Regular"
       ]
     },
     "outputs": {

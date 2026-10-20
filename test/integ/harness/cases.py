@@ -17,7 +17,8 @@ no Python change needed. Schema::
       "expect_alerts": ["Missing fonts"], # optional; submitter warnings this case expects
       "ae_run_timeout": 300,            # optional; per-drive budget in seconds
       "expect_frames": ["1010-1033"],   # optional; per-step AE frame ranges, authored by hand
-      "frame_code": false               # optional; frames carry a pixel-encoded frame number
+      "frame_code": false,              # optional; frames carry a pixel-encoded frame number
+      "expect_refusal": "..."           # optional; the submitter must refuse, with this alert
     }
 
 ``settings`` are applied by the driver JSX before the submitter builds the bundle.
@@ -57,21 +58,6 @@ JOB_MAX_RETRIES = int(os.environ.get("AE_JOB_MAX_RETRIES", "3"))
 # Cases skipped entirely (id -> reason shown in the pytest skip message).
 SKIP_CASES: dict[str, str] = {}
 
-# Known submitter defects a case exposes (id -> reason). The case's checks against
-# what was authored in AE (frame ranges, output names) become a strict xfail limited
-# to those checks, so any other failure still fails, and the suite goes red once the
-# defect is fixed so the entry gets removed. See KNOWN_ISSUES.md #7 and #8.
-KNOWN_DEFECTS: dict[str, str] = {
-    "T22": (
-        "submitter floors a fractional frame start: a comp starting at 1001 with its "
-        "work area at 1010 is submitted as 1009-1032"
-    ),
-    "T23": (
-        "submitter uses the URI-encoded output file name: '[####]' becomes "
-        "'%5B####%5D' and '{{' becomes '%7B%7B'"
-    ),
-}
-
 
 @dataclass(frozen=True)
 class Case:
@@ -103,6 +89,9 @@ class Case:
     # The comps burn their frame number into the pixels (addFrameCode in
     # build_test_projects.jsx), so the output layer can check each file's content.
     frame_code: bool = False
+    # The submitter must refuse this case with an alert containing this text. Known
+    # defects in the authored-in-AE checks live in known_defects.py.
+    expect_refusal: str | None = None
 
     @property
     def slug(self) -> str:
@@ -128,6 +117,7 @@ def _load_case(case_dir: Path) -> Case:
         expect_alerts=data.get("expect_alerts", []),
         expect_frames=data.get("expect_frames", []),
         frame_code=data.get("frame_code", False),
+        expect_refusal=data.get("expect_refusal"),
     )
 
 

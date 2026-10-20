@@ -25,7 +25,6 @@ import json
 import os
 import shutil
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -38,10 +37,12 @@ sys.path.insert(0, str(_INTEG))
 from harness import ae_launcher, aep, config
 
 JSX = _SCRIPTS / "build_test_projects.jsx"
-MARKER = Path(tempfile.gettempdir()) / "ae_build_projects.done"
 # Settings handed to the JSX. A file, because on macOS AE is launched with `open -a`,
-# which does not pass this process's environment through.
-BUILD_CONFIG = Path(tempfile.gettempdir()) / "ae_build_projects.config.json"
+# which does not pass this process's environment through. Beside the driver's config
+# in ~/.deadline: AE's Folder.temp and Python's temp dir differ on macOS. The config
+# also tells the JSX where to write the completion marker.
+BUILD_CONFIG = config.get_config_path().with_name("ae_build_projects.config.json")
+MARKER = config.get_config_path().with_name("ae_build_projects.done")
 LAUNCH_TIMEOUT_S = int(os.environ.get("AE_BUILD_TIMEOUT", "900"))
 
 
@@ -58,7 +59,10 @@ def main(argv: list[str]) -> int:
         print("ERROR: After Effects not found (set AE_VERSION / AE_EXECUTABLE)")
         return 2
 
-    BUILD_CONFIG.write_text(json.dumps({"root": root, "only": only}))
+    BUILD_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+    BUILD_CONFIG.write_text(
+        json.dumps({"root": root, "only": only, "done": str(MARKER)})
+    )
     if MARKER.exists():
         MARKER.unlink()
 

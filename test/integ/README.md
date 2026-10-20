@@ -12,20 +12,25 @@ One cached AE drive (~30 s) per case feeds every layer.
 
 | Test | Proves | Runs |
 |---|---|---|
-| `test_bundle_generation` | The bundle passes `openjd check`; one step per comp; frame ranges match the comps (and `expect_frames`); output names match AE's; conda and asset references are right; no unexpected submitter alerts. | always |
-| `test_bundle_matches_golden` | The bundle matches `test_cases/<case>/expected/job_bundle/` after normalization. | always |
+| `test_bundle_generation` | The bundle passes `openjd check`; one step per comp; frame ranges match the comps (and `expect_frames`); output names match AE's; conda and asset references are right; no unexpected submitter alerts. A case with `expect_refusal` must be refused instead. | always |
+| `test_bundle_matches_golden` | The bundle matches `test_cases/<case>/expected/job_bundle/` after normalization, on any host. | always |
 | `test_job_settings` | Each `settings` value reached the bundle; unset settings kept the submitter's defaults. | always |
 | `test_render` | The job reaches the expected terminal state on the farm. | `--render` |
 | `test_render_outputs` | Every expected output file exists; sampled frames decode, differ, and (with `frame_code`) carry their own frame number; the tasks cover `expect_frames`. | `--render` |
 
 ## Cases
 
-18 cases, T05–T23. What each covers, its settings, expectations, steps and outputs,
+16 cases, T05–T24. What each covers, its settings, expectations, steps and outputs,
 and which layers run for it: [`test_cases/README.md`](test_cases/README.md).
 
-A case in `cases.KNOWN_DEFECTS` runs as a strict xfail limited to its checks against
-what was authored in AE (frames, output names): any other failure still fails, and a
-fix turns the suite red until the entry is removed.
+Some checks compare the job with what was authored in AE (frames, output names,
+refusals), not with the submitter's own formula. A submitter defect they expose is
+registered in `harness/known_defects.py` for one case, one check and the comps it
+affects. Only that mismatch becomes an xfail. Any other mismatch fails, and so does a
+registered comp that starts matching, so a fix forces the entry's removal.
+
+Static checks on the cases (every case documented, known defects name real cases)
+are unit tests in `test/unit/test_integ_*.py`, so they run in CI without AE.
 
 ## How it works
 
@@ -57,8 +62,11 @@ The submitter UI is stubbed, so the Submit button, docking and dialogs are not t
 ## Prerequisites
 
 - After Effects 2025 or 2026, signed in to Creative Cloud.
-- Fonts: [Lato](https://fonts.google.com/specimen/Lato) (`Lato-Regular`, SIL OFL)
-  installed, and Komet activated from Adobe Fonts.
+- Fonts: Lato Regular 2.015 (`Lato-Regular`, SIL OFL) installed, and Komet activated
+  from Adobe Fonts. The projects were built with
+  [`ofl/lato/Lato-Regular.ttf` at google/fonts@5d3b761](https://github.com/google/fonts/blob/5d3b76120a319730fda218cc7410174a462b32cb/ofl/lato/Lato-Regular.ttf)
+  (sha256 `d636e468…f185b251`). Other Lato builds share the PostScript name but
+  render differently.
 - In AE: *Preferences (macOS: Settings) > Scripting & Expressions > Allow Scripts to
   Write Files and Access Network* on.
 - The submitter installed in AE's user or system **ScriptUI Panels** folder:
@@ -127,7 +135,7 @@ for failing cases (`--keep-outputs` keeps all).
 
 1. Add a builder to `aep_test_assets/scripts/build_test_projects.jsx` and rebuild only
    that id for each AE year:
-   `AE_VERSION=2025 hatch run integ:python test/integ/aep_test_assets/scripts/run_build.py T24`.
+   `AE_VERSION=2025 hatch run integ:python test/integ/aep_test_assets/scripts/run_build.py T25`.
 2. Add `test_cases/<id>_<slug>/case.json`:
 
    ```json
@@ -143,8 +151,8 @@ for failing cases (`--keep-outputs` keeps all).
 
    `settings` are applied by the driver JSX. `expect` is the terminal job status.
    Optional: `expect_failure_message`, `expect_alerts`, `max_retries`, `ae_run_timeout`,
-   `expect_frames`, `frame_code`
-   (see `harness/cases.py`).
+   `expect_frames`, `frame_code`, `expect_refusal` (see `harness/cases.py`).
+   A case must check something no other case does.
 3. Write its golden with `AE_UPDATE_GOLDENS=1 hatch run integ:test -k <id>`, and
    review it.
 4. Add a coverage row and a section to `test_cases/README.md`. `test_cases_documented`

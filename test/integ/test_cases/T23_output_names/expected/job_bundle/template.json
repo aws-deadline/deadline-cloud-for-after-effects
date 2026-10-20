@@ -126,29 +126,6 @@
         "label": "(1_T23_pad___) Start Frame - End Frame",
         "groupLabel": "Frame Range"
       }
-    },
-    {
-      "name": "_2_T23_braces_OutputDir",
-      "type": "PATH",
-      "objectType": "DIRECTORY",
-      "dataFlow": "OUT",
-      "userInterface": {
-        "control": "CHOOSE_DIRECTORY",
-        "label": "(2_T23_bra___) Output Directory",
-        "groupLabel": "Render Parameters"
-      },
-      "default": "./output",
-      "description": "Choose the render output directory."
-    },
-    {
-      "name": "_2_T23_braces_Frames",
-      "type": "STRING",
-      "userInterface": {
-        "control": "LINE_EDIT",
-        "label": "(2_T23_bra___) Start Frame - End Frame",
-        "groupLabel": "Frame Range"
-      },
-      "default": "1-10"
     }
   ],
   "jobEnvironments": [
@@ -161,7 +138,7 @@
             "command": "python",
             "args": [
               "{{Param.JobScriptDir}}/create_output_directory.py",
-              "{{Param._1_T23_padding_4_OutputDir}},{{Param._2_T23_braces_OutputDir}}"
+              "{{Param._1_T23_padding_4_OutputDir}}"
             ]
           }
         }
@@ -229,41 +206,6 @@
               "{{Param.ChunkSize}}",
               "--index",
               "{{Task.Param._1_T23_padding_4_Index}}",
-              "--multi-frame-rendering",
-              "{{Param.MultiFrameRendering}}",
-              "--max-cpu-usage-percentage",
-              "{{Param.MaxCpuUsagePercentage}}",
-              "--ignore-missing-dependencies",
-              "{{Param.IgnoreMissingDependencies}}"
-            ],
-            "timeout": 172800
-          }
-        }
-      }
-    },
-    {
-      "name": "_2_T23_braces",
-      "hostRequirements": {
-        "attributes": [
-          {
-            "name": "attr.worker.os.family",
-            "anyOf": [
-              "windows",
-              "macos"
-            ]
-          }
-        ]
-      },
-      "script": {
-        "actions": {
-          "onRun": {
-            "command": "python",
-            "args": [
-              "{{Param.JobScriptDir}}/call_aerender.py",
-              "{{Param.ProjectFile}}",
-              "2",
-              "{{Param._2_T23_braces_OutputDir}}/T23_%7B%7Bbraces%7D%7D_ae<YEAR>.mp4",
-              "{{Param._2_T23_braces_Frames}}",
               "--multi-frame-rendering",
               "{{Param.MultiFrameRendering}}",
               "--max-cpu-usage-percentage",

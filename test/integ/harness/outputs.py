@@ -223,6 +223,11 @@ def output_leaf_names(job_id: str) -> set[str]:
     return leaves
 
 
+def _glob_literal(name: str) -> str:
+    """``name`` as an fnmatch pattern that matches only itself (``[`` -> ``[[]``)."""
+    return "".join(f"[{c}]" if c in "[]*?" else c for c in name)
+
+
 def download_outputs(job_id: str, leaf_names: list[str] | None = None) -> list[Path]:
     """Download the job's outputs, optionally narrowed to specific leaf filenames.
 
@@ -238,7 +243,9 @@ def download_outputs(job_id: str, leaf_names: list[str] | None = None) -> list[P
     """
     from deadline.job_attachments.models import FileConflictResolution
 
-    filters = [f"*/{name}" for name in leaf_names] if leaf_names else None
+    filters = (
+        [f"*/{_glob_literal(name)}" for name in leaf_names] if leaf_names else None
+    )
     downloader = _downloader(job_id, include_filters=filters)
 
     if filters:

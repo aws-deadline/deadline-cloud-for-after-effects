@@ -6,5 +6,5 @@
   "expect": "SUCCEEDED",
   "render": true,
   "ae_run_timeout": 300,
-  "notes": "Exercises the get_user_fonts Python fallback in JobTemplateHelper.jsx. No .ttc font (KNOWN_ISSUES.md #2)."
+  "notes": "Partial: same comp as T06 without the missing font. Nothing forces the get_user_fonts fallback yet (follow-up)."
 }

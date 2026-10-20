@@ -14,6 +14,7 @@ No third-party licensed content is used; everything is generated locally.
 """
 
 import os
+import shutil
 import subprocess
 
 VERSION = "1.0.0"
@@ -23,8 +24,14 @@ ROOT = os.environ.get("AE_TEST_ASSETS") or os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
 )
 SRC = os.path.join(ROOT, "source_assets")
-# Lato (SIL OFL); Pillow finds it by file name among the installed fonts.
-LABEL_FONT = "Lato-Regular.ttf"
+# Lato (SIL OFL). AE_LABEL_FONT overrides the path. Pillow searches the system
+# font folders by file name; the per-user folders are added here.
+LABEL_FONT = os.environ.get("AE_LABEL_FONT") or "Lato-Regular.ttf"
+_USER_FONT_DIRS = [
+    os.path.join(os.environ.get("LOCALAPPDATA", ""), "Microsoft", "Windows", "Fonts"),
+    os.path.expanduser("~/Library/Fonts"),
+    os.path.expanduser("~/.local/share/fonts"),
+]
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -32,12 +39,15 @@ W, H = 1920, 1080
 
 
 def font(sz):
-    # OSError is what Pillow raises for "cannot open resource" when the font is
-    # absent; fall back to the bundled face.
-    try:
-        return ImageFont.truetype(LABEL_FONT, sz)
-    except OSError:
-        return ImageFont.load_default()
+    # No fallback: Pillow's default face would silently change every label.
+    for candidate in [LABEL_FONT] + [
+        os.path.join(d, LABEL_FONT) for d in _USER_FONT_DIRS
+    ]:
+        try:
+            return ImageFont.truetype(candidate, sz)
+        except OSError:
+            continue
+    raise SystemExit(f"{LABEL_FONT} not found; install Lato (see test/integ/README.md)")
 
 
 def draw_label(draw, lines, origin=(80, 80), size=48, fill=(255, 255, 255)):
@@ -64,6 +74,7 @@ def make_still(path, title, subtitle, bg=(18, 24, 42)):
         origin=(90, 380),
         size=64,
     )
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     img.save(path)
     print("still :", os.path.relpath(path, ROOT))
 
@@ -95,15 +106,19 @@ def make_sequence(dirpath, base, frames=60):
 
 
 def run(cmd):
-    subprocess.run(
-        cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    out = cmd[-1]
+    if not str(out).startswith("-"):
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+    proc = subprocess.run(
+        cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True
     )
+    if proc.returncode != 0:
+        raise SystemExit(f"{cmd[0]} failed ({proc.returncode}): {proc.stderr[-2000:]}")
 
 
 def make_video(path, seconds=6, fps=30):
     # This ffmpeg build has no drawtext filter, so render frames with Pillow
     # (burned-in label + frame counter) then encode H.264 / yuv420p, 1080p30.
-    import shutil
     import tempfile
 
     frames = seconds * fps
@@ -168,6 +183,10 @@ def make_audio():
 
 
 def main():
+    if not shutil.which("ffmpeg"):
+        raise SystemExit(
+            "ffmpeg not found on PATH; it builds the video and audio assets"
+        )
     # Video
     make_video(os.path.join(SRC, "video", f"plate_motion_1080p30_v{VERSION}.mp4"))
     # Audio (3 formats)

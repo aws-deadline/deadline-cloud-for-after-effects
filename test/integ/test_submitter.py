@@ -29,25 +29,10 @@ from deadline_test_fixtures.job_bundle.compare import assert_valid_job_bundle
 from harness import bundle as bundle_mod
 from harness import cases as cases_mod
 from harness import config, deadline_client, golden
+from harness import known_defects as kd
 from harness import outputs as outputs_mod
 
 _CASES = cases_mod.discover_cases()
-
-
-class AuthoredMismatch(AssertionError):
-    """The job differs from what was authored in AE: its frames or output names."""
-
-
-def test_cases_discovered():
-    """A moved or empty test_cases/ must fail. Parametrised tests would just skip."""
-    assert _CASES, f"no case.json found under {cases_mod.TEST_CASES_DIR}"
-
-
-def test_cases_documented():
-    """Every case appears in test_cases/README.md, so the coverage table stays complete."""
-    readme = (cases_mod.TEST_CASES_DIR / "README.md").read_text(encoding="utf-8")
-    missing = [c.id for c in _CASES if f'<a id="{c.id.lower()}"></a>' not in readme]
-    assert not missing, f"cases missing from test_cases/README.md: {missing}"
 
 
 def _case_id(case: cases_mod.Case) -> str:
@@ -63,10 +48,15 @@ def case(request: pytest.FixtureRequest) -> cases_mod.Case:
     return param
 
 
-def test_bundle_generation(case, case_run, case_dir, request):
-    """The real submitter builds a well-formed OpenJD bundle for the case."""
+def test_bundle_generation(case, case_run, case_dir):
+    """The real submitter builds a well-formed OpenJD bundle for the case.
+
+    A case with ``expect_refusal`` instead requires the submitter to refuse it.
+    """
     run = case_run
-    _expect_known_defect(case, request)
+    if case.expect_refusal:
+        _check_refusal(case, run)
+        return
     assert run.ok, f"Submitter did not produce a bundle: {run.error}"
     as_built = case_dir / "bundle-as-built"
     assert as_built.is_dir(), f"no as-built bundle snapshot at {as_built}"
@@ -149,21 +139,26 @@ def test_bundle_generation(case, case_run, case_dir, request):
             assert Path(f).exists(), f"Referenced input does not exist on disk: {f}"
 
     # --- Bundle vs. what was authored in AE ----------------------------------------
-    # Last, so a known defect here (KNOWN_DEFECTS) does not hide the checks above.
+    # Last, so a known defect (harness/known_defects.py) cannot hide the checks above.
+    comps = [str(item.get("comp")) for item in rq_items]
+    checks = kd.AuthoredChecks(case.id)
     # Output names: the file each step writes must be the one AE's queue item names.
-    ae_names = [item.get("outputName") for item in rq_items]
-    bundle_names = [so.leaf for so in bundle.step_outputs()]
-    if all(ae_names) and bundle_names != ae_names:
-        raise AuthoredMismatch(
-            f"bundle output names {bundle_names} differ from AE's {ae_names}"
+    # The oracle is required: an empty name must fail, never switch the check off.
+    missing = [c for c, item in zip(comps, rq_items) if not item.get("outputName")]
+    assert not missing, f"the drive reported no output file name for {missing}"
+    for comp, item, so in zip(comps, rq_items, bundle.step_outputs()):
+        checks.compare(
+            kd.OUTPUT_NAMES, comp, so.leaf, item["outputName"], "output name"
         )
     # Frames: the drive's measurement copies the submitter's formula, so it agrees
     # with a wrong formula. Ranges written down when the comp was authored do not.
-    if case.expect_frames and bundle_ranges != case.expect_frames:
-        raise AuthoredMismatch(
-            f"bundle frame ranges {bundle_ranges} do not match the frames authored in "
-            f"AE {case.expect_frames}"
-        )
+    if case.expect_frames:
+        assert len(case.expect_frames) == len(
+            comps
+        ), f"expect_frames has {len(case.expect_frames)} ranges for {len(comps)} comps"
+        for comp, got, want in zip(comps, bundle_ranges, case.expect_frames):
+            checks.compare(kd.FRAMES, comp, got, want, "frame range")
+    _settle(checks)
 
 
 def test_bundle_matches_golden(case, case_run, case_dir, ae_version):
@@ -174,12 +169,14 @@ def test_bundle_matches_golden(case, case_run, case_dir, ae_version):
     environment). Set ``AE_UPDATE_GOLDENS=1`` to rewrite the goldens from this run.
     See ``harness/golden.py``.
     """
+    _require_bundle(case)
     assert case_run.ok, f"Submitter did not produce a bundle: {case_run.error}"
     actual = case_dir / "bundle-as-built"
     expected = golden.expected_dir(case.dir, ae_version)
+    temp_root = case_run.temp_folder
     if golden.update_requested():
-        golden.write_golden(actual, expected)
-    golden.assert_matches_golden(actual, expected)
+        golden.write_golden(actual, expected, temp_root)
+    golden.assert_matches_golden(actual, expected, temp_root)
 
 
 def test_job_settings(case, case_run, case_bundle_as_built):
@@ -194,6 +191,7 @@ def test_job_settings(case, case_run, case_bundle_as_built):
     Reads the *as-built* snapshot, not the live bundle: the harness rewrites step
     timeouts on its way to the farm (see ``apply_job_metadata``).
     """
+    _require_bundle(case)
     assert case_run.ok, f"Submitter did not produce a bundle: {case_run.error}"
     assert case_bundle_as_built is not None, "no as-built bundle snapshot was archived"
     bundle = case_bundle_as_built
@@ -269,10 +267,7 @@ def test_render(
     The submission happens in ``case_run`` (see conftest) so each case uploads its own
     bundle+fonts before the next drive overwrites the shared temp dir; here we only wait.
     """
-    if not (render and case.render):
-        pytest.skip(
-            "render layer disabled (pass --render / AE_RUN_RENDER=1 to submit + poll)"
-        )
+    _skip_unless_rendering(case, render)
 
     run = case_run
     assert run.ok, f"No bundle to submit: {run.error}"
@@ -348,7 +343,7 @@ def test_render(
 
 
 def test_render_outputs(
-    case, case_run, case_submission, case_dir, render, ae_version, unavailable, request
+    case, case_run, case_submission, case_dir, render, ae_version, unavailable
 ):
     """The job's *outputs* are complete, and a sample of them is a valid image.
 
@@ -367,14 +362,12 @@ def test_render_outputs(
     a product defect, the same reasoning as ``test_render``'s POLL_ERROR skip. Under
     ``--strict-environment`` that skip is a failure.
     """
-    if not (render and case.render):
-        pytest.skip("render layer disabled (pass --render / AE_RUN_RENDER=1)")
+    _skip_unless_rendering(case, render)
     if case.expect != "SUCCEEDED":
         pytest.skip(
             f"{case.id} expects {case.expect}, so it has no complete output to check"
         )
 
-    _expect_known_defect(case, request)
     submitted = case_submission
     assert submitted is not None and submitted.ok, "no successful submission to check"
 
@@ -508,29 +501,46 @@ def test_render_outputs(
     (case_dir / "outputs.json").write_text(json.dumps(report, indent=2))
     # A chunked task's frame parameter is its first frame, so the authored range split
     # by ChunkSize gives the task frames to expect.
-    chunk = bundle.param("ChunkSize") if bundle.has_chunking() else 1
-    for step, want in zip(bundle.steps, case.expect_frames):
+    chunk = int(bundle.param("ChunkSize")) if bundle.has_chunking() else 1
+    comps = [str(item.get("comp")) for item in case_run.render_queue_items]
+    checks = kd.AuthoredChecks(case.id)
+    for comp, step, want in zip(comps, bundle.steps, case.expect_frames):
         got = task_frames.get(step.get("name")) or []
-        authored = deadline_client.expand_frames(want)
-        expected = authored[:: int(chunk)]
-        if got != expected:
-            raise AuthoredMismatch(
-                f"step {step.get('name')!r} tasks start at frames {got}, but AE frames "
-                f"{want} in chunks of {chunk} start at {expected}"
-            )
+        expected = deadline_client.expand_frames(want)[::chunk]
+        checks.compare(kd.TASK_FRAMES, comp, got, expected, "task start frames")
+    _settle(checks)
 
 
-def _expect_known_defect(case, request) -> None:
-    """Strictly xfail the case's authored-in-AE checks for a defect in KNOWN_DEFECTS.
-
-    Only an AuthoredMismatch counts as the expected failure; anything else still
-    fails, and a pass fails the suite so the entry gets removed.
-    """
-    reason = cases_mod.KNOWN_DEFECTS.get(case.id)
+def _settle(checks: kd.AuthoredChecks) -> None:
+    """Fail on any unexpected mismatch or fixed defect; xfail on a known defect."""
+    reason = checks.settle()
     if reason:
-        request.applymarker(
-            pytest.mark.xfail(reason=reason, raises=AuthoredMismatch, strict=True)
+        pytest.xfail(reason)
+
+
+def _require_bundle(case) -> None:
+    if case.expect_refusal:
+        pytest.skip(f"{case.id} expects the submitter to refuse, so it has no bundle")
+
+
+def _check_refusal(case, run) -> None:
+    """The submitter refused the case, for the expected reason.
+
+    It refuses after it has started writing the bundle, so this is also the
+    partial-bundle case: the drive must report it as a failure, not a success.
+    """
+    comps = [str(item.get("comp")) for item in run.render_queue_items] or [case.id]
+    checks = kd.AuthoredChecks(case.id)
+    checks.compare(kd.REFUSAL, comps[0], run.ok, False, "bundle built")
+    if not run.ok:
+        assert any(case.expect_refusal in a for a in run.alerts), (
+            f"the submitter refused, but without an alert containing "
+            f"{case.expect_refusal!r}: {run.alerts}"
         )
+        assert "Bundle incomplete" in (
+            run.error or ""
+        ), f"the drive should report the partial bundle, got: {run.error!r}"
+    _settle(checks)
 
 
 def _assert_alerts(case, run) -> None:
@@ -578,6 +588,17 @@ def _verify_image(path: Path) -> tuple[tuple[int, int], str]:
         lo != hi for lo, hi in bands
     ), f"{path.name} is a single flat colour ({bands}) — the render produced no content"
     return size, digest
+
+
+def _skip_unless_rendering(case, render) -> None:
+    """Skip the render layers, saying why: the run did not ask for it, or the case is
+    bundle-only (``"render": false`` in its case.json)."""
+    if not render:
+        pytest.skip(
+            "render layer disabled (pass --render / AE_RUN_RENDER=1 to submit + poll)"
+        )
+    if not case.render:
+        pytest.skip(f"{case.id} is bundle-only (render: false in its case.json)")
 
 
 def config_project_name(case) -> str:

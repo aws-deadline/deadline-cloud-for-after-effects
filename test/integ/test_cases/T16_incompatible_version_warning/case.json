@@ -6,5 +6,5 @@
   "expect": "SUCCEEDED",
   "render": false,
   "ae_run_timeout": 300,
-  "notes": "Bundle only: spoofing an unsupported AE version needs a driver hook that does not exist yet."
+  "notes": "Partial: today this asserts that no version warning fires on a supported AE. Spoofing an unsupported version needs a driver hook (follow-up)."
 }

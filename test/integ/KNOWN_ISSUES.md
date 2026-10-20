@@ -42,21 +42,23 @@ A project re-saved after AE relinked a missing font failed to load on the worker
 are only written by the builder (`aep_test_assets/scripts/run_build.py`), which fails if
 a font it names is missing.
 
-## 7. The submitter floors a fractional frame start (T22)
+## 7. Fixed: the submitter floored a fractional frame start (T22)
 
-The submitter computes a queue item's first frame as
+The submitter computed a queue item's first frame as
 `Math.floor((comp.displayStartTime + timeSpanStart) * frameRate)`. For a comp starting at
-frame 1001 with its work area at 1010, that product is 1009.999…, so the job renders
-1009–1032 instead of 1010–1033. T22 is registered in `cases.KNOWN_DEFECTS`.
+frame 1001 with its work area at 1010, that product is 1009.999…, so the job rendered
+1009–1032 instead of 1010–1033. Fixed in #358, which snaps values within float error of
+a whole frame. T22 now passes.
 
-## 8. The submitter uses the URI-encoded output file name (T23)
+## 8. The submitter uses the URI-encoded output file name (T23, T24)
 
 The submitter reads an output module's file name from ExtendScript's `File.name`, which
 is URI-encoded. It decodes only `%20` and `%5B#####%5D`. So `[####]` padding reaches the
-job as `%5B####%5D`, and `{{` as `%7B%7B`. The submitter's own check that rejects `{{`
-in an output name therefore never fires. T23 is registered in `cases.KNOWN_DEFECTS`.
+job as `%5B####%5D` (T23), and `{{` as `%7B%7B`. The submitter's own check that rejects
+`{{` in an output name therefore never fires (T24). Both are registered in
+`harness/known_defects.py`.
 
-The same encoding means a partial bundle (the submitter stopping after it started
-writing the bundle) has no scriptable reproduction: the `{{` check cannot fire, and
-setting an output module's file to `null` from script blocks AE with a dialog. The
-driver still fails a drive whose bundle lacks any of its three files.
+T24 also covers the partial bundle: the submitter refuses `{{` after it has started
+writing the bundle, and the drive must report that as a failure. Once #8 is fixed,
+T24 exercises it. Setting an output module's file to `null` from script blocks AE with
+a dialog, so there is no other scripted reproduction.

@@ -6,5 +6,5 @@
   "expect": "SUCCEEDED",
   "render": false,
   "ae_run_timeout": 300,
-  "notes": "Output names AE accepts: a sequence with four-digit padding ([####]) and a name containing '{{'. The bundle must name the files AE would write. Bundle only: rendering the misnamed bundle adds nothing (KNOWN_ISSUES.md #8)."
+  "notes": "A sequence with four-digit padding ([####]). The bundle must name the files AE would write. Bundle only. Known defect (KNOWN_ISSUES.md #8)."
 }

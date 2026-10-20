@@ -36,9 +36,12 @@ Environment / options:
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import shutil
 import time
+import warnings
 from pathlib import Path
 
 import pytest
@@ -166,25 +169,47 @@ def require_ae(pytestconfig: pytest.Config) -> None:
             pytestconfig,
             f"After Effects not found at {app} (set AE_EXECUTABLE / AE_VERSION)",
         )
-    if not config.get_submitter_path().exists():
+    submitter = config.get_submitter_path()
+    if not submitter.exists():
         _absent(
             pytestconfig,
             "Deadline Cloud submitter not installed at "
-            f"{config.get_submitter_path()} — install the submitter first",
+            f"{submitter} — install the submitter first",
         )
+    # Different submitters in several prefs folders: the one tested may not be the
+    # one AE loads. Fatal under --strict-environment, reported otherwise.
+    if "AE_SUBMITTER_PATH" not in os.environ:
+        found = config.get_submitter_candidates()
+        if len({_sha256(p) for p in found}) > 1:
+            msg = (
+                f"testing {submitter}, but different submitters are installed: "
+                + ", ".join(str(p) for p in found)
+                + ". Remove the stale ones or set AE_SUBMITTER_PATH."
+            )
+            if _strict_environment(pytestconfig):
+                pytest.fail(f"{msg} (--strict-environment)")
+            warnings.warn(msg, stacklevel=1)
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 @pytest.fixture(scope="session")
-def run_assets(require_ae: None) -> Path:
+def run_assets(require_ae: None, pytestconfig: pytest.Config) -> Path:
     """A fresh copy of the asset tree for this session's drives.
 
     AE and the submitter save the project during a drive. Driving a copy keeps the
     committed projects exactly as authored, and keeps this machine's name and home
-    paths out of them.
+    paths out of them. A source without projects is an error, never a reason to
+    reuse a copy an earlier session left behind.
     """
     source = config.get_source_assets_root()
     if not (source / "projects").is_dir():
-        return source
+        config.clear_run_assets()
+        _absent(
+            pytestconfig, f"no projects/ under the asset root {source} (AE_TEST_ASSETS)"
+        )
     return config.prepare_run_assets()
 
 
@@ -356,6 +381,9 @@ def case_run(
                 "renderQueueItems": result.render_queue_items,
                 "timedOut": result.timed_out,
                 "elapsed_s": result.elapsed_s,
+                "submitterPath": str(config.get_submitter_path()),
+                "submitterSha256": _sha256(config.get_submitter_path()),
+                "tempFolder": str(result.temp_folder) if result.temp_folder else None,
             },
             indent=2,
         )

@@ -173,18 +173,38 @@ def get_submitter_path() -> Path:
     override = os.environ.get("AE_SUBMITTER_PATH")
     if override:
         return Path(override)
-    prefs_dirs = get_ae_prefs_version_dirs()
-    panels_dirs = [base / "Scripts" / "ScriptUI Panels" for base in prefs_dirs]
+    candidates = get_submitter_candidates()
+    if candidates:
+        return candidates[0]
+    return (
+        get_ae_prefs_version_dirs()[0]
+        / "Scripts"
+        / "ScriptUI Panels"
+        / ("DeadlineCloudSubmitter.jsx")
+    )
+
+
+def get_submitter_candidates() -> list[Path]:
+    """Every installed submitter for the target AE, in the order they are preferred.
+
+    More than one usually means a leftover install in an older prefs folder, which
+    may not be the one AE loads. ``require_ae`` reports it.
+    """
+    panels_dirs = [
+        base / "Scripts" / "ScriptUI Panels" for base in get_ae_prefs_version_dirs()
+    ]
     panels_dirs.append(get_system_panels_dir())
+    found: list[Path] = []
     for panels in panels_dirs:
-        for name in ("DeadlineCloudSubmitter.jsx", "DeadlineCloudSubmitter(User).jsx"):
-            if (panels / name).exists():
-                return panels / name
-    for panels in panels_dirs:
-        matches = sorted(panels.glob("DeadlineCloudSubmitter*.jsx"))
-        if matches:
-            return matches[0]
-    return panels_dirs[0] / "DeadlineCloudSubmitter.jsx"
+        named = [
+            panels / n
+            for n in ("DeadlineCloudSubmitter.jsx", "DeadlineCloudSubmitter(User).jsx")
+        ]
+        others = sorted(panels.glob("DeadlineCloudSubmitter*.jsx"))
+        for path in dict.fromkeys(named + others):
+            if path.is_file():
+                found.append(path)
+    return found
 
 
 def get_config_path() -> Path:
@@ -214,6 +234,14 @@ def get_assets_root() -> Path:
     return RUN_ASSETS_ROOT
 
 
+def clear_run_assets() -> None:
+    """Delete the run copy, so nothing can drive a copy from an earlier session."""
+    import shutil
+
+    if RUN_ASSETS_ROOT.exists():
+        shutil.rmtree(RUN_ASSETS_ROOT)
+
+
 def prepare_run_assets() -> Path:
     """Replace the run copy with a fresh copy of the source asset tree.
 
@@ -221,8 +249,7 @@ def prepare_run_assets() -> Path:
     """
     import shutil
 
-    if RUN_ASSETS_ROOT.exists():
-        shutil.rmtree(RUN_ASSETS_ROOT)
+    clear_run_assets()
     shutil.copytree(
         get_source_assets_root(),
         RUN_ASSETS_ROOT,

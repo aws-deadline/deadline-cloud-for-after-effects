@@ -16,25 +16,24 @@ checks against what was authored in AE; every other check still runs).
 | [T06](#t06) | Fonts + video | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [T07](#t07) | Audio-only output | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [T08](#t08) | Chunking, 300 frames | ✅ | ✅ | ✅ | ✅ | ✅ |
-| [T09](#t09) | CLI error case | ✅ | ✅ | ✅ | ➖ | ➖ |
+| [T09](#t09) | CLI error case (partial) | ✅ | ✅ | ✅ | ➖ | ➖ |
 | [T10](#t10) | Special characters | ✅ | ✅ | ✅ | ➖ | ➖ |
 | [T11](#t11) | Multi-frame rendering | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [T12](#t12) | Task timeout | ✅ | ✅ | ✅ | ✅ | ➖ |
-| [T13](#t13) | aerender wrapper | ✅ | ✅ | ✅ | ➖ | ➖ |
-| [T15](#t15) | Conda version | ✅ | ✅ | ✅ | ✅ | ✅ |
-| [T16](#t16) | Version fallback | ✅ | ✅ | ✅ | ➖ | ➖ |
+| [T16](#t16) | Version warning (partial) | ✅ | ✅ | ✅ | ➖ | ➖ |
 | [T17](#t17) | Three comps | ✅ | ✅ | ✅ | ✅ | ✅ |
-| [T18](#t18) | Three comps, settings untouched | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [T19](#t19) | Image sequences | ✅ | ✅ | ✅ | ✅ | ✅ |
-| [T20](#t20) | Missing dependency | ✅ | ✅ | ✅ | ✅ | ✅ |
-| [T21](#t21) | get_user_fonts fallback | ✅ | ✅ | ✅ | ✅ | ✅ |
-| [T22](#t22) | Frame numbers | ⚠️ | ✅ | ✅ | ✅ | ⚠️ |
+| [T20](#t20) | Ignore missing dependencies (partial) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| [T21](#t21) | get_user_fonts fallback (partial) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| [T22](#t22) | Frame numbers | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [T23](#t23) | Output names | ⚠️ | ✅ | ✅ | ➖ | ➖ |
+| [T24](#t24) | Output name with braces | ⚠️ | ➖ | ➖ | ➖ | ➖ |
 
 Layer columns are the tests in `../test_submitter.py`: **bundle** = `test_bundle_generation`, **golden** = `test_bundle_matches_golden`, **settings** = `test_job_settings`, **render** = `test_render`, **outputs** = `test_render_outputs`. The render and outputs layers need `--render`.
 
-⚠️ cases are in `cases.KNOWN_DEFECTS`; the defects are described in
-[`../KNOWN_ISSUES.md`](../KNOWN_ISSUES.md) #7 and #8.
+⚠️ cases are registered in `../harness/known_defects.py`, scoped to one check and
+comp; the defect is [`../KNOWN_ISSUES.md`](../KNOWN_ISSUES.md) #8. "(partial)" cases
+check less than their name says; their follow-ups are in their notes.
 
 ## Cases
 
@@ -42,7 +41,7 @@ Layer columns are the tests in `../test_submitter.py`: **bundle** = `test_bundle
 <details>
 <summary><b>T05</b> · Baseline submit</summary>
 
-One comp, no settings. Pins the submitter's defaults and the basic bundle shape.
+One comp, no settings. Pins the submitter's defaults, the basic bundle shape, call_aerender.py on every step, and CondaPackages aftereffects=<major> (rendered on the farm).
 
 | | |
 |---|---|
@@ -116,9 +115,9 @@ TIFF sequence with framesPerTask 100: ChunkSize is declared, valued and drives t
 
 <a id="t09"></a>
 <details>
-<summary><b>T09</b> · CLI error case · bundle only</summary>
+<summary><b>T09</b> · CLI error case (partial) · bundle only</summary>
 
-Bundle builds for the CLI-error scenario. Rendering with no deadline CLI on PATH needs harness support first.
+Only builds the bundle. Rendering with the deadline CLI absent from PATH needs a harness hook (follow-up).
 
 | | |
 |---|---|
@@ -129,7 +128,7 @@ Bundle builds for the CLI-error scenario. Rendering with no deadline CLI on PATH
 | Outputs | `T09_ae<year>.mp4` |
 | Layers | bundle, golden, settings |
 
-> Bundle only. Rendering with the deadline CLI absent from PATH needs harness support that does not exist yet.
+> Partial: only builds the bundle. Rendering with the deadline CLI absent from PATH needs a harness hook (follow-up).
 
 </details>
 
@@ -190,49 +189,11 @@ MultiFrameRendering ON and MaxCpuUsagePercentage 50 (not the default 90) reach t
 
 </details>
 
-<a id="t13"></a>
-<details>
-<summary><b>T13</b> · aerender wrapper · bundle only</summary>
-
-Every step runs call_aerender.py. Bundle only until a worker pins AERENDER_EXECUTABLE.
-
-| | |
-|---|---|
-| Project | `T13_env_variable_ae<year>_v1.0.0.aep` |
-| Settings | none (the submitter's defaults must hold) |
-| Expects | terminal state `SUCCEEDED` |
-| Steps | `_1_T13_env_variabl` |
-| Outputs | `T13_ae<year>.mp4` |
-| Layers | bundle, golden, settings |
-
-> Bundle only: checks the step calls call_aerender.py. A render check needs a pinned AERENDER_EXECUTABLE on the worker.
-
-</details>
-
-<a id="t15"></a>
-<details>
-<summary><b>T15</b> · Conda version</summary>
-
-CondaPackages is aftereffects=<major>, and that conda environment installs and renders on the worker.
-
-| | |
-|---|---|
-| Project | `T15_conda_version_ae<year>_v1.0.0.aep` |
-| Settings | none (the submitter's defaults must hold) |
-| Expects | terminal state `SUCCEEDED` |
-| Steps | `_1_T15_conda_versi` |
-| Outputs | `T15_ae<year>.mp4` |
-| Layers | bundle, golden, settings, render, outputs |
-
-> CondaPackages must be aftereffects=<major>; the render proves that conda environment installs and renders.
-
-</details>
-
 <a id="t16"></a>
 <details>
-<summary><b>T16</b> · Version fallback · bundle only</summary>
+<summary><b>T16</b> · Version warning (partial) · bundle only</summary>
 
-Bundle for the unsupported-version path. Bundle only: spoofing app.version needs a driver hook.
+Asserts no version warning fires on a supported AE. Spoofing an unsupported version needs a driver hook (follow-up).
 
 | | |
 |---|---|
@@ -243,7 +204,7 @@ Bundle for the unsupported-version path. Bundle only: spoofing app.version needs
 | Outputs | `T16_ae<year>.mp4` |
 | Layers | bundle, golden, settings |
 
-> Bundle only: spoofing an unsupported AE version needs a driver hook that does not exist yet.
+> Partial: today this asserts that no version warning fires on a supported AE. Spoofing an unsupported version needs a driver hook (follow-up).
 
 </details>
 
@@ -263,25 +224,6 @@ One step per comp, per-comp frame ranges, unique parameter names (openjd check r
 | Layers | bundle, golden, settings, render, outputs |
 
 > Three comps, all queued: one step per comp, per-comp frame ranges, unique parameter names.
-
-</details>
-
-<a id="t18"></a>
-<details>
-<summary><b>T18</b> · Three comps, settings untouched</summary>
-
-Multi-comp shape with no driver overrides. Render options are job-wide since #322.
-
-| | |
-|---|---|
-| Project | `T18_sticky_settings_ae<year>_v1.0.0.aep` |
-| Settings | none (the submitter's defaults must hold) |
-| Expects | terminal state `SUCCEEDED` |
-| Steps | `_1_T18_comp_1`<br>`_2_T18_comp_2`<br>`_3_T18_comp_3` |
-| Outputs | `T18_comp1_ae<year>.mp4`<br>`T18_comp2_ae<year>.mp4`<br>`T18_comp3_ae<year>.mp4` |
-| Layers | bundle, golden, settings, render, outputs |
-
-> Three comps with settings left empty. Render options are job-wide since #322, so only the multi-comp shape is asserted.
 
 </details>
 
@@ -306,9 +248,9 @@ A PNG sequence import (every frame must be an input) and a TIFF sequence output 
 
 <a id="t20"></a>
 <details>
-<summary><b>T20</b> · Missing dependency</summary>
+<summary><b>T20</b> · Ignore missing dependencies (partial)</summary>
 
-ignoreMissingDependencies ON: the missing file is recorded and the render continues.
+ignoreMissingDependencies reaches the bundle. Nothing is missing yet; removing a file from the run copy is a follow-up.
 
 | | |
 |---|---|
@@ -319,15 +261,15 @@ ignoreMissingDependencies ON: the missing file is recorded and the render contin
 | Outputs | `T20_ae<year>.mp4` |
 | Layers | bundle, golden, settings, render, outputs |
 
-> ignoreMissingDependencies on: the submitter records the missing file and the render continues.
+> Partial: checks that ignoreMissingDependencies reaches the bundle. Nothing is missing yet; removing a file from the run copy before the drive is a follow-up.
 
 </details>
 
 <a id="t21"></a>
 <details>
-<summary><b>T21</b> · get_user_fonts fallback</summary>
+<summary><b>T21</b> · get_user_fonts fallback (partial)</summary>
 
-Exercises the Python font-discovery fallback in JobTemplateHelper.jsx.
+T06's comp without the missing font. Nothing forces the Python font-discovery fallback yet (follow-up).
 
 | | |
 |---|---|
@@ -338,15 +280,15 @@ Exercises the Python font-discovery fallback in JobTemplateHelper.jsx.
 | Outputs | `T21_ae<year>.mp4` |
 | Layers | bundle, golden, settings, render, outputs |
 
-> Exercises the get_user_fonts Python fallback in JobTemplateHelper.jsx. No .ttc font (KNOWN_ISSUES.md #2).
+> Partial: same comp as T06 without the missing font. Nothing forces the get_user_fonts fallback yet (follow-up).
 
 </details>
 
 <a id="t22"></a>
 <details>
-<summary><b>T22</b> · Frame numbers · ⚠️ known defect</summary>
+<summary><b>T22</b> · Frame numbers</summary>
 
-Start frame 1001 with an offset work area, a work area starting at 5, and 23.976 fps. Bundle frames, farm task frames and a pixel-encoded frame number are checked against what AE shows.
+Start frame 1001 with an offset work area, a work area starting at 5, and 23.976 fps. Bundle frames, farm task frames and a pixel-encoded frame number are checked against what AE shows. Fixed in #358.
 
 | | |
 |---|---|
@@ -356,7 +298,6 @@ Start frame 1001 with an offset work area, a work area starting at 5, and 23.976
 | Steps | `_1_T22_start_1001`<br>`_2_T22_work_area_o`<br>`_3_T22_fps_23976` |
 | Outputs | `T22_1_ae<year>_[#####].tif`<br>`T22_2_ae<year>_[#####].tif`<br>`T22_3_ae<year>_[#####].tif` |
 | Layers | bundle, golden, settings, render, outputs |
-| Known defect | Frame start is floored: the start-1001 comp is submitted as 1009–1032. |
 
 > Frame numbers as AE shows them: a comp starting at 1001 with an offset work area, a work area starting at 5, and 23.976 fps. The bundle's frame ranges, the farm's task frames, and the number encoded in each sampled output frame must all match expect_frames.
 
@@ -366,18 +307,38 @@ Start frame 1001 with an offset work area, a work area starting at 5, and 23.976
 <details>
 <summary><b>T23</b> · Output names · ⚠️ known defect · bundle only</summary>
 
-A [####]-padded sequence and a name containing {{. The bundle must name the files AE would write.
+A [####]-padded sequence. The bundle must name the files AE would write.
 
 | | |
 |---|---|
 | Project | `T23_output_names_ae<year>_v1.0.0.aep` |
 | Settings | none (the submitter's defaults must hold) |
-| Expects | terminal state `SUCCEEDED`<br>`ChunkSize` declared and referenced by the task range |
-| Steps | `_1_T23_padding_4`<br>`_2_T23_braces` |
-| Outputs | `T23_padding_ae<year>_%5B####%5D.tif`<br>`T23_%7B%7Bbraces%7D%7D_ae<year>.mp4` |
+| Expects | terminal state `SUCCEEDED` |
+| Steps |  |
+| Outputs |  |
 | Layers | bundle, golden, settings |
-| Known defect | Output names are URI-encoded: [####] → %5B####%5D, {{ → %7B%7B. |
+| Known defect | Output names are URI-encoded: [####] becomes %5B####%5D (KNOWN_ISSUES #8). |
 
-> Output names AE accepts: a sequence with four-digit padding ([####]) and a name containing '{{'. The bundle must name the files AE would write. Bundle only: rendering the misnamed bundle adds nothing (KNOWN_ISSUES.md #8).
+> A sequence with four-digit padding ([####]). The bundle must name the files AE would write. Bundle only. Known defect (KNOWN_ISSUES.md #8).
+
+</details>
+
+<a id="t24"></a>
+<details>
+<summary><b>T24</b> · Output name with braces · ⚠️ known defect · bundle only</summary>
+
+'{{' in an output name must be refused, after the bundle was started: the drive must report the partial bundle.
+
+| | |
+|---|---|
+| Project | `T24_output_braces_ae<year>_v1.0.0.aep` |
+| Settings | none (the submitter's defaults must hold) |
+| Expects | refused, with an alert containing `contains "{{" or "}}"`; the drive reports the partial bundle |
+| Steps |  |
+| Outputs |  |
+| Layers | bundle |
+| Known defect | The '{{' check never fires: it sees the encoded %7B%7B, so no refusal (KNOWN_ISSUES #8). |
+
+> '{{' in an output name must be refused, after the submitter has started writing the bundle, so the drive must report the partial bundle as a failure. Known defect: the check never fires (KNOWN_ISSUES.md #8).
 
 </details>

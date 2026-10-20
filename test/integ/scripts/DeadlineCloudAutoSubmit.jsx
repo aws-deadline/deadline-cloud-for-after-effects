@@ -80,6 +80,10 @@
         result += '  "error": ' + (error ? '"' + jsonEscape(error) + '"' : 'null') + ',\n';
         result += '  "bundlePath": ' + (bundlePath ? '"' + bundlePath.replace(/\\/g, '/') + '"' : 'null') + ',\n';
         result += '  "duration_ms": ' + duration + ',\n';
+        // The submitter's temp folder; undefined before the submitter is loaded.
+        var tempFolder = "";
+        try { tempFolder = new Folder(dcUtil.getTempFolder()).fsName.replace(/\\/g, '/'); } catch (e) {}
+        result += '  "tempFolder": ' + (tempFolder ? '"' + jsonEscape(tempFolder) + '"' : 'null') + ',\n';
         result += '  "alerts": [';
         var al = (typeof alerts !== "undefined" && alerts) ? alerts : [];
         for (var ai = 0; ai < al.length; ai++) {
@@ -178,7 +182,15 @@
     }
 
     // --- Open project ---
-    app.open(projFile);
+    // Suppress AE's modal warnings while opening (e.g. "Resolve Fonts" for T06's
+    // deliberately missing font). Unanswered, they block the drive, and dismissing
+    // them from outside AE needs Accessibility on macOS.
+    app.beginSuppressDialogs();
+    try {
+        app.open(projFile);
+    } finally {
+        app.endSuppressDialogs(false);
+    }
     if (!app.project || !app.project.file) {
         writeResult("failure", "Failed to open project", null, null);
         return;
@@ -321,8 +333,9 @@
         try {
             var outFile = rqi.outputModule(1).file;
             if (outFile) {
-                // displayName is decoded; File.name is URI-encoded ("%5B" for "[").
-                outputName = outFile.displayName;
+                // File.name is URI-encoded ("%5B" for "["); decode it. displayName
+                // would be simpler but is empty on macOS.
+                outputName = File.decode(outFile.name);
                 var ext = outFile.name.split(".").pop().toLowerCase();
                 var imageExts = ["png", "jpg", "jpeg", "tif", "tiff", "exr", "psd", "tga", "bmp", "dpx"];
                 outputType = imageExts.indexOf(ext) >= 0 ? "image_sequence" : "video";
