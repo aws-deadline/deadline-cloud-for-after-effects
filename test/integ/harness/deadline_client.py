@@ -77,6 +77,21 @@ def terminal_status_from_counts(counts: dict[str, Any]) -> str | None:
     return "SUCCEEDED"
 
 
+# Statuses that mean the poll failed, so the job's real state is unknown.
+_UNKNOWN_STATES = {"POLL_ERROR", "UNKNOWN"}
+
+
+def should_cancel(effective: str, expected: str) -> bool:
+    """Whether the harness should cancel a job that did not end as expected.
+
+    Only when the farm's answer is known: a terminal status other than ``expected``,
+    or a local ``TIMEOUT`` (the poll worked and the job is still running, so it is
+    wedged). A failed poll says nothing about the job, so a job that may be healthy
+    is left running. Cancelling a finished job is a no-op.
+    """
+    return effective != expected and effective not in _UNKNOWN_STATES
+
+
 def redirect_output_dir(bundle_dir: Path, output_dir: Path) -> list[str]:
     """Point every step's render output at ``output_dir``, returning the old paths.
 
