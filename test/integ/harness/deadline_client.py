@@ -77,6 +77,24 @@ def terminal_status_from_counts(counts: dict[str, Any]) -> str | None:
     return "SUCCEEDED"
 
 
+# Statuses that mean the poll failed, so the job's real state is unknown.
+_UNKNOWN_STATES = {"POLL_ERROR", "UNKNOWN"}
+
+
+def should_cancel(effective: str, expected: str, farm_read: bool) -> bool:
+    """Whether the harness should cancel a job that did not end as expected.
+
+    Only when the farm's answer is known: a terminal status other than ``expected``,
+    or a ``TIMEOUT`` while the farm still reports tasks in flight (the job is wedged).
+    ``farm_read`` says whether the farm's task counts could be read. A failed poll,
+    or a timeout with an unreadable farm, says nothing about the job, so a job that
+    may be healthy is left running. Cancelling a finished job is a no-op.
+    """
+    if effective == expected or effective in _UNKNOWN_STATES:
+        return False
+    return farm_read or effective != "TIMEOUT"
+
+
 def redirect_output_dir(bundle_dir: Path, output_dir: Path) -> list[str]:
     """Point every step's render output at ``output_dir``, returning the old paths.
 

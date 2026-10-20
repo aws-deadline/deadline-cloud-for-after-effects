@@ -178,9 +178,11 @@ def test_render(
         counts = deadline_client.job_status_counts(submitted.job_id)
         effective = deadline_client.terminal_status_from_counts(counts) or effective
 
-    # Anything other than the expected outcome: cancel, so a timed-out or wedged job
-    # does not keep running on the default farm. A no-op for a job already finished.
-    canceled = effective != case.expect and deadline_client.cancel(submitted.job_id)
+    # A known unexpected outcome: cancel, so a timed-out or wedged job does not keep
+    # running on the default farm. A failed poll leaves the job alone: it may be healthy.
+    canceled = deadline_client.should_cancel(
+        effective, case.expect, farm_read=bool(counts)
+    ) and deadline_client.cancel(submitted.job_id)
 
     (case_dir / "wait.json").write_text(
         json.dumps(
@@ -204,11 +206,15 @@ def test_render(
     except deadline_client.DeadlineError:
         pass
 
-    if effective in ("POLL_ERROR", "TIMEOUT", "UNKNOWN") and not counts:
+    # The poll failed and the farm did not report a terminal state: the outcome is
+    # unknown, which is an environment problem rather than a product one.
+    if effective in ("POLL_ERROR", "UNKNOWN") or (
+        effective == "TIMEOUT" and not counts
+    ):
         unavailable(
-            f"Could not poll job {submitted.job_id} (credentials/endpoint) and the "
-            f"farm state was unreadable — refresh credentials and re-run. "
-            f"{waited.stderr.strip()[:300]}"
+            f"Could not determine how job {submitted.job_id} ended (credentials/"
+            f"endpoint); it was left running. Refresh credentials and re-run. "
+            f"counts={counts} {waited.stderr.strip()[:300]}"
         )
 
     assert effective == case.expect, (

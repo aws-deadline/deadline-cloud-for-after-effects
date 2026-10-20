@@ -61,10 +61,10 @@ dependencies = [
 
 [envs.integ-lint.scripts]
 lint = [
-  "black --target-version py311 {args:test/integ test/unit/test_integ_asset_hygiene.py}",
-  "ruff check --fix {args:test/integ test/unit/test_integ_asset_hygiene.py}",
+  "black --target-version py311 {args:test/integ test/unit/test_integ_asset_hygiene.py test/unit/test_integ_render_policy.py}",
+  "ruff check --fix {args:test/integ test/unit/test_integ_asset_hygiene.py test/unit/test_integ_render_policy.py}",
 ]
 lint-check = [
-  "black --check --diff --target-version py311 {args:test/integ test/unit/test_integ_asset_hygiene.py}",
-  "ruff check {args:test/integ test/unit/test_integ_asset_hygiene.py}",
+  "black --check --diff --target-version py311 {args:test/integ test/unit/test_integ_asset_hygiene.py test/unit/test_integ_render_policy.py}",
+  "ruff check {args:test/integ test/unit/test_integ_asset_hygiene.py test/unit/test_integ_render_policy.py}",
 ]
