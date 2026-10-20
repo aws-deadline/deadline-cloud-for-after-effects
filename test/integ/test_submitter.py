@@ -181,7 +181,7 @@ def test_render(
     # A known unexpected outcome: cancel, so a timed-out or wedged job does not keep
     # running on the default farm. A failed poll leaves the job alone: it may be healthy.
     canceled = deadline_client.should_cancel(
-        effective, case.expect
+        effective, case.expect, farm_read=bool(counts)
     ) and deadline_client.cancel(submitted.job_id)
 
     (case_dir / "wait.json").write_text(
