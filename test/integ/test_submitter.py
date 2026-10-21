@@ -1,34 +1,38 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 """End-to-end tests for the Deadline Cloud After Effects submitter.
 
-Two layers per discovered case, sharing a single (cached) AE drive:
+Five layers per discovered case, sharing a single (cached) AE drive:
 
 * **bundle generation** (``test_bundle_generation``): re-drive the *real* submitter
   headlessly and assert the OpenJD job bundle it produces is valid and well-formed.
   Always runs when AE is installed.
+* **golden** (``test_bundle_matches_golden``): the bundle matches the committed golden
+  after normalization. Offline.
+* **job settings** (``test_job_settings``): the case's ``settings`` reached the bundle,
+  and unset settings produced the submitter's defaults. Offline.
 * **render** (``test_render``): submit that bundle to Deadline Cloud and poll the job to
   its expected terminal state. Runs only with ``--render`` / ``AE_RUN_RENDER=1``.
+* **render outputs** (``test_render_outputs``): the job wrote every expected file, and
+  a sample of them decodes to real, distinct images. ``--render`` only.
 
-Both are parametrised over every ``test_cases/<name>/case.json``.
+All are parametrised over every ``test_cases/<name>/case.json``.
 """
 
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
 from deadline_test_fixtures.job_bundle.compare import assert_valid_job_bundle
 from harness import bundle as bundle_mod
 from harness import cases as cases_mod
-from harness import config, deadline_client
+from harness import config, deadline_client, golden
+from harness import known_defects as kd
+from harness import outputs as outputs_mod
 
 _CASES = cases_mod.discover_cases()
-
-
-def test_cases_discovered():
-    """A moved or empty test_cases/ must fail. Parametrised tests would just skip."""
-    assert _CASES, f"no case.json found under {cases_mod.TEST_CASES_DIR}"
 
 
 def _case_id(case: cases_mod.Case) -> str:
@@ -45,8 +49,14 @@ def case(request: pytest.FixtureRequest) -> cases_mod.Case:
 
 
 def test_bundle_generation(case, case_run, case_dir):
-    """The real submitter builds a well-formed OpenJD bundle for the case."""
+    """The real submitter builds a well-formed OpenJD bundle for the case.
+
+    A case with ``expect_refusal`` instead requires the submitter to refuse it.
+    """
     run = case_run
+    if case.expect_refusal:
+        _check_refusal(case, run)
+        return
     assert run.ok, f"Submitter did not produce a bundle: {run.error}"
     as_built = case_dir / "bundle-as-built"
     assert as_built.is_dir(), f"no as-built bundle snapshot at {as_built}"
@@ -67,20 +77,7 @@ def test_bundle_generation(case, case_run, case_dir):
         project_file
     ), f"ProjectFile {project_file!r} does not reference {expected}"
 
-    # The driver stubs adcAlert, so the submitter's non-fatal warnings (missing
-    # footage, missing fonts) would otherwise vanish and the bundle would look clean.
-    # A case declares the ones it expects; anything else is a regression.
-    unexpected = [
-        a for a in run.alerts if not any(want in a for want in case.expect_alerts)
-    ]
-    assert not unexpected, (
-        f"submitter raised unexpected alerts: {unexpected} "
-        f"(expected substrings: {case.expect_alerts})"
-    )
-    for want in case.expect_alerts:
-        assert any(
-            want in a for a in run.alerts
-        ), f"expected a submitter alert containing {want!r}, got {run.alerts}"
+    _assert_alerts(case, run)
 
     # Declared with a default and never given a value, so param() is always None here.
     conda = bundle.param_default("CondaPackages") or bundle.param("CondaPackages")
@@ -141,6 +138,126 @@ def test_bundle_generation(case, case_run, case_dir):
         if f.replace("\\", "/").lower().startswith(assets_root):
             assert Path(f).exists(), f"Referenced input does not exist on disk: {f}"
 
+    # --- Bundle vs. what was authored in AE ----------------------------------------
+    # Last, so a known defect (harness/known_defects.py) cannot hide the checks above.
+    comps = [str(item.get("comp")) for item in rq_items]
+    checks = kd.AuthoredChecks(case.id)
+    # Output names: the file each step writes must be the one AE's queue item names.
+    # The oracle is required: an empty name must fail, never switch the check off.
+    missing = [c for c, item in zip(comps, rq_items) if not item.get("outputName")]
+    assert not missing, f"the drive reported no output file name for {missing}"
+    for comp, item, so in zip(comps, rq_items, bundle.step_outputs()):
+        checks.compare(
+            kd.OUTPUT_NAMES, comp, so.leaf, item["outputName"], "output name"
+        )
+    # Frames: the drive's measurement copies the submitter's formula, so it agrees
+    # with a wrong formula. Ranges written down when the comp was authored do not.
+    if case.expect_frames:
+        assert len(case.expect_frames) == len(
+            comps
+        ), f"expect_frames has {len(case.expect_frames)} ranges for {len(comps)} comps"
+        for comp, got, want in zip(comps, bundle_ranges, case.expect_frames):
+            checks.compare(kd.FRAMES, comp, got, want, "frame range")
+    _settle(checks)
+
+
+def test_bundle_matches_golden(case, case_run, case_dir, ae_version):
+    """The as-built bundle matches the committed golden, after normalization.
+
+    The structural and settings assertions check what we chose to check; the golden
+    catches everything else (a renamed parameter, a changed step script, a dropped
+    environment). Set ``AE_UPDATE_GOLDENS=1`` to rewrite the goldens from this run.
+    See ``harness/golden.py``.
+    """
+    _require_bundle(case)
+    assert case_run.ok, f"Submitter did not produce a bundle: {case_run.error}"
+    actual = case_dir / "bundle-as-built"
+    expected = golden.expected_dir(case.dir, ae_version)
+    temp_root = case_run.temp_folder
+    if golden.update_requested():
+        golden.write_golden(actual, expected, temp_root)
+    golden.assert_matches_golden(actual, expected, temp_root)
+
+
+def test_job_settings(case, case_run, case_bundle_as_built):
+    """Each case's ``settings`` actually reach the bundle the submitter produced.
+
+    Without this, every case ran the *same* generic structural assertions and the
+    settings were write-only: ``multiFrameRendering``, ``maxCpuUsagePercentage``,
+    ``ignoreMissingDependencies``, ``taskRunTimeout*`` and ``framesPerTask`` were
+    handed to the submitter and nothing ever checked what it did with them. A
+    submitter that dropped a setting on the floor passed the suite.
+
+    Reads the *as-built* snapshot, not the live bundle: the harness rewrites step
+    timeouts on its way to the farm (see ``apply_job_metadata``).
+    """
+    _require_bundle(case)
+    assert case_run.ok, f"Submitter did not produce a bundle: {case_run.error}"
+    assert case_bundle_as_built is not None, "no as-built bundle snapshot was archived"
+    bundle = case_bundle_as_built
+    settings = case.settings
+
+    # --- Job-wide render options ---------------------------------------------------
+    # Asserted for every case, not just the ones that set them: a case with empty
+    # settings pins the submitter's documented defaults, which is how we'd catch a
+    # default silently changing.
+    for name, want in bundle_mod.expected_job_parameters(settings).items():
+        got = bundle.param(name)
+        assert got == want, (
+            f"job parameter {name} is {got!r}, expected {want!r} "
+            f"for settings={settings}"
+        )
+
+    # --- Task-run timeout ----------------------------------------------------------
+    # The submitter composes this from day/hour/minute fields that default
+    # independently, so a case setting only minutes still inherits the 2-day default.
+    want_timeout = bundle_mod.expected_task_timeout_s(settings)
+    timeouts = bundle.step_run_timeouts()
+    assert timeouts, "no steps carried an onRun.timeout"
+    for step, got in zip(bundle.steps, timeouts):
+        assert got == want_timeout, (
+            f"step {step.get('name')!r} onRun.timeout is {got!r}, expected "
+            f"{want_timeout}s for settings={settings}"
+        )
+
+    # --- Frames per task (image sequences only) ------------------------------------
+    # The submitter declares ChunkSize only when the selection contains an image
+    # sequence; for a video output module framesPerTask is inert by design ("img seq
+    # only ... Has no effect on video output" — SubmitterUI.jsx). So a case that sets
+    # framesPerTask only proves anything if it actually renders a sequence.
+    if bundle.has_chunking():
+        want_chunk = settings.get("framesPerTask", bundle_mod.DEFAULT_FRAMES_PER_TASK)
+        assert bundle.param("ChunkSize") == want_chunk, (
+            f"ChunkSize is {bundle.param('ChunkSize')!r}, expected {want_chunk} "
+            f"for settings={settings}"
+        )
+        # ...and that it actually drives the task space. A ChunkSize that is declared
+        # and valued but absent from the step's range would render the whole frame
+        # range in one task while passing the check above.
+        ranges = bundle.step_task_ranges()
+        assert any("{{Param.ChunkSize}}" in r for r in ranges), (
+            "ChunkSize is declared but no step's task range references it, so the "
+            f"step would not chunk: ranges={ranges}"
+        )
+    else:
+        assert "framesPerTask" not in settings, (
+            f"{case.id} sets framesPerTask={settings['framesPerTask']} but the "
+            "submitter emitted no ChunkSize parameter, meaning this selection has no "
+            "image-sequence output — the setting is inert and the case proves nothing "
+            "about chunking. Re-author the comp's output module to an image sequence, "
+            "or drop the setting. See KNOWN_ISSUES.md #4."
+        )
+
+    # --- Output references ---------------------------------------------------------
+    # One output path per step, each parameterised through that step's OutputDir —
+    # previously output_directories()/output paths were never asserted at all.
+    outputs = bundle.output_filenames()
+    assert len(outputs) == len(bundle.steps), (
+        f"{len(outputs)} parameterised output paths for {len(bundle.steps)} steps: "
+        f"{outputs}"
+    )
+    assert bundle.output_directories(), "bundle declares no output directories"
+
 
 def test_render(
     case, case_run, case_submission, case_dir, render, ae_version, unavailable
@@ -150,10 +267,7 @@ def test_render(
     The submission happens in ``case_run`` (see conftest) so each case uploads its own
     bundle+fonts before the next drive overwrites the shared temp dir; here we only wait.
     """
-    if not (render and case.render):
-        pytest.skip(
-            "render layer disabled (pass --render / AE_RUN_RENDER=1 to submit + poll)"
-        )
+    _skip_unless_rendering(case, render)
 
     run = case_run
     assert run.ok, f"No bundle to submit: {run.error}"
@@ -226,6 +340,265 @@ def test_render(
             f"Job {submitted.job_id} failed, but no failed task mentions "
             f"{case.expect_failure_message!r}: {messages}"
         )
+
+
+def test_render_outputs(
+    case, case_run, case_submission, case_dir, render, ae_version, unavailable
+):
+    """The job's *outputs* are complete, and a sample of them is a valid image.
+
+    A job can succeed while writing the wrong thing: H.264 under a filename claiming
+    a TIFF sequence, or a chunking bug that drops a frame at a task seam. Two tiers,
+    because the cheap one covers most of it:
+
+    * **Completeness** from the output manifest listing, which transfers no file bytes.
+      Every filename the bundle says the step should write must be present. For T08
+      that is all 300 frames, verified for free.
+    * **Content** from a sampled download — the chunk seams plus the range ends (see
+      ``outputs.chunk_boundary_sample``). Only those frames move, so a 300-frame case
+      costs ~50 MB rather than ~2.4 GB.
+
+    Skips rather than fails when the farm is unreachable: an expired credential is not
+    a product defect, the same reasoning as ``test_render``'s POLL_ERROR skip. Under
+    ``--strict-environment`` that skip is a failure.
+    """
+    _skip_unless_rendering(case, render)
+    if case.expect != "SUCCEEDED":
+        pytest.skip(
+            f"{case.id} expects {case.expect}, so it has no complete output to check"
+        )
+
+    submitted = case_submission
+    assert submitted is not None and submitted.ok, "no successful submission to check"
+
+    # Only a finished job has a complete output manifest. test_render records the
+    # outcome; if it did not succeed, it has already failed and said why.
+    wait_file = case_dir / "wait.json"
+    waited = (
+        json.loads(wait_file.read_text(encoding="utf-8")) if wait_file.exists() else {}
+    )
+    if waited.get("jobId") != submitted.job_id:
+        unavailable(
+            f"no test_render result for job {submitted.job_id}; run the render layer "
+            "in the same invocation"
+        )
+    if waited.get("effectiveStatus") != "SUCCEEDED":
+        pytest.skip(f"job {submitted.job_id} did not succeed (see test_render)")
+
+    # The archived as-submitted copy, never case_run.bundle_path: that is the shared
+    # temp dir, which by now holds the last-driven case's bundle (KNOWN_ISSUES.md #1).
+    bundle = bundle_mod.Bundle.load(case_dir / "bundle")
+    step_outputs = bundle.step_outputs()
+    assert len(step_outputs) == len(bundle.steps), (
+        f"resolved {len(step_outputs)} step outputs for {len(bundle.steps)} steps; an "
+        "unrecognised output arg would drop that step out of output verification"
+    )
+
+    try:
+        produced = outputs_mod.output_leaf_names(submitted.job_id)
+    except outputs_mod.OutputsUnavailable as exc:
+        unavailable(f"farm outputs unreadable for {submitted.job_id}: {exc}")
+
+    # --- Tier 1: completeness, zero bytes transferred -------------------------------
+    report: dict[str, object] = {"jobId": submitted.job_id, "steps": []}
+    sampled: list[str] = []
+    for so in step_outputs:
+        expected = so.expected_filenames()
+        assert expected, (
+            f"step {so.step!r} output {so.leaf!r} resolved to no expected filenames "
+            f"(frames={so.frames!r}) — the harness cannot verify it"
+        )
+        missing = [name for name in expected if name not in produced]
+        assert not missing, (
+            f"step {so.step!r} was expected to write {len(expected)} file(s) but "
+            f"{len(missing)} are absent from the job's outputs. "
+            f"First missing: {missing[:5]}. Produced: {sorted(produced)[:5]}..."
+        )
+
+        if so.is_sequence:
+            rng = so.frame_range()
+            frames = outputs_mod.chunk_boundary_sample(rng[0], rng[1], so.chunk_size)
+            names = [so.frame_filename(f) for f in frames]
+        else:
+            frames, names = [], [so.leaf]
+        sampled.extend(names)
+        report["steps"].append(
+            {
+                "step": so.step,
+                "leaf": so.leaf,
+                "frames": so.frames,
+                "chunkSize": so.chunk_size,
+                "isSequence": so.is_sequence,
+                "expectedCount": len(expected),
+                "sampledFrames": frames,
+                "sampled": names,
+            }
+        )
+
+    # --- Tier 2: content of the sample ----------------------------------------------
+    # Clear first: a kept output/ from a previous failing run would otherwise satisfy
+    # the per-frame checks below without anything being downloaded now.
+    out_dir = case_dir / "output"
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        outputs_mod.download_outputs(submitted.job_id, leaf_names=sampled)
+    except outputs_mod.OutputsUnavailable as exc:
+        unavailable(f"could not download sampled output for {submitted.job_id}: {exc}")
+
+    checked_images = 0
+    for so in step_outputs:
+        if so.is_sequence:
+            rng = so.frame_range()
+            frames = outputs_mod.chunk_boundary_sample(rng[0], rng[1], so.chunk_size)
+            names = [so.frame_filename(f) for f in frames]
+            seen_digests = {}
+            for frame, name in zip(frames, names):
+                path = out_dir / name
+                assert path.exists(), f"sampled frame not downloaded: {path}"
+                size, digest = _verify_image(path)
+                seen_digests[name] = digest
+                checked_images += 1
+                # The file named for frame N must hold AE's frame N.
+                if case.frame_code:
+                    shown = outputs_mod.read_frame_code(path)
+                    assert (
+                        shown == frame
+                    ), f"{name} holds AE frame {shown}, not frame {frame}"
+            # Sampled frames must differ in pixels. Every sequence comp burns in a
+            # frame counter (addFrameCounter in build_test_projects.jsx), so two
+            # identical frames mean a task rendered the wrong slice or the same frame
+            # twice — the failure mode chunking is most likely to have.
+            dupes = [
+                (a, b)
+                for i, a in enumerate(names)
+                for b in names[i + 1 :]
+                if seen_digests[a] == seen_digests[b]
+            ]
+            assert not dupes, (
+                f"step {so.step!r} rendered pixel-identical frames, so a task rendered "
+                f"the wrong frame(s): {dupes}"
+            )
+        else:
+            path = out_dir / so.leaf
+            assert path.exists(), f"output not downloaded: {path}"
+            # Video/audio are not decoded (no ffmpeg by design — see
+            # requirements-integ.txt), so assert only that the file is non-trivial.
+            size = path.stat().st_size
+            assert (
+                size > 1024
+            ), f"output {path.name} is implausibly small ({size} bytes)"
+
+    report["imagesChecked"] = checked_images
+
+    # --- The farm's tasks cover exactly the frames authored in AE ------------------
+    if case.expect_frames:
+        task_frames = deadline_client.task_frames(submitted.job_id)
+        if task_frames is None:
+            unavailable(f"tasks unreadable for {submitted.job_id}")
+        report["taskFrames"] = task_frames
+    (case_dir / "outputs.json").write_text(json.dumps(report, indent=2))
+    # A chunked task's frame parameter is its first frame, so the authored range split
+    # by ChunkSize gives the task frames to expect.
+    chunk = int(bundle.param("ChunkSize")) if bundle.has_chunking() else 1
+    comps = [str(item.get("comp")) for item in case_run.render_queue_items]
+    checks = kd.AuthoredChecks(case.id)
+    for comp, step, want in zip(comps, bundle.steps, case.expect_frames):
+        got = task_frames.get(step.get("name")) or []
+        expected = deadline_client.expand_frames(want)[::chunk]
+        checks.compare(kd.TASK_FRAMES, comp, got, expected, "task start frames")
+    _settle(checks)
+
+
+def _settle(checks: kd.AuthoredChecks) -> None:
+    """Fail on any unexpected mismatch or fixed defect; xfail on a known defect."""
+    reason = checks.settle()
+    if reason:
+        pytest.xfail(reason)
+
+
+def _require_bundle(case) -> None:
+    if case.expect_refusal:
+        pytest.skip(f"{case.id} expects the submitter to refuse, so it has no bundle")
+
+
+def _check_refusal(case, run) -> None:
+    """The submitter refused the case, for the expected reason.
+
+    It refuses after it has started writing the bundle, so this is also the
+    partial-bundle case: the drive must report it as a failure, not a success.
+    """
+    comps = [str(item.get("comp")) for item in run.render_queue_items] or [case.id]
+    checks = kd.AuthoredChecks(case.id)
+    checks.compare(kd.REFUSAL, comps[0], run.ok, False, "bundle built")
+    if not run.ok:
+        assert any(case.expect_refusal in a for a in run.alerts), (
+            f"the submitter refused, but without an alert containing "
+            f"{case.expect_refusal!r}: {run.alerts}"
+        )
+        assert "Bundle incomplete" in (
+            run.error or ""
+        ), f"the drive should report the partial bundle, got: {run.error!r}"
+    _settle(checks)
+
+
+def _assert_alerts(case, run) -> None:
+    """The submitter raised exactly the alerts the case expects.
+
+    The driver stubs adcAlert, so the submitter's non-fatal warnings (missing
+    footage, missing fonts) would otherwise vanish and the bundle would look clean.
+    A case declares the ones it expects; anything else is a regression.
+    """
+    unexpected = [
+        a for a in run.alerts if not any(want in a for want in case.expect_alerts)
+    ]
+    assert not unexpected, (
+        f"submitter raised unexpected alerts: {unexpected} "
+        f"(expected substrings: {case.expect_alerts})"
+    )
+    for want in case.expect_alerts:
+        assert any(
+            want in a for a in run.alerts
+        ), f"expected a submitter alert containing {want!r}, got {run.alerts}"
+
+
+def _verify_image(path: Path) -> tuple[tuple[int, int], str]:
+    """Open a rendered frame, assert it is a decodable non-blank image, return (size, digest).
+
+    ``verify()`` alone would catch a truncated file but not a correct-looking black
+    frame, which is what a missing-footage or failed-font render actually produces — so
+    the pixel extrema are checked too.
+
+    The digest is of the decoded pixels, not the file. TIFF headers carry per-file
+    metadata, so byte-identical checks would call two identical images distinct.
+    """
+    import hashlib
+
+    from PIL import Image
+
+    with Image.open(path) as im:
+        im.load()
+        size = im.size
+        rgb = im.convert("RGB")
+        bands = rgb.getextrema()
+        digest = hashlib.sha256(rgb.tobytes()).hexdigest()
+    assert size[0] > 0 and size[1] > 0, f"{path.name} decoded to an empty image"
+    assert any(
+        lo != hi for lo, hi in bands
+    ), f"{path.name} is a single flat colour ({bands}) — the render produced no content"
+    return size, digest
+
+
+def _skip_unless_rendering(case, render) -> None:
+    """Skip the render layers, saying why: the run did not ask for it, or the case is
+    bundle-only (``"render": false`` in its case.json)."""
+    if not render:
+        pytest.skip(
+            "render layer disabled (pass --render / AE_RUN_RENDER=1 to submit + poll)"
+        )
+    if not case.render:
+        pytest.skip(f"{case.id} is bundle-only (render: false in its case.json)")
 
 
 def config_project_name(case) -> str:

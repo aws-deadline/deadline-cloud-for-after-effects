@@ -7,7 +7,7 @@ on:
   pull_request:
     paths:
       - "test/integ/**"
-      - "test/unit/test_integ_asset_hygiene.py"
+      - "test/unit/test_integ_*.py"
       - "hatch.toml"
       - "requirements-testing.txt"
       - "requirements-integ.txt"
@@ -16,7 +16,7 @@ on:
     branches: [mainline]
     paths:
       - "test/integ/**"
-      - "test/unit/test_integ_asset_hygiene.py"
+      - "test/unit/test_integ_*.py"
 
 permissions:
   contents: read

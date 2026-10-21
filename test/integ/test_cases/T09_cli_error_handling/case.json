@@ -1,0 +1,10 @@
+{
+  "id": "T09",
+  "name": "Deadline CLI error handling",
+  "aep_slug": "cli_error_handling",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": false,
+  "ae_run_timeout": 300,
+  "notes": "Partial: only builds the bundle. Rendering with the deadline CLI absent from PATH needs a harness hook (follow-up)."
+}

@@ -4,8 +4,8 @@
 The driver JSX (``scripts/DeadlineCloudAutoSubmit.jsx``) is installed into AE's
 ``Scripts/Startup`` folder. On launch it reads ``headless_submit_config.json``,
 ``eval``s the real submitter (UI stripped), overrides ``system.callSystem`` to block
-the GUI shell-out, calls ``SubmitSelection`` and writes a result JSON. We run in
-*bundle-only* mode (``submitAfterBundle: false``) — Python owns submission + polling.
+the GUI shell-out, calls ``SubmitSelection`` and writes a result JSON. The drive only
+builds the bundle; Python owns submission and polling.
 """
 
 from __future__ import annotations
@@ -37,6 +37,10 @@ class SubmitterRun:
     timed_out: bool = False
     elapsed_s: float = 0.0
     raw: dict[str, Any] = field(default_factory=dict)
+    # The submitter's own temp folder (dcUtil.getTempFolder()). It differs per OS
+    # (%TEMP% on Windows, ~/.deadline/DeadlineCloudAETemp on macOS), and the bundle
+    # and collected fonts live under it.
+    temp_folder: Path | None = None
 
     @property
     def ok(self) -> bool:
@@ -86,8 +90,6 @@ def _write_config(project_file: Path, settings: dict[str, Any]) -> None:
         # Resolve the exact installed submitter here so the JSX doesn't have to
         # guess between DeadlineCloudSubmitter.jsx and DeadlineCloudSubmitter(User).jsx.
         "submitterPath": str(config.get_submitter_path()),
-        # Bundle-only: the JSX builds the bundle and stops. Python submits + polls.
-        "submitAfterBundle": False,
         "quitAfterSubmit": True,
         **settings,
     }
@@ -268,6 +270,7 @@ def _drive_once(
         timed_out=not completed,
         elapsed_s=round(elapsed, 1),
         raw=raw,
+        temp_folder=Path(raw["tempFolder"]) if raw.get("tempFolder") else None,
     )
 
 

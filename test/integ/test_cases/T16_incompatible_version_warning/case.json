@@ -1,0 +1,10 @@
+{
+  "id": "T16",
+  "name": "Incompatible version warning",
+  "aep_slug": "incompatible_version_warning",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": false,
+  "ae_run_timeout": 300,
+  "notes": "Partial: today this asserts that no version warning fires on a supported AE. Spoofing an unsupported version needs a driver hook (follow-up)."
+}

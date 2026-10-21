@@ -1,0 +1,12 @@
+{
+  "id": "T20",
+  "name": "Missing dependencies",
+  "aep_slug": "missing_dependencies",
+  "settings": {
+    "ignoreMissingDependencies": true
+  },
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Partial: checks that ignoreMissingDependencies reaches the bundle. Nothing is missing yet; removing a file from the run copy before the drive is a follow-up."
+}

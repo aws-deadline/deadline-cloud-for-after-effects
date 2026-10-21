@@ -1,0 +1,280 @@
+{
+  "specificationVersion": "jobtemplate-2023-09",
+  "name": "T19_image_sequence_import_ae<YEAR>_v1.0.0.aep",
+  "description": "A simple job bundle that allows a user to select a project and comp to render with aerender.",
+  "parameterDefinitions": [
+    {
+      "name": "ProjectFile",
+      "type": "PATH",
+      "objectType": "FILE",
+      "dataFlow": "IN",
+      "userInterface": {
+        "control": "CHOOSE_INPUT_FILE",
+        "label": "Project file",
+        "groupLabel": "Source",
+        "fileFilters": [
+          {
+            "label": "After Effects project files",
+            "patterns": [
+              "*.aep",
+              "*.aepx"
+            ]
+          },
+          {
+            "label": "All Files",
+            "patterns": [
+              "*"
+            ]
+          }
+        ]
+      },
+      "description": "The After Effects project file to render."
+    },
+    {
+      "name": "JobScriptDir",
+      "description": "Directory containing embedded scripts.",
+      "userInterface": {
+        "control": "HIDDEN"
+      },
+      "type": "PATH",
+      "objectType": "DIRECTORY",
+      "dataFlow": "IN",
+      "default": "scripts"
+    },
+    {
+      "name": "CondaPackages",
+      "type": "STRING",
+      "userInterface": {
+        "control": "HIDDEN"
+      },
+      "default": "aftereffects=<VER>",
+      "description": "If a queue accepts this parameter, it will create a conda virtual environment from it."
+    },
+    {
+      "name": "MultiFrameRendering",
+      "type": "STRING",
+      "default": "OFF",
+      "allowedValues": [
+        "ON",
+        "OFF"
+      ],
+      "userInterface": {
+        "control": "DROPDOWN_LIST",
+        "label": "Enable or disable multi-frame rendering",
+        "groupLabel": "Multi-Frame Rendering"
+      },
+      "description": "Multi frame rendering settings"
+    },
+    {
+      "name": "MaxCpuUsagePercentage",
+      "type": "INT",
+      "userInterface": {
+        "control": "SPIN_BOX",
+        "label": "Max CPU Usage Percentage",
+        "groupLabel": "Multi-Frame Rendering"
+      },
+      "description": "Max Cpu Percentage to use with Multi-Frame Rendering, ignored if MFR is OFF",
+      "minValue": 1,
+      "maxValue": 100,
+      "default": 90
+    },
+    {
+      "name": "IgnoreMissingDependencies",
+      "type": "STRING",
+      "default": "OFF",
+      "allowedValues": [
+        "ON",
+        "OFF"
+      ],
+      "userInterface": {
+        "control": "DROPDOWN_LIST",
+        "label": "Ignore Missing Dependencies",
+        "groupLabel": "Ignore Missing Dependencies"
+      },
+      "description": "Allows render to continue without failing if referenced files are missing."
+    },
+    {
+      "name": "ChunkSize",
+      "type": "INT",
+      "userInterface": {
+        "control": "SPIN_BOX",
+        "label": "Frames Per Task",
+        "groupLabel": "Frame Range"
+      },
+      "description": "The chunk size of frames per task to render",
+      "minValue": 1,
+      "default": 10
+    },
+    {
+      "name": "_1_T19_emit_image__OutputDir",
+      "type": "PATH",
+      "objectType": "DIRECTORY",
+      "dataFlow": "OUT",
+      "userInterface": {
+        "control": "CHOOSE_DIRECTORY",
+        "label": "(1_T19_emi___) Output Directory",
+        "groupLabel": "Render Parameters"
+      },
+      "default": "./output",
+      "description": "Choose the render output directory."
+    },
+    {
+      "name": "_1_T19_emit_image__Frames",
+      "type": "STRING",
+      "userInterface": {
+        "control": "LINE_EDIT",
+        "label": "(1_T19_emi___) Start Frame - End Frame",
+        "groupLabel": "Frame Range"
+      }
+    },
+    {
+      "name": "_2_T19_import_png__OutputDir",
+      "type": "PATH",
+      "objectType": "DIRECTORY",
+      "dataFlow": "OUT",
+      "userInterface": {
+        "control": "CHOOSE_DIRECTORY",
+        "label": "(2_T19_imp___) Output Directory",
+        "groupLabel": "Render Parameters"
+      },
+      "default": "./output",
+      "description": "Choose the render output directory."
+    },
+    {
+      "name": "_2_T19_import_png__Frames",
+      "type": "STRING",
+      "userInterface": {
+        "control": "LINE_EDIT",
+        "label": "(2_T19_imp___) Start Frame - End Frame",
+        "groupLabel": "Frame Range"
+      },
+      "default": "1-10"
+    }
+  ],
+  "jobEnvironments": [
+    {
+      "name": "Create Output Directories",
+      "description": "Create Output Directories",
+      "script": {
+        "actions": {
+          "onEnter": {
+            "command": "python",
+            "args": [
+              "{{Param.JobScriptDir}}/create_output_directory.py",
+              "{{Param._1_T19_emit_image__OutputDir}},{{Param._2_T19_import_png__OutputDir}}"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Install Fonts to Worker",
+      "description": "Install Fonts to Worker",
+      "script": {
+        "actions": {
+          "onEnter": {
+            "command": "python",
+            "args": [
+              "{{Param.JobScriptDir}}/font_manager.py",
+              "install",
+              "{{Session.WorkingDirectory}}"
+            ]
+          },
+          "onExit": {
+            "command": "python",
+            "args": [
+              "{{Param.JobScriptDir}}/font_manager.py",
+              "remove",
+              "{{Session.WorkingDirectory}}"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "steps": [
+    {
+      "name": "_1_T19_emit_image_",
+      "hostRequirements": {
+        "attributes": [
+          {
+            "name": "attr.worker.os.family",
+            "anyOf": [
+              "windows",
+              "macos"
+            ]
+          }
+        ]
+      },
+      "parameterSpace": {
+        "taskParameterDefinitions": [
+          {
+            "name": "_1_T19_emit_image__Index",
+            "type": "INT",
+            "range": "{{Param._1_T19_emit_image__Frames}}:{{Param.ChunkSize}}"
+          }
+        ]
+      },
+      "script": {
+        "actions": {
+          "onRun": {
+            "command": "python",
+            "args": [
+              "{{Param.JobScriptDir}}/call_aerender.py",
+              "{{Param.ProjectFile}}",
+              "1",
+              "{{Param._1_T19_emit_image__OutputDir}}/T19_emit_ae<YEAR>_[#####].tif",
+              "{{Param._1_T19_emit_image__Frames}}",
+              "--chunk-size",
+              "{{Param.ChunkSize}}",
+              "--index",
+              "{{Task.Param._1_T19_emit_image__Index}}",
+              "--multi-frame-rendering",
+              "{{Param.MultiFrameRendering}}",
+              "--max-cpu-usage-percentage",
+              "{{Param.MaxCpuUsagePercentage}}",
+              "--ignore-missing-dependencies",
+              "{{Param.IgnoreMissingDependencies}}"
+            ],
+            "timeout": 172800
+          }
+        }
+      }
+    },
+    {
+      "name": "_2_T19_import_png_",
+      "hostRequirements": {
+        "attributes": [
+          {
+            "name": "attr.worker.os.family",
+            "anyOf": [
+              "windows",
+              "macos"
+            ]
+          }
+        ]
+      },
+      "script": {
+        "actions": {
+          "onRun": {
+            "command": "python",
+            "args": [
+              "{{Param.JobScriptDir}}/call_aerender.py",
+              "{{Param.ProjectFile}}",
+              "2",
+              "{{Param._2_T19_import_png__OutputDir}}/T19_import_ae<YEAR>.mp4",
+              "{{Param._2_T19_import_png__Frames}}",
+              "--multi-frame-rendering",
+              "{{Param.MultiFrameRendering}}",
+              "--max-cpu-usage-percentage",
+              "{{Param.MaxCpuUsagePercentage}}",
+              "--ignore-missing-dependencies",
+              "{{Param.IgnoreMissingDependencies}}"
+            ],
+            "timeout": 172800
+          }
+        }
+      }
+    }
+  ]
+}

@@ -306,20 +306,16 @@ def submit(
     bundle_dir: Path,
     *,
     name: str | None = None,
-    priority: int | None = None,
     max_retries_per_task: int | None = None,
-    add_known_asset_paths: bool = True,
-    extra_args: list[str] | None = None,
 ) -> SubmitResult:
     """``deadline bundle submit <dir> --yes`` using the configured default farm/queue.
 
     Returns the parsed job id. Note ``bundle submit`` has no ``--output json``; the
     job id (``job-<32 hex>``) is parsed from stdout.
 
-    By default the bundle's referenced directories are passed as
-    ``--known-asset-path`` (see :func:`known_asset_paths`) so the non-interactive
-    ``--yes`` submit doesn't cancel on "unknown paths". Pass
-    ``add_known_asset_paths=False`` to exercise that guard (e.g. negative tests).
+    The bundle's referenced directories are passed as ``--known-asset-path`` (see
+    :func:`known_asset_paths`) so the non-interactive ``--yes`` submit doesn't cancel
+    on "unknown paths".
     """
     args = [
         "bundle",
@@ -331,15 +327,10 @@ def submit(
     ]
     if name:
         args += ["--name", name]
-    if priority is not None:
-        args += ["--priority", str(priority)]
     if max_retries_per_task is not None:
         args += ["--max-retries-per-task", str(max_retries_per_task)]
-    if add_known_asset_paths:
-        for path in known_asset_paths(bundle_dir):
-            args += ["--known-asset-path", path]
-    if extra_args:
-        args += extra_args
+    for path in known_asset_paths(bundle_dir):
+        args += ["--known-asset-path", path]
 
     # Bounded: a stalled job-attachments upload must not hang the whole suite.
     try:
@@ -447,6 +438,52 @@ def task_failure_messages(job_id: str) -> list[str] | None:
                         )
                         messages.append(detail.get("progressMessage") or "")
         return messages
+    except Exception:  # noqa: BLE001 - any boto/credential error means "unreadable"
+        return None
+
+
+def expand_frames(expr: str) -> list[int]:
+    """Frame numbers in a range expression such as ``"1010-1016"`` or ``"1,3,5-7"``."""
+    frames: list[int] = []
+    for part in str(expr).split(","):
+        part = part.strip()
+        m = re.fullmatch(r"(-?\d+)\s*-\s*(-?\d+)", part)
+        if m:
+            frames.extend(range(int(m.group(1)), int(m.group(2)) + 1))
+        elif part:
+            frames.append(int(part))
+    return frames
+
+
+def task_frames(job_id: str) -> dict[str, list[int]] | None:
+    """Each task's frame parameter, sorted, keyed by step name; None if unreadable.
+
+    Read from the farm's own tasks, so it reflects what the workers were told to
+    render. For a chunked step the value is the chunk's first frame; the task renders
+    from there for ``ChunkSize`` frames, up to the step's last frame.
+    """
+    try:
+        from deadline.client import api
+        from deadline.client import config as dlconfig
+
+        client = api.get_boto3_client("deadline")
+        ids = {
+            "farmId": dlconfig.get_setting("defaults.farm_id"),
+            "queueId": dlconfig.get_setting("defaults.queue_id"),
+            "jobId": job_id,
+        }
+        result: dict[str, list[int]] = {}
+        for page in client.get_paginator("list_steps").paginate(**ids):
+            for step in page.get("steps", []):
+                frames: list[int] = []
+                pager = client.get_paginator("list_tasks")
+                for tasks in pager.paginate(stepId=step["stepId"], **ids):
+                    for task in tasks.get("tasks", []):
+                        for value in (task.get("parameters") or {}).values():
+                            for v in value.values():
+                                frames.extend(expand_frames(v))
+                result[step["name"]] = sorted(frames)
+        return result
     except Exception:  # noqa: BLE001 - any boto/credential error means "unreadable"
         return None
 

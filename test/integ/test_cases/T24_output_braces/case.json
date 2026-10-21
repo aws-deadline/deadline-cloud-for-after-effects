@@ -1,0 +1,11 @@
+{
+  "id": "T24",
+  "name": "Output name with braces",
+  "aep_slug": "output_braces",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": false,
+  "ae_run_timeout": 300,
+  "expect_refusal": "contains \"{{\" or \"}}\"",
+  "notes": "'{{' in an output name must be refused, after the submitter has started writing the bundle, so the drive must report the partial bundle as a failure. Known defect: the check never fires (KNOWN_ISSUES.md #8)."
+}
