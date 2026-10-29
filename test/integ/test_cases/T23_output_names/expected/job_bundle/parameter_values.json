@@ -1,0 +1,48 @@
+{
+  "parameterValues": [
+    {
+      "name": "deadline:targetTaskRunStatus",
+      "value": "READY"
+    },
+    {
+      "name": "deadline:maxFailedTasksCount",
+      "value": 20
+    },
+    {
+      "name": "deadline:maxRetriesPerTask",
+      "value": 5
+    },
+    {
+      "name": "deadline:priority",
+      "value": 50
+    },
+    {
+      "name": "ProjectFile",
+      "value": "<ASSETS>/projects/ae<YEAR>/T23_output_names_ae<YEAR>_v1.0.0.aep"
+    },
+    {
+      "name": "MultiFrameRendering",
+      "value": "OFF"
+    },
+    {
+      "name": "MaxCpuUsagePercentage",
+      "value": 90
+    },
+    {
+      "name": "IgnoreMissingDependencies",
+      "value": "OFF"
+    },
+    {
+      "name": "ChunkSize",
+      "value": 10
+    },
+    {
+      "name": "_1_T23_padding_4_OutputDir",
+      "value": "<RENDERS>/ae<YEAR>/T23"
+    },
+    {
+      "name": "_1_T23_padding_4_Frames",
+      "value": "0-29"
+    }
+  ]
+}

@@ -1,15 +1,18 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 """Pytest fixtures for the After Effects submitter integration tests.
 
-Execution model (two tests per case, sharing one AE drive):
+Execution model (five tests per case, sharing one AE drive):
 
   1. ``driver_installed`` (session)  — install the Startup driver JSX; remove after.
+     ``run_assets`` (session)        — copy the asset tree to build/integ/assets;
+                                        drives open the copy, never the committed tree.
   2. ``case_run``                    — drive AE once per case (cached) to build a
-                                        bundle; consumed by both test layers. With
+                                        bundle; consumed by every test layer. With
                                         ``--render`` on, it *also* submits the bundle
                                         to the farm right here — see ``case_submission``.
-  3. tests in the test module        — bundle generation always; render (poll only)
-                                        only with ``--render`` and when the case opts in.
+  3. tests in the test module        — bundle, golden and settings always; render and
+                                        render outputs only with ``--render`` and when
+                                        the case opts in.
 
 Two snapshots of the bundle are archived per case, and the difference matters:
 ``bundle-as-built`` is what the submitter wrote, ``bundle`` is what we submitted
@@ -25,20 +28,24 @@ own bundle+fonts while they are still on disk; ``test_render`` only polls the jo
 
 Environment / options:
   ``AE_VERSION``      release year to drive (default 2026); or ``--ae-version``.
-  ``AE_TEST_ASSETS``  asset root (default: the in-repo test/integ/aep_test_assets).
+  ``AE_TEST_ASSETS``  source asset root (default: the in-repo test/integ/aep_test_assets).
+                      Copied to build/integ/assets before the first drive.
   ``DEADLINE_CLI``    deadline CLI path (default: PATH).
   ``--render`` / ``AE_RUN_RENDER=1``  enable live submit + poll (needs AE license + farm).
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import shutil
 import time
+import warnings
 from pathlib import Path
 
 import pytest
-from harness import ae_launcher, aep, config, deadline_client, driver
+from harness import ae_launcher, config, deadline_client, driver
 from harness import bundle as bundle_mod
 from harness import cases as cases_mod
 
@@ -76,14 +83,23 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         "submitter, no project asset). Without it a host missing After Effects exits "
         "0 having tested nothing. Also enabled by AE_STRICT_ENVIRONMENT=1.",
     )
+    group.addoption(
+        "--keep-outputs",
+        action="store_true",
+        default=False,
+        help="Keep downloaded render output for cases that passed. By default a "
+        "passing case's output/ is deleted and a failing case's is kept.",
+    )
+
+
+def _env_flag(name: str) -> bool:
+    return os.environ.get(name, "").strip() in ("1", "true", "yes")
 
 
 def _strict_environment(pytestconfig: pytest.Config) -> bool:
-    import os
-
-    if pytestconfig.getoption("--strict-environment"):
-        return True
-    return os.environ.get("AE_STRICT_ENVIRONMENT", "").strip() in ("1", "true", "yes")
+    return bool(pytestconfig.getoption("--strict-environment")) or _env_flag(
+        "AE_STRICT_ENVIRONMENT"
+    )
 
 
 def _absent(pytestconfig: pytest.Config, reason: str) -> None:
@@ -104,18 +120,12 @@ def unavailable(pytestconfig: pytest.Config):
 
 
 def _render_enabled(pytestconfig: pytest.Config) -> bool:
-    import os
-
-    if pytestconfig.getoption("--render"):
-        return True
-    return os.environ.get("AE_RUN_RENDER", "").strip() in ("1", "true", "yes")
+    return bool(pytestconfig.getoption("--render")) or _env_flag("AE_RUN_RENDER")
 
 
 # --------------------------------------------------------------------------- fixtures
 @pytest.fixture(scope="session", autouse=True)
 def _apply_ae_version(pytestconfig: pytest.Config) -> None:
-    import os
-
     override = pytestconfig.getoption("--ae-version")
     if override:
         os.environ["AE_VERSION"] = override
@@ -155,23 +165,76 @@ def require_ae(pytestconfig: pytest.Config) -> None:
             pytestconfig,
             f"After Effects not found at {app} (set AE_EXECUTABLE / AE_VERSION)",
         )
-    if not config.get_submitter_path().exists():
+    submitter = config.get_submitter_path()
+    if not submitter.exists():
         _absent(
             pytestconfig,
             "Deadline Cloud submitter not installed at "
-            f"{config.get_submitter_path()} — install the submitter first",
+            f"{submitter} — install the submitter first",
         )
+    # Different submitters in several prefs folders: the one tested may not be the
+    # one AE loads. Fatal under --strict-environment, reported otherwise.
+    if "AE_SUBMITTER_PATH" not in os.environ:
+        found = config.get_submitter_candidates()
+        if len({_sha256(p) for p in found}) > 1:
+            msg = (
+                f"testing {submitter}, but different submitters are installed: "
+                + ", ".join(str(p) for p in found)
+                + ". Remove the stale ones or set AE_SUBMITTER_PATH."
+            )
+            if _strict_environment(pytestconfig):
+                pytest.fail(f"{msg} (--strict-environment)")
+            warnings.warn(msg, stacklevel=1)
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 @pytest.fixture(scope="session")
-def driver_installed(require_ae: None) -> Path:
+def run_assets(require_ae: None, pytestconfig: pytest.Config) -> Path:
+    """A fresh copy of the asset tree for this session's drives.
+
+    AE and the submitter save the project during a drive. Driving a copy keeps the
+    committed projects exactly as authored, and keeps this machine's name and home
+    paths out of them. A source without projects is an error, never a reason to
+    reuse a copy an earlier session left behind.
+    """
+    source = config.get_source_assets_root()
+    if not (source / "projects").is_dir():
+        config.clear_run_assets()
+        _absent(
+            pytestconfig, f"no projects/ under the asset root {source} (AE_TEST_ASSETS)"
+        )
+    return config.prepare_run_assets()
+
+
+@pytest.fixture(scope="session")
+def driver_installed(
+    require_ae: None, run_assets: Path, pytestconfig: pytest.Config
+) -> Path:
+    # Every drive quits AE (and force-kills it if it hangs), and launches delete its
+    # crash-recovery data. Never do that to an AE the user has open.
+    if ae_launcher.is_ae_running() and not _env_flag("AE_INTEG_STOP_RUNNING_AE"):
+        pytest.fail(
+            f"After Effects {config.get_ae_year()} is already running. Close it first "
+            "(the suite quits it, may force-kill it, and deletes its recovery data), "
+            "or set AE_INTEG_STOP_RUNNING_AE=1."
+        )
     installed = driver.install_driver()
     try:
         yield installed
     finally:
         driver.uninstall_driver()
+        driver.clean_state()
         if ae_launcher.is_ae_running():
             ae_launcher.stop_ae()
+        left = deadline_client.cancel_unhandled()
+        if left:
+            warnings.warn(
+                f"cancelled {len(left)} job(s) no render test polled: {', '.join(left)}",
+                stacklevel=1,
+            )
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -182,8 +245,47 @@ def _ae_warmup(driver_installed: Path) -> None:
     it here — untimed — keeps the first case's per-drive timeout from racing it. See
     ``driver.warmup``. Best-effort: a warmup miss just leaves the drive timeout as the
     backstop, exactly as before.
+
+    The same launch checks that AE resolves every font the projects use, so a missing
+    font is one clear error up front, not a failure per case minutes later.
     """
-    driver.warmup()
+    fonts = driver.required_fonts()
+    result = driver.warmup(fonts=fonts)
+    if isinstance(result, list) and result:
+        pytest.fail(
+            f"After Effects cannot find font(s) {result}. Install Lato and activate "
+            "Komet from Adobe Fonts (see test/integ/README.md, Prerequisites)."
+        )
+
+
+# Case slugs that ran / had a failing test this session. A failing case's downloaded
+# frames are kept as evidence; a passing case's are pruned at session end. Only cases
+# that ran are pruned, so a `-k` rerun does not delete another run's evidence.
+_FAILED_CASES: set[str] = set()
+_RAN_CASES: set[str] = set()
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """Record which cases failed, so their render output survives cleanup."""
+    outcome = yield
+    report = outcome.get_result()
+    slug = getattr(getattr(item, "callspec", None), "id", None)
+    if slug and report.when == "call":
+        _RAN_CASES.add(slug)
+        if report.failed:
+            _FAILED_CASES.add(slug)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _prune_outputs(pytestconfig: pytest.Config):
+    """Delete passing cases' downloaded output at session end (unless --keep-outputs)."""
+    yield
+    if pytestconfig.getoption("--keep-outputs") or not _ARTIFACT_ROOT.exists():
+        return
+    for out in sorted(_ARTIFACT_ROOT.glob("*/output")):
+        if out.parent.name in _RAN_CASES and out.parent.name not in _FAILED_CASES:
+            shutil.rmtree(out, ignore_errors=True)
 
 
 @pytest.fixture
@@ -249,9 +351,6 @@ def case_run(
         return cached
 
     result = driver.run_submitter(project, case.settings, timeout=case.ae_run_timeout)
-    # The drive may have re-saved the project, recording this machine's name and
-    # home-directory paths in it.
-    aep.scrub_project(project)
 
     # Archive the bundle *exactly as the submitter built it*, before any harness
     # patching. This is the only copy that can be asserted against the case's
@@ -304,6 +403,9 @@ def case_run(
                 "renderQueueItems": result.render_queue_items,
                 "timedOut": result.timed_out,
                 "elapsed_s": result.elapsed_s,
+                "submitterPath": str(config.get_submitter_path()),
+                "submitterSha256": _sha256(config.get_submitter_path()),
+                "tempFolder": str(result.temp_folder) if result.temp_folder else None,
             },
             indent=2,
         )
@@ -341,3 +443,17 @@ def case_submission(
 ) -> deadline_client.SubmitResult:
     """The farm submission produced during ``case_run`` (None if render was off)."""
     return _SUBMIT_CACHE.get(case.slug)
+
+
+@pytest.fixture
+def case_bundle_as_built(case_run: driver.SubmitterRun, case_dir: Path):
+    """The bundle as the submitter wrote it, before any harness patching, or None.
+
+    Assertions about the submitter's own output, above all the task-run timeout that
+    ``apply_job_metadata`` rewrites on its way to the farm, must read this snapshot.
+    """
+    as_built = case_dir / "bundle-as-built"
+    if not as_built.exists():
+        # The test body asserts case_run.ok first and reports the drive's own error.
+        return None
+    return bundle_mod.Bundle.load(as_built)

@@ -4,8 +4,8 @@
 The driver JSX (``scripts/DeadlineCloudAutoSubmit.jsx``) is installed into AE's
 ``Scripts/Startup`` folder. On launch it reads ``headless_submit_config.json``,
 ``eval``s the real submitter (UI stripped), overrides ``system.callSystem`` to block
-the GUI shell-out, calls ``SubmitSelection`` and writes a result JSON. We run in
-*bundle-only* mode (``submitAfterBundle: false``) — Python owns submission + polling.
+the GUI shell-out, calls ``SubmitSelection`` and writes a result JSON. The drive only
+builds the bundle; Python owns submission and polling.
 """
 
 from __future__ import annotations
@@ -34,9 +34,17 @@ class SubmitterRun:
     render_queue_items: list[dict[str, Any]] = field(default_factory=list)
     # Messages the submitter raised through adcAlert (stubbed by the driver JSX).
     alerts: list[str] = field(default_factory=list)
+    # Messages the submitter asked to confirm (stubbed to accept, and recorded).
+    confirms: list[str] = field(default_factory=list)
     timed_out: bool = False
     elapsed_s: float = 0.0
     raw: dict[str, Any] = field(default_factory=dict)
+    # The submitter's own temp folder (dcUtil.getTempFolder()). It differs per OS
+    # (%TEMP% on Windows, ~/.deadline/DeadlineCloudAETemp on macOS), and the bundle
+    # and collected fonts live under it.
+    temp_folder: Path | None = None
+    # The AE version as the submitter reads it (dcUtil.getAEVersion(), e.g. 26.3).
+    ae_version: float | None = None
 
     @property
     def ok(self) -> bool:
@@ -68,7 +76,7 @@ def uninstall_driver() -> None:
             dest.unlink()
 
 
-def _clean_state() -> None:
+def clean_state() -> None:
     result = config.get_result_path()
     if result.exists():
         result.unlink()
@@ -86,8 +94,6 @@ def _write_config(project_file: Path, settings: dict[str, Any]) -> None:
         # Resolve the exact installed submitter here so the JSX doesn't have to
         # guess between DeadlineCloudSubmitter.jsx and DeadlineCloudSubmitter(User).jsx.
         "submitterPath": str(config.get_submitter_path()),
-        # Bundle-only: the JSX builds the bundle and stops. Python submits + polls.
-        "submitAfterBundle": False,
         "quitAfterSubmit": True,
         **settings,
     }
@@ -178,7 +184,22 @@ def _wait_for_completion(timeout: int, start_timeout: int = 90) -> bool:
     return False
 
 
-def warmup(timeout: int = 480) -> bool:
+def required_fonts() -> list[str]:
+    """PostScript names the test projects need installed (from the asset builder)."""
+    import re
+
+    jsx = (
+        Path(__file__).resolve().parents[1]
+        / "aep_test_assets"
+        / "scripts"
+        / "build_test_projects.jsx"
+    ).read_text(encoding="utf-8")
+    return re.findall(
+        r'^var FONT_(?:INSTALLED|CC)\s*=\s*"([^"]+)"', jsx, flags=re.MULTILINE
+    )
+
+
+def warmup(timeout: int = 480, fonts: list[str] | None = None) -> bool | list[str]:
     """Absorb AE's one-time cold-launch cost before any case is timed.
 
     A *cold* AE launch (from a fully quit app) can take minutes to reach the point
@@ -200,12 +221,18 @@ def warmup(timeout: int = 480) -> bool:
     if ae_launcher.is_ae_running():
         ae_launcher.stop_ae()
         time.sleep(5)
-    _clean_state()
+    clean_state()
 
     # A project-less config: the JSX writes its breadcrumb (proof it reached execution)
-    # then returns early without opening a project or building a bundle.
+    # then returns early without opening a project or building a bundle. With fonts,
+    # it first checks that AE resolves each one.
     config.get_config_path().parent.mkdir(parents=True, exist_ok=True)
-    config.get_config_path().write_text("{}", encoding="utf-8")
+    config.get_config_path().write_text(
+        json.dumps({"checkFonts": fonts} if fonts else {}), encoding="utf-8"
+    )
+    result_path = config.get_result_path()
+    result_path.unlink(missing_ok=True)
+    done = config.get_config_path().with_name(config.get_config_path().name + ".done")
 
     breadcrumb = Path("/tmp/deadline_driver_started.txt")
     if config.get_platform() != "macos":
@@ -225,9 +252,22 @@ def warmup(timeout: int = 480) -> bool:
             break
         time.sleep(2)
 
+    # The font check runs after the breadcrumb; wait for its result.
+    missing: list[str] | None = None
+    if warmed and fonts:
+        while time.time() - start < timeout and not done.exists():
+            last_escape = _dismiss_blocking_dialogs(start, last_escape)
+            time.sleep(2)
+        raw = _read_result() if done.exists() else {}
+        note = str(raw.get("error") or "")
+        if raw.get("status") == "success" and note.startswith("missingFonts="):
+            missing = [f for f in note.split("=", 1)[1].split(",") if f]
+
     ae_launcher.stop_ae()
-    _clean_state()
+    clean_state()
     time.sleep(5)
+    if fonts:
+        return missing if missing is not None else warmed
     return warmed
 
 
@@ -239,7 +279,7 @@ def _drive_once(
         ae_launcher.stop_ae()
         time.sleep(5)
 
-    _clean_state()
+    clean_state()
     _write_config(project_file, settings)
 
     start = time.time()
@@ -265,9 +305,12 @@ def _drive_once(
         error=error,
         render_queue_items=raw.get("renderQueueItems", []) or [],
         alerts=raw.get("alerts", []) or [],
+        confirms=raw.get("confirms", []) or [],
         timed_out=not completed,
         elapsed_s=round(elapsed, 1),
         raw=raw,
+        temp_folder=Path(raw["tempFolder"]) if raw.get("tempFolder") else None,
+        ae_version=raw.get("aeVersion"),
     )
 
 

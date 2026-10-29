@@ -1,0 +1,64 @@
+{
+  "parameterValues": [
+    {
+      "name": "deadline:targetTaskRunStatus",
+      "value": "READY"
+    },
+    {
+      "name": "deadline:maxFailedTasksCount",
+      "value": 20
+    },
+    {
+      "name": "deadline:maxRetriesPerTask",
+      "value": 5
+    },
+    {
+      "name": "deadline:priority",
+      "value": 50
+    },
+    {
+      "name": "ProjectFile",
+      "value": "<ASSETS>/projects/ae<YEAR>/T22_frame_numbers_ae<YEAR>_v1.0.0.aep"
+    },
+    {
+      "name": "MultiFrameRendering",
+      "value": "OFF"
+    },
+    {
+      "name": "MaxCpuUsagePercentage",
+      "value": 90
+    },
+    {
+      "name": "IgnoreMissingDependencies",
+      "value": "OFF"
+    },
+    {
+      "name": "ChunkSize",
+      "value": 7
+    },
+    {
+      "name": "_1_T22_start_1001_OutputDir",
+      "value": "<RENDERS>/ae<YEAR>/T22"
+    },
+    {
+      "name": "_1_T22_start_1001_Frames",
+      "value": "1010-1033"
+    },
+    {
+      "name": "_2_T22_work_area_o_OutputDir",
+      "value": "<RENDERS>/ae<YEAR>/T22"
+    },
+    {
+      "name": "_2_T22_work_area_o_Frames",
+      "value": "5-16"
+    },
+    {
+      "name": "_3_T22_fps_23976_OutputDir",
+      "value": "<RENDERS>/ae<YEAR>/T22"
+    },
+    {
+      "name": "_3_T22_fps_23976_Frames",
+      "value": "0-23"
+    }
+  ]
+}

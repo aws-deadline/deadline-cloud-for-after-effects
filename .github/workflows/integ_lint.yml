@@ -7,7 +7,7 @@ on:
   pull_request:
     paths:
       - "test/integ/**"
-      - "test/unit/test_integ_asset_hygiene.py"
+      - "test/unit/test_integ_*.py"
       - "hatch.toml"
       - "requirements-testing.txt"
       - "requirements-integ.txt"
@@ -16,7 +16,7 @@ on:
     branches: [mainline]
     paths:
       - "test/integ/**"
-      - "test/unit/test_integ_asset_hygiene.py"
+      - "test/unit/test_integ_*.py"
 
 permissions:
   contents: read
@@ -42,3 +42,8 @@ jobs:
 
       - name: Lint harness (black + ruff)
         run: hatch run integ-lint:lint-check
+
+      # The harness's own unit tests need no After Effects or farm: case schema,
+      # docs, known defects, golden normalization, the .aep scrub, asset hygiene.
+      - name: Harness unit tests
+        run: hatch run integ:python -m pytest --no-cov -o addopts= test/unit/test_integ_*.py

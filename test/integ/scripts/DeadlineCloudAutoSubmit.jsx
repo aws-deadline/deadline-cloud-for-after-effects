@@ -73,15 +73,27 @@
     }
 
     // --- Helper: write result file (full version with submit output) ---
-    function writeResultFull(status, error, bundlePath, rqItems, submitOutput, submitExitCode) {
+    function writeResultFile(status, error, bundlePath, rqItems) {
         var duration = new Date().getTime() - startTime;
         var result = '{\n';
         result += '  "status": "' + status + '",\n';
         result += '  "error": ' + (error ? '"' + jsonEscape(error) + '"' : 'null') + ',\n';
         result += '  "bundlePath": ' + (bundlePath ? '"' + bundlePath.replace(/\\/g, '/') + '"' : 'null') + ',\n';
         result += '  "duration_ms": ' + duration + ',\n';
-        result += '  "submitOutput": ' + (submitOutput ? '"' + jsonEscape(submitOutput) + '"' : 'null') + ',\n';
-        result += '  "submitExitCode": ' + (submitExitCode !== null && submitExitCode !== undefined ? submitExitCode : 'null') + ',\n';
+        // The AE version as the submitter sees it; undefined before it is loaded.
+        var aeVersion = null;
+        try { aeVersion = dcUtil.getAEVersion(); } catch (e) {}
+        result += '  "aeVersion": ' + (aeVersion !== null ? aeVersion : 'null') + ',\n';
+        // The submitter's temp folder; undefined before the submitter is loaded.
+        var tempFolder = "";
+        try { tempFolder = new Folder(dcUtil.getTempFolder()).fsName.replace(/\\/g, '/'); } catch (e) {}
+        result += '  "tempFolder": ' + (tempFolder ? '"' + jsonEscape(tempFolder) + '"' : 'null') + ',\n';
+        result += '  "confirms": [';
+        var cf = (typeof confirms !== "undefined" && confirms) ? confirms : [];
+        for (var ci = 0; ci < cf.length; ci++) {
+            result += (ci > 0 ? ', ' : '') + '"' + jsonEscape(cf[ci]) + '"';
+        }
+        result += '],\n';
         result += '  "alerts": [';
         var al = (typeof alerts !== "undefined" && alerts) ? alerts : [];
         for (var ai = 0; ai < al.length; ai++) {
@@ -109,7 +121,7 @@
     // the full drive timeout and then retry a deterministic failure as a flake.
     function writeResult(status, error, bundlePath, rqItems) {
         closeProjectQuietly();
-        writeResultFull(status, error, bundlePath, rqItems, null, null);
+        writeResultFile(status, error, bundlePath, rqItems);
         signalDone();
     }
 
@@ -125,6 +137,8 @@
     // Messages the submitter tried to show via adcAlert (stubbed below). They are the
     // submitter's validation failures, so they belong in a failure result.
     var alerts = [];
+    // Messages the submitter asked the user to confirm (stubbed below to accept).
+    var confirms = [];
 
     // Recursively delete a folder. Used to clear the previous case's bundle.
     function removeTree(folder) {
@@ -167,6 +181,28 @@
         return;
     }
 
+    // --- Font preflight (warm-up launch only) ---
+    // Ask AE itself whether each font is installed. A text layer keeps a missing
+    // font's name, so look the name up in AE's font registry instead.
+    if (!config.projectFile && config.checkFonts) {
+        var missingFonts = [];
+        try {
+            for (var fi = 0; fi < config.checkFonts.length; fi++) {
+                var hits = app.fonts.getFontsByPostScriptName(config.checkFonts[fi]);
+                var present = false;
+                for (var hi = 0; hits && hi < hits.length; hi++) {
+                    if (hits[hi].postScriptName === config.checkFonts[fi] && !hits[hi].isSubstitute) present = true;
+                }
+                if (!present) missingFonts.push(config.checkFonts[fi]);
+            }
+        } catch (e) {
+            writeResult("failure", "font preflight error: " + e.message, null, null);
+            return;
+        }
+        writeResult("success", "missingFonts=" + missingFonts.join(","), null, null);
+        return;
+    }
+
     // --- Validate ---
     if (!config.projectFile) {
         writeResult("failure", "projectFile is required in config", null, null);
@@ -180,7 +216,15 @@
     }
 
     // --- Open project ---
-    app.open(projFile);
+    // Suppress AE's modal warnings while opening (e.g. "Resolve Fonts" for T06's
+    // deliberately missing font). Unanswered, they block the drive, and dismissing
+    // them from outside AE needs Accessibility on macOS.
+    app.beginSuppressDialogs();
+    try {
+        app.open(projFile);
+    } finally {
+        app.endSuppressDialogs(false);
+    }
     if (!app.project || !app.project.file) {
         writeResult("failure", "Failed to open project", null, null);
         return;
@@ -270,7 +314,9 @@
 
     // --- Suppress interactive popups ---
     updateList = function () {};
-    confirm = function () { return true; };
+    // Accept, but record: the unsupported-version warning is a confirm(), not an
+    // adcAlert, and an unrecorded prompt could never fail a case.
+    confirm = function (msg) { confirms.push(String(msg)); return true; };
     adcAlert = function (msg) { alerts.push(String(msg)); };
 
     // --- Force save ---
@@ -319,16 +365,20 @@
         }
 
         var outputType = "unknown";
+        var outputName = "";
         try {
             var outFile = rqi.outputModule(1).file;
             if (outFile) {
+                // File.name is URI-encoded ("%5B" for "["); decode it. displayName
+                // would be simpler but is empty on macOS.
+                outputName = File.decode(outFile.name);
                 var ext = outFile.name.split(".").pop().toLowerCase();
                 var imageExts = ["png", "jpg", "jpeg", "tif", "tiff", "exr", "psd", "tga", "bmp", "dpx"];
                 outputType = imageExts.indexOf(ext) >= 0 ? "image_sequence" : "video";
             }
         } catch (e) {}
 
-        rqItemDescriptions.push('{"index": ' + rqIndices[i] + ', "comp": "' + jsonEscape(rqi.comp.name) + '", "frames": "' + jsonEscape(String(frameInfo)) + '", "output": "' + outputType + '"}');
+        rqItemDescriptions.push('{"index": ' + rqIndices[i] + ', "comp": "' + jsonEscape(rqi.comp.name) + '", "frames": "' + jsonEscape(String(frameInfo)) + '", "output": "' + outputType + '", "outputName": "' + jsonEscape(outputName) + '"}');
     }
 
     // --- Build UiSettingsState ---
@@ -388,6 +438,18 @@
             return;
         }
     }
+    // Save after clearing the submitter's stored settings, so it does not stop to ask
+    // ("Project must be saved before submitting"). Its getters write a missing
+    // setting's default back to the project, so read each one first. A prompt then
+    // means something else made the project dirty.
+    for (var getter in uiSettingsState) {
+        if (typeof uiSettingsState[getter] === "function" && getter.indexOf("set") !== 0) {
+            try { uiSettingsState[getter](); } catch (e) {}
+        }
+    }
+    if (app.project.dirty) {
+        app.project.save();
+    }
     try {
         SubmitSelection(selection, uiSettingsState);
         // The submitter writes the bundle to dcUtil.getTempFolder()/DeadlineCloudAESubmission
@@ -431,82 +493,12 @@
         }
     }
 
-    // --- If submitAfterBundle is false, we're done (bundle-only mode) ---
-    if (config.submitAfterBundle === false) {
-        Folder.current = originalFolder;
-        // Close before signalling completion: the harness force-quits on the .done
-        // marker, so the project must already be non-dirty by the time we write it.
-        closeProjectQuietly();
-        writeResultFull("success", null, bundlePath, rqItemDescriptions, null, null);
-        signalDone();
-        if (config.quitAfterSubmit) app.quit();
-        return;
-    }
-
-    // --- Run headless submission: deadline bundle submit ---
-    var deadlineCli = config.deadlineCli || "deadline";
-    var submitCmd = '"' + deadlineCli + '" bundle submit "' + bundlePath + '" --yes';
-    submitCmd += ' --submitter-name "After Effects"';
-    if (config.farmId) submitCmd += ' --farm-id "' + config.farmId + '"';
-    if (config.queueId) submitCmd += ' --queue-id "' + config.queueId + '"';
-    if (config.jobName) submitCmd += ' --name "' + config.jobName + '"';
-    if (config.priority) submitCmd += ' --priority ' + config.priority;
-    if (config.storageProfileId) submitCmd += ' --storage-profile-id "' + config.storageProfileId + '"';
-
-    // Capture output to a temp file (system.callSystem returns stdout directly on macOS)
-    var submitOutput = "";
-    var submitExitCode = 0;
-    try {
-        // Restore original callSystem for our own use
-        system.callSystem = originalCallSystem;
-
-        if ($.os.indexOf("Windows") === -1) {
-            // macOS: run command and capture both stdout+stderr, append exit code
-            var fullCmd = submitCmd + ' 2>&1; echo "EXIT_CODE:$?"';
-            submitOutput = system.callSystem(fullCmd);
-        } else {
-            // Windows: use temp file for output
-            var outFile = new File(Folder.temp.fsName + "\\deadline_submit_output.txt");
-            var batCmd = submitCmd + ' > "' + outFile.fsName + '" 2>&1';
-            batCmd += '\necho EXIT_CODE:%ERRORLEVEL% >> "' + outFile.fsName + '"';
-            var batFile = new File(Folder.temp.fsName + "\\deadline_submit.bat");
-            batFile.open("w");
-            batFile.writeln("@echo off");
-            batFile.writeln(batCmd);
-            batFile.close();
-            system.callSystem(batFile.fsName);
-            if (outFile.exists) {
-                outFile.open("r");
-                submitOutput = outFile.read();
-                outFile.close();
-            }
-        }
-
-        // Parse exit code from output
-        var exitCodeMatch = submitOutput.match(/EXIT_CODE:(\d+)/);
-        if (exitCodeMatch) {
-            submitExitCode = parseInt(exitCodeMatch[1]);
-            submitOutput = submitOutput.replace(/EXIT_CODE:\d+\s*$/, "").replace(/\s+$/, "");
-        }
-    } catch (e) {
-        submitOutput = "Exception running deadline CLI: " + e.message;
-        submitExitCode = -1;
-    }
-
-    // --- Determine success/failure ---
-    var submitStatus = (submitExitCode === 0) ? "success" : "failure";
-    var submitError = (submitExitCode !== 0) ? submitOutput : null;
-
-    // --- Clean up, then signal: the harness force-quits on the .done marker ---
+    // Python submits the bundle (harness/deadline_client.py); the drive only builds it.
     Folder.current = originalFolder;
-    closeProjectQuietly();
-    writeResultFull(submitStatus, submitError, bundlePath, rqItemDescriptions, submitOutput, submitExitCode);
-    signalDone();
-
-    // --- Quit ---
-    if (config.quitAfterSubmit) {
-        app.quit();
-    }
+    // writeResult closes the project before signalling: the harness force-quits on
+    // the .done marker, so the project must already be non-dirty by then.
+    writeResult("success", null, bundlePath, rqItemDescriptions);
+    if (config.quitAfterSubmit) app.quit();
     }  // end main
 
     // Run main() once AE has finished launching. app.scheduleTask defers execution to
