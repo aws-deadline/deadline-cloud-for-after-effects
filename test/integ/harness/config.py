@@ -36,7 +36,12 @@ def get_platform() -> str:
 
 def get_ae_year() -> str:
     """AE release year, e.g. '2026'. From ``AE_VERSION`` env, default 2026."""
-    return os.environ.get("AE_VERSION", DEFAULT_AE_YEAR).strip()
+    year = os.environ.get("AE_VERSION", DEFAULT_AE_YEAR).strip()
+    if not re.fullmatch(r"20\d\d", year):
+        raise ValueError(
+            f"AE_VERSION must be a release year such as 2025, got {year!r}"
+        )
+    return year
 
 
 def get_ae_major() -> str:
@@ -205,6 +210,15 @@ def get_submitter_candidates() -> list[Path]:
             if path.is_file():
                 found.append(path)
     return found
+
+
+def get_supported_versions(submitter: Path) -> list[float]:
+    """The AE versions the submitter's conda channel supports (``SUPPORTED_VERSIONS``)."""
+    text = submitter.read_text(encoding="utf-8", errors="replace")
+    m = re.search(r"SUPPORTED_VERSIONS\s*=\s*\[([^\]]*)\]", text)
+    if not m:
+        raise ValueError(f"no SUPPORTED_VERSIONS in {submitter}")
+    return [float(v) for v in m.group(1).split(",") if v.strip()]
 
 
 def get_config_path() -> Path:

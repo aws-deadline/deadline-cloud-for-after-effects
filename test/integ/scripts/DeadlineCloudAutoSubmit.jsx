@@ -80,10 +80,20 @@
         result += '  "error": ' + (error ? '"' + jsonEscape(error) + '"' : 'null') + ',\n';
         result += '  "bundlePath": ' + (bundlePath ? '"' + bundlePath.replace(/\\/g, '/') + '"' : 'null') + ',\n';
         result += '  "duration_ms": ' + duration + ',\n';
+        // The AE version as the submitter sees it; undefined before it is loaded.
+        var aeVersion = null;
+        try { aeVersion = dcUtil.getAEVersion(); } catch (e) {}
+        result += '  "aeVersion": ' + (aeVersion !== null ? aeVersion : 'null') + ',\n';
         // The submitter's temp folder; undefined before the submitter is loaded.
         var tempFolder = "";
         try { tempFolder = new Folder(dcUtil.getTempFolder()).fsName.replace(/\\/g, '/'); } catch (e) {}
         result += '  "tempFolder": ' + (tempFolder ? '"' + jsonEscape(tempFolder) + '"' : 'null') + ',\n';
+        result += '  "confirms": [';
+        var cf = (typeof confirms !== "undefined" && confirms) ? confirms : [];
+        for (var ci = 0; ci < cf.length; ci++) {
+            result += (ci > 0 ? ', ' : '') + '"' + jsonEscape(cf[ci]) + '"';
+        }
+        result += '],\n';
         result += '  "alerts": [';
         var al = (typeof alerts !== "undefined" && alerts) ? alerts : [];
         for (var ai = 0; ai < al.length; ai++) {
@@ -127,6 +137,8 @@
     // Messages the submitter tried to show via adcAlert (stubbed below). They are the
     // submitter's validation failures, so they belong in a failure result.
     var alerts = [];
+    // Messages the submitter asked the user to confirm (stubbed below to accept).
+    var confirms = [];
 
     // Recursively delete a folder. Used to clear the previous case's bundle.
     function removeTree(folder) {
@@ -166,6 +178,28 @@
         config = eval("(" + configText + ")");
     } catch (e) {
         writeResult("failure", "Config parse error: " + e.message, null, null);
+        return;
+    }
+
+    // --- Font preflight (warm-up launch only) ---
+    // Ask AE itself whether each font is installed. A text layer keeps a missing
+    // font's name, so look the name up in AE's font registry instead.
+    if (!config.projectFile && config.checkFonts) {
+        var missingFonts = [];
+        try {
+            for (var fi = 0; fi < config.checkFonts.length; fi++) {
+                var hits = app.fonts.getFontsByPostScriptName(config.checkFonts[fi]);
+                var present = false;
+                for (var hi = 0; hits && hi < hits.length; hi++) {
+                    if (hits[hi].postScriptName === config.checkFonts[fi] && !hits[hi].isSubstitute) present = true;
+                }
+                if (!present) missingFonts.push(config.checkFonts[fi]);
+            }
+        } catch (e) {
+            writeResult("failure", "font preflight error: " + e.message, null, null);
+            return;
+        }
+        writeResult("success", "missingFonts=" + missingFonts.join(","), null, null);
         return;
     }
 
@@ -280,7 +314,9 @@
 
     // --- Suppress interactive popups ---
     updateList = function () {};
-    confirm = function () { return true; };
+    // Accept, but record: the unsupported-version warning is a confirm(), not an
+    // adcAlert, and an unrecorded prompt could never fail a case.
+    confirm = function (msg) { confirms.push(String(msg)); return true; };
     adcAlert = function (msg) { alerts.push(String(msg)); };
 
     // --- Force save ---
@@ -401,6 +437,18 @@
             writeResult("failure", "Could not delete stale bundle: " + staleBundles[sb], null, rqItemDescriptions);
             return;
         }
+    }
+    // Save after clearing the submitter's stored settings, so it does not stop to ask
+    // ("Project must be saved before submitting"). Its getters write a missing
+    // setting's default back to the project, so read each one first. A prompt then
+    // means something else made the project dirty.
+    for (var getter in uiSettingsState) {
+        if (typeof uiSettingsState[getter] === "function" && getter.indexOf("set") !== 0) {
+            try { uiSettingsState[getter](); } catch (e) {}
+        }
+    }
+    if (app.project.dirty) {
+        app.project.save();
     }
     try {
         SubmitSelection(selection, uiSettingsState);

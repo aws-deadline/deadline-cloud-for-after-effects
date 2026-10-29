@@ -16,15 +16,15 @@ checks against what was authored in AE; every other check still runs).
 | [T06](#t06) | Fonts + video | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [T07](#t07) | Audio-only output | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [T08](#t08) | Chunking, 300 frames | ✅ | ✅ | ✅ | ✅ | ✅ |
-| [T09](#t09) | CLI error case (partial) | ✅ | ✅ | ✅ | ➖ | ➖ |
+| [T09](#t09) | CLI error case | ✅ | ✅ | ✅ | ➖ | ➖ |
 | [T10](#t10) | Special characters | ✅ | ✅ | ✅ | ➖ | ➖ |
 | [T11](#t11) | Multi-frame rendering | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [T12](#t12) | Task timeout | ✅ | ✅ | ✅ | ✅ | ➖ |
-| [T16](#t16) | Version warning (partial) | ✅ | ✅ | ✅ | ➖ | ➖ |
+| [T16](#t16) | Version warning | ✅ | ✅ | ✅ | ➖ | ➖ |
 | [T17](#t17) | Three comps | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [T19](#t19) | Image sequences | ✅ | ✅ | ✅ | ✅ | ✅ |
-| [T20](#t20) | Ignore missing dependencies (partial) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| [T21](#t21) | get_user_fonts fallback (partial) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| [T20](#t20) | Ignore missing dependencies | ✅ | ✅ | ✅ | ✅ | ✅ |
+| [T21](#t21) | get_user_fonts fallback | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [T22](#t22) | Frame numbers | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [T23](#t23) | Output names | ⚠️ | ✅ | ✅ | ➖ | ➖ |
 | [T24](#t24) | Output name with braces | ⚠️ | ➖ | ➖ | ➖ | ➖ |
@@ -104,18 +104,18 @@ TIFF sequence with framesPerTask 100: ChunkSize is declared, valued and drives t
 |---|---|
 | Project | `T08_image_chunking_300f_ae<year>_v1.0.0.aep` |
 | Settings | `framesPerTask: 100` |
-| Expects | terminal state `SUCCEEDED`<br>`ChunkSize` declared and referenced by the task range |
+| Expects | terminal state `SUCCEEDED`<br>frames as AE shows them: `0-299`<br>`ChunkSize` declared and referenced by the task range |
 | Steps | `_1_T08_image_chunk` |
 | Outputs | `T08_ae<year>_[#####].tif` |
 | Layers | bundle, golden, settings, render, outputs |
 
-> TIFF sequence, 300 frames, framesPerTask 100: ChunkSize must be 100 and drive the step's task range (3 tasks). The output layer checks every chunk seam.
+> TIFF sequence, 300 frames, framesPerTask 100: ChunkSize must be 100 and drive the step's task range. expect_frames checks the farm's tasks start at 0, 100, 200. The output layer checks every chunk seam.
 
 </details>
 
 <a id="t09"></a>
 <details>
-<summary><b>T09</b> · CLI error case (partial) · bundle only</summary>
+<summary><b>T09</b> · CLI error case · bundle only</summary>
 
 Only builds the bundle. Rendering with the deadline CLI absent from PATH needs a harness hook (follow-up).
 
@@ -191,9 +191,9 @@ MultiFrameRendering ON and MaxCpuUsagePercentage 50 (not the default 90) reach t
 
 <a id="t16"></a>
 <details>
-<summary><b>T16</b> · Version warning (partial) · bundle only</summary>
+<summary><b>T16</b> · Version warning · bundle only</summary>
 
-Asserts no version warning fires on a supported AE. Spoofing an unsupported version needs a driver hook (follow-up).
+The unsupported-version prompt must appear exactly when the host AE is unsupported (checked in every case), with the conda fallback. Spoofing a version on demand needs a driver hook (follow-up).
 
 | | |
 |---|---|
@@ -204,7 +204,7 @@ Asserts no version warning fires on a supported AE. Spoofing an unsupported vers
 | Outputs | `T16_ae<year>.mp4` |
 | Layers | bundle, golden, settings |
 
-> Partial: today this asserts that no version warning fires on a supported AE. Spoofing an unsupported version needs a driver hook (follow-up).
+> Partial. Every case now asserts the unsupported-version confirm() appears exactly when the host AE is not in the submitter's SUPPORTED_VERSIONS, and that CondaPackages falls back to the major version then. This case's own goal, an unsupported version on demand, needs a driver hook to spoof it (follow-up).
 
 </details>
 
@@ -248,7 +248,7 @@ A PNG sequence import (every frame must be an input) and a TIFF sequence output 
 
 <a id="t20"></a>
 <details>
-<summary><b>T20</b> · Ignore missing dependencies (partial)</summary>
+<summary><b>T20</b> · Ignore missing dependencies</summary>
 
 ignoreMissingDependencies reaches the bundle. Nothing is missing yet; removing a file from the run copy is a follow-up.
 
@@ -267,7 +267,7 @@ ignoreMissingDependencies reaches the bundle. Nothing is missing yet; removing a
 
 <a id="t21"></a>
 <details>
-<summary><b>T21</b> · get_user_fonts fallback (partial)</summary>
+<summary><b>T21</b> · get_user_fonts fallback</summary>
 
 T06's comp without the missing font. Nothing forces the Python font-discovery fallback yet (follow-up).
 
@@ -313,9 +313,9 @@ A [####]-padded sequence. The bundle must name the files AE would write.
 |---|---|
 | Project | `T23_output_names_ae<year>_v1.0.0.aep` |
 | Settings | none (the submitter's defaults must hold) |
-| Expects | terminal state `SUCCEEDED` |
-| Steps |  |
-| Outputs |  |
+| Expects | terminal state `SUCCEEDED`<br>`ChunkSize` declared and referenced by the task range |
+| Steps | `_1_T23_padding_4` |
+| Outputs | `T23_padding_ae<year>_%5B####%5D.tif` |
 | Layers | bundle, golden, settings |
 | Known defect | Output names are URI-encoded: [####] becomes %5B####%5D (KNOWN_ISSUES #8). |
 

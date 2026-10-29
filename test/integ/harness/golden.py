@@ -54,13 +54,13 @@ def update_requested() -> bool:
 def _path_regex(path: Path) -> str:
     """Case-insensitive regex for ``path`` written with either separator.
 
-    Ends at a separator or the end of the string, so ``/Users/vik`` does not match
-    inside ``/Users/viknith``.
+    Not preceded by a path-name character, and ends at a separator or the end, so ``/var`` does not match inside ``/private/var`` and
+    ``/Users/vik`` does not match inside ``/Users/viknith``.
     """
     parts = [re.escape(p) for p in re.split(r"[\\/]+", str(path)) if p]
     body = r"[\\/]+".join(parts)
     lead = r"[\\/]+" if str(path)[:1] in "\\/" else ""
-    return r"(?i)" + lead + body + r"(?=[\\/]|$)"
+    return r"(?i)(?<![A-Za-z0-9._-])" + lead + body + r"(?=[\\/]|$)"
 
 
 # Asset-reference lists whose order is filesystem enumeration order.
@@ -87,7 +87,7 @@ def _canonical(name: str, data: Any) -> Any:
 
 def _path_rules(path: Path, placeholder: str) -> tuple[tuple[str, str], ...]:
     """Rules for ``path`` as given and as resolved (macOS: /var vs /private/var)."""
-    forms = dict.fromkeys([str(path), str(path.resolve())])
+    forms = sorted({str(path), str(path.resolve())}, key=len, reverse=True)
     return tuple((_path_regex(Path(p)), placeholder) for p in forms)
 
 

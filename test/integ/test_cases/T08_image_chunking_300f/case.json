@@ -8,5 +8,8 @@
   "expect": "SUCCEEDED",
   "render": true,
   "ae_run_timeout": 600,
-  "notes": "TIFF sequence, 300 frames, framesPerTask 100: ChunkSize must be 100 and drive the step's task range (3 tasks). The output layer checks every chunk seam."
+  "notes": "TIFF sequence, 300 frames, framesPerTask 100: ChunkSize must be 100 and drive the step's task range. expect_frames checks the farm's tasks start at 0, 100, 200. The output layer checks every chunk seam.",
+  "expect_frames": [
+    "0-299"
+  ]
 }

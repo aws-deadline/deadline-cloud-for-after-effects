@@ -29,8 +29,9 @@ registered in `harness/known_defects.py` for one case, one check and the comps i
 affects. Only that mismatch becomes an xfail. Any other mismatch fails, and so does a
 registered comp that starts matching, so a fix forces the entry's removal.
 
-Static checks on the cases (every case documented, known defects name real cases)
-are unit tests in `test/unit/test_integ_*.py`, so they run in CI without AE.
+The harness's own unit tests (`test/unit/test_integ_*.py`: case schema, docs, known
+defects, golden normalization, the `.aep` scrub, asset hygiene) need no AE. The
+`Integ Lint` workflow runs them on every PR that touches the harness.
 
 ## How it works
 
@@ -66,7 +67,9 @@ The submitter UI is stubbed, so the Submit button, docking and dialogs are not t
   from Adobe Fonts. The projects were built with
   [`ofl/lato/Lato-Regular.ttf` at google/fonts@5d3b761](https://github.com/google/fonts/blob/5d3b76120a319730fda218cc7410174a462b32cb/ofl/lato/Lato-Regular.ttf)
   (sha256 `d636e468…f185b251`). Other Lato builds share the PostScript name but
-  render differently.
+  render differently. Komet is a Creative Cloud font: activate it in the Creative
+  Cloud app (it doesn't show in the OS font list). The warm-up launch checks both in
+  AE and stops the run up front if either is missing.
 - In AE: *Preferences (macOS: Settings) > Scripting & Expressions > Allow Scripts to
   Write Files and Access Network* on.
 - The submitter installed in AE's user or system **ScriptUI Panels** folder:
@@ -81,11 +84,18 @@ The submitter UI is stubbed, so the Submit button, docking and dialogs are not t
 - Render only: the `deadline` CLI with a default farm and queue (`deadline config show`)
   and valid credentials. The queue needs job attachments.
 - An unlocked desktop session. AE can't finish a drive while the screen is locked.
+- After Effects closed. The suite refuses to start if the AE year under test is
+  already running, because every drive quits AE (force-killing it if it hangs). Set
+  `AE_INTEG_STOP_RUNNING_AE=1` to let it close yours.
+- macOS: Accessibility permission for the terminal that runs the suite (*System
+  Settings > Privacy & Security > Accessibility*). The harness uses it to dismiss
+  dialogs AE shows at launch.
 
 ### What a run changes on your machine
 
 To launch AE unattended, the harness edits your **real** AE preferences before each
-launch. Run it on a dedicated test machine, or save your work first:
+launch, in every prefs folder of the AE year under test (`<major>.*`). Nothing is
+backed up or restored. Run it on a dedicated test machine, or save your work first:
 
 - **Deletes** AE's `Adobe After Effects Auto-Save Recovery/` and `CrashRecovery/`
   folders, crash markers, and `*.aepcrash` files, so the crash-repair dialog can't
@@ -93,7 +103,10 @@ launch. Run it on a dedicated test machine, or save your work first:
 - Sets `AE.DebugShowPreviousCrashWarning` to `false` in `Debug Database.txt`.
 - On macOS, clears AE's `AppStates` defaults.
 - Turns off Adobe's in-app feedback survey for the AE version under test.
-- Installs a Startup script while the suite runs, and removes it afterwards.
+- Installs a Startup script while the suite runs, and removes it and its config
+  files from `~/.deadline/` afterwards.
+- Rebuilding projects (`run_build.py`) also turns on *Allow Scripts to Write Files
+  and Access Network*, and quits AE when it is done.
 
 ## Running
 
@@ -107,6 +120,9 @@ hatch run integ:test-render
 # Pick the AE year (default 2026), or one case.
 AE_VERSION=2025 hatch run integ:test -k T17
 ```
+
+`-k` is the way to narrow a run. A path or node id is added to `test/integ`, which
+is always collected, so it still drives every case.
 
 Results: pytest output, plus JUnit XML at `build/integ/results.xml`. Each case writes
 `build/integ-artifacts/<id>-<slug>/` with the bundle as built, the bundle as
@@ -149,10 +165,14 @@ for failing cases (`--keep-outputs` keeps all).
    }
    ```
 
-   `settings` are applied by the driver JSX. `expect` is the terminal job status.
-   Optional: `expect_failure_message`, `expect_alerts`, `max_retries`, `ae_run_timeout`,
-   `expect_frames`, `frame_code`, `expect_refusal` (see `harness/cases.py`).
-   A case must check something no other case does.
+   `settings` are applied by the driver JSX: `framesPerTask`, `multiFrameRendering`,
+   `maxCpuUsagePercentage`, `ignoreMissingDependencies` and `taskRunTimeoutDays` /
+   `Hours` / `Minutes`. `expect` is the terminal job status. Optional:
+   `expect_failure_message`, `expect_alerts`, `expect_confirms`, `max_retries`,
+   `ae_run_timeout`, `expect_frames` (per-comp ranges; a movie step expects one task),
+   `frame_code`, `expect_refusal`, and free-text `notes` (see `harness/cases.py`).
+   `test/unit/test_integ_cases_static.py` rejects any other key or setting. A case must
+   check something no other case does.
 3. Write its golden with `AE_UPDATE_GOLDENS=1 hatch run integ:test -k <id>`, and
    review it.
 4. Add a coverage row and a section to `test_cases/README.md`. `test_cases_documented`

@@ -77,13 +77,25 @@ def test_bundle_generation(case, case_run, case_dir):
         project_file
     ), f"ProjectFile {project_file!r} does not reference {expected}"
 
-    _assert_alerts(case, run)
+    # A host AE the submitter's conda channel does not list gets a warning prompt,
+    # and the job falls back to the major version. Expected exactly then.
+    assert run.ae_version, "the drive did not report the AE version"
+    supported = config.get_supported_versions(config.get_submitter_path())
+    unsupported = run.ae_version not in supported
+    _assert_alerts(case, run, version_warning=unsupported)
 
     # Declared with a default and never given a value, so param() is always None here.
     conda = bundle.param_default("CondaPackages") or bundle.param("CondaPackages")
     assert conda, "CondaPackages is neither declared with a default nor given a value"
-    want_conda = f"aftereffects={config.get_ae_major()}"
-    assert want_conda in str(conda), f"CondaPackages {conda!r} lacks {want_conda!r}"
+    version = int(run.ae_version) if unsupported else run.ae_version
+    want_conda = f"aftereffects={version:g}"
+    assert want_conda in str(conda).split(), (
+        f"CondaPackages {conda!r} lacks {want_conda!r} (AE {run.ae_version}, "
+        f"supported {supported})"
+    )
+    assert str(config.get_ae_major()) == str(
+        int(run.ae_version)
+    ), f"drove AE {run.ae_version}, expected the {config.get_ae_year()} release"
 
     assert bundle.steps, "Bundle template has no steps"
 
@@ -117,13 +129,23 @@ def test_bundle_generation(case, case_run, case_dir):
     # The driver JSX measures each queue item's range with its own copy of the
     # submitter's formula. Checking the bundle against itself would pass any
     # regression; this catches a change to the submitter's calculation.
+    # Every step must resolve to an output, or the per-comp checks below would
+    # silently cover fewer comps (they zip steps with queue items).
+    assert len(bundle.step_outputs()) == len(bundle.steps), (
+        f"only {len(bundle.step_outputs())} of {len(bundle.steps)} steps have an "
+        "output arg the harness recognises"
+    )
     drive_ranges = [str(item.get("frames")) for item in rq_items]
     bundle_ranges = [str(so.frames) for so in bundle.step_outputs()]
-    if "unknown" not in drive_ranges:
-        assert bundle_ranges == drive_ranges, (
-            f"bundle frame ranges {bundle_ranges} do not match the ranges the drive "
-            f"measured from the comps {drive_ranges}"
-        )
+    # "unknown" means the drive could not measure the range; that must fail, never
+    # switch the check off.
+    assert (
+        "unknown" not in drive_ranges
+    ), f"the drive could not measure a frame range: {rq_items}"
+    assert bundle_ranges == drive_ranges, (
+        f"bundle frame ranges {bundle_ranges} do not match the ranges the drive "
+        f"measured from the comps {drive_ranges}"
+    )
 
     # --- Asset references: the project resolves to a real input --------------------
     inputs = bundle.input_filenames()
@@ -279,6 +301,7 @@ def test_render(
         f"{submitted.stderr or submitted.stdout}"
     )
 
+    deadline_client.HANDLED.add(submitted.job_id)
     waited = deadline_client.wait(submitted.job_id, timeout=case.job_wait_timeout)
 
     # Reconcile against the real farm state. A local wait can report the wrong thing
@@ -504,9 +527,15 @@ def test_render_outputs(
     chunk = int(bundle.param("ChunkSize")) if bundle.has_chunking() else 1
     comps = [str(item.get("comp")) for item in case_run.render_queue_items]
     checks = kd.AuthoredChecks(case.id)
-    for comp, step, want in zip(comps, bundle.steps, case.expect_frames):
+    for comp, step, so, want in zip(
+        comps, bundle.steps, bundle.step_outputs(), case.expect_frames
+    ):
         got = task_frames.get(step.get("name")) or []
-        expected = deadline_client.expand_frames(want)[::chunk]
+        # A movie renders in one task with no frame parameter; a sequence is split
+        # into chunks that start every ChunkSize frames.
+        expected = (
+            deadline_client.expand_frames(want)[::chunk] if so.is_sequence else []
+        )
         checks.compare(kd.TASK_FRAMES, comp, got, expected, "task start frames")
     _settle(checks)
 
@@ -537,13 +566,19 @@ def _check_refusal(case, run) -> None:
             f"the submitter refused, but without an alert containing "
             f"{case.expect_refusal!r}: {run.alerts}"
         )
+        others = [a for a in run.alerts if case.expect_refusal not in a]
+        assert not others, f"unexpected alerts besides the refusal: {others}"
         assert "Bundle incomplete" in (
             run.error or ""
         ), f"the drive should report the partial bundle, got: {run.error!r}"
     _settle(checks)
 
 
-def _assert_alerts(case, run) -> None:
+# The submitter's confirm() for a host AE its conda channel does not list.
+VERSION_WARNING = "is not officially supported in the deadline-cloud conda channel"
+
+
+def _assert_alerts(case, run, version_warning: bool = False) -> None:
     """The submitter raised exactly the alerts the case expects.
 
     The driver stubs adcAlert, so the submitter's non-fatal warnings (missing
@@ -561,6 +596,17 @@ def _assert_alerts(case, run) -> None:
         assert any(
             want in a for a in run.alerts
         ), f"expected a submitter alert containing {want!r}, got {run.alerts}"
+    # The same for confirm() prompts. The unsupported-version warning depends on the
+    # host's AE version, so it is expected exactly when that version is unsupported.
+    wanted = list(case.expect_confirms) + ([VERSION_WARNING] if version_warning else [])
+    unexpected = [c for c in run.confirms if not any(want in c for want in wanted)]
+    assert (
+        not unexpected
+    ), f"submitter asked to confirm: {unexpected} (expected substrings: {wanted})"
+    for want in wanted:
+        assert any(
+            want in c for c in run.confirms
+        ), f"expected a confirm prompt containing {want!r}, got {run.confirms}"
 
 
 def _verify_image(path: Path) -> tuple[tuple[int, int], str]:

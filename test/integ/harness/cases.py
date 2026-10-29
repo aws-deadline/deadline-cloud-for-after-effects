@@ -15,6 +15,7 @@ no Python change needed. Schema::
       "max_retries": 3,                 # optional; farm retries per task
       "expect_failure_message": "TIMEOUT", # optional; why an expected failure failed
       "expect_alerts": ["Missing fonts"], # optional; submitter warnings this case expects
+      "expect_confirms": ["..."],       # optional; confirm() prompts this case expects
       "ae_run_timeout": 300,            # optional; per-drive budget in seconds
       "expect_frames": ["1010-1033"],   # optional; per-step AE frame ranges, authored by hand
       "frame_code": false,              # optional; frames carry a pixel-encoded frame number
@@ -83,6 +84,9 @@ class Case:
     # matches none of them fails the bundle layer, so a new warning cannot pass
     # unnoticed. T06 expects its deliberately-missing font to be reported.
     expect_alerts: list[str] = field(default_factory=list)
+    # Substrings of confirm() prompts this case expects (e.g. the unsupported-version
+    # warning). Any other prompt fails, like an unexpected alert.
+    expect_confirms: list[str] = field(default_factory=list)
     # Per-step frame ranges as authored in AE, e.g. ["1010-1033"]. An oracle that is
     # independent of the submitter's frame formula, which the driver JSX copies.
     expect_frames: list[str] = field(default_factory=list)
@@ -115,6 +119,7 @@ def _load_case(case_dir: Path) -> Case:
         max_retries=data.get("max_retries", JOB_MAX_RETRIES),
         expect_failure_message=data.get("expect_failure_message"),
         expect_alerts=data.get("expect_alerts", []),
+        expect_confirms=data.get("expect_confirms", []),
         expect_frames=data.get("expect_frames", []),
         frame_code=data.get("frame_code", False),
         expect_refusal=data.get("expect_refusal"),

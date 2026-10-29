@@ -92,12 +92,14 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
-def _strict_environment(pytestconfig: pytest.Config) -> bool:
-    import os
+def _env_flag(name: str) -> bool:
+    return os.environ.get(name, "").strip() in ("1", "true", "yes")
 
-    if pytestconfig.getoption("--strict-environment"):
-        return True
-    return os.environ.get("AE_STRICT_ENVIRONMENT", "").strip() in ("1", "true", "yes")
+
+def _strict_environment(pytestconfig: pytest.Config) -> bool:
+    return bool(pytestconfig.getoption("--strict-environment")) or _env_flag(
+        "AE_STRICT_ENVIRONMENT"
+    )
 
 
 def _absent(pytestconfig: pytest.Config, reason: str) -> None:
@@ -118,18 +120,12 @@ def unavailable(pytestconfig: pytest.Config):
 
 
 def _render_enabled(pytestconfig: pytest.Config) -> bool:
-    import os
-
-    if pytestconfig.getoption("--render"):
-        return True
-    return os.environ.get("AE_RUN_RENDER", "").strip() in ("1", "true", "yes")
+    return bool(pytestconfig.getoption("--render")) or _env_flag("AE_RUN_RENDER")
 
 
 # --------------------------------------------------------------------------- fixtures
 @pytest.fixture(scope="session", autouse=True)
 def _apply_ae_version(pytestconfig: pytest.Config) -> None:
-    import os
-
     override = pytestconfig.getoption("--ae-version")
     if override:
         os.environ["AE_VERSION"] = override
@@ -214,14 +210,31 @@ def run_assets(require_ae: None, pytestconfig: pytest.Config) -> Path:
 
 
 @pytest.fixture(scope="session")
-def driver_installed(require_ae: None, run_assets: Path) -> Path:
+def driver_installed(
+    require_ae: None, run_assets: Path, pytestconfig: pytest.Config
+) -> Path:
+    # Every drive quits AE (and force-kills it if it hangs), and launches delete its
+    # crash-recovery data. Never do that to an AE the user has open.
+    if ae_launcher.is_ae_running() and not _env_flag("AE_INTEG_STOP_RUNNING_AE"):
+        pytest.fail(
+            f"After Effects {config.get_ae_year()} is already running. Close it first "
+            "(the suite quits it, may force-kill it, and deletes its recovery data), "
+            "or set AE_INTEG_STOP_RUNNING_AE=1."
+        )
     installed = driver.install_driver()
     try:
         yield installed
     finally:
         driver.uninstall_driver()
+        driver.clean_state()
         if ae_launcher.is_ae_running():
             ae_launcher.stop_ae()
+        left = deadline_client.cancel_unhandled()
+        if left:
+            warnings.warn(
+                f"cancelled {len(left)} job(s) no render test polled: {', '.join(left)}",
+                stacklevel=1,
+            )
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -232,8 +245,17 @@ def _ae_warmup(driver_installed: Path) -> None:
     it here — untimed — keeps the first case's per-drive timeout from racing it. See
     ``driver.warmup``. Best-effort: a warmup miss just leaves the drive timeout as the
     backstop, exactly as before.
+
+    The same launch checks that AE resolves every font the projects use, so a missing
+    font is one clear error up front, not a failure per case minutes later.
     """
-    driver.warmup()
+    fonts = driver.required_fonts()
+    result = driver.warmup(fonts=fonts)
+    if isinstance(result, list) and result:
+        pytest.fail(
+            f"After Effects cannot find font(s) {result}. Install Lato and activate "
+            "Komet from Adobe Fonts (see test/integ/README.md, Prerequisites)."
+        )
 
 
 # Case slugs that ran / had a failing test this session. A failing case's downloaded

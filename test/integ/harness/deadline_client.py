@@ -77,6 +77,20 @@ def terminal_status_from_counts(counts: dict[str, Any]) -> str | None:
     return "SUCCEEDED"
 
 
+# Jobs this session submitted, and the ones test_render has dealt with. A job the
+# render layer never saw (deselected, -x, Ctrl-C) is cancelled at session end.
+SUBMITTED: set[str] = set()
+HANDLED: set[str] = set()
+
+
+def cancel_unhandled() -> list[str]:
+    """Cancel every submitted job test_render never dealt with. Returns their ids."""
+    left = sorted(SUBMITTED - HANDLED)
+    for job_id in left:
+        cancel(job_id)
+    return left
+
+
 def redirect_output_dir(bundle_dir: Path, output_dir: Path) -> list[str]:
     """Point every step's render output at ``output_dir``, returning the old paths.
 
@@ -284,13 +298,20 @@ def _run(args: list[str], timeout: int | None = None) -> subprocess.CompletedPro
     # check=False semantics are load-bearing: `job wait`'s *exit code* is the job
     # outcome (see _WAIT_EXIT_STATUS), so a non-zero return is data, not an error.
     cmd = [config.get_deadline_cli(), *args]
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        start_new_session=sys.platform != "win32",
-    )
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            start_new_session=sys.platform != "win32",
+        )
+    except OSError as exc:
+        # A missing or unrunnable CLI is a failed call, never an exception that
+        # takes the offline layers down with it.
+        return subprocess.CompletedProcess(
+            cmd, 127, "", f"could not run {cmd[0]}: {exc}"
+        )
     try:
         out, err = proc.communicate(timeout=timeout)
     except subprocess.TimeoutExpired as exc:
@@ -343,6 +364,8 @@ def submit(
             stderr=f"bundle submit timed out after {JOB_SUBMIT_TIMEOUT_S}s",
         )
     match = _JOB_ID_RE.search(proc.stdout) or _JOB_ID_RE.search(proc.stderr)
+    if match:
+        SUBMITTED.add(match.group(0))
     return SubmitResult(
         job_id=match.group(0) if match else None,
         returncode=proc.returncode,

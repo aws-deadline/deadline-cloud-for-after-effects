@@ -5,8 +5,9 @@ referenced from code and case notes.
 
 ## 1. The submitter's temp folder is shared across drives
 
-The submitter rewrites `~/.deadline/DeadlineCloudAETemp/` (bundle and `tempFonts/`) on
-every drive. pytest runs every bundle test before any render test, so the harness
+The submitter rewrites its temp folder (bundle and `tempFonts/`) on every drive. That
+is `Folder.temp` when writable (`%TEMP%` on Windows), else a fallback such as
+`~/.deadline/DeadlineCloudAETemp/` on macOS. The drive reports which one it used. pytest runs every bundle test before any render test, so the harness
 submits each case during its own drive (`conftest.py::case_run`). Tests that read a
 bundle later read the per-case copies under `build/integ-artifacts/<case>/`.
 

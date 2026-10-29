@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import sys
 import time
@@ -46,8 +47,22 @@ MARKER = config.get_config_path().with_name("ae_build_projects.done")
 LAUNCH_TIMEOUT_S = int(os.environ.get("AE_BUILD_TIMEOUT", "900"))
 
 
+def builder_ids() -> list[str]:
+    """The test ids build_test_projects.jsx knows how to build (its BUILDS list)."""
+    text = JSX.read_text(encoding="utf-8")
+    block = text[text.index("var BUILDS = [") :]
+    block = block[: block.index("];")]
+    return re.findall(r'^\s*\["(T\d+)"', block, flags=re.MULTILINE)
+
+
 def main(argv: list[str]) -> int:
-    only = ",".join(a.strip().upper() for a in argv if a.strip())
+    ids = [a.strip().upper() for a in argv if a.strip()]
+    known = builder_ids()
+    unknown = [i for i in ids if i not in known]
+    if unknown:
+        print(f"ERROR: unknown test id(s) {unknown}; the builder knows {known}")
+        return 2
+    only = ",".join(ids)
 
     # Empty means unset, matching harness/config.py.
     root = os.environ.get("AE_TEST_ASSETS") or str(_ASSETS)
@@ -57,6 +72,15 @@ def main(argv: list[str]) -> int:
 
     if not config.get_ae_app_path().exists():
         print("ERROR: After Effects not found (set AE_VERSION / AE_EXECUTABLE)")
+        return 2
+    if (
+        ae_launcher.is_ae_running()
+        and os.environ.get("AE_INTEG_STOP_RUNNING_AE") != "1"
+    ):
+        print(
+            "ERROR: After Effects is already running. Close it first (the build "
+            "quits it), or set AE_INTEG_STOP_RUNNING_AE=1."
+        )
         return 2
 
     BUILD_CONFIG.parent.mkdir(parents=True, exist_ok=True)
@@ -102,17 +126,20 @@ def main(argv: list[str]) -> int:
                 dest.unlink()
         BUILD_CONFIG.unlink(missing_ok=True)
         print("uninstalled build script")
-
-    if ok:
-        # AE records the saving machine's name; these files are public.
+        # Always: a build that timed out may still have saved some projects, and
+        # AE records the machine name and home paths in each. These files are public.
         scrubbed = aep.scrub_tree(Path(root) / "projects")
         if scrubbed:
-            print(f"scrubbed machine name from {scrubbed} .aep file(s)")
+            print(f"scrubbed machine and user names from {scrubbed} .aep file(s)")
+
+    if ok:
+        log = MARKER.read_text(errors="replace")
+        MARKER.unlink(missing_ok=True)
         print("--- build log ---")
-        print(MARKER.read_text(errors="replace"))
+        print(log)
         # A builder that threw logs "FAIL <id>" and keeps going, so a zero exit
         # code would otherwise hide a project that was never regenerated.
-        if "FAIL " in MARKER.read_text(errors="replace"):
+        if "FAIL " in log:
             print("ERROR: at least one builder failed (see FAIL lines above)")
             return 1
     return 0 if ok else 1

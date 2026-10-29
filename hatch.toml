@@ -55,18 +55,19 @@ test-render = "pytest --no-cov test/integ -vvv --numprocesses=1 --render --junit
 # PR check in .github/workflows/integ_lint.yml needs no AE or farm dependencies.
 [envs.integ-lint]
 detached = true
-# Same pins as requirements-testing.txt.
+# Same pins as requirements-testing.txt. test_integ_harness_misc.py checks that the
+# file lists below name every test/unit/test_integ_*.py.
 dependencies = [
   "black == 26.*",
-  "ruff == 0.16.*",
+  "ruff == 0.17.*",
 ]
 
 [envs.integ-lint.scripts]
 lint = [
-  "black --target-version py311 {args:test/integ test/unit/test_integ_asset_hygiene.py test/unit/test_integ_aep_scrub.py test/unit/test_integ_cases_static.py test/unit/test_integ_golden.py test/unit/test_integ_known_defects.py}",
-  "ruff check --fix {args:test/integ test/unit/test_integ_asset_hygiene.py test/unit/test_integ_aep_scrub.py test/unit/test_integ_cases_static.py test/unit/test_integ_golden.py test/unit/test_integ_known_defects.py}",
+  "black --target-version py311 {args:test/integ test/unit/test_integ_aep_scrub.py test/unit/test_integ_asset_hygiene.py test/unit/test_integ_cases_static.py test/unit/test_integ_golden.py test/unit/test_integ_golden_paths.py test/unit/test_integ_harness_misc.py test/unit/test_integ_known_defects.py}",
+  "ruff check --fix {args:test/integ test/unit/test_integ_aep_scrub.py test/unit/test_integ_asset_hygiene.py test/unit/test_integ_cases_static.py test/unit/test_integ_golden.py test/unit/test_integ_golden_paths.py test/unit/test_integ_harness_misc.py test/unit/test_integ_known_defects.py}",
 ]
 lint-check = [
-  "black --check --diff --target-version py311 {args:test/integ test/unit/test_integ_asset_hygiene.py test/unit/test_integ_aep_scrub.py test/unit/test_integ_cases_static.py test/unit/test_integ_golden.py test/unit/test_integ_known_defects.py}",
-  "ruff check {args:test/integ test/unit/test_integ_asset_hygiene.py test/unit/test_integ_aep_scrub.py test/unit/test_integ_cases_static.py test/unit/test_integ_golden.py test/unit/test_integ_known_defects.py}",
+  "black --check --diff --target-version py311 {args:test/integ test/unit/test_integ_aep_scrub.py test/unit/test_integ_asset_hygiene.py test/unit/test_integ_cases_static.py test/unit/test_integ_golden.py test/unit/test_integ_golden_paths.py test/unit/test_integ_harness_misc.py test/unit/test_integ_known_defects.py}",
+  "ruff check {args:test/integ test/unit/test_integ_aep_scrub.py test/unit/test_integ_asset_hygiene.py test/unit/test_integ_cases_static.py test/unit/test_integ_golden.py test/unit/test_integ_golden_paths.py test/unit/test_integ_harness_misc.py test/unit/test_integ_known_defects.py}",
 ]

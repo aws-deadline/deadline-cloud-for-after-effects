@@ -10,7 +10,7 @@ Assets produced (version stamped into filenames AND burned into pixels/labels):
   - image_sequences/ : PNG sequence for image-sequence-import coverage
   - special_characters/ : PNG whose filename carries special characters (=, +, -, _, ñ)
 
-No third-party licensed content is used; everything is generated locally.
+Everything is generated locally. Labels use Lato (SIL Open Font License).
 """
 
 import os
@@ -69,7 +69,7 @@ def make_still(path, title, subtitle, bg=(18, 24, 42)):
             title,
             subtitle,
             f"asset v{VERSION}",
-            "mac -> Windows SMF  |  Deadline Cloud AE E2E",
+            "Deadline Cloud for After Effects integration test",
         ],
         origin=(90, 380),
         size=64,
@@ -93,7 +93,7 @@ def make_sequence(dirpath, base, frames=60):
                 "Image Sequence Import",
                 f"frame {i:04d} / {frames}",
                 f"asset v{VERSION}",
-                "mac -> Windows SMF",
+                "Deadline Cloud for After Effects integration test",
             ],
             origin=(90, 360),
             size=64,
@@ -135,7 +135,7 @@ def make_video(path, seconds=6, fps=30):
             d.rectangle([40, 40, W - 40, H - 40], outline=(120, 200, 255), width=6)
             draw_label(
                 d,
-                ["AE SMF SOURCE FOOTAGE", f"asset v{VERSION}", "mac -> Windows SMF"],
+                ["AE SOURCE FOOTAGE", f"asset v{VERSION}", "integration test"],
                 origin=(90, 120),
                 size=56,
             )
