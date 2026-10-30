@@ -8,12 +8,13 @@ It reads -s/-e from argv and env vars to decide what to emit, then replays
 canned stdout lines shaped like real "-v ERRORS_AND_PROGRESS" output.
 
 Env controls:
-    FAKE_AE_MODE   seq (default) | mfr | movie | strong_error | read_source_error | bare_read_source_error | error_then_read_source | full_render_then_read_source | benign_source_read_name | benign_error | partial | bad_bytes
+    FAKE_AE_MODE   seq (default) | mfr | movie | strong_error | read_source_error | bare_read_source_error | error_then_read_source | full_render_then_read_source | benign_source_read_name | license_failure | benign_license_name | benign_error | partial | bad_bytes
     FAKE_AE_EXIT   integer exit code to return (default "0")
 """
 
 import os
 import sys
+import time
 
 
 def parse_range(argv):
@@ -113,6 +114,19 @@ def main():
         # A footage name that merely CONTAINS the phrase, with no AE prefix and no error
         # code -- must NOT fail an otherwise healthy render.
         print("Loading footage: could not read from source_FIX.mov", flush=True)
+        for f in frames:
+            print(frame_line(f), flush=True)
+    elif mode == "license_failure":
+        # A plug-in's line when its license checkout fails. Real aerender keeps
+        # rendering and exits 0; the long sleep stands in for that so a test can prove
+        # the render is stopped instead of waited out.
+        print("INFO:FAILED: License needs activation.", flush=True)
+        time.sleep(60)
+        for f in frames:
+            print(frame_line(f), flush=True)
+    elif mode == "benign_license_name":
+        # A footage name that merely CONTAINS the phrase mid-line must NOT fail.
+        print("Loading footage: FAILED: License needs activation.mov", flush=True)
         for f in frames:
             print(frame_line(f), flush=True)
     elif mode == "benign_error":
