@@ -6,5 +6,5 @@
   "expect": "SUCCEEDED",
   "render": true,
   "ae_run_timeout": 300,
-  "notes": "Three comps, all queued. Asserts one step per comp, per-step frame ranges matching each comp, and a template that passes openjd check (which also rejects duplicate parameter names). Renders on the farm and must SUCCEED."
+  "notes": "Three comps, all queued: one step per comp, per-comp frame ranges, unique parameter names."
 }

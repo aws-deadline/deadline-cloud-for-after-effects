@@ -1,0 +1,10 @@
+{
+  "id": "T10",
+  "name": "Naming / special characters",
+  "aep_slug": "special_characters",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": false,
+  "ae_run_timeout": 300,
+  "notes": "Comp names and footage with special characters. Bundle only: one comp's worker session hangs after aerender finishes (KNOWN_ISSUES.md #3)."
+}
