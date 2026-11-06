@@ -123,6 +123,12 @@ def _render_enabled(pytestconfig: pytest.Config) -> bool:
     return bool(pytestconfig.getoption("--render")) or _env_flag("AE_RUN_RENDER")
 
 
+def pytest_collection_modifyitems(config: pytest.Config, items: list) -> None:
+    """Move test_ae_crash_render to the end, so its job renders during the suite."""
+    last = [i for i in items if i.name == "test_ae_crash_render"]
+    items[:] = [i for i in items if i.name != "test_ae_crash_render"] + last
+
+
 # --------------------------------------------------------------------------- fixtures
 @pytest.fixture(scope="session", autouse=True)
 def _apply_ae_version(pytestconfig: pytest.Config) -> None:

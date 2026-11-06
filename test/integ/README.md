@@ -17,6 +17,7 @@ One cached AE drive (~30 s) per case feeds every layer.
 | `test_job_settings` | Each `settings` value reached the bundle; unset settings kept the submitter's defaults. | always |
 | `test_render` | The job reaches the expected terminal state on the farm. | `--render` |
 | `test_render_outputs` | Every expected output file exists; sampled frames decode, differ, and (with `frame_code`) carry their own frame number; the tasks cover `expect_frames`. | `--render` |
+| `test_ae_crash` (`test_ae_crash.py`) | A crashed After Effects fails its task instead of reporting success, and the retries still render every frame. See [Crash handling](#crash-handling). | `--render` |
 
 ## Cases
 
@@ -146,6 +147,28 @@ for failing cases (`--keep-outputs` keeps all).
 | `AE_JOB_SUBMIT_TIMEOUT` | `900` | Upper bound for `deadline bundle submit` (s). |
 | `AE_JOB_TASK_TIMEOUT` | `3600` | Task timeout stamped on cases that set none (s). |
 | `AE_JOB_MAX_RETRIES` | `3` | Retries per task. |
+
+## Crash handling
+
+`test_ae_crash.py` does not drive the submitter. It submits the hand-written bundle in
+`ae_crash/job_bundle/`, which renders the T08 project with `dist/`'s
+`call_aerender.py`, frames 0-1000 in chunks of 100, with 10 retries per task.
+
+The bundle's `Crash AfterFX` job environment starts a watcher that polls for
+`AfterFX.com` every second. Each new process gets one coin flip: it is either killed
+as soon as a new file appears in the output directory, which means it has rendered a
+frame, or left alone for the rest of its run.
+aerender reports the kill as "An existing connection was forcibly closed" and exits 0.
+The environment's `onExit` stops the watcher and prints its log of kills.
+
+The test passes when the job succeeds, at least one failed task mentions that error,
+and every frame exists. Without crash detection the crashed tasks succeed with frames
+missing, so the test fails. The watcher waits for a frame rather than a fixed delay
+because a kill during AE's startup can hang the task instead.
+
+```bash
+hatch run integ:test-render -k ae_crash
+```
 
 ## Adding a case
 
