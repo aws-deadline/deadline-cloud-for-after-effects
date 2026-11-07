@@ -207,8 +207,9 @@ def apply_junctions(args):
 # Per-frame progress line, e.g. "PROGRESS:  0:00:00:00 (1): 0 Seconds"; used only
 # to COUNT frames. The leading timecode is required so header lines that also
 # carry a "(N)" -- "Duration: ... (49)", "Frame Rate: 24.00 (comp)" -- aren't counted.
+# Drop-frame timecodes (29.97 and 59.94 fps) separate fields with ";" instead of ":".
 PROGRESS_FRAME_PATTERN = re.compile(
-    r"PROGRESS:\s+\d+:\d+:\d+:\d+\s+\((\d+)\)", re.IGNORECASE
+    r"PROGRESS:\s+\d+[:;]\d+[:;]\d+[:;]\d+\s+\((\d+)\)", re.IGNORECASE
 )
 
 # Low-false-positive markers for real AE/aerender failures; a match fails the task
@@ -220,7 +221,7 @@ STRONG_ERROR_PATTERNS = [
     re.compile(r"After Effects error:", re.IGNORECASE),
     # IGNORECASE covers every case spelling of this prefix (one entry suffices); it
     # does NOT make "aerender " optional, so a bare "ERROR:" is caught only by exit code.
-    re.compile(r"aerender ERROR:", re.IGNORECASE),
+    re.compile(r"aerender ERROR", re.IGNORECASE),
 ]
 
 # Broad "any line containing 'error'" scan. Off by default (aerender prints benign
