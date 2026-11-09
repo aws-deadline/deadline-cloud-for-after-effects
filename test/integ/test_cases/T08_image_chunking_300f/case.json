@@ -1,0 +1,15 @@
+{
+  "id": "T08",
+  "name": "Image chunking (300 frames)",
+  "aep_slug": "image_chunking_300f",
+  "settings": {
+    "framesPerTask": 100
+  },
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 600,
+  "notes": "TIFF sequence, 300 frames, framesPerTask 100: ChunkSize must be 100 and drive the step's task range. expect_frames checks the farm's tasks start at 0, 100, 200. The output layer checks every chunk seam.",
+  "expect_frames": [
+    "0-299"
+  ]
+}

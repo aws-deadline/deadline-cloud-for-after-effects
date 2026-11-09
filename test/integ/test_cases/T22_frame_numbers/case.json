@@ -1,0 +1,18 @@
+{
+  "id": "T22",
+  "name": "Frame numbers",
+  "aep_slug": "frame_numbers",
+  "settings": {
+    "framesPerTask": 7
+  },
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "expect_frames": [
+    "1010-1033",
+    "5-16",
+    "0-23"
+  ],
+  "frame_code": true,
+  "notes": "Frame numbers as AE shows them: a comp starting at 1001 with an offset work area, a work area starting at 5, and 23.976 fps. The bundle's frame ranges, the farm's task frames, and the number encoded in each sampled output frame must all match expect_frames."
+}

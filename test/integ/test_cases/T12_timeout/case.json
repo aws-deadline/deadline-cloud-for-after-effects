@@ -1,0 +1,16 @@
+{
+  "id": "T12",
+  "name": "Timeout",
+  "aep_slug": "timeout",
+  "settings": {
+    "taskRunTimeoutDays": 0,
+    "taskRunTimeoutHours": 0,
+    "taskRunTimeoutMinutes": 1
+  },
+  "expect": "FAILED",
+  "render": true,
+  "max_retries": 0,
+  "ae_run_timeout": 300,
+  "notes": "Expected failure: a 1-minute task timeout on a 120 s comp. max_retries 0 so the job settles on the first timeout.",
+  "expect_failure_message": "TIMEOUT"
+}
