@@ -1,0 +1,10 @@
+{
+  "id": "T23",
+  "name": "Output names",
+  "aep_slug": "output_names",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": false,
+  "ae_run_timeout": 300,
+  "notes": "A sequence with four-digit padding ([####]). The bundle must name the files AE would write. Bundle only. Known defect (KNOWN_ISSUES.md #8)."
+}

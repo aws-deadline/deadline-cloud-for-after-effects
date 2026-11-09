@@ -235,6 +235,14 @@ COULD_NOT_READ_SOURCE_PATTERN = re.compile(r"could not read from source", re.IGN
 # AE stamps a genuine decode failure with its error-code suffix, e.g. "( 86 :: 2 )".
 AE_ERROR_CODE_PATTERN = re.compile(r"\(\s*\d+\s*::\s*\d+\s*\)")
 
+# Some third-party plug-ins log this when their license checkout fails. aerender
+# still exits 0 with unusable (unlicensed) frames, so a match fails the task
+# immediately. Anchored to the line start (aerender's own "INFO:" prefix is optional)
+# so a layer or footage name echoed mid-line can't trip it.
+LICENSE_FAILURE_PATTERN = re.compile(
+    r"^\s*(?:INFO:\s*)?FAILED:\s*License needs activation", re.IGNORECASE
+)
+
 # Cap the GPU probe so a missing/wedged nvidia-smi can't stall failure reporting.
 _GPU_PROBE_TIMEOUT_SECONDS = 5
 
@@ -341,6 +349,20 @@ def build_failure_message(returncode, strong_error_line, read_source_line):
     )
 
 
+def build_license_failure_message(license_line):
+    """The openjd_fail message for a plug-in license checkout failure."""
+    return (
+        "A plug-in failed to acquire a license, so the render was stopped. "
+        "If you are using bring your own license (BYOL), check your license "
+        "configuration and that the license server is reachable and has licenses "
+        "available. "
+        "If you are using usage-based licensing (UBL) from AWS Deadline Cloud and need a "
+        "higher 'License sessions per license endpoint' limit, contact the AWS Deadline "
+        "Cloud team to request an increase. "
+        f"Error: {license_line.strip()}"
+    )
+
+
 def parse_frame_range(frames):
     """Parse "start-end" into (start, end). Raises ValueError on bad input."""
     parts = frames.split("-")
@@ -399,6 +421,10 @@ def build_render_args(args, start_frame, end_frame):
 
 def is_strong_error(line):
     return any(p.search(line) for p in STRONG_ERROR_PATTERNS)
+
+
+def is_license_failure(line):
+    return bool(LICENSE_FAILURE_PATTERN.search(line))
 
 
 def is_source_read_failure(line):
@@ -555,6 +581,7 @@ def run(argv):
     # First matching line of each kind, or "" if unseen.
     strong_error_line = ""
     read_source_line = ""
+    license_failure_line = ""
     process = None
 
     try:
@@ -580,6 +607,13 @@ def run(argv):
             line = line.rstrip("\n")
 
             # --- error detection ---------------------------------------------
+            if is_license_failure(line):
+                # Unrecoverable: every remaining frame would be unlicensed, so stop
+                # now instead of spending the rest of the render on unusable output.
+                license_failure_line = line
+                print(f"[ERROR DETECTED license] {line}", file=sys.stderr, flush=True)
+                break
+
             if is_strong_error(line):
                 # Real, well-formed AE/aerender error. Remember the first one so
                 # we can report it, and fail the task regardless of exit code.
@@ -612,6 +646,15 @@ def run(argv):
 
             # Non-progress, non-error line: pass through for logs.
             print(f"[STDOUT] {line}", flush=True)
+
+        if license_failure_line:
+            # aerender is still rendering; reap it rather than wait for it to finish.
+            reap_process(process)
+            process.stdout.close()
+            message = build_license_failure_message(license_failure_line)
+            emit_fail(message)
+            print(f"[ERROR] {_one_line(message)}", file=sys.stderr, flush=True)
+            return 1
 
         process.stdout.close()
         returncode = process.wait()

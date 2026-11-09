@@ -535,20 +535,3 @@ def stop_ae() -> None:
         return
     if not quit_ae_gracefully(timeout=15):
         kill_ae()
-
-
-def wait_for_ae_quit(timeout: int = 300, start_timeout: int = 60) -> bool:
-    """Wait for AE to start, then quit. True if it quit on its own within timeout."""
-    start = time.time()
-    while not is_ae_running():
-        if time.time() - start > start_timeout:
-            return False
-        time.sleep(2)
-
-    start = time.time()
-    while is_ae_running():
-        if time.time() - start > timeout:
-            stop_ae()
-            return False
-        time.sleep(3)
-    return True

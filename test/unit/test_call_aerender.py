@@ -17,6 +17,7 @@ import json
 import locale
 import logging
 import sys
+import time
 import types
 from pathlib import Path
 
@@ -761,6 +762,62 @@ class TestEndToEnd:
         assert fail == []
         assert progress[-1] == 100
         assert "reported only 5 of 10 frames" in out
+
+
+class TestLicenseFailure:
+    @pytest.mark.parametrize(
+        "line",
+        [
+            "INFO:FAILED: License needs activation.",
+            "FAILED: License needs activation.",
+        ],
+    )
+    def test_matches_plugin_license_failure(self, line):
+        assert call_aerender.is_license_failure(line) is True
+
+    @pytest.mark.parametrize(
+        "line",
+        [
+            # aerender echoes user-controlled names verbatim; mid-line text must not trip.
+            "Loading footage: FAILED: License needs activation.mov",
+            "PROGRESS:  0:00:00:00 (1): 0 Seconds",
+            "INFO: License found",
+        ],
+    )
+    def test_ignores_other_lines(self, line):
+        assert call_aerender.is_license_failure(line) is False
+
+    def test_fails_fast_without_waiting_for_render(self, run_render, monkeypatch):
+        # The fake keeps "rendering" for 60s after the license line, like real
+        # aerender producing unlicensed frames; the task must stop well before that.
+        reaped = []
+        real_reap = call_aerender.reap_process
+        monkeypatch.setattr(
+            call_aerender,
+            "reap_process",
+            lambda p: (reaped.append(p), real_reap(p)),
+        )
+        start = time.monotonic()
+        rc, progress, _, fail, _ = run_render(
+            frames="0-9", mode="license_failure", exit_code=0
+        )
+        assert time.monotonic() - start < 30
+        assert rc == 1
+        assert len(reaped) == 1
+        assert 100 not in progress
+        assert len(fail) == 1
+        assert "failed to acquire a license" in fail[0]
+        assert "check your license configuration" in fail[0]
+        assert "License sessions per license endpoint" in fail[0]
+        assert fail[0].endswith("Error: INFO:FAILED: License needs activation.")
+
+    def test_name_containing_phrase_renders_normally(self, run_render):
+        rc, progress, _, fail, _ = run_render(
+            frames="0-9", mode="benign_license_name", exit_code=0
+        )
+        assert rc == 0
+        assert fail == []
+        assert progress[-1] == 100
 
 
 # ----------------------------------------------------------------------------

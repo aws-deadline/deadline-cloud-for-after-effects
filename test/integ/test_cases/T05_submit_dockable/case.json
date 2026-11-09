@@ -1,0 +1,10 @@
+{
+  "id": "T05",
+  "name": "Basic submit (single comp, default settings)",
+  "aep_slug": "submit_dockable",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Baseline: one comp, default settings. The harness stubs the submitter UI, so the Submit button and docking are not tested. The slug keeps the old 'submit_dockable' name."
+}
