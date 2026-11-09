@@ -150,8 +150,8 @@ hatch run test-installer
 
 These drive the installed submitter in a real After Effects. They need a licensed AE.
 ```bash
-hatch run integ:test        # offline: bundle generation
-hatch run integ:test-render # also renders on the default farm
+hatch run integ:test        # offline: bundle, golden, settings
+hatch run integ:test-render # also renders on the default farm and checks outputs
 hatch run integ-lint:lint-check  # harness lint (also runs on PRs)
 ```
 See [test/integ/README.md](test/integ/README.md).

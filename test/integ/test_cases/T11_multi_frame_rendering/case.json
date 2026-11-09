@@ -1,0 +1,13 @@
+{
+  "id": "T11",
+  "name": "Multi-frame rendering (MFR)",
+  "aep_slug": "multi_frame_rendering",
+  "settings": {
+    "multiFrameRendering": true,
+    "maxCpuUsagePercentage": 50
+  },
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "maxCpuUsagePercentage is 50, not the default 90, so the setting is distinguishable from the default."
+}

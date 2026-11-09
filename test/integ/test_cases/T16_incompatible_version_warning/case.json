@@ -1,0 +1,10 @@
+{
+  "id": "T16",
+  "name": "Incompatible version warning",
+  "aep_slug": "incompatible_version_warning",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": false,
+  "ae_run_timeout": 300,
+  "notes": "Partial. Every case now asserts the unsupported-version confirm() appears exactly when the host AE is not in the submitter's SUPPORTED_VERSIONS, and that CondaPackages falls back to the major version then. This case's own goal, an unsupported version on demand, needs a driver hook to spoof it (follow-up)."
+}

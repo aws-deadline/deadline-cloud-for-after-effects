@@ -1027,14 +1027,27 @@ function __generateUtil() {
         return version;
     }
 
+    function snapToWholeFrame(frames) {
+        /**
+         * Snap a frame count to the nearest whole frame if it is within floating-point error of it.
+         * Times are seconds, so (seconds * frameRate) can land a hair off the frame, e.g. a comp
+         * starting at frame 1001 with its work area at 1010 gives 1009.9999999999999 at 30 fps.
+         * Genuinely fractional values are returned unchanged.
+         * @param {Number} frames - A time multiplied by the frame rate
+         * @returns {Number} The nearest whole frame, or frames unchanged
+         */
+        const nearest = Math.round(frames);
+        return Math.abs(frames - nearest) < 1e-6 ? nearest : frames;
+    }
+
     function calculateFrameRange(rqi) {
         /**
          * Calculate start and end frames for a render queue item using render settings
          * @param {RenderQueueItem} rqi - The render queue item to calculate frames for
          * @returns {Object} Object containing startFrame and endFrame
          */
-        const startFrame = Number(Math.floor((rqi.comp.displayStartTime + rqi.timeSpanStart) * rqi.comp.frameRate)) + app.project.displayStartFrame;
-        const numFrames = Number(Math.ceil(rqi.timeSpanDuration * rqi.comp.frameRate));
+        const startFrame = Number(Math.floor(snapToWholeFrame((rqi.comp.displayStartTime + rqi.timeSpanStart) * rqi.comp.frameRate))) + app.project.displayStartFrame;
+        const numFrames = Number(Math.ceil(snapToWholeFrame(rqi.timeSpanDuration * rqi.comp.frameRate)));
         const endFrame = startFrame + numFrames - 1; // end frame is inclusive
 
         return {

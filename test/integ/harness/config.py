@@ -25,6 +25,10 @@ DEFAULT_AE_YEAR = "2026"
 # with AE_TEST_ASSETS.
 DEFAULT_ASSETS_ROOT = Path(__file__).resolve().parents[1] / "aep_test_assets"
 
+# Drives open a copy of the asset tree, never the committed one: AE and the submitter
+# save the project during a drive, which would otherwise dirty git on every run.
+RUN_ASSETS_ROOT = Path(__file__).resolve().parents[3] / "build" / "integ" / "assets"
+
 
 def get_platform() -> str:
     return "windows" if platform.system() == "Windows" else "macos"
@@ -32,7 +36,12 @@ def get_platform() -> str:
 
 def get_ae_year() -> str:
     """AE release year, e.g. '2026'. From ``AE_VERSION`` env, default 2026."""
-    return os.environ.get("AE_VERSION", DEFAULT_AE_YEAR).strip()
+    year = os.environ.get("AE_VERSION", DEFAULT_AE_YEAR).strip()
+    if not re.fullmatch(r"20\d\d", year):
+        raise ValueError(
+            f"AE_VERSION must be a release year such as 2025, got {year!r}"
+        )
+    return year
 
 
 def get_ae_major() -> str:
@@ -145,28 +154,71 @@ def get_startup_folder() -> Path:
     return get_startup_folders()[0]
 
 
+def get_system_panels_dir() -> Path:
+    """AE's own ``ScriptUI Panels`` folder, where a system-wide install puts the submitter.
+
+    Beside the ``.app`` bundle on macOS, beside ``AfterFX.exe`` (``Support Files``) on
+    Windows.
+    """
+    return get_ae_app_path().parent / "Scripts" / "ScriptUI Panels"
+
+
 def get_submitter_path() -> Path:
     """Installed location of the real submitter under test.
 
-    The installer's filename varies (``DeadlineCloudSubmitter.jsx`` or, for
-    user-level installs, ``DeadlineCloudSubmitter(User).jsx``), so resolve by
-    preferred names then glob across *all* candidate prefs dirs (the submitter may
-    live in a different minor-version folder than the newest). Returns the
-    canonical path as a fallback so the ``require_ae`` skip message is meaningful.
+    Looks in the user ``ScriptUI Panels`` folders first, then AE's own (system-wide
+    install). A user install wins, matching what AE loads when both exist. The
+    filename varies (``DeadlineCloudSubmitter.jsx`` or, for user-level installs,
+    ``DeadlineCloudSubmitter(User).jsx``), so resolve by preferred names then glob.
+    The user folders span *all* candidate prefs dirs (the submitter may live in a
+    different minor-version folder than the newest). ``AE_SUBMITTER_PATH`` overrides.
+    Returns the canonical user path as a fallback so the ``require_ae`` skip message
+    is meaningful.
     """
-    prefs_dirs = get_ae_prefs_version_dirs()
-    for base in prefs_dirs:
-        panels = base / "Scripts" / "ScriptUI Panels"
-        for name in ("DeadlineCloudSubmitter.jsx", "DeadlineCloudSubmitter(User).jsx"):
-            if (panels / name).exists():
-                return panels / name
-    for base in prefs_dirs:
-        matches = sorted(
-            (base / "Scripts" / "ScriptUI Panels").glob("DeadlineCloudSubmitter*.jsx")
-        )
-        if matches:
-            return matches[0]
-    return prefs_dirs[0] / "Scripts" / "ScriptUI Panels" / "DeadlineCloudSubmitter.jsx"
+    override = os.environ.get("AE_SUBMITTER_PATH")
+    if override:
+        return Path(override)
+    candidates = get_submitter_candidates()
+    if candidates:
+        return candidates[0]
+    return (
+        get_ae_prefs_version_dirs()[0]
+        / "Scripts"
+        / "ScriptUI Panels"
+        / ("DeadlineCloudSubmitter.jsx")
+    )
+
+
+def get_submitter_candidates() -> list[Path]:
+    """Every installed submitter for the target AE, in the order they are preferred.
+
+    More than one usually means a leftover install in an older prefs folder, which
+    may not be the one AE loads. ``require_ae`` reports it.
+    """
+    panels_dirs = [
+        base / "Scripts" / "ScriptUI Panels" for base in get_ae_prefs_version_dirs()
+    ]
+    panels_dirs.append(get_system_panels_dir())
+    found: list[Path] = []
+    for panels in panels_dirs:
+        named = [
+            panels / n
+            for n in ("DeadlineCloudSubmitter.jsx", "DeadlineCloudSubmitter(User).jsx")
+        ]
+        others = sorted(panels.glob("DeadlineCloudSubmitter*.jsx"))
+        for path in dict.fromkeys(named + others):
+            if path.is_file():
+                found.append(path)
+    return found
+
+
+def get_supported_versions(submitter: Path) -> list[float]:
+    """The AE versions the submitter's conda channel supports (``SUPPORTED_VERSIONS``)."""
+    text = submitter.read_text(encoding="utf-8", errors="replace")
+    m = re.search(r"SUPPORTED_VERSIONS\s*=\s*\[([^\]]*)\]", text)
+    if not m:
+        raise ValueError(f"no SUPPORTED_VERSIONS in {submitter}")
+    return [float(v) for v in m.group(1).split(",") if v.strip()]
 
 
 def get_config_path() -> Path:
@@ -184,19 +236,48 @@ def get_result_path() -> Path:
     return Path("/tmp/deadline_headless_result.json")
 
 
-def get_assets_root() -> Path:
-    """Root of the test artifact superset."""
+def get_source_assets_root() -> Path:
+    """The asset tree as committed (or ``AE_TEST_ASSETS``). Copied, never driven."""
     # Empty means unset: CI passes ``${{ vars.AE_TEST_ASSETS }}``, which is "" when
     # the repo variable is not configured.
     return Path(os.environ.get("AE_TEST_ASSETS") or str(DEFAULT_ASSETS_ROOT))
 
 
+def get_assets_root() -> Path:
+    """The copy of the asset tree that drives open (see :func:`prepare_run_assets`)."""
+    return RUN_ASSETS_ROOT
+
+
+def clear_run_assets() -> None:
+    """Delete the run copy, so nothing can drive a copy from an earlier session."""
+    import shutil
+
+    if RUN_ASSETS_ROOT.exists():
+        shutil.rmtree(RUN_ASSETS_ROOT)
+
+
+def prepare_run_assets() -> Path:
+    """Replace the run copy with a fresh copy of the source asset tree.
+
+    Renders and AE's per-project log folders are left out: they are output, not input.
+    """
+    import shutil
+
+    clear_run_assets()
+    shutil.copytree(
+        get_source_assets_root(),
+        RUN_ASSETS_ROOT,
+        ignore=shutil.ignore_patterns("renders", "* Logs", "build_log_*"),
+    )
+    return RUN_ASSETS_ROOT
+
+
 @lru_cache(maxsize=1)
 def get_asset_version() -> str:
-    """Read ``asset_version`` from the superset manifest (default 1.0.0)."""
+    """Read ``asset_version`` from aep_test_assets/manifest.json (default 1.0.0)."""
     import json
 
-    manifest = get_assets_root() / "manifest.json"
+    manifest = get_source_assets_root() / "manifest.json"
     try:
         return json.loads(manifest.read_text(encoding="utf-8")).get(
             "asset_version", "1.0.0"

@@ -1,0 +1,10 @@
+{
+  "id": "T21",
+  "name": "get_user_fonts python fallback",
+  "aep_slug": "get_user_fonts",
+  "settings": {},
+  "expect": "SUCCEEDED",
+  "render": true,
+  "ae_run_timeout": 300,
+  "notes": "Partial: same comp as T06 without the missing font. Nothing forces the get_user_fonts fallback yet (follow-up)."
+}
