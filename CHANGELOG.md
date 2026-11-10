@@ -1,3 +1,10 @@
+## 0.5.2 (2026-11-10)
+
+### Bug Fixes
+* If After Effects crashes during a render, the task now fails and is retried. Before, it could report success even though frames were missing. (#370)
+* Renders of drop-frame comps (29.97 and 59.94 fps) now report per-frame progress. Before, their semicolon-separated timecodes weren't recognized. (#370)
+* If a third-party plug-in can't check out its license, the render now stops right away and the task fails with guidance for bring your own license (BYOL) and usage-based licensing (UBL) setups. Before, aerender kept rendering unlicensed frames and the task was marked as successful. (#366)
+* Fixed the submitter sometimes sending a frame range shifted by one frame because of floating-point rounding. For example, a work area of 1010–1033 could be submitted as 1009–1032, which left out the last frame. (#358)
 ## 0.5.1 (2026-09-29)
 
 ### Features
