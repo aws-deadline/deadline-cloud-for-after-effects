@@ -360,9 +360,7 @@ def build_failure_message(
     """
     # Report the most specific evidence: the missing file, else a strong error, else
     # the source-read line.
-    reported_line = (
-        missing_footage_line or strong_error_line or read_source_line
-    ).strip()
+    reported_line = missing_footage_line or strong_error_line or read_source_line
     if returncode == 0 and not reported_line:
         return None
 

@@ -813,6 +813,15 @@ class TestMissingFootage:
         assert "File Not Found C:\\footage\\clip.mp4" in fail[0]
         assert "Ignore Missing Dependencies" in fail[0]
 
+    def test_source_read_headline_with_trailing_space_not_repeated(self, monkeypatch):
+        # AE lines can end in a space. The headline must still be recognised as the
+        # source-read line, so the hint doesn't repeat it as "Also saw: ...".
+        monkeypatch.setattr(call_aerender, "worker_has_nvidia_gpu", lambda: True)
+        line = "Could not read from source. ( 86 :: 2 ) "
+        openjd_message, _log = call_aerender.build_failure_message(0, "", line)
+        assert "Also saw" not in openjd_message
+        assert line in openjd_message
+
     def test_benign_export_names_render_normally(self, run_render):
         rc, progress, _status, fail, _ = run_render(
             frames="0-9", mode="benign_export_names"
