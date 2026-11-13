@@ -244,6 +244,28 @@ LICENSE_FAILURE_PATTERN = re.compile(
     r"^\s*(?:INFO:\s*)?FAILED:\s*License needs activation", re.IGNORECASE
 )
 
+# aerender's own wording when it gives up on a composition. With
+# -v ERRORS_AND_PROGRESS it can exit 0 after printing this, having rendered nothing
+# (a missing footage file is the usual cause). Anchored to the line start (after
+# aerender's optional "PROGRESS:" prefix) so a comp or footage name echoed mid-line
+# can't trip it.
+EXPORT_FAILURE_PATTERN = re.compile(
+    r"^\s*(?:PROGRESS:\s*)?An unexpected error occurred while exporting a composition",
+    re.IGNORECASE,
+)
+
+# AE's end-of-render summary of an error it logged, e.g.
+#   WARNING:After Effects warning: logged one error - "error: Unable to Render: File
+#   Not Found C:\...\clip.mp4"
+# Only the "Unable to Render" form fails the task; AE logs other, non-fatal errors the
+# same way. With Ignore Missing Dependencies (-continueOnMissingFootage) AE renders
+# the comp without the file and doesn't log this.
+UNABLE_TO_RENDER_PATTERN = re.compile(
+    r"^\s*(?:WARNING:\s*)?After Effects warning: logged .*\berror: Unable to Render:",
+    re.IGNORECASE,
+)
+MISSING_FOOTAGE_PATTERN = re.compile(r"Unable to Render: File Not Found", re.IGNORECASE)
+
 # Cap the GPU probe so a missing/wedged nvidia-smi can't stall failure reporting.
 _GPU_PROBE_TIMEOUT_SECONDS = 5
 
@@ -321,18 +343,32 @@ def _source_read_hint_anchored(reported_line, read_source_line):
     return hint
 
 
-def build_failure_message(returncode, strong_error_line, read_source_line):
+MISSING_FOOTAGE_HINT = (
+    "A footage file the composition uses is missing on this worker. Make sure the "
+    "file exists when you submit (it is then uploaded with the job), or relink it in "
+    "the project. To render without it, enable Ignore Missing Dependencies."
+)
+
+
+def build_failure_message(
+    returncode, strong_error_line, read_source_line, missing_footage_line=""
+):
     """The (openjd_fail, log) message pair for a failed render, or None on success.
 
     Lines are "" when unseen. On exit 0 a strong error or a source-read line still fails
     -- the bare source-read spelling would otherwise ship black frames as success.
     """
-    # Report the most specific evidence: a strong error, else the source-read line.
-    reported_line = strong_error_line or read_source_line
+    # Report the most specific evidence: the missing file, else a strong error, else
+    # the source-read line.
+    reported_line = (
+        missing_footage_line or strong_error_line or read_source_line
+    ).strip()
     if returncode == 0 and not reported_line:
         return None
 
     hint = _source_read_hint_anchored(reported_line, read_source_line)
+    if missing_footage_line:
+        hint = f"{MISSING_FOOTAGE_HINT} {hint}".strip()
     suffix = f" {hint}" if hint else ""
 
     if returncode != 0:
@@ -422,6 +458,18 @@ def build_render_args(args, start_frame, end_frame):
 
 def is_strong_error(line):
     return any(p.search(line) for p in STRONG_ERROR_PATTERNS)
+
+
+def is_render_failure(line):
+    return bool(
+        EXPORT_FAILURE_PATTERN.search(line) or UNABLE_TO_RENDER_PATTERN.search(line)
+    )
+
+
+def is_missing_footage(line):
+    return bool(
+        UNABLE_TO_RENDER_PATTERN.search(line) and MISSING_FOOTAGE_PATTERN.search(line)
+    )
 
 
 def is_license_failure(line):
@@ -582,6 +630,7 @@ def run(argv):
     # First matching line of each kind, or "" if unseen.
     strong_error_line = ""
     read_source_line = ""
+    missing_footage_line = ""
     license_failure_line = ""
     process = None
 
@@ -615,7 +664,14 @@ def run(argv):
                 print(f"[ERROR DETECTED license] {line}", file=sys.stderr, flush=True)
                 break
 
-            if is_strong_error(line):
+            if is_render_failure(line):
+                # aerender gave up on the comp; it may still exit 0 with no frames.
+                if not strong_error_line:
+                    strong_error_line = line
+                if not missing_footage_line and is_missing_footage(line):
+                    missing_footage_line = line
+                print(f"[ERROR DETECTED] {line}", file=sys.stderr, flush=True)
+            elif is_strong_error(line):
                 # Real, well-formed AE/aerender error. Remember the first one so
                 # we can report it, and fail the task regardless of exit code.
                 if not strong_error_line:
@@ -678,7 +734,9 @@ def run(argv):
             reap_process(process)
 
     # --- final verdict ---------------------------------------------------
-    failure = build_failure_message(returncode, strong_error_line, read_source_line)
+    failure = build_failure_message(
+        returncode, strong_error_line, read_source_line, missing_footage_line
+    )
     if failure is not None:
         openjd_message, log_message = failure
         emit_fail(openjd_message)
