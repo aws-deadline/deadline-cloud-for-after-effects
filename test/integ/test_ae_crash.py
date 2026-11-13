@@ -68,6 +68,9 @@ def _write_bundle(bundle_dir: Path, project: Path, output_dir: Path) -> None:
         }
     }
     (bundle_dir / "asset_references.json").write_text(json.dumps(refs, indent=2))
+    deadline_client.apply_job_metadata(
+        bundle_dir, conda_channels=cases_mod.JOB_CONDA_CHANNELS
+    )
 
 
 _SUBMISSION: dict[str, deadline_client.SubmitResult] = {}

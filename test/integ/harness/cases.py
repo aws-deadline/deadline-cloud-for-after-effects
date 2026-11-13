@@ -56,6 +56,12 @@ JOB_TASK_TIMEOUT_S = int(os.environ.get("AE_JOB_TASK_TIMEOUT", "3600"))
 # Override with AE_JOB_MAX_RETRIES.
 JOB_MAX_RETRIES = int(os.environ.get("AE_JOB_MAX_RETRIES", "3"))
 
+# Conda channels for the render jobs, space-separated, e.g. a dev channel that serves an
+# After Effects package before the deadline-cloud channel does:
+#   "s3://bucket/prefix/channel deadline-cloud"
+# Unset (or empty) leaves the queue environment's default.
+JOB_CONDA_CHANNELS = os.environ.get("AE_INTEG_CONDA_CHANNELS") or None
+
 # Cases skipped entirely (id -> reason shown in the pytest skip message).
 SKIP_CASES: dict[str, str] = {}
 
