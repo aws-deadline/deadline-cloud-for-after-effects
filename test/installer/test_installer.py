@@ -63,6 +63,8 @@ def _run_installer(installer_path, install_scope, installation_path) -> Path:
     ae2025.mkdir(parents=True)
     ae2026: Path = installation_path / "ae2026"
     ae2026.mkdir(parents=True)
+    ae2027: Path = installation_path / "ae2027"
+    ae2027.mkdir(parents=True)
     installation_path = installation_path / "dne"
     installation_path.mkdir(parents=True)
 
@@ -75,13 +77,15 @@ def _run_installer(installer_path, install_scope, installation_path) -> Path:
         "--prefix",
         installation_path,
         "--enable-components",
-        "deadline_cloud_for_after_effects,ae_2024,ae_2025,ae_2026",
+        "deadline_cloud_for_after_effects,ae_2024,ae_2025,ae_2026,ae_2027",
         "--after_effects_script_ui_directory_2024",
         ae2024,
         "--after_effects_script_ui_directory_2025",
         ae2025,
         "--after_effects_script_ui_directory_2026",
         ae2026,
+        "--after_effects_script_ui_directory_2027",
+        ae2027,
     ]
     subprocess.run(args, check=True, capture_output=True, text=True)
 
