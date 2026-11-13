@@ -168,6 +168,7 @@ def apply_job_metadata(
     *,
     description: str | None = None,
     task_run_timeout_s: int | None = None,
+    conda_channels: str | None = None,
 ) -> None:
     """Patch the bundle's OpenJD template in place before submit.
 
@@ -178,13 +179,16 @@ def apply_job_metadata(
       job description in the Deadline Cloud Monitor console).
     * ``task_run_timeout_s`` -> ``steps[].script.actions.onRun.timeout`` for every
       step (seconds), bounding each task on the farm.
+    * ``conda_channels`` -> a ``CondaChannels`` parameter defaulting to it. The
+      submitter's template doesn't declare one; the queue's Conda environment reads it
+      by name, so this selects the channels the job's conda environment uses.
 
     No-op if the field is None or the template can't be found/parsed. Preserves the
     template's serialization format (JSON or YAML). Output redirection is a separate
     concern handled by :func:`redirect_output_dir`, which patches the *parameter
     values* and *asset references* rather than the template.
     """
-    if description is None and task_run_timeout_s is None:
+    if description is None and task_run_timeout_s is None and conda_channels is None:
         return
     for ext in (".json", ".yaml", ".yml"):
         path = Path(bundle_dir) / f"template{ext}"
@@ -211,6 +215,21 @@ def apply_job_metadata(
             on_run = actions.get("onRun")
             if isinstance(on_run, dict):
                 on_run["timeout"] = int(task_run_timeout_s)
+    if conda_channels is not None:
+        params = tmpl.setdefault("parameterDefinitions", [])
+        existing = [p for p in params if p.get("name") == "CondaChannels"]
+        if existing:
+            existing[0]["default"] = conda_channels
+        else:
+            params.append(
+                {
+                    "name": "CondaChannels",
+                    "type": "STRING",
+                    "default": conda_channels,
+                    "userInterface": {"control": "HIDDEN"},
+                    "description": "Conda channels for the queue's Conda environment.",
+                }
+            )
 
     if is_json:
         path.write_text(json.dumps(tmpl, indent=2), encoding="utf-8")
