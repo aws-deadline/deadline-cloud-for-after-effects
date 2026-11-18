@@ -8,7 +8,7 @@ It reads -s/-e from argv and env vars to decide what to emit, then replays
 canned stdout lines shaped like real "-v ERRORS_AND_PROGRESS" output.
 
 Env controls:
-    FAKE_AE_MODE   seq (default) | mfr | movie | strong_error | read_source_error | bare_read_source_error | error_then_read_source | full_render_then_read_source | benign_source_read_name | license_failure | benign_license_name | benign_error | partial | bad_bytes
+    FAKE_AE_MODE   seq (default) | mfr | movie | strong_error | read_source_error | bare_read_source_error | error_then_read_source | full_render_then_read_source | benign_source_read_name | license_failure | benign_license_name | benign_error | partial | bad_bytes | missing_footage | benign_export_names
     FAKE_AE_EXIT   integer exit code to return (default "0")
 """
 
@@ -145,11 +145,43 @@ def main():
             sys.stdout.flush()
             sys.stdout.buffer.write(b"\xff\xfe garbage\n")
             sys.stdout.buffer.flush()
+    elif mode == "missing_footage":
+        # Real AE 25.6 output for a comp whose footage file is missing (no
+        # -continueOnMissingFootage): no frames, an export error, and exit 0.
+        print(
+            "PROGRESS:  An unexpected error occurred while exporting a composition.",
+            flush=True,
+        )
+        print("Error Code: 1", flush=True)
+        print("Please restart After Effects and retry the export.", flush=True)
+        print(
+            'PROGRESS:  1/1/2026 0:00:00 PM: Finished composition "Comp 1".', flush=True
+        )
+    elif mode == "benign_export_names":
+        # A footage name containing the export-failure phrase mid-line, and a logged
+        # error that isn't "Unable to Render", must NOT fail a healthy render.
+        print(
+            "PROGRESS:  Loading An unexpected error occurred while exporting a composition.mov",
+            flush=True,
+        )
+        for f in frames:
+            print(frame_line(f), flush=True)
     else:  # "seq"
         for f in frames:
             print(frame_line(f), flush=True)
 
     print("PROGRESS: Total Time Elapsed: 1 Second", flush=True)
+    if mode == "missing_footage":
+        print(
+            'WARNING:After Effects warning: logged one error - "error: Unable to Render: '
+            'File Not Found C:\\footage\\clip.mp4"',
+            flush=True,
+        )
+    if mode == "benign_export_names":
+        print(
+            'WARNING:After Effects warning: logged one error - "error: Unable to load font"',
+            flush=True,
+        )
     return exit_code
 
 

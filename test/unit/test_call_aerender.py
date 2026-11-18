@@ -764,6 +764,73 @@ class TestEndToEnd:
         assert "reported only 5 of 10 frames" in out
 
 
+class TestMissingFootage:
+    MISSING = (
+        'WARNING:After Effects warning: logged one error - "error: Unable to Render: '
+        'File Not Found C:\\footage\\clip.mp4"'
+    )
+
+    @pytest.mark.parametrize(
+        "line",
+        [
+            "PROGRESS:  An unexpected error occurred while exporting a composition.",
+            "An unexpected error occurred while exporting a composition.",
+            MISSING,
+        ],
+    )
+    def test_matches_render_failures(self, line):
+        assert call_aerender.is_render_failure(line) is True
+
+    @pytest.mark.parametrize(
+        "line",
+        [
+            "PROGRESS:  Loading An unexpected error occurred while exporting a composition.mov",
+            'WARNING:After Effects warning: logged one error - "error: Unable to load font"',
+            "PROGRESS:  Output To: C:\\out\\Unable to Render_[####].png",
+        ],
+    )
+    def test_ignores_benign_lines(self, line):
+        assert call_aerender.is_render_failure(line) is False
+
+    def test_missing_footage_detected_only_for_file_not_found(self):
+        assert call_aerender.is_missing_footage(self.MISSING) is True
+        assert (
+            call_aerender.is_missing_footage(
+                "PROGRESS:  An unexpected error occurred while exporting a composition."
+            )
+            is False
+        )
+
+    def test_missing_footage_fails_on_exit_0(self, run_render):
+        # The mainline regression: AE renders nothing, logs the missing file, exits 0.
+        rc, progress, _status, fail, _out = run_render(
+            frames="0-9", mode="missing_footage"
+        )
+        assert rc == 1
+        assert 100 not in progress
+        assert len(fail) == 1
+        # The missing file is the headline, not the generic export error printed first.
+        assert "File Not Found C:\\footage\\clip.mp4" in fail[0]
+        assert "Ignore Missing Dependencies" in fail[0]
+
+    def test_source_read_headline_with_trailing_space_not_repeated(self, monkeypatch):
+        # AE lines can end in a space. The headline must still be recognised as the
+        # source-read line, so the hint doesn't repeat it as "Also saw: ...".
+        monkeypatch.setattr(call_aerender, "worker_has_nvidia_gpu", lambda: True)
+        line = "Could not read from source. ( 86 :: 2 ) "
+        openjd_message, _log = call_aerender.build_failure_message(0, "", line)
+        assert "Also saw" not in openjd_message
+        assert line in openjd_message
+
+    def test_benign_export_names_render_normally(self, run_render):
+        rc, progress, _status, fail, _ = run_render(
+            frames="0-9", mode="benign_export_names"
+        )
+        assert rc == 0
+        assert fail == []
+        assert progress[-1] == 100
+
+
 class TestLicenseFailure:
     @pytest.mark.parametrize(
         "line",
