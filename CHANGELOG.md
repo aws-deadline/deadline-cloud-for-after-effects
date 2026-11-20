@@ -1,3 +1,10 @@
+## 0.5.3 (2026-11-20)
+
+### Features
+* Added support for After Effects 2027 (27.0) and After Effects 26.5. Jobs from these versions now submit without the "not officially supported" warning and use the exact version (`aftereffects=27.0` / `aftereffects=26.5`). The installer also has a new After Effects 2027 component. (#373)
+
+### Bug Fixes
+* Tasks now fail when aerender reports missing footage ("Unable to Render: File Not Found" or "An unexpected error occurred while exporting a composition"). Before, aerender could exit successfully after rendering no frames, so the task was marked as succeeded. (#372)
 ## 0.5.2 (2026-11-10)
 
 ### Bug Fixes
