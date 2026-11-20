@@ -63,7 +63,7 @@ The submitter UI is stubbed, so the Submit button, docking and dialogs are not t
 
 ## Prerequisites
 
-- After Effects 2025 or 2026, signed in to Creative Cloud.
+- After Effects 2025, 2026 or 2027, signed in to Creative Cloud.
 - Fonts: Lato Regular 2.015 (`Lato-Regular`, SIL OFL) installed, and Komet activated
   from Adobe Fonts. The projects were built with
   [`ofl/lato/Lato-Regular.ttf` at google/fonts@5d3b761](https://github.com/google/fonts/blob/5d3b76120a319730fda218cc7410174a462b32cb/ofl/lato/Lato-Regular.ttf)
@@ -147,6 +147,7 @@ for failing cases (`--keep-outputs` keeps all).
 | `AE_JOB_SUBMIT_TIMEOUT` | `900` | Upper bound for `deadline bundle submit` (s). |
 | `AE_JOB_TASK_TIMEOUT` | `3600` | Task timeout stamped on cases that set none (s). |
 | `AE_JOB_MAX_RETRIES` | `3` | Retries per task. |
+| `AE_INTEG_CONDA_CHANNELS` | queue default | Space-separated conda channels for the render jobs, e.g. a dev channel serving a new `aftereffects` package: `"s3://bucket/prefix/channel deadline-cloud"`. |
 
 ## Crash handling
 

@@ -386,6 +386,7 @@ def case_run(
             result.bundle_path,
             description=description,
             task_run_timeout_s=task_timeout,
+            conda_channels=cases_mod.JOB_CONDA_CHANNELS,
         )
         # Redirect the render output into this case's artifact dir. Must happen before
         # the "bundle" snapshot and before submit() calls known_asset_paths, which

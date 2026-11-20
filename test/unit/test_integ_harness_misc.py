@@ -56,3 +56,60 @@ def test_lint_lists_name_every_harness_unit_test():
 
 def test_required_fonts_come_from_the_builder():
     assert driver.required_fonts() == ["Lato-Regular", "Komet-Regular"]
+
+
+def _write_template(tmp_path, params):
+    import json
+
+    (tmp_path / "template.json").write_text(
+        json.dumps({"parameterDefinitions": params, "steps": []}), encoding="utf-8"
+    )
+
+
+def _read_params(tmp_path):
+    import json
+
+    return json.loads((tmp_path / "template.json").read_text(encoding="utf-8"))[
+        "parameterDefinitions"
+    ]
+
+
+def test_conda_channels_adds_parameter(tmp_path):
+    _write_template(tmp_path, [{"name": "CondaPackages", "type": "STRING"}])
+    deadline_client.apply_job_metadata(
+        tmp_path, conda_channels="s3://b/c deadline-cloud"
+    )
+    channels = [p for p in _read_params(tmp_path) if p["name"] == "CondaChannels"]
+    assert channels == [
+        {
+            "name": "CondaChannels",
+            "type": "STRING",
+            "default": "s3://b/c deadline-cloud",
+            "userInterface": {"control": "HIDDEN"},
+            "description": "Conda channels for the queue's Conda environment.",
+        }
+    ]
+
+
+def test_conda_channels_updates_existing_parameter(tmp_path):
+    _write_template(
+        tmp_path,
+        [{"name": "CondaChannels", "type": "STRING", "default": "deadline-cloud"}],
+    )
+    deadline_client.apply_job_metadata(
+        tmp_path, conda_channels="s3://b/c deadline-cloud"
+    )
+    assert _read_params(tmp_path) == [
+        {
+            "name": "CondaChannels",
+            "type": "STRING",
+            "default": "s3://b/c deadline-cloud",
+        }
+    ]
+
+
+def test_no_conda_channels_leaves_template_alone(tmp_path):
+    _write_template(tmp_path, [{"name": "CondaPackages", "type": "STRING"}])
+    before = (tmp_path / "template.json").read_text(encoding="utf-8")
+    deadline_client.apply_job_metadata(tmp_path)
+    assert (tmp_path / "template.json").read_text(encoding="utf-8") == before
